@@ -1,0 +1,72 @@
+measurement: plc_tags
+tags:
+  equipment_id
+  variable
+  unit
+  datatype
+fields:
+  value_bool       (si existe)
+  value_int        (si existe)
+  value_float      (si existe)
+  value_str        (si existe)
+  value_time       (si existe)
+timestamp:
+  el contenido del campo JSON "timestamp"
+
+
+
+[agent]
+  interval = "10s" -> cada cuánto se ejecutan los inputs (interval)
+  flush_interval = "10s" -> cada cuánto se envían los outputs (flush_interval)
+  hostname = "" -> hostname a adjuntar a los datos
+  debug = false -> modos debug/quiet
+  logfile = "" -> nivel de logs
+
+[inputs.*]] — LOS “SENSORES”
+Cada input es un plugin que obtiene datos de algún sitio.
+Ejemplos comunes:
+inputs.cpu
+inputs.mem
+inputs.disk
+inputs.mqtt_consumer
+inputs.modbus
+inputs.opcua
+inputs.exec
+inputs.http
+Un fichero puede tener:
+✔ varios inputs
+✔ repetidos con distinta config
+✔ o inputs complejos (json_v2, grok, etc.)
+
+[[processors.*]] — PROCESADORES (opcionales)
+Transforman los datos antes de enviarlos a outputs.
+Ejemplos:
+processors.rename → renombrar tags o fields
+processors.converter → convertir tipos
+processors.filter → eliminar o incluir fields
+processors.starlark → lógica avanzada
+[[processors.rename]]
+  [[processors.rename.tag]]
+    from = "host"
+    to = "device"
+
+[[outputs.*]] — ADONDE VAN LOS DATOS
+Obligatorio tener al menos 1 output.
+Ejemplos:
+outputs.influxdb_v2
+outputs.file
+outputs.prometheus_client
+outputs.mqtt
+outputs.http
+Ejemplo estándar:
+[[outputs.influxdb_v2]]
+  urls = ["http://localhost:8086"]
+  token = "xxx"
+  bucket = "system"
+  organization = "acme"
+Un fichero puede tener varios outputs, y todos reciben los mismos datos.
+
+
+
+
+"UPaQRl6XGsHmang40vybMYNxIhRT8LuL--4OYEPfyx7i3zyF4t89Z5G06l8eII_9l0X2ABIwXoejD95FBuBHYw=="

@@ -1,0 +1,32 @@
+{
+  "success": true,
+  "datos": [
+    {
+      "id": 101,
+      "name": "Prensa Hidráulica A-01",
+      "temperature": 55.2,
+      "pressure": 8.1,
+      "humidity": 45.0,
+      "voltage": 480.5,
+      "status": "active"
+    },
+    {
+      "id": 102,
+      "name": "Reactor Químico R-02",
+      "temperature": 85.7,
+      "pressure": 4.5,
+      "humidity": 30.2,
+      "voltage": 479.9,
+      "status": "warning"
+    },
+    {
+      "id": 103,
+      "name": "Línea Ensamblaje S-03",
+      "temperature": 30.0,
+      "pressure": 1.2,
+      "humidity": 60.5,
+      "voltage": 481.0,
+      "status": "idle"
+    }
+  ]
+}

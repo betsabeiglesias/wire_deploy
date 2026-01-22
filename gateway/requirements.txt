@@ -1,0 +1,33 @@
+aiofiles==25.1.0
+aiosqlite==0.21.0
+asyncua==1.1.8
+attrs==25.4.0
+cffi==2.0.0
+cryptography==46.0.3
+jsonschema==4.25.1
+jsonschema-specifications==2025.9.1
+lxml==6.0.2
+opcua==0.98.13
+paho-mqtt==2.1.0
+pycparser==2.23
+pyOpenSSL==25.3.0
+python-dateutil==2.9.0.post0
+python-snap7==2.0.2
+pytz==2025.2
+PyYAML==6.0.3
+referencing==0.37.0
+rpds-py==0.27.1
+six==1.17.0
+sortedcontainers==2.4.0
+typing_extensions==4.15.0
+wait_for2==0.3.2
+pymodbus==3.6.8 
+
+
+# C:\Users\betsabe.iglesias\Documents\PLC_Connect>
+# docker build -t gateway:dev .
+
+
+# Reemplaza "/ruta/completa/a/tu/codigo" con la ruta absoluta en tu máquina
+# donde tienes tu "main.py" y el resto de tu código.
+# docker run --rm -it -p 4840:4840 -v C:\Users\betsabe.iglesias\Documents\PLC_Connect:/app gateway:dev

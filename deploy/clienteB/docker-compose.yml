@@ -1,0 +1,20 @@
+services:
+  gateway:
+    build: ../../gateway
+    container_name: gateway_customerB
+    environment:
+      - TZ=Europe/Madrid
+      - MQTT_URL=mosquitto
+      - MQTT_PORT=1883
+      - MQTT_USER=customerB
+      - GATEWAY_CONFIG=/opt/suite/config/gateway.yaml
+    volumes:
+      - ./opt/suite/config:/opt/suite/config:ro
+    restart: unless-stopped
+    networks:
+      - suite-central-net
+
+networks:
+  suite-central-net:
+    external: true
+    name: suite-central-net

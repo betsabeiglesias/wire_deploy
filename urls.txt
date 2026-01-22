@@ -1,0 +1,72 @@
+
+
+
+Frontend:
+http://localhost:5173/login
+
+http://localhost:5173/map
+
+
+Django Api:
+http://localhost:8000/admin
+
+
+Chatbot:
+http://localhost:5050/chat
+
+
+ML Service:
+http://localhost:5000/predict
+
+
+VR Service:
+http://localhost:6001/
+
+
+Grafana:
+http://localhost:3000/login
+
+
+Influx DB:
+http://localhost:8086/signin
+
+
+Kafka / Mosquitto:
+no navegador, Son brokers, se usan desde los otros servicios
+
+
+
+
+
+comandos docker:
+
+
+docker compose down 
+docker compose build
+docker compose up -d
+docker compose ps 
+
+docker compose up -d --build
+
+
+docker compose logs -f opcua-gateway
+
+
+pasos git rama nueva: 
+
+git checkout -b feature/nueva-rama
+git add .
+git commit -m "Mensaje describiendo los cambios"
+git push -u origin nueva-rama
+
+pr a develop       OJO!!!! NO A MAIN!!!! 
+
+
+
+
+
+
+docker compose exec django-api python manage.py makemigrations
+
+docker compose exec django-api python manage.py migrate   
+

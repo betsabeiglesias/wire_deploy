@@ -1,0 +1,113 @@
+/* --- Estilos Base (Tema claro / fondo transparente) --- */
+.gauge-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  box-sizing: border-box;
+  background: transparent; /* fondo transparente */
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+/* SVG */
+.gauge-container .gauge {
+  width: 100%;
+  height: 100%;
+}
+
+/* Texto del valor */
+.gauge-container > .gauge .value-text {
+  fill: #333;
+  font-family: "Poppins", sans-serif;
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+/* Dial base */
+.gauge-container > .gauge .dial {
+  stroke: #e6e9ef; /* gris claro */
+  stroke-width: 4;
+  fill: none;
+}
+
+/* Valor por defecto (celeste) */
+.gauge-container > .gauge .value {
+  stroke: #00bcd4;
+  stroke-width: 6;
+  fill: none;
+}
+
+/* --- Variantes específicas --- */
+
+/* .two: naranja dinámico */
+.gauge-container.two > .gauge .value {
+  stroke: #ff9800;
+}
+.gauge-container.two > .gauge .value-text {
+  fill: #ff9800;
+}
+
+/* .three: verde lima */
+.gauge-container.three > .gauge .value {
+  stroke: #8bc34a;
+}
+.gauge-container.three > .gauge .value-text {
+  fill: #8bc34a;
+}
+
+/* .four: rojo (velocidad) */
+.gauge-container.four > .gauge .value {
+  stroke: #f44336;
+}
+.gauge-container.four > .gauge .value-text {
+  fill: #f44336;
+}
+.gauge-container.four .value-text::after {
+  content: " km/h";
+  font-size: 0.8rem;
+  fill: #f44336;
+}
+
+/* .five: coral */
+.gauge-container.five > .gauge .value {
+  stroke: #ff7043;
+}
+.gauge-container.five > .gauge .value-text {
+  fill: #ff7043;
+}
+
+/* .six: rosa */
+.gauge-container.six > .gauge .value {
+  stroke: #e91e63;
+}
+.gauge-container.six > .gauge .value-text {
+  fill: #e91e63;
+}
+
+/* .seven: magenta */
+.gauge-container.seven > .gauge .value {
+  stroke: #9c27b0;
+}
+.gauge-container.seven > .gauge .value-text {
+  fill: #9c27b0;
+}
+
+/* --- Ajustes visuales del label para gauges 6 y 7 --- */
+.gauge-container.six .value-text {
+  fill: #212121;
+  top: 0px;
+  right: 10px;
+  font-size: 0.5rem;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
+}
+
+.gauge-container.seven .value-text {
+  fill: #212121;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
+}

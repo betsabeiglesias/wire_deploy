@@ -1,0 +1,29 @@
+driver: opcua
+equipment_id: customerB/PlantaSecado/Linea2/Caudal
+connection:
+  endpoint: opc.tcp://host.docker.internal:4841/valve/server/
+  namespace_uri: http://customerB-simulator.local
+  security_mode: None
+  security_policy: None
+  timeouts_ms:
+    connect: 5000
+    session: 10000
+  reconnect:
+    enable: true
+    min_delay_ms: 1000
+    max_delay_ms: 10000
+
+isa95:
+  site: customerB
+  area: PlantaSecado
+  work_center: Linea2
+  work_unit: ValvulaPrincipal
+
+items:
+  - name: caudal_valvula
+    datatype: Float
+    cdc:
+      tag: process/caudal_valvula
+      unit: L/s
+    addressing:
+      node_id: ns=2;s=Flow.Rate

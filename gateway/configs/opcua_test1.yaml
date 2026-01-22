@@ -1,0 +1,87 @@
+# ===== OPC UA Gateway Mapping =====
+driver: "opcua"
+
+connection:
+  endpoint: "opc.tcp://10.100.100.204:48010"
+  namespace_uri: "http://plc_albertosite.local"
+  # security (opcional):
+  security_mode: "None"          # None | Sign | SignAndEncrypt
+  security_policy: "None"        # None | Basic256Sha256 | Aes128_Sha256_RsaOaep | ...
+  # auth (opcional):
+  # username: "user"
+  # password: "pass"
+  timeouts_ms:
+    connect: 5000
+    session: 10000
+  reconnect:
+    enable: true
+    min_delay_ms: 1000
+    max_delay_ms: 10000
+
+# Identidad lógica CDC del equipo
+equipment_id: "DemoLine/Cell_A/EBW_01"
+
+# Suscripción OPC UA (para data notifications)
+subscription:
+  publishing_interval_ms: 500     # ritmo al que el servidor publica notificaciones
+  sampling_interval_ms: 200       # cada cuánto muestrea el servidor la variable
+  queue_size: 10
+  discard_oldest: true
+
+# Política común (se aplica si el item no lo sobreescribe)
+defaults:
+  quality_on_bad: "drop"          # drop | last | null
+  deadband:
+    type: "none"                  # none | absolute | percent
+    value: 0
+  on_change_only: false
+
+# ===== Señales a leer =====
+items:
+  # --- Señal principal del ciclo (tu v1 en el servidor) ---
+  - name: "Vble_INT"
+    addressing:
+      node_id: "ns=4;s=S7_1200A.PLC_!.Generic.Variable1"
+    datatype: "Int16"
+    cdc:
+      tag: "process/state_ok"
+      unit: "int"
+      description: "Testing variable int PLC Local"
+    overrides:
+      sampling_interval_ms: 100
+      deadband:
+        type: "none"
+
+  # --- Señal secundaria (tu v2 en el servidor) ---
+  - name: "Vble_FLOAT"
+    addressing:
+      node_id: "ns=4;s=S7_1200A.PLC_!.Generic.Variable2"
+    datatype: "Float"
+    cdc:
+      tag: "process/aux_ok"
+      unit: "float"
+      description: "Testing variable float en PLC Local"
+
+  # --- Heartbeat para liveness (parpadeo 1s) ---
+  - name: "Vble_current"
+    addressing:
+      node_id: "ns=4;s=S7_1200A.PLC_!.Generic.Variable9"
+      # browse_path: [ "Objects", "Heartbeat" ]
+    datatype: "Float"
+    cdc:
+      tag: "process/temp_plc_real"
+      unit: "Float"
+      description: "Testing variable cambiante float en PLC Local"
+    overrides:
+      on_change_only: false         #false -> publicará siempre
+      sampling_interval_ms: 200
+
+# Emisión (cómo publicamos los CDC tags hacia fuera)
+publish:
+  mode: "function"                 # "function" | "mqtt" | "http" | "stdout" ...
+  target: "gateway.publisher"      # p.ej. nombre de la función a inyectar o config específica del modo
+  # Ejemplo si fuera MQTT:
+  # mode: "mqtt"
+  # mqtt:
+  #   broker_url: "mqtt://localhost:1883"
+  #   topic_template: "plant/{equipment_id}/{tag}"

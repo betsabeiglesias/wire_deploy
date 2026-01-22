@@ -1,0 +1,165 @@
+{
+  "$id": "mapping.opcua.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OPC UA Mapping v1 (with connection/subscription)",
+  "type": "object",
+  "required": ["driver", "equipment_id", "connection", "items"],
+  "properties": {
+    "driver": { "const": "opcua" },
+
+    "equipment_id": { "type": "string", "minLength": 1 },
+
+    "connection": {
+      "type": "object",
+      "required": ["endpoint"],
+      "properties": {
+        "endpoint": { "type": "string", "minLength": 1 },
+        "namespace_uri": { "type": "string" },
+        "security_mode": { "type": "string", "enum": ["None", "Sign", "SignAndEncrypt"], "default": "None" },
+        "security_policy": { "type": "string", "default": "None" },
+        "certificate":    { "type": "string" },
+        "private_key":    { "type": "string" },
+        "application_uri":{ "type": "string" },
+        "cert_uri":       { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "timeouts_ms": {
+          "type": "object",
+          "properties": {
+            "connect": { "type": "integer", "minimum": 0 },
+            "session": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "reconnect": {
+          "type": "object",
+          "properties": {
+            "enable": { "type": "boolean" },
+            "min_delay_ms": { "type": "integer", "minimum": 0 },
+            "max_delay_ms": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "subscription": {
+      "type": "object",
+      "properties": {
+        "publishing_interval_ms": { "type": "integer", "minimum": 0 },
+        "sampling_interval_ms":   { "type": "integer", "minimum": 0 },
+        "queue_size":             { "type": "integer", "minimum": 1 },
+        "discard_oldest":         { "type": "boolean" },
+        "watchdog_ms":            { "type": "integer", "minimum": 1000, "description": "Tiempo máximo en ms sin recibir notificaciones antes de disparar recuperación"},
+        "debounce_ms":            { "type": "integer", "minimum": 500, "description": "Tiempo mínimo entre intentos de recuperación sucesivos"}
+        },
+      "additionalProperties": false
+    },
+
+    "defaults": {
+      "type": "object",
+      "properties": {
+        "on_change_only": { "type": "boolean" },
+        "quality_on_bad": { "enum": ["drop", "last", "null"] },
+        "deadband": {
+          "type": "object",
+          "properties": {
+            "type":  { "enum": ["none", "absolute", "percent"] },
+            "value": { "type": "number" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": true
+    },
+
+    "publish": {
+      "type": "object",
+      "properties": {
+        "mode":   { "enum": ["stdout", "pretty", "function", "mqtt", "http"] },
+        "target": { "type": "string" },
+        "mqtt":   { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+
+    "on_change_only": { "type": "boolean" },
+    "quality_on_bad": { "enum": ["drop", "last", "null"] },
+    "deadband": {
+      "type": "object",
+      "properties": {
+        "type":  { "enum": ["none", "absolute", "percent"] },
+        "value": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["datatype"],
+        "properties": {
+          "name":     { "type": "string" },
+
+          "addressing": {
+            "type": "object",
+            "properties": {
+              "node_id":    { "type": "string" },
+              "browse_path": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "additionalProperties": false
+          },
+
+          "datatype": { "type": "string", "enum": ["Boolean","Int16","Int32","UInt16","UInt32","Float","Double","String","DateTime","Char"] },
+
+          "cdc": {
+            "type": "object",
+            "properties": {
+              "tag":         { "type": "string", "pattern": "^[a-zA-Z0-9_./-]+$" },
+              "unit":        { "type": "string" },
+              "description": { "type": "string" }
+            },
+            "additionalProperties": true
+          },
+
+          "overrides": {
+            "type": "object",
+            "properties": {
+              "on_change_only":        { "type": "boolean" },
+              "sampling_interval_ms":  { "type": "integer", "minimum": 0 },
+              "deadband": {
+                "type": "object",
+                "properties": {
+                  "type":  { "enum": ["none", "absolute", "percent"] },
+                  "value": { "type": "number" }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": true
+          },
+
+          "attrs": { "type": "object" },
+
+   
+          "nodeid":   { "type": "string" },
+          "variable": { "type": "string" } 
+        },
+        "additionalProperties": true
+      }
+    },
+
+   
+    "endpoint":        { "type": "string" },
+    "security_mode":   { "type": "string" },
+    "security_policy": { "type": "string" },
+    "poll_ms":         { "type": "integer" }
+  },
+  "additionalProperties": true
+}

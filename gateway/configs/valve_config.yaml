@@ -1,0 +1,81 @@
+# ===== OPC UA Gateway Mapping =====
+driver: "opcua"
+
+connection:
+  endpoint: "opc.tcp://host.docker.internal:4841/valve/server/"
+  namespace_uri: "http://valve-simulator.local"
+  # security (opcional):
+  security_mode: "None"          # None | Sign | SignAndEncrypt
+  security_policy: "None"        # None | Basic256Sha256 | Aes128_Sha256_RsaOaep | ...
+  # auth (opcional):
+  # username: "user"
+  # password: "pass"
+  timeouts_ms:
+    connect: 5000
+    session: 10000
+  reconnect:
+    enable: true
+    min_delay_ms: 1000
+    max_delay_ms: 10000
+
+# Identidad lógica CDC del equipo
+equipment_id: "DemoSite2/DemoArea2/DemoLine2/DemoCell2/Valve_SIM"
+
+# Suscripción OPC UA (para data notifications)
+subscription:
+  publishing_interval_ms: 500     # ritmo al que el servidor publica notificaciones
+  sampling_interval_ms: 200       # cada cuánto muestrea el servidor la variable
+  queue_size: 10
+  discard_oldest: true
+  watchdog_ms: 30000
+  debounce_ms: 3000
+
+# Política común (se aplica si el item no lo sobreescribe)
+defaults:
+  quality_on_bad: "drop"          # drop | last | null
+  deadband:
+    type: "none"                  # none | absolute | percent
+    
+    value: 0
+  on_change_only: false
+
+# ===== Señales a leer =====
+items:
+  - name: "State"
+    addressing:
+      node_id: "ns=2;s=Valve1.Open"
+    datatype: "Boolean"
+    cdc:
+      tag: "process/state_valve1"
+      unit: "-"
+      description: "Estado de la válvula 1 (ABIERTO/CERRADO)"
+    overrides:
+      sampling_interval_ms: 200
+  - name: "State"
+    addressing:
+      node_id: "ns=2;s=Valve2.Open"
+    datatype: "Boolean"
+    cdc:
+      tag: "process/state_valve2"
+      unit: "-"
+      description: "Estado de la válvula 2 (ABIERTO/CERRADO)"
+    overrides:
+      sampling_interval_ms: 200
+  - name: "State"
+    addressing:
+      node_id: "ns=2;s=Flow.Rate"
+    datatype: "Float"
+    cdc:
+      tag: "process/press"
+      unit: "L/s"
+      description: "Flow del fluído"
+    overrides:
+      sampling_interval_ms: 200
+  - name: "State"
+    addressing:
+      node_id: "ns=2;s=Pressure.Value"
+    datatype: "Float"
+    cdc:
+      tag: "process/flow"
+      unit: "bar"
+      description: "Presión del fluído"

@@ -1,0 +1,154 @@
+/* src/pages/modulos/css/PLCs.css */
+
+/* ------------------ LAYOUT GENERAL ------------------ */
+
+.plcs-page-layout {
+    display: flex;
+    flex-direction: column; /* Navbar arriba, contenido (Sidebar + Canvas) abajo */
+    height: 100vh;
+    overflow: hidden; /* Evita el scroll global */
+
+    /* 👇 AÑADIDO PARA QUE EL CONTENIDO NO SUBA Y CHOQUE CON EL BOTÓN */
+    /* padding-top: 70px; Ajusta el espacio hasta que quede perfecto */
+}
+
+/* Contenedor que pone el Sidebar y el Main Content lado a lado */
+.editor-area-flex {
+    display: flex; 
+    flex-grow: 1; /* Ocupa el espacio restante */
+    z-index: 1; /* Asegura que esta capa esté detrás de los elementos flotantes arrastrados */
+}
+
+/* ------------------ ÁREA DEL CANVAS ------------------ */
+
+.canvas-main-content {
+    flex-grow: 1; /* Ocupa el espacio restante junto al Sidebar */
+    display: flex;
+    justify-content: center; /* Centra el Canvas Blanco horizontalmente */
+    align-items: center; /* Centra el Canvas Blanco verticalmente */
+    background-color: #f0f0f0; /* Color gris de fondo del área de trabajo */
+    overflow: auto; /* Permite el scroll si el Canvas es más grande que la ventana */
+    padding: 20px; /* Espacio alrededor del canvas blanco */
+}
+
+.canvas-editor {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden; 
+}
+
+/* ------------------ ORDEN Z PARA DRAGGABLE BOX ------------------ */
+
+.draggable-box {
+    z-index: 1; 
+}
+
+.component-equipment-label {
+    position: absolute;
+    left: 8px;
+    bottom: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #1f2937;
+    background-color: rgba(255, 255, 255, 0.85);
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 2px 6px;
+    pointer-events: none;
+}
+
+.component-no-data-badge {
+    position: absolute;
+    right: 8px;
+    bottom: 6px;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    pointer-events: none;
+}
+
+/* ----- Mini widgets importados del módulo de comunicaciones ----- */
+.scada-mini-widget {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 6px 4px;
+}
+
+.scada-mini-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1f2937;
+    text-transform: lowercase;
+    display: none;
+}
+
+.mini-table {
+    width: 100%;
+}
+
+.mini-table table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    border: 1px solid #e5e7eb;
+}
+
+.mini-table th,
+.mini-table td {
+    padding: 6px 8px;
+    border: 1px solid #e5e7eb;
+    text-align: left;
+}
+
+.mini-table th {
+    background: #f8fafc;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    color: #475569;
+}
+
+.mini-table td.ok {
+    color: #15803d;
+    font-weight: 600;
+}
+
+.mini-table td.fallo,
+.mini-table td.error {
+    color: #b91c1c;
+    font-weight: 600;
+}
+
+.mini-table .empty-cell {
+    text-align: center;
+    color: #94a3b8;
+}
+
+.mini-chart {
+    width: 100%;
+    height: 140px;
+    stroke: #2563eb;
+    fill: none;
+}
+
+.mini-chart polyline {
+    stroke-width: 3;
+    stroke: #2563eb;
+}
+
+.mini-chart circle {
+    fill: #93c5fd;
+    stroke: #2563eb;
+    stroke-width: 1;
+}
+
+.mini-chart-empty {
+    font-size: 0.85rem;
+    color: #94a3b8;
+}

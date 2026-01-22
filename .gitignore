@@ -1,0 +1,91 @@
+# ===============================================
+# 📂 CONFIGURACIÓN BASE DEL PROYECTO (INDUSTRY4-SUITE)
+# ===============================================
+# Archivos de configuración y entornos sensibles
+# .env
+# .env.*.local
+# .venv
+*.log
+.DS_Store
+Thumbs.db
+urls.txt # Archivo que aparece en tu estructura
+
+# ===============================================
+# 🐍 PYTHON / DJANGO (django-api, ml-service, chatbot-service, opcua-gateway)
+# ===============================================
+__pycache__/
+*.pyc
+*.pyd
+*.so
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Datos generados por Django
+/django-api/db.sqlite3            # A pesar de usar Postgres, ignora el archivo por defecto.
+/django-api/staticfiles/          # Archivos estáticos recolectados
+/django-api/media/                # Archivos subidos por usuarios
+/django-api/**/migrations/*
+!/django-api/**/migrations/__init__.py 
+!/django-api/**/migrations/0001_initial.py # Mantener el archivo inicial de migraciones si lo deseas
+
+# Caché de dependencias (cors, simplejwt)
+.cache/
+
+# ===============================================
+# ⚛️ FRONTEND / NODE (frontend)
+# ===============================================
+/frontend/node_modules
+/frontend/dist                    # Output de construcción (build) de Vite/React
+/frontend/.vite/                  # Caché de Vite
+/frontend/npm-debug.log*
+
+# ===============================================
+# 🐳 DOCKER & VOLUMENES DE DATOS
+# ===============================================
+# Las carpetas locales donde Docker guarda los datos NO deben subirse.
+# Basado en tus volúmenes:
+/postgres_data/                   # Volumen local de Postgres
+/influxdb_data/                   # Volumen local de InfluxDB
+/kafka_data/                      # Volumen local de Kafka
+/mosquitto_data/                  # Volumen de datos de Mosquitto
+/mosquitto_log/                   # Volumen de logs de Mosquitto
+
+# Logs y configuración específica de Mosquitto (bind mount)
+# /mosquitto/config/acl.conf
+# /mosquitto/config/mosquitto.conf
+# Si creas directorios de logs locales:
+logs/
+
+# Volúmenes locales
+influxdb_data/
+postgres_data/
+kafka_data/
+mosquitto_data/
+mosquitto_log/
+mosquitto/data/
+mosquitto/log/
+docker/telegraf/telegraf.conf
+docker/mosquitto/config/mosquitto.conf
+docker/grafana/provisioning/
+docker/grafana/data/*
+docker-compose.override.yml
+
+
+# ===============================================
+# 🤖 SERVICIOS ML / LLM (ml-service, chatbot-service)
+# ===============================================
+# Modelos binarios grandes
+*.pkl
+*.h5
+*.onnx
+*.safetensors
+*.pth
+*.bin
+/ml-service/data/
+/chatbot-service/data/
+
+
+node_modules/
