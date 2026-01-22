@@ -1,5 +1,4 @@
-
-
+URLs PROYECTO:
 
 Frontend:
 http://localhost:5173/login
@@ -31,20 +30,20 @@ Influx DB:
 http://localhost:8086/signin
 
 
-Kafka / Mosquitto:
-no navegador, Son brokers, se usan desde los otros servicios
+Mosquitto:
+no navegador, es broker, se usa desde los otros servicios
 
 
+------------------------------------------------------------------------------------------------------------
 
 
-
-comandos docker:
-
+COMANDOS DOCKER:
 
 docker compose down 
 docker compose build
 docker compose up -d
 docker compose ps 
+
 
 docker compose up -d --build
 
@@ -52,21 +51,40 @@ docker compose up -d --build
 docker compose logs -f opcua-gateway
 
 
-pasos git rama nueva: 
+------------------------------------------------------------------------------------------------------------
+
+
+PASOS GIT CREAR RAMA NUEVA: 
 
 git checkout -b feature/nueva-rama
 git add .
 git commit -m "Mensaje describiendo los cambios"
 git push -u origin nueva-rama
 
-pr a develop       OJO!!!! NO A MAIN!!!! 
+
+------------------------------------------------------------------------------------------------------------
 
 
-
-
-
+HACER MIGRACIONES A MANODESDE EL DOCKER:
 
 docker compose exec django-api python manage.py makemigrations
 
 docker compose exec django-api python manage.py migrate   
+
+
+------------------------------------------------------------------------------------------------------------
+
+
+USAR dev.bat:
+
+Abrir CMD o PowerShell en la raíz del proyecto y ejecutar:
+
+| Comando         | Qué hace                                                                          |
+| --------------- | --------------------------------------------------------------------------------- |
+| `dev.bat dev`   | Levanta contenedores, aplica migraciones, carga fixtures y muestra logs           |
+| `dev.bat reset` | Resetea contenedores, borra volúmenes, reconstruye, aplica migraciones y fixtures |
+| `dev.bat seed`  | Solo carga datos base (fixtures) sin tocar contenedores                           |
+| `dev.bat logs`  | Muestra logs en tiempo real de todos los servicios                                |
+
+
 

@@ -11,23 +11,7 @@ services:
       - mosquitto_data:/mosquitto/data
       - ./mosquitto_log:/mosquitto/log
 
-  # telegraf:
-  #   image: telegraf:1.28
-  #   container_name: telegraf
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - mosquitto
-  #     - influxdb
-  #   volumes:
-  #     - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
-  #   # env_file:
-  #   #   - .env
-  #   environment:
-  #     - HOSTNAME=telegraf
-  #     - INFLUX_TOKEN=d55k6GoWTb2VFHPInrF72xcx5R20THh-CJn2KRIZai3m-P_58FQDreODcpGq6DlVGSSDmDIZjIRZnG5qFAOacw==
-      
-  #   networks:
-  #     - default
+  
 
   telegraf_customerA:
     image: telegraf:1.30
@@ -115,7 +99,6 @@ services:
       - "8000:8000"
     depends_on:
       - postgres
-      - kafka
       - mosquitto
 
     command: python manage.py runserver 0.0.0.0:8000
@@ -127,7 +110,6 @@ services:
       - .env
     environment:
       - TZ=Europe/Madrid
-      - BROKER_URL=kafka:9092
       - MQTT_URL=mosquitto
       - MQTT_PORT=1883
     ports:
@@ -138,7 +120,6 @@ services:
       - mosquitto 
       - influxdb
       - telegraf_customerA
-      - kafka
     restart: unless-stopped
     
 

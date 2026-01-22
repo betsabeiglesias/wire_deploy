@@ -1,17 +1,14 @@
 # ===============================================
-# 📂 CONFIGURACIÓN BASE DEL PROYECTO (INDUSTRY4-SUITE)
+# 🔐 VARIABLES DE ENTORNO / SENSIBLE
 # ===============================================
-# Archivos de configuración y entornos sensibles
-# .env
-# .env.*.local
-# .venv
+.env
+.env.*.local
 *.log
 .DS_Store
 Thumbs.db
-urls.txt # Archivo que aparece en tu estructura
 
 # ===============================================
-# 🐍 PYTHON / DJANGO (django-api, ml-service, chatbot-service, opcua-gateway)
+# 🐍 PYTHON / DJANGO
 # ===============================================
 __pycache__/
 *.pyc
@@ -23,69 +20,55 @@ env/
 .mypy_cache/
 .ruff_cache/
 
-# Datos generados por Django
-/django-api/db.sqlite3            # A pesar de usar Postgres, ignora el archivo por defecto.
-/django-api/staticfiles/          # Archivos estáticos recolectados
-/django-api/media/                # Archivos subidos por usuarios
-/django-api/**/migrations/*
-!/django-api/**/migrations/__init__.py 
-!/django-api/**/migrations/0001_initial.py # Mantener el archivo inicial de migraciones si lo deseas
+# SQLite por defecto de Django (no usado)
+django-api/db.sqlite3
 
-# Caché de dependencias (cors, simplejwt)
-.cache/
+# Archivos generados
+django-api/staticfiles/
+django-api/media/
 
 # ===============================================
-# ⚛️ FRONTEND / NODE (frontend)
+# ⚛️ FRONTEND / NODE
 # ===============================================
-/frontend/node_modules
-/frontend/dist                    # Output de construcción (build) de Vite/React
-/frontend/.vite/                  # Caché de Vite
-/frontend/npm-debug.log*
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/npm-debug.log*
+
+node_modules/
 
 # ===============================================
-# 🐳 DOCKER & VOLUMENES DE DATOS
+# 🐳 DOCKER / VOLUMENES (NO VERSIONAR)
 # ===============================================
-# Las carpetas locales donde Docker guarda los datos NO deben subirse.
-# Basado en tus volúmenes:
-/postgres_data/                   # Volumen local de Postgres
-/influxdb_data/                   # Volumen local de InfluxDB
-/kafka_data/                      # Volumen local de Kafka
-/mosquitto_data/                  # Volumen de datos de Mosquitto
-/mosquitto_log/                   # Volumen de logs de Mosquitto
-
-# Logs y configuración específica de Mosquitto (bind mount)
-# /mosquitto/config/acl.conf
-# /mosquitto/config/mosquitto.conf
-# Si creas directorios de logs locales:
-logs/
-
-# Volúmenes locales
-influxdb_data/
 postgres_data/
-kafka_data/
+influxdb_data/
 mosquitto_data/
 mosquitto_log/
 mosquitto/data/
 mosquitto/log/
-docker/telegraf/telegraf.conf
-docker/mosquitto/config/mosquitto.conf
-docker/grafana/provisioning/
-docker/grafana/data/*
+
+logs/
+
 docker-compose.override.yml
 
+opt/
 
 # ===============================================
-# 🤖 SERVICIOS ML / LLM (ml-service, chatbot-service)
+# 🤖 ML / BINARIOS GRANDES
 # ===============================================
-# Modelos binarios grandes
 *.pkl
 *.h5
 *.onnx
 *.safetensors
 *.pth
 *.bin
-/ml-service/data/
-/chatbot-service/data/
 
+ml-service/data/
+chatbot-service/data/
 
-node_modules/
+# ===============================================
+# ✅ COSAS QUE SÍ SE VERSIONAN (DOCUMENTADO)
+# ===============================================
+# django-api/migrations/        <-- TODAS
+# django-api/fixtures/          <-- DATOS SEED
+# .env.example                  <-- CONFIG DE EJEMPLO
