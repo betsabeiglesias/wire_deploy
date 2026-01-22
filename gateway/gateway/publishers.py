@@ -124,7 +124,7 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
     port   = parsed.port or (8883 if scheme == "ssl" else 1883)
     use_tls = scheme == "ssl"
 
-    client_id = f"{tenant or 'default'}-{gw.get('name','gw')}"
+    client_id = gw.get('name', f"{tenant}-gateway")
     client = mqtt.Client(
             callback_api_version=mqtt.CallbackAPIVersion.VERSION1,
             client_id=client_id,
