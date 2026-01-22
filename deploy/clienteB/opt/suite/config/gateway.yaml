@@ -1,9 +1,10 @@
 gateway:
   name: gateway-customerB
+  tenant: customerB
   log_level: INFO
   publisher:
     mode: mqtt
-    url: tcp://host.docker.internal:1883
+    url: tcp://mosquitto:1883
     topic_prefix: customerB
 
 defaults:

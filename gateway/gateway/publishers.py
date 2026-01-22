@@ -100,16 +100,10 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
    
     # --- Config --- (puedes tomar de YAML o de ENV)
     mqtt_url     = pub.get("url") or os.getenv("MQTT_URL", "tcp://localhost:1883")
-    mqtt_user    = pub.get("username") or os.getenv("MQTT_USER", "")
-    mqtt_pass    = pub.get("password") or os.getenv("MQTT_PASS", "")
+    mqtt_user    = pub.get("username") or os.getenv("GATEWAY_MQTT_USER", "")
+    mqtt_pass    = pub.get("password") or os.getenv("GATEWAY_MQTT_PASS", "")
     if not mqtt_user or not mqtt_pass:
         raise ValueError("Credenciales MQTT no configuradas (username/password)")
-
-    if mqtt_user != tenant:
-        raise ValueError(
-            f"El usuario MQTT ({mqtt_user}) debe coincidir con el tenant ({tenant})"
-        )
-
 
     # QoS/retain por tipo (defaults recomendados)
     qos_tag      = int(pub.get("qos_tag", 1))
