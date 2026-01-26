@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import WizardNavigation from "@/components/WizardNavigationButton";
+import WizardNavigation from "../components/WizardNavigationButton";
 
 const OPCUAConfigPage = () => {
   const navigate = useNavigate();

@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import WizardNavigation from "@/components/WizardNavigationButton";
 import { getPLC, updatePLC } from "../api/plcApi";
 import { markConfigDirty } from "../../../utils/configUtils";
 import Swal from "sweetalert2";
+import WizardNavigation from "../components/WizardNavigationButton";
 
 const EditOPCUAConfigPage = () => {
   const navigate = useNavigate();

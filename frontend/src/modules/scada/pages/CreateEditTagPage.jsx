@@ -5,7 +5,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { createTag, getTag, updateTag, getPLC } from "../api/plcApi";
 import { markConfigDirty } from "../../../utils/configUtils";
 import Swal from "sweetalert2";
-import WizardNavigation from "../../../components/WizardNavigationButton";
+import WizardNavigation from "../components/WizardNavigationButton";
 
 const DATATYPES = [
   "Boolean", "Int16", "Int32", "UInt16", "UInt32",

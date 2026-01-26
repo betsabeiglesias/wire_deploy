@@ -3,10 +3,10 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getPLC } from "../api/plcApi";
-import WizardNavigation from "@/components/WizardNavigationButton";
 import Swal from "sweetalert2";
 import { deleteTag, toggleTag } from "../api/plcApi";
 import { markConfigDirty } from "../../../utils/configUtils";
+import WizardNavigation from "../components/WizardNavigationButton";
 
 export default function PLCTagsPage() {
   const { id } = useParams();
