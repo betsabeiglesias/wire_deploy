@@ -36,7 +36,7 @@ const Login = () => {
           <label>Usuario:</label>
           <input 
             type="text" 
-            fullWidth 
+            
             value={username} 
             onChange={(e) => setUsername(e.target.value)} 
             required 
