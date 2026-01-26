@@ -1,25 +1,19 @@
-
 import './styles/App.css'
 import AppRoutes from './routes/AppRoutes';
 import { useEffect } from "react";
 import { useFavoriteStore } from "@/store/useFavoriteStore";
-
-// Objeto de configuración con las URLs de los servicios.
-export const SERVICE_URLS = {
-  djangoApi: "http://localhost:8000/admin",
-  chatbot: "http://localhost:5050/chat",
-  mlService: "http://localhost:5000/predict",
-  vrService: "http://localhost:6001/",
-  grafana: "http://localhost:3000/login",
-  influxDb: "http://localhost:8086/signin"
-};
+import { useAuthStore } from "@/store/useAuthStore";
 
 function App() {
   const fetchFavorites = useFavoriteStore((s) => s.fetchFavorites);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   useEffect(() => {
-    fetchFavorites();
-  }, [fetchFavorites]);
+    // Solo pedimos favoritos si el usuario está autenticado
+    if (isAuthenticated) {
+      fetchFavorites();
+    }
+  }, [isAuthenticated, fetchFavorites]);
 
   return (
     <>

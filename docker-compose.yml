@@ -54,7 +54,7 @@ services:
       - ../../opt/suite/config:/opt/suite/config
       - /var/run/docker.sock:/var/run/docker.sock
     env_file:
-      - ../../.env
+      - ./.env
     environment:
       - DJANGO_SETTINGS_MODULE=core.settings
       - PYTHONUNBUFFERED=1
