@@ -2,69 +2,71 @@ services:
 
   mosquitto:
     image: eclipse-mosquitto:2.0.18
-    container_name: mosquitto
+    container_name: wire-deploy-mosquitto
     ports:
-      - "127.0.0.1:1884:1883"  # ← Solo accesible localmente
-      - "127.0.0.1:9001:9001"  # ← Solo accesible localmente
+      - "127.0.0.1:1884:1883"
+      - "127.0.0.1:9001:9001"
     volumes:
-      - ../../mosquitto/config:/mosquitto/config
-      - ../../mosquitto_data:/mosquitto/data
-      - ../../mosquitto_log:/mosquitto/log
+      - ./mosquitto/config:/mosquitto/config
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
     networks:
       - suite-central-net
 
 
   influxdb:
     image: influxdb:2.7
-    container_name: influxdb
+    container_name: wire-deploy-influxdb
     ports:
       - "8086:8086"
     environment:
-      - DOCKER_INFLUXDB_INIT_MODE=setup
-      - DOCKER_INFLUXDB_INIT_USERNAME=admin
-      - DOCKER_INFLUXDB_INIT_PASSWORD=admin1234
-      - DOCKER_INFLUXDB_INIT_ORG=acme
-      - DOCKER_INFLUXDB_INIT_BUCKET=scada
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: admin1234
+      DOCKER_INFLUXDB_INIT_ORG: acme
+      DOCKER_INFLUXDB_INIT_BUCKET: scada
     volumes:
       - influxdb_data:/var/lib/influxdb2
     networks:
       - suite-central-net
 
+
   postgres:
     image: postgres:16
-    container_name: postgres
+    container_name: wire-deploy-postgres
     restart: always
     environment:
-      - POSTGRES_USER=django
-      - POSTGRES_PASSWORD=django1234
-      - POSTGRES_DB=industry4_v2
+      POSTGRES_USER: django
+      POSTGRES_PASSWORD: django1234
+      POSTGRES_DB: industry4_v2
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data_v2:/var/lib/postgresql/data
     networks:
       - suite-central-net
 
+
   # ---------- BACKEND CORE ----------
   django-api:
-    build: ../../django-api
-    container_name: django-api
+    build: ./django-api
+    container_name: wire-deploy-django-api
     volumes:
-      - ../../django-api:/app
-      - ../../opt/suite/config:/opt/suite/config
+      - ./django-api:/app
+      - ./opt/suite/config:/opt/suite/config
       - /var/run/docker.sock:/var/run/docker.sock
     env_file:
-      - ../../.env
+      - ./.env
     environment:
-      - DJANGO_SETTINGS_MODULE=core.settings
-      - PYTHONUNBUFFERED=1
-      - TZ=Europe/Madrid
-      - POSTGRES_HOST=postgres
-      - POSTGRES_DB=industry4_v2
-      - POSTGRES_USER=django
-      - POSTGRES_PASSWORD=django1234
-      - DOCKER_HOST=unix:///var/run/docker.sock
-      - INFLUX_URL=http://influxdb:8086
+      DJANGO_SETTINGS_MODULE: core.settings
+      PYTHONUNBUFFERED: "1"
+      TZ: Europe/Madrid
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: industry4_v2
+      POSTGRES_USER: django
+      POSTGRES_PASSWORD: django1234
+      DOCKER_HOST: unix:///var/run/docker.sock
+      INFLUX_URL: http://influxdb:8086
     ports:
       - "8000:8000"
     depends_on:
@@ -77,14 +79,14 @@ services:
 
   # ---------- FRONTEND ----------
   frontend:
-    build: ../../frontend
-    container_name: frontend
+    build: ./frontend
+    container_name: wire-deploy-frontend
     volumes:
-      - ../../frontend:/app
+      - ./frontend:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://django-api:8000
-      - CHOKIDAR_USEPOLLING=true
+      VITE_API_URL: http://django-api:8000
+      CHOKIDAR_USEPOLLING: "true"
     ports:
       - "5173:5173"
     depends_on:
@@ -92,14 +94,15 @@ services:
     networks:
       - suite-central-net
 
+
 volumes:
   mosquitto_data:
   mosquitto_log:
   influxdb_data:
   postgres_data_v2:
 
+
 networks:
   suite-central-net:
     driver: bridge
     name: suite-central-net
-
