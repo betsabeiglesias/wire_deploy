@@ -125,7 +125,8 @@ REST_FRAMEWORK = {
     # Las rutas de login y registro NO deben requerir autenticación. 
     # Usaremos el permiso 'IsAuthenticated' solo en las vistas que lo necesiten.
     'DEFAULT_PERMISSION_CLASSES': (
-        'core.auth_manager.permissions.IsAuthenticatedAndActive',
+        'rest_framework.permissions.AllowAny',
+
     ),
 }
 
