@@ -1,5 +1,3 @@
-// src/services/authService.js (Final)
-
 import axios from "axios"; 
 import { navigateTo } from "./router"; // ⬅️ Asegurar que este módulo exista
 import api from './api'; // ⬅️ Asegurar que api.js exista
