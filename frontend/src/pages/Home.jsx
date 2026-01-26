@@ -29,8 +29,8 @@ const Home = () => {
           {[
             { label: "Power BI", onClick: goToPowerBi, color: "border-blue-500" },
             { label: "HMI", onClick: goToHmi, color: "border-cyan-500" },
-            { label: "Chat bot", onClick: goToChatBot, color: "border-purple-500" },
-            { label: "VR", onClick: null, color: "border-gray-500" }
+            // { label: "Chat bot", onClick: goToChatBot, color: "border-purple-500" },
+            // { label: "VR", onClick: null, color: "border-gray-500" }
           ].map((item, idx) => (
             <div
               key={idx}

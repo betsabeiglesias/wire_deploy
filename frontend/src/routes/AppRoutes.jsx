@@ -86,7 +86,8 @@ export default function AppRoutes() {
       <Route path="/layout/:id" element={<ProtectedRoute><LayOutDetail /></ProtectedRoute>} />
 
       {/* 404 */}
-      <Route path="*" element={<NotFound />} />
+      <Route path="*" element={<NotFound />} /> 
+
     </Routes>
   );
 }
