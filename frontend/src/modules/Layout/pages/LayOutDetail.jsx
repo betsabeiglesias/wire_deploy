@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import DraggableBox from "../../organizarScada/components/DraggableBox";
 import HomeButton from "../../../components/HomeButton";
-import EditLayOutButton from "../../../components/EditLayOutButton";
+import EditLayOutButton from "../components/EditLayOutButton";
 import api from "@/services/api";
-import DeleteLayOutButton from "../../../components/DeleteLayOutButton";
+import DeleteLayOutButton from "../components/DeleteLayOutButton";
 
 const normalizeElements = (items = []) =>
   items.map((item, idx) => ({

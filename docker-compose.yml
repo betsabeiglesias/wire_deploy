@@ -4,47 +4,14 @@ services:
     image: eclipse-mosquitto:2.0.18
     container_name: mosquitto
     ports:
-      - "1883:1883"
-      - "9001:9001"  # WebSocket port
+      - "127.0.0.1:1884:1883"  # ← Solo accesible localmente
+      - "127.0.0.1:9001:9001"  # ← Solo accesible localmente
     volumes:
-      - ./mosquitto/config:/mosquitto/config
-      - mosquitto_data:/mosquitto/data
-      - ./mosquitto_log:/mosquitto/log
-
-  
-
-  telegraf_customerA:
-    image: telegraf:1.30
-    container_name: telegraf_customerA
-    restart: unless-stopped
-    depends_on:
-      - mosquitto
-      - influxdb
-    env_file:
-      - ./customerA.env
-    environment:
-      HOSTNAME: telegraf_customerA
-    volumes:
-      - ./telegraf/telegraf_customerA.conf:/etc/telegraf/telegraf.conf:ro
+      - ../../mosquitto/config:/mosquitto/config
+      - ../../mosquitto_data:/mosquitto/data
+      - ../../mosquitto_log:/mosquitto/log
     networks:
-      - default
-
-  # telegraf_customerB:
-  #   image: telegraf:1.30
-  #   container_name: telegraf_customerB
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - mosquitto
-  #     - influxdb
-  #   env_file:
-  #     - ./customerB.env
-  #   environment:
-  #     HOSTNAME: telegraf_customerB
-  #   volumes:
-  #     - ./telegraf/customerB.conf:/etc/telegraf/telegraf.conf:ro
-  #   networks:
-  #     - default
-
+      - suite-central-net
 
 
   influxdb:
@@ -59,80 +26,62 @@ services:
       - DOCKER_INFLUXDB_INIT_ORG=acme
       - DOCKER_INFLUXDB_INIT_BUCKET=scada
     volumes:
-      - ./influxdb_data:/var/lib/influxdb2
+      - influxdb_data:/var/lib/influxdb2
+    networks:
+      - suite-central-net
 
   postgres:
-    # Versión actualizada de postgres: 15 -> 16
     image: postgres:16
     container_name: postgres
     restart: always
     environment:
       - POSTGRES_USER=django
       - POSTGRES_PASSWORD=django1234
-      - POSTGRES_DB=industry4
+      - POSTGRES_DB=industry4_v2
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-
+      - postgres_data_v2:/var/lib/postgresql/data
+    networks:
+      - suite-central-net
 
   # ---------- BACKEND CORE ----------
   django-api:
-    build: ./django-api
+    build: ../../django-api
     container_name: django-api
     volumes:
-      - ./django-api:/app
-      - ./opt/suite/config/:/opt/suite/config
+      - ../../django-api:/app
+      - ../../opt/suite/config:/opt/suite/config
       - /var/run/docker.sock:/var/run/docker.sock
     env_file:
-      - .env
+      - ../../.env
     environment:
       - DJANGO_SETTINGS_MODULE=core.settings
       - PYTHONUNBUFFERED=1
       - TZ=Europe/Madrid
       - POSTGRES_HOST=postgres
-      - POSTGRES_DB=industry4
+      - POSTGRES_DB=industry4_v2
       - POSTGRES_USER=django
       - POSTGRES_PASSWORD=django1234
-      - DOCKER_HOST=unix:///var/run/docker.sock 
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - INFLUX_URL=http://influxdb:8086
     ports:
       - "8000:8000"
     depends_on:
       - postgres
       - mosquitto
-
     command: python manage.py runserver 0.0.0.0:8000
-
-  gateway:
-    build: ./gateway
-    container_name: gateway
-    env_file:
-      - .env
-    environment:
-      - TZ=Europe/Madrid
-      - MQTT_URL=mosquitto
-      - MQTT_PORT=1883
-    ports:
-      - "4840:4840"       
-    volumes:
-      - ./opt/suite/config:/opt/suite/config:ro
-    depends_on:
-      - mosquitto 
-      - influxdb
-      - telegraf_customerA
-    restart: unless-stopped
-    
+    networks:
+      - suite-central-net
 
 
   # ---------- FRONTEND ----------
   frontend:
-    build: ./frontend
+    build: ../../frontend
     container_name: frontend
-    # AÑADIDO: Volume para desarrollo en vivo
     volumes:
-      - ./frontend:/app
-      # Opcional pero recomendado para evitar errores de vinculación con node_modules
-      - /app/node_modules 
+      - ../../frontend:/app
+      - /app/node_modules
     environment:
       - VITE_API_URL=http://django-api:8000
       - CHOKIDAR_USEPOLLING=true
@@ -140,9 +89,17 @@ services:
       - "5173:5173"
     depends_on:
       - django-api
+    networks:
+      - suite-central-net
 
 volumes:
   mosquitto_data:
   mosquitto_log:
   influxdb_data:
-  postgres_data: 
+  postgres_data_v2:
+
+networks:
+  suite-central-net:
+    driver: bridge
+    name: suite-central-net
+
