@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import api from "../../../services/api"; // Instancia centralizada
+import api from "../../../services/api";
 
 const PUBLISHED_VIEWS_KEY = "publishedScadaViews";
 const PUBLISHED_LATEST_KEY = "publishedScadaLatest";
@@ -26,12 +26,15 @@ const persistPublishedView = (viewId, viewsData, name) => {
 
 const normalizeCanvasElements = (items = []) => {
   const baseId = Date.now();
-  return items.map((item, idx) => ({
-    id: item.id || baseId + idx,
-    x: item.x ?? 100,
-    y: item.y ?? 100,
-    data: item.data || item,
-  }));
+  return items.map((item, idx) => {
+    const { id, x, y, ...rest } = item;
+    return {
+      id: id || baseId + idx,
+      x: x ?? 100,
+      y: y ?? 100,
+      data: item.data ? { ...item.data } : { ...rest },
+    };
+  });
 };
 
 export const useOrganizarScada = () => {
@@ -57,9 +60,6 @@ export const useOrganizarScada = () => {
   useEffect(() => {
     viewsRef.current = views;
   }, [views]);
-
-  // 🚀 ELIMINADAS FUNCIONES MANUALES DE TOKEN (getAuthToken, refreshAccessToken)
-  // Ahora usamos directamente 'api' que ya sabe qué hacer.
 
   const loadPublishedViews = useCallback(async () => {
     try {
@@ -210,12 +210,20 @@ export const useOrganizarScada = () => {
   }, [currentViewId, handleSelectView]);
 
   const addComponentToCanvas = useCallback((data) => {
-    setCanvasElements((prev) => [...prev, { id: Date.now(), x: 100, y: 100, data }]);
+    setCanvasElements((prev) => [...prev, { id: Date.now(), x: 100, y: 100, data: { ...data } }]);
   }, []);
 
   const handleUpdateComponent = useCallback((id, changes) => {
     setCanvasElements((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, ...changes, data: { ...item.data, ...changes } } : item))
+      prev.map((item) => (
+        item.id === id 
+          ? { 
+              ...item, 
+              ...changes, 
+              data: item.data ? { ...item.data, ...changes } : { ...changes } 
+            } 
+          : item
+      ))
     );
   }, []);
 
@@ -288,6 +296,18 @@ export const useOrganizarScada = () => {
     }
   }, [currentLayoutId, loadPublishedViews]);
 
+  const exportToFile = useCallback((viewsData, exportName) => {
+    const filename = (exportName || "Layout").replace(/\s+/g, "_");
+    const dataStr = JSON.stringify(viewsData, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = `${filename}.json`;
+    link.click();
+    URL.revokeObjectURL(downloadUrl);
+  }, []);
+
   const handleNewDashboard = useCallback(() => {
     setCanvasElements([]);
     setCurrentLayoutId(null);
@@ -305,7 +325,7 @@ export const useOrganizarScada = () => {
   return {
     state: { canvasElements, publishedViews, selectedId, isPropsOpen, views, isLoadingViews, viewsError, currentViewId, isLoadingCanvas, currentLayoutId, showExportModal, isEditMode, exportName, location },
     setters: { setSelectedId, setIsPropsOpen, setViews, setCurrentViewId, setCanvasElements, setCurrentLayoutId, setShowExportModal, setIsEditMode, setExportName },
-    loadPublishedViews, fetchUserViews, loadViewDetail, handleCreateView, handleSelectView, handleDeleteView, handleLoadPublishedView, handleOpenPublishedView, handleDeletePublishedView, addComponentToCanvas, handleUpdateComponent, handleDeleteComponent, handleDropFromSidebar, confirmExport, handleNewDashboard,
+    loadPublishedViews, fetchUserViews, loadViewDetail, handleCreateView, handleSelectView, handleDeleteView, handleLoadPublishedView, handleOpenPublishedView, handleDeletePublishedView, addComponentToCanvas, handleUpdateComponent, handleDeleteComponent, handleDropFromSidebar, confirmExport, exportToFile, handleNewDashboard, normalizeCanvasElements
   };
 };
 

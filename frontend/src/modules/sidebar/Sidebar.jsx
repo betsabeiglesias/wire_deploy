@@ -2,14 +2,22 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SidebarItem from "./SidebarItem";
 import SidebarProfile from "./SidebarProfile";
+import { useAuthStore } from "../../store/useAuthStore";
 
 export default function Sidebar() {
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
+  
+  // Extraemos el usuario y la función de limpieza del Store que ya funciona
+  const user = useAuthStore((state) => state.user);
+  const clearAuth = useAuthStore((state) => state.clearAuth);
+  
+  // Accedemos a user.username porque tu setAuth guarda { username }
+  const displayName = user?.username || "Usuario";
 
   const handleLogout = () => {
-    localStorage.clear();
-    sessionStorage.clear();
+    // Usamos la función del store que ya limpia localStorage y favoritos
+    clearAuth();
     navigate("/login");
   };
 
@@ -50,7 +58,7 @@ export default function Sidebar() {
       <div className="mt-auto border-t border-gray-100">
         <SidebarProfile 
           open={open} 
-          name={sessionStorage.getItem("username") || "Usuario"} 
+          name={displayName} 
           role="Administrador" 
           onLogout={handleLogout}
         />
