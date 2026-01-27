@@ -101,7 +101,6 @@ const OrganizarScada = () => {
       alert(`HMI ${currentLayoutId ? "actualizado" : "creado"} correctamente.`);
       navigate(`/scada/production/${savedId}`);
     } catch (err) {
-      // El error ya viene filtrado por el interceptor si es 401/500
       alert("Error al guardar el HMI.");
     }
   };
@@ -113,7 +112,6 @@ const OrganizarScada = () => {
       try {
         const parsed = JSON.parse(event.target.result);
         
-        // Caso A: Proyecto completo
         if (parsed.views && Array.isArray(parsed.views)) {
           const mappedViews = parsed.views.map((v) => ({
             ...v,
@@ -128,7 +126,6 @@ const OrganizarScada = () => {
           return;
         }
         
-        // Caso B: Elementos sueltos
         const elements = Array.isArray(parsed) ? parsed : parsed.elements || [];
         if (elements.length > 0) {
           const normalized = normalizeCanvasElements(elements);
@@ -139,7 +136,8 @@ const OrganizarScada = () => {
           setCurrentLayoutId(null);
         }
       } catch (err) {
-        alert("Archivo JSON no válido.");
+        console.error("ERROR REAL AL IMPORTAR:", err);
+        alert("Error técnico: " + err.message); 
       }
     };
     reader.readAsText(file);

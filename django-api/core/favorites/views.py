@@ -1,91 +1,79 @@
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.contrib.contenttypes.models import ContentType
 
 from .models import Favorite
-from .serializers import FavoriteSerializer, CONTENT_TYPE_MAP
-
+from .serializers import FavoriteSerializer
 
 class FavoriteViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request):
+        """
+        Lista los favoritos del usuario actual transformando los modelos 
+        genéricos en rutas y títulos legibles para el frontend.
+        """
         favorites = Favorite.objects.filter(user=request.user)
         data = []
 
         for fav in favorites:
-            obj = fav.content_object
-            if not obj:
+            try:
+                obj = fav.content_object
+                if not obj:
+                    continue
+            except Exception:
                 continue
 
-            model = fav.content_type.model
+            model_name = fav.content_type.model
+            route, title, section, fav_type = None, None, None, None
 
-            # 🔵 LAYOUTS
-            if model == "mylayoutstitle":
+            # 🔵 LAYOUTS (App: scada_manager)
+            if model_name == "mylayoutstitle":
                 route = f"/layout/{obj.id}"
-                title = obj.button_name
+                title = getattr(obj, 'button_name', 'Sin nombre')
                 section = "scada"
                 fav_type = "mylayout"
 
-            # 🟢 LOCATIONS
-            elif model == "location":
+            # 🟢 LOCATIONS (App: scada_manager)
+            elif model_name == "location":
                 route = "/map"
-                title = obj.city
+                title = getattr(obj, 'city', 'Sin ciudad')
                 section = "location"
                 fav_type = "location"
 
-            # 🟣 POWER BI
-            elif model == "mypowerbi":
+            # 🟣 POWER BI (App: powerbi_manager)
+            elif model_name == "mypowerbi":
                 route = "/powerbi-view"
-                title = obj.name
+                title = getattr(obj, 'name', 'Sin nombre')
                 section = "powerbi"
                 fav_type = "mypowerbi"
 
-            else:
-                continue
-
-            data.append({
-                "id": fav.id,
-                "type": fav_type,        # 👈 lo que espera el frontend
-                "section": section,
-                "object_id": fav.object_id,
-                "title": title,
-                "route": route,
-            })
+            if fav_type:
+                data.append({
+                    "id": fav.id,
+                    "type": fav_type,
+                    "section": section,
+                    "object_id": fav.object_id,
+                    "title": title,
+                    "route": route,
+                })
 
         return Response(data)
 
     def create(self, request):
-        ct_key = request.data.get("content_type")
-        object_id = request.data.get("object_id")
-
-        if ct_key not in CONTENT_TYPE_MAP:
-            return Response({"error": "Tipo no válido"}, status=400)
-
-        app_label, model = CONTENT_TYPE_MAP[ct_key]
-
-        content_type = ContentType.objects.get(
-            app_label=app_label,
-            model=model
-        )
-
-        favorite = Favorite.objects.filter(
-            user=request.user,
-            content_type=content_type,
-            object_id=object_id,
-        ).first()
-
-        # 🔁 TOGGLE
-        if favorite:
-            favorite.delete()
-            return Response({"status": "removed"})
-
+        """
+        Crea o elimina un favorito (Toggle). 
+        Toda la lógica de búsqueda y validación está en FavoriteSerializer.
+        """
         serializer = FavoriteSerializer(
             data=request.data,
             context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        instance = serializer.save()
 
+        # Si el objeto devuelto no tiene clave primaria (pk), es que el serializador lo borró
+        if instance.pk is None:
+            return Response({"status": "removed"})
+        
         return Response({"status": "added"})
