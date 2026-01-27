@@ -20,5 +20,12 @@ def token_health_check(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def current_user(request):
-    serializer = UserSerializer(request.user)
-    return Response(serializer.data)
+    user = request.user
+    return Response({
+        'username': user.username,
+        'email': user.email,
+        'is_active': user.is_active,
+        'is_staff': user.is_staff,
+        'is_superuser': user.is_superuser,
+        'date_joined': user.date_joined, # <--- ESTE ES EL QUE PIDE USERPAGE
+    })
