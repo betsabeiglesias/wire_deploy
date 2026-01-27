@@ -1,45 +1,32 @@
 import axios from 'axios';
-import { refreshAccessToken } from './authService';
 import { useAuthStore } from '../store/useAuthStore';
 
 const api = axios.create({
   baseURL: "http://localhost:8000",
+  withCredentials: true, // Crucial para cookies
 });
 
-// 1. Interceptor para añadir el token a todas las peticiones
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// 2. Interceptor para manejar errores (como el 401)
+// Interceptor de respuesta para manejar el refresco de token vía cookies
 api.interceptors.response.use(
-  (response) => response, // Si todo va bien, pasar la respuesta
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Si el error es 401 y no hemos intentado reintentar ya
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
-        // Intentar refrescar el token
-        const newToken = await refreshAccessToken();
+        // En cookies, el refresh token ya está en el navegador. 
+        // Solo llamamos al endpoint de refresh.
+        await axios.post('http://localhost:8000/api/token/refresh/', {}, { withCredentials: true });
         
-        // Actualizar el header y reintentar la petición original
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        // Si el refresco falla, el refresh_token expiró -> Logout forzoso
         useAuthStore.getState().clearAuth();
         window.location.href = '/login'; 
         return Promise.reject(refreshError);
       }
     }
-
     return Promise.reject(error);
   }
 );

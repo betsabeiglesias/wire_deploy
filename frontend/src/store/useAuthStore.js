@@ -1,61 +1,61 @@
 import { create } from 'zustand';
 import { useFavoriteStore } from './useFavoriteStore';
-import api from '../services/api'; // Asegúrate de que esta ruta a tu axios sea correcta
+import api from '../services/api';
 
 export const useAuthStore = create((set) => ({
-  // Estado inicial: leemos de localStorage para persistir tras recargar
+  // Solo persistimos la info básica del usuario para UI, no el token.
   user: JSON.parse(localStorage.getItem('user')) || null,
-  isAuthenticated: !!localStorage.getItem('token'),
+  isAuthenticated: !!localStorage.getItem('user'),
   loading: false,
   error: null,
 
-  // Acción para cuando el login es exitoso
-  setAuth: (user, token, refresh) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('refresh', refresh);
-    localStorage.setItem('user', JSON.stringify(user));
-    set({ user, isAuthenticated: true, error: null });
+  // Al loguear, el backend ya habrá seteado la cookie. 
+  // Aquí solo guardamos la info del perfil (roles, cliente, etc.)
+  setAuth: (userData) => {
+    localStorage.setItem('user', JSON.stringify(userData));
+    set({ user: userData, isAuthenticated: true, error: null });
   },
 
-  // Obtener datos frescos del usuario desde Django (/api/me/)
+  // Carga el perfil completo desde el endpoint /api/me/
   fetchCurrentUser: async () => {
     set({ loading: true, error: null });
     try {
-      // Usamos tu endpoint exacto definido en urls.py
       const response = await api.get('/api/me/');
       const userData = response.data;
 
-      // Actualizamos localStorage con los datos completos (date_joined, etc.)
       localStorage.setItem('user', JSON.stringify(userData));
-      
       set({ 
         user: userData, 
         isAuthenticated: true, 
         loading: false 
       });
     } catch (err) {
-      console.error("Error en fetchCurrentUser:", err);
+      console.error("Error cargando usuario:", err);
+      // Si falla, limpiamos porque la sesión no es válida
+      localStorage.removeItem('user');
       set({ 
-        error: err.response?.data?.detail || "No se pudo obtener el perfil del usuario", 
-        loading: false 
+        user: null, 
+        isAuthenticated: false, 
+        loading: false,
+        error: "Sesión no válida o expirada"
       });
     }
   },
 
-  // Acción para limpiar todo (Logout)
-  clearAuth: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refresh');
-    localStorage.removeItem('user');
-    
-    // Limpiamos también el estado de favoritos
-    useFavoriteStore.getState().clearFavorites();
-    
-    set({ 
-      user: null, 
-      isAuthenticated: false, 
-      loading: false, 
-      error: null 
-    });
+  // Logout: Limpia el perfil y los favoritos.
+  clearAuth: async () => {
+    try {
+      // Opcional: Llamada al backend para invalidar la cookie
+      // await api.post('/api/logout/');
+    } finally {
+      localStorage.removeItem('user');
+      useFavoriteStore.getState().clearFavorites();
+      set({ 
+        user: null, 
+        isAuthenticated: false, 
+        loading: false, 
+        error: null 
+      });
+    }
   },
 }));
