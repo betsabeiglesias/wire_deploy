@@ -84,8 +84,8 @@ const OrganizarScada = () => {
     if (!currentViewId) return;
     setViews((prev) =>
       prev.map((v) =>
-        v.id === currentViewId ? { ...v, elements: canvasElements } : v,
-      ),
+        v.id === currentViewId ? { ...v, elements: canvasElements } : v
+      )
     );
   }, [canvasElements, currentViewId, setViews]);
 
@@ -101,7 +101,7 @@ const OrganizarScada = () => {
   const performPublish = async (nameOverride) => {
     const viewsData = buildViewsData(views, currentViewId);
     const hasAnyElements = viewsData.views.some(
-      (v) => Array.isArray(v.elements) && v.elements.length,
+      (v) => Array.isArray(v.elements) && v.elements.length
     );
     if (!hasAnyElements) {
       Swal.fire("Error", "No hay elementos válidos que guardar.", "error");
@@ -136,13 +136,13 @@ const OrganizarScada = () => {
       });
 
       // Navegar a la página de producción con el ID guardado
-      // navigate(`/scada/production/${savedId}`);
-      navigate(`/layout`);
+      navigate(`/scada/production/${savedId}`);
+      //navigate(`/layout`);
     } catch (err) {
       Swal.fire(
         "Error",
         "Error de conexión al guardar el HMI. Intenta de nuevo.",
-        "error",
+        "error"
       );
     }
   };
@@ -155,14 +155,14 @@ const OrganizarScada = () => {
     // 1. Validar que haya algo que guardar antes de preguntar nada
     const viewsData = buildViewsData(views, currentViewId);
     const hasAnyElements = viewsData.views.some(
-      (v) => Array.isArray(v.elements) && v.elements.length,
+      (v) => Array.isArray(v.elements) && v.elements.length
     );
 
     if (!hasAnyElements) {
       Swal.fire(
         "Atención",
         "No hay elementos válidos que guardar (el canvas está vacío).",
-        "warning",
+        "warning"
       );
       return;
     }
@@ -229,128 +229,77 @@ const OrganizarScada = () => {
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target.result);
-        let newViewsCandidates = [];
 
-        // 1. Extraer vistas del JSON
+        // CASO A: Estructura completa de proyecto con múltiples vistas
         if (
           parsed.views &&
           Array.isArray(parsed.views) &&
           parsed.views.length > 0
         ) {
-          newViewsCandidates = parsed.views;
-        } else if (Array.isArray(parsed)) {
-          newViewsCandidates = [{ name: "Vista Importada", elements: parsed }];
-        } else if (parsed?.elements) {
-          newViewsCandidates = [
-            {
-              name: parsed.name || "Vista Importada",
-              elements: parsed.elements,
-            },
-          ];
-        }
+          const mappedViews = parsed.views.map((v) => ({
+            ...v,
+            elements: normalizeCanvasElements(v.elements || []),
+          }));
 
-        if (newViewsCandidates.length === 0) {
+          setViews(mappedViews);
+          // Cargar la primera vista
+          const firstView = mappedViews[0];
+          setCurrentViewId(firstView.id);
+          setCanvasElements(firstView.elements || []);
+          setExportName(
+            parsed.button_name || parsed.name || "Layout Importado"
+          );
+
+          // Si tiene ID, podríamos conservarlo o resetearlo.
+          // Para "Importar", generalmente queremos crear una copia/nuevo, así que limpiamos LayoutId para evitar sobreescribir el original
+          // Opcional: preguntar al usuario. Por defecto: Nuevo proyecto basado en este JSON.
+          setCurrentLayoutId(null);
+          setIsEditMode(false);
+
           Swal.fire(
-            "Error",
-            "El archivo no tiene un formato válido de elementos o vistas.",
-            "error",
+            "Importado",
+            `Importadas ${mappedViews.length} vistas correctamente.`,
+            "success"
           );
           return;
         }
 
-        // 2. Normalizar elementos
-        const processedCandidates = newViewsCandidates.map((v) => ({
-          ...v,
-          elements: normalizeCanvasElements(v.elements || []),
-        }));
+        // CASO B: Estructura antigua o array directo (Solo elementos de una vista)
+        let newElements = [];
+        if (Array.isArray(parsed)) {
+          newElements = parsed;
+        } else if (parsed?.elements) {
+          newElements = parsed.elements;
+        }
 
-        // 3. Función auxiliar para ejecutar la acción elegida
-        const executeImport = (action) => {
-          if (action === "add") {
-            // --- MODO ADITIVO (Concatenar) ---
-            const timestamp = Date.now();
-            const importedViews = processedCandidates.map((v, vIdx) => {
-              const newViewId = `view-${timestamp}-${vIdx}-${Math.random()
-                .toString(36)
-                .substr(2, 9)}`;
-              return {
-                ...v,
-                id: newViewId,
-                name: v.name || `Vista Importada ${vIdx + 1}`,
-                elements: v.elements.map((el, eIdx) => ({
-                  ...el,
-                  id: `el-${timestamp}-${vIdx}-${eIdx}-${Math.random()
-                    .toString(36)
-                    .substr(2, 9)}`,
-                })),
-              };
-            });
+        if (newElements && newElements.length > 0) {
+          // Crear una estructura de vista única envolviendo los elementos
+          const normalized = normalizeCanvasElements(newElements);
+          const singleView = {
+            id: `view-${Date.now()}`,
+            name: "Vista Importada",
+            elements: normalized,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          setViews([singleView]);
+          setCurrentViewId(singleView.id);
+          setCanvasElements(normalized);
+          setExportName(parsed.name || "HMI Importado");
+          setCurrentLayoutId(null);
+          setIsEditMode(false);
 
-            setViews((prev) => [...prev, ...importedViews]);
-
-            if (importedViews.length > 0) {
-              const firstImported = importedViews[0];
-              setCurrentViewId(firstImported.id);
-              setCanvasElements(firstImported.elements);
-            }
-
-            Swal.fire({
-              title: "Importación Completada",
-              text: `Se han añadido ${importedViews.length} nuevas vistas al proyecto.`,
-              icon: "success",
-              timer: 2000,
-              showConfirmButton: false,
-            });
-          } else {
-            // --- MODO REEMPLAZO ---
-            const mappedViews = processedCandidates.map((v) => ({
-              ...v,
-              id: v.id || `view-${Date.now()}-${Math.random()}`,
-            }));
-
-            setViews(mappedViews);
-
-            if (mappedViews.length > 0) {
-              const firstView = mappedViews[0];
-              setCurrentViewId(firstView.id);
-              setCanvasElements(firstView.elements);
-            }
-
-            if (parsed.button_name || parsed.name) {
-              setExportName(parsed.button_name || parsed.name);
-            }
-
-            setCurrentLayoutId(null);
-            setIsEditMode(false);
-
-            Swal.fire(
-              "Importado",
-              `Proyecto reemplazado correctamente (${mappedViews.length} vistas).`,
-              "success",
-            );
-          }
-        };
-
-        // 4. Decisión del Usuario
-        if (views.length > 0) {
-          Swal.fire({
-            title: "Contenido detectado",
-            text: "¿Deseas añadir estos elementos al diseño actual o reemplazarlos por completo?",
-            icon: "question",
-            showDenyButton: true,
-            showCancelButton: true,
-            confirmButtonText: "Añadir nuevos",
-            denyButtonText: "Reemplazar todo",
-            cancelButtonText: "Cancelar",
-          }).then((result) => {
-            if (result.isConfirmed) {
-              executeImport("add");
-            } else if (result.isDenied) {
-              executeImport("replace");
-            }
-          });
+          Swal.fire(
+            "Importado",
+            "Vista única importada correctamente.",
+            "success"
+          );
         } else {
-          executeImport("replace");
+          Swal.fire(
+            "Error",
+            "El archivo no tiene un formato válido de elementos o vistas.",
+            "error"
+          );
         }
       } catch (err) {
         console.error("No se pudo importar el archivo", err);
@@ -363,7 +312,7 @@ const OrganizarScada = () => {
   const handleExportToFile = () => {
     const viewsData = buildViewsData(views, currentViewId);
     const hasAnyElements = viewsData.views.some(
-      (v) => Array.isArray(v.elements) && v.elements.length,
+      (v) => Array.isArray(v.elements) && v.elements.length
     );
     if (!hasAnyElements) {
       Swal.fire("Error", "No hay elementos válidos que exportar.", "error");
@@ -382,7 +331,7 @@ const OrganizarScada = () => {
 
   return (
     <>
-      <div className="flex flex-col h-screen w-full overflow-hidden bg-slate-100">
+      <div className="plcs-page-layout">
         <NavbarPLCs
           toolbar={{
             showActions: true,
@@ -396,11 +345,13 @@ const OrganizarScada = () => {
                 Swal.fire(
                   "Error",
                   err.message || "No se pudo exportar.",
-                  "error",
+                  "error"
                 );
               }
             },
             onImport: handleImportCanvas,
+            onTemplateMini: () => {}, // pendiente: wirear plantillas
+            onTemplateDashboard: () => {}, // pendiente: wirear plantillas
             onTemplateMini: () => {}, // pendiente: wirear plantillas
             onTemplateDashboard: () => {}, // pendiente: wirear plantillas
             onPublish: handlePublishClick,
@@ -408,7 +359,7 @@ const OrganizarScada = () => {
           }}
         />
 
-        <div className="flex flex-1 overflow-hidden relative">
+        <div className="editor-area-flex">
           <UnifiedSidebar
             views={views}
             selectedViewId={currentViewId}
@@ -416,7 +367,7 @@ const OrganizarScada = () => {
             onSelectView={handleSelectView}
             onRenameView={(id, name) =>
               setViews((prev) =>
-                prev.map((v) => (v.id === id ? { ...v, name } : v)),
+                prev.map((v) => (v.id === id ? { ...v, name } : v))
               )
             }
             onDeleteView={handleDeleteView}
@@ -429,10 +380,9 @@ const OrganizarScada = () => {
             viewsError={viewsError}
             onRefreshViews={fetchUserViews}
           />
-          {/* Contenedor del Canvas */}
-          <main className="flex-1 relative bg-slate-200/50 overflow-hidden flex justify-center items-center p-4 transition-all duration-300">
-            <div className="relative w-full h-full flex justify-center items-center">
-              {/* <h3 className="absolute top-13 left-1/2 transform -translate-x-1/2 p-2 text-xl font-semibold text-gray-700 z-10">
+          {/* canvas-main-content */}
+          <main className=" transition-all duration-300 ease-in-out">
+            {/* <h3 className="absolute top-13 left-1/2 transform -translate-x-1/2 p-2 text-xl font-semibold text-gray-700 z-10">
               {currentViewId
                 ? `Editando Vista: ${
                     views.find(v => v.id === currentViewId)?.name ||
@@ -441,20 +391,19 @@ const OrganizarScada = () => {
                 : "Canvas SCADA"}
             </h3> */}
 
-              <CanvasEditor
-                elements={canvasElements}
-                selectedId={selectedId}
-                onSelect={(id) => {
-                  setSelectedId(id);
-                  setIsPropsOpen(true);
-                }}
-                onUpdate={(id, changes) => handleUpdateComponent(id, changes)}
-                onDelete={handleDeleteComponent}
-                onDrop={handleDropFromSidebar}
-                canvasWidth={canvasWidth}
-                isEditMode
-              />
-            </div>
+            <CanvasEditor
+              elements={canvasElements}
+              selectedId={selectedId}
+              onSelect={(id) => {
+                setSelectedId(id);
+                setIsPropsOpen(true);
+              }}
+              onUpdate={(id, changes) => handleUpdateComponent(id, changes)}
+              onDelete={handleDeleteComponent}
+              onDrop={handleDropFromSidebar}
+              canvasWidth={canvasWidth}
+              isEditMode
+            />
           </main>
 
           <SidebarPropiedades
@@ -464,7 +413,7 @@ const OrganizarScada = () => {
             onCreateView={handleCreateView}
             onRenameView={(id, name) =>
               setViews((prev) =>
-                prev.map((v) => (v.id === id ? { ...v, name } : v)),
+                prev.map((v) => (v.id === id ? { ...v, name } : v))
               )
             }
             onDeleteView={handleDeleteView}

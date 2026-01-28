@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import HomeButton from "../../../components/HomeButton";
+import HomeButton from "@/components/HomeButton";
 
 export default function NavbarPLCs({ toolbar }) {
   const fileRef = useRef(null);

@@ -16,14 +16,15 @@ import gaugeMiniRingIcon from '@/assets/icons/gaugeMiniRing.svg'
 
 export const templates = [
   {
-    id: "tpl-temperature-gauge",
-    title: "Indicador de Temperatura",
-    thumbnailUrl: genericGaugeIcon,
+    id: "tpl-temp-gauge",
+    title: "Temp Gauge",
+    thumbnailUrl: gaugeDefaultIcon, // Reusamos icono por ahora
     data: {
-      type: "temperature-gauge",
+      type: "temp-gauge",
       width: 220,
-      height: 250,
-      label: "Temp. (C)",
+      height: 220,
+      label: "Temperatura",
+      settings: { min: 0, max: 120, unit: "°C" },
     },
   },
   {
