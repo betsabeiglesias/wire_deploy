@@ -68,6 +68,10 @@ DATABASES = {
     }
 }
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'core.auth_manager.authenticate.CustomJWTAuthentication', # <--- USA ESTA PARA LEER COOKIES
