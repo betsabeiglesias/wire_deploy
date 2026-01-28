@@ -12,6 +12,7 @@ export const useAuthStore = create((set) => ({
   // Al loguear, el backend ya habrá seteado la cookie. 
   // Aquí solo guardamos la info del perfil (roles, cliente, etc.)
   setAuth: (userData) => {
+    console.log("SET_AUTH: Guardando datos en LocalStorage", userData);
     localStorage.setItem('user', JSON.stringify(userData));
     set({ user: userData, isAuthenticated: true, error: null });
   },
@@ -23,6 +24,8 @@ export const useAuthStore = create((set) => ({
       const response = await api.get('/api/me/');
       const userData = response.data;
 
+      console.log("FETCH_USER: Datos recibidos del servidor", userData);
+
       localStorage.setItem('user', JSON.stringify(userData));
       set({ 
         user: userData, 
@@ -31,7 +34,6 @@ export const useAuthStore = create((set) => ({
       });
     } catch (err) {
       console.error("Error cargando usuario:", err);
-      // Si falla, limpiamos porque la sesión no es válida
       localStorage.removeItem('user');
       set({ 
         user: null, 
@@ -45,11 +47,16 @@ export const useAuthStore = create((set) => ({
   // Logout: Limpia el perfil y los favoritos.
   clearAuth: async () => {
     try {
-      // Opcional: Llamada al backend para invalidar la cookie
-      // await api.post('/api/logout/');
+      await api.post('/api/logout/');
+    } catch (err) {
+      console.warn("Logout en backend falló o ya estaba cerrado", err);
     } finally {
+      // Limpiamos SIEMPRE el cliente, aunque falle la red
       localStorage.removeItem('user');
-      useFavoriteStore.getState().clearFavorites();
+      // Si tienes el store de favoritos, lo limpiamos
+      if (useFavoriteStore.getState().clearFavorites) {
+        useFavoriteStore.getState().clearFavorites();
+      }
       set({ 
         user: null, 
         isAuthenticated: false, 
