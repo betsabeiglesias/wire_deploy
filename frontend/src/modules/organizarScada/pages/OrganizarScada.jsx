@@ -1,13 +1,10 @@
-// Contenedor orquestador del editor SCADA con vistas múltiples y publicación.
-// Se apoya en el hook useOrganizarScada para mantener la lógica y en componentes modulares.
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import UnifiedSidebar from "../components/UnifiedSidebar";
 import CanvasEditor from "../components/CanvasEditor";
 import SidebarPropiedades from "../components/SidebarPropiedades";
 import NavbarPLCs from "../components/NavbarPLCs";
 
-import PublishModal from "../components/PublishModal";
 import { buildViewsData } from "../utils/viewsSerializer";
 import useOrganizarScada from "../hooks/useOrganizarScada";
 
@@ -18,17 +15,12 @@ const OrganizarScada = () => {
       canvasElements,
       publishedViews,
       selectedId,
-      isPropsOpen,
       views,
       isLoadingViews,
       viewsError,
       currentViewId,
-      isLoadingCanvas,
       currentLayoutId,
-      showExportModal,
-      isEditMode,
       exportName,
-      location,
     },
     setters: {
       setSelectedId,
@@ -37,7 +29,6 @@ const OrganizarScada = () => {
       setCurrentViewId,
       setCanvasElements,
       setCurrentLayoutId,
-      setShowExportModal,
       setIsEditMode,
       setExportName,
     },
@@ -51,7 +42,6 @@ const OrganizarScada = () => {
     handleOpenPublishedView,
     handleDeletePublishedView,
     addComponentToCanvas,
-    addTemplateElements,
     handleUpdateComponent,
     handleDeleteComponent,
     handleDropFromSidebar,
@@ -60,25 +50,22 @@ const OrganizarScada = () => {
     handleNewDashboard,
   } = useOrganizarScada();
 
-  // Inicialización: carga publicadas y garantiza una vista inicial.
+  // 1. Carga inicial de datos
   useEffect(() => {
     loadPublishedViews();
     fetchUserViews();
-    if (!views.length) {
+  }, [loadPublishedViews, fetchUserViews]);
+
+  // 2. Garantizar que siempre haya al menos una vista si no se está cargando nada
+  useEffect(() => {
+    if (!isLoadingViews && views.length === 0 && !currentViewId) {
       const initialView = handleCreateView();
       setCurrentViewId(initialView.id);
-      setCanvasElements(initialView.elements || []);
+      setCanvasElements([]);
     }
-  }, [
-    fetchUserViews,
-    handleCreateView,
-    loadPublishedViews,
-    setCanvasElements,
-    setCurrentViewId,
-    views.length,
-  ]);
+  }, [views.length, isLoadingViews, currentViewId, handleCreateView, setCurrentViewId, setCanvasElements]);
 
-  // Mantener sincronizados los elementos del canvas con la vista actual (para exportar/contar)
+  // 3. Sincronizar canvasElements en el array de vistas (para que buildViewsData tenga lo último)
   useEffect(() => {
     if (!currentViewId) return;
     setViews((prev) =>
@@ -88,32 +75,21 @@ const OrganizarScada = () => {
     );
   }, [canvasElements, currentViewId, setViews]);
 
-  const selectedElement =
-    canvasElements.find((el) => el.id === selectedId) || null;
-  const isPropsPanelOpen = true;
+  const selectedElement = canvasElements.find((el) => el.id === selectedId) || null;
   const canvasWidth = "clamp(720px, calc(100vw - 38rem), 1400px)";
 
-  /*
-   * Ejecuta la lógica de guardado/publicación al API.
-   * Se llama directamente si es UPDATE (tras confirmar) o desde el Modal si es NEW.
-   */
-  const performPublish = async (nameOverride) => {
+  const handlePublishClick = async () => {
     const viewsData = buildViewsData(views, currentViewId);
     const hasAnyElements = viewsData.views.some(
       (v) => Array.isArray(v.elements) && v.elements.length
     );
+
     if (!hasAnyElements) {
-      alert("No hay elementos validos que guardar.");
+      alert("No hay elementos válidos para guardar. El canvas está vacío.");
       return;
     }
 
-    // Usar el nombre proporcionado directamente (desde modal) o el del estado
-    const finalName = nameOverride || exportName?.trim() || "Nuevo HMI";
-
-    // Si llegó un nombre nuevo, actualizar el estado también
-    if (nameOverride) {
-      setExportName(nameOverride);
-    }
+    const finalName = exportName?.trim() || "Nuevo HMI";
 
     try {
       const savedId = await confirmExport({
@@ -121,35 +97,12 @@ const OrganizarScada = () => {
         viewsData,
         isUpdating: !!currentLayoutId,
       });
-      setCurrentLayoutId(savedId);
-      setIsEditMode(true);
-      alert(
-        `HMI ${currentLayoutId ? "actualizado" : "creado"} correctamente.`
-      );
-
-      // Navegar a la página de producción con el ID guardado
+      
+      alert(`HMI ${currentLayoutId ? "actualizado" : "creado"} correctamente.`);
       navigate(`/scada/production/${savedId}`);
     } catch (err) {
-      alert("Error de conexion al guardar el HMI. Intenta de nuevo.");
+      alert("Error al guardar el HMI.");
     }
-  };
-
-  /*
-   * Manejador del botón "Publicar" en la barra de tareas.
-   * Decide si mostrar confirmación (Update) o abrir modal (New).
-   */
-  const handlePublishClick = () => {
-    // 1. Validar que haya algo que guardar antes de preguntar nada
-    const viewsData = buildViewsData(views, currentViewId);
-    const hasAnyElements = viewsData.views.some(
-      (v) => Array.isArray(v.elements) && v.elements.length
-    );
-    if (!hasAnyElements) {
-      alert("No hay elementos validos que guardar (el canvas esta vacio).");
-      return;
-    }
-
-    performPublish();
   };
 
   const handleImportCanvas = (file) => {
@@ -158,200 +111,119 @@ const OrganizarScada = () => {
     reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target.result);
-
-        // CASO A: Estructura completa de proyecto con múltiples vistas
-        if (
-          parsed.views &&
-          Array.isArray(parsed.views) &&
-          parsed.views.length > 0
-        ) {
+        
+        if (parsed.views && Array.isArray(parsed.views)) {
           const mappedViews = parsed.views.map((v) => ({
             ...v,
             elements: normalizeCanvasElements(v.elements || []),
           }));
-
           setViews(mappedViews);
-          // Cargar la primera vista
-          const firstView = mappedViews[0];
-          setCurrentViewId(firstView.id);
-          setCanvasElements(firstView.elements || []);
-          setExportName(
-            parsed.button_name || parsed.name || "Layout Importado"
-          );
-
-          // Si tiene ID, podríamos conservarlo o resetearlo.
-          // Para "Importar", generalmente queremos crear una copia/nuevo, así que limpiamos LayoutId para evitar sobreescribir el original
-          // Opcional: preguntar al usuario. Por defecto: Nuevo proyecto basado en este JSON.
+          setCurrentViewId(mappedViews[0].id);
+          setCanvasElements(mappedViews[0].elements);
+          setExportName(parsed.button_name || "Layout Importado");
           setCurrentLayoutId(null);
           setIsEditMode(false);
-
-          alert(`Importadas ${mappedViews.length} vistas correctamente.`);
           return;
         }
-
-        // CASO B: Estructura antigua o array directo (Solo elementos de una vista)
-        let newElements = [];
-        if (Array.isArray(parsed)) {
-          newElements = parsed;
-        } else if (parsed?.elements) {
-          newElements = parsed.elements;
-        }
-
-        if (newElements && newElements.length > 0) {
-          // Crear una estructura de vista única envolviendo los elementos
-          const normalized = normalizeCanvasElements(newElements);
-          const singleView = {
-            id: `view-${Date.now()}`,
-            name: "Vista Importada",
-            elements: normalized,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          setViews([singleView]);
-          setCurrentViewId(singleView.id);
+        
+        const elements = Array.isArray(parsed) ? parsed : parsed.elements || [];
+        if (elements.length > 0) {
+          const normalized = normalizeCanvasElements(elements);
+          const newId = `view-${Date.now()}`;
+          setViews([{ id: newId, name: "Vista Importada", elements: normalized }]);
+          setCurrentViewId(newId);
           setCanvasElements(normalized);
-          setExportName(parsed.name || "HMI Importado");
           setCurrentLayoutId(null);
-          setIsEditMode(false);
-
-          alert("Vista única importada correctamente.");
-        } else {
-          alert("El archivo no tiene un formato válido de elementos o vistas.");
         }
       } catch (err) {
-        console.error("No se pudo importar el archivo", err);
-        alert("Error al leer el archivo JSON.");
+        console.error("ERROR REAL AL IMPORTAR:", err);
+        alert("Error técnico: " + err.message); 
       }
     };
     reader.readAsText(file);
   };
 
-  const handleExportToFile = () => {
-    const viewsData = buildViewsData(views, currentViewId);
-    const hasAnyElements = viewsData.views.some(
-      (v) => Array.isArray(v.elements) && v.elements.length
-    );
-    if (!hasAnyElements) {
-      alert("No hay elementos validos que exportar.");
-      return;
-    }
-    const filename = (exportName || "Layout").replace(/\s+/g, "_");
-    const dataStr = JSON.stringify(viewsData, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const downloadUrl = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = `${filename}.json`;
-    link.click();
-    URL.revokeObjectURL(downloadUrl);
-  };
-
   return (
-    <>
-      <div className="plcs-page-layout">
-        <NavbarPLCs
-          toolbar={{
-            showActions: true,
-            onClear: () => {
-              setCanvasElements([]);
-            },
-            onExport: () => {
-              try {
-                exportToFile(buildViewsData(views, currentViewId), exportName);
-              } catch (err) {
-                alert(err.message || "No se pudo exportar.");
-              }
-            },
-            onImport: handleImportCanvas,
-            onTemplateMini: () => {}, // pendiente: wirear plantillas
-            onTemplateDashboard: () => {}, // pendiente: wirear plantillas
-            onTemplateMini: () => {}, // pendiente: wirear plantillas
-            onTemplateDashboard: () => {}, // pendiente: wirear plantillas
-            onPublish: handlePublishClick,
-            onNewDashboard: handleNewDashboard,
-          }}
+    <div className="plcs-page-layout">
+      <NavbarPLCs
+        toolbar={{
+          showActions: true,
+          onClear: () => setCanvasElements([]),
+          onExport: () => exportToFile(buildViewsData(views, currentViewId), exportName),
+          onImport: handleImportCanvas,
+          onPublish: handlePublishClick,
+          onNewDashboard: handleNewDashboard,
+        }}
+      />
+
+      <div className="editor-area-flex">
+        <UnifiedSidebar
+          views={views}
+          selectedViewId={currentViewId}
+          onCreateView={handleCreateView}
+          onSelectView={handleSelectView}
+          onRenameView={(id, name) =>
+            setViews((prev) => prev.map((v) => (v.id === id ? { ...v, name } : v)))
+          }
+          onDeleteView={handleDeleteView}
+          addComponentToCanvas={addComponentToCanvas}
+          publishedViews={publishedViews}
+          onLoadScreen={handleLoadPublishedView}
+          onOpenScreen={handleOpenPublishedView}
+          onDeleteScreen={handleDeletePublishedView}
+          viewsLoading={isLoadingViews}
+          viewsError={viewsError}
+          onRefreshViews={fetchUserViews}
         />
 
-        <div className="editor-area-flex">
-          <UnifiedSidebar
-            views={views}
-            selectedViewId={currentViewId}
-            onCreateView={handleCreateView}
-            onSelectView={handleSelectView}
-            onRenameView={(id, name) =>
-              setViews((prev) =>
-                prev.map((v) => (v.id === id ? { ...v, name } : v))
-              )
-            }
-            onDeleteView={handleDeleteView}
-            addComponentToCanvas={addComponentToCanvas}
-            publishedViews={publishedViews}
-            onLoadScreen={handleLoadPublishedView}
-            onOpenScreen={handleOpenPublishedView}
-            onDeleteScreen={handleDeletePublishedView}
-            viewsLoading={isLoadingViews}
-            viewsError={viewsError}
-            onRefreshViews={fetchUserViews}
+        <main className="canvas-main-content" style={{ paddingRight: "1.5rem" }}>
+          <h3 className="absolute top-1 left-1/2 transform -translate-x-1/2 p-2 text-xl font-semibold text-gray-700 z-10">
+            {currentViewId
+              ? `Editando: ${views.find((v) => v.id === currentViewId)?.name || "Vista"}`
+              : "Cargando editor..."}
+          </h3>
+
+          <CanvasEditor
+            elements={canvasElements}
+            selectedId={selectedId}
+            onSelect={(id) => {
+              setSelectedId(id);
+              setIsPropsOpen(true);
+            }}
+            onUpdate={handleUpdateComponent}
+            onDelete={handleDeleteComponent}
+            onDrop={handleDropFromSidebar}
+            canvasWidth={canvasWidth}
+            isEditMode
           />
+        </main>
 
-          <main
-            className="canvas-main-content transition-all duration-300 ease-in-out"
-            style={{ paddingRight: isPropsPanelOpen ? "1.5rem" : "2.5rem" }}
-          >
-            <h3 className="absolute top-1 left-1/2 transform -translate-x-1/2 p-2 text-xl font-semibold text-gray-700 z-10">
-              {currentViewId
-                ? `Editando Vista: ${
-                    views.find((v) => v.id === currentViewId)?.name ||
-                    currentViewId
-                  }`
-                : "Canvas SCADA"}
-            </h3>
-
-            <CanvasEditor
-              elements={canvasElements}
-              selectedId={selectedId}
-              onSelect={(id) => {
-                setSelectedId(id);
-                setIsPropsOpen(true);
-              }}
-              onUpdate={(id, changes) => handleUpdateComponent(id, changes)}
-              onDelete={handleDeleteComponent}
-              onDrop={handleDropFromSidebar}
-              canvasWidth={canvasWidth}
-              isEditMode
-            />
-          </main>
-
-          <SidebarPropiedades
-            isOpen={isPropsPanelOpen}
-            selectedViewId={currentViewId}
-            onSelectView={handleSelectView}
-            onCreateView={handleCreateView}
-            onRenameView={(id, name) =>
-              setViews((prev) =>
-                prev.map((v) => (v.id === id ? { ...v, name } : v))
-              )
-            }
-            onDeleteView={handleDeleteView}
-            publishedViews={publishedViews}
-            onLoadScreen={handleLoadPublishedView}
-            onOpenScreen={handleOpenPublishedView}
-            onDeleteScreen={handleDeletePublishedView}
-            viewsLoading={isLoadingViews}
-            viewsError={viewsError}
-            onRefreshViews={fetchUserViews}
-            exportName={exportName}
-            onExportNameChange={setExportName}
-            selectedElement={selectedElement}
-            views={views}
-            onChange={(changes) =>
-              selectedElement &&
-              handleUpdateComponent(selectedElement.id, changes)
-            }
-          />
-        </div>
+        <SidebarPropiedades
+          isOpen={true}
+          selectedViewId={currentViewId}
+          onSelectView={handleSelectView}
+          onCreateView={handleCreateView}
+          onRenameView={(id, name) =>
+            setViews((prev) => prev.map((v) => (v.id === id ? { ...v, name } : v)))
+          }
+          onDeleteView={handleDeleteView}
+          publishedViews={publishedViews}
+          onLoadScreen={handleLoadPublishedView}
+          onOpenScreen={handleOpenPublishedView}
+          onDeleteScreen={handleDeletePublishedView}
+          viewsLoading={isLoadingViews}
+          viewsError={viewsError}
+          onRefreshViews={fetchUserViews}
+          exportName={exportName}
+          onExportNameChange={setExportName}
+          selectedElement={selectedElement}
+          views={views}
+          onChange={(changes) =>
+            selectedElement && handleUpdateComponent(selectedElement.id, changes)
+          }
+        />
       </div>
-    </>
+    </div>
   );
 };
 

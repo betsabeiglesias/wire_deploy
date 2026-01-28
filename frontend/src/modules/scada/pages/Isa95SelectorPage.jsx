@@ -1,10 +1,10 @@
 // docker-suite/frontend/src/modules/scada/pages/Isa95SelectorPage.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import WizardNavigation from "@/components/WizardNavigationButton";
 import { createPLC } from "../api/plcApi";
 import Swal from "sweetalert2";
 import { apiFetch } from "../api/plcApi";
+import WizardNavigation from "../components/WizardNavigationButton";
 
 
 

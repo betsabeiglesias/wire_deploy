@@ -26,7 +26,7 @@ function AppNavigationInitializer() {
 }
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+//   <StrictMode>
     <BrowserRouter>        
       <link
         href="https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css"
@@ -38,5 +38,5 @@ createRoot(document.getElementById('root')).render(
       
       <App />
     </BrowserRouter>
-  </StrictMode>
+//   </StrictMode>
 )

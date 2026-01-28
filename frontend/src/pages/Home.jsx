@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../modules/sidebar/Sidebar";
 import "../styles/Home.css"; 
-import { SERVICE_URLS } from "../App";
+import { SERVICE_URLS } from "../routes/service_urls"; // Ruta corregida y centralizada
 import MapView from '@/modules/maps/components/MapView';
 
 const Home = () => {
@@ -29,8 +29,8 @@ const Home = () => {
           {[
             { label: "Power BI", onClick: goToPowerBi, color: "border-blue-500" },
             { label: "HMI", onClick: goToHmi, color: "border-cyan-500" },
-            { label: "Chat bot", onClick: goToChatBot, color: "border-purple-500" },
-            { label: "VR", onClick: null, color: "border-gray-500" }
+            // { label: "Chat bot", onClick: goToChatBot, color: "border-purple-500" },
+            // { label: "VR", onClick: null, color: "border-gray-500" }
           ].map((item, idx) => (
             <div
               key={idx}

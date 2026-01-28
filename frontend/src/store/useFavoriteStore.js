@@ -41,4 +41,7 @@ export const useFavoriteStore = create((set, get) => ({
       console.error("Error al hacer toggle de favorito", err);
     }
   },
+
+      // Limpiamos favoritos
+  clearFavorites: () => set({ favorites: [] }),
 }));

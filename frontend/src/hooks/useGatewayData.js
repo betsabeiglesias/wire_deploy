@@ -41,7 +41,6 @@ function parseTopicHierarchy(topic) {
   return levels;
 }
 
-
 export function useGatewayData() {
   const [connected, setConnected] = useState(false);
   const [allTags, setAllTags] = useState([]);
@@ -51,16 +50,35 @@ export function useGatewayData() {
   const clientRef = useRef(null);
 
   useEffect(() => {
-    const c = mqtt.connect(MQTT_URL, { reconnectPeriod: 1500 });
+    // 🔑 EXTRAEMOS EL TOKEN PARA MQTT
+    // Asegúrate de que el nombre coincide con cómo lo guardas tras el login ('token' o 'access')
+    const token = localStorage.getItem("token") || localStorage.getItem("access");
+
+    const mqttOptions = {
+      reconnectPeriod: 1500,
+      clientId: `web_client_${Math.random().toString(16).slice(2, 8)}`,
+      // Enviamos el token como password
+      username: "jwt", 
+      password: token || "", 
+    };
+
+    const c = mqtt.connect(MQTT_URL, mqttOptions);
     clientRef.current = c;
 
     c.on("connect", () => {
+      console.log("✅ MQTT Conectado con Token");
       setConnected(true);
       c.subscribe("plant/#");
     });
 
-    c.on("close", () => setConnected(false));
-    c.on("error", (err) => console.error("MQTT error:", err.message));
+    c.on("close", () => {
+      console.warn("❌ MQTT Conexión cerrada");
+      setConnected(false);
+    });
+
+    c.on("error", (err) => {
+      console.error("MQTT error:", err.message);
+    });
 
     // -----------------------------------------------------
     // MESSAGE HANDLER
@@ -68,8 +86,6 @@ export function useGatewayData() {
     c.on("message", (topic, payload) => {
       setLastMessageAt(Date.now());
       setDataStale(false);
-
-      
 
       try {
         const msg = JSON.parse(payload.toString());
@@ -84,14 +100,14 @@ export function useGatewayData() {
           msg.source?.endpoint ||
           "unknown_equipment";
 
-          // Ignorar tópicos de estado del gateway
-          if (topic.includes("/status/")) return;
+        // Ignorar tópicos de estado del gateway
+        if (topic.includes("/status/")) return;
 
-          // Solo procesar tópicos que contengan "tag/"
-          if (!topic.includes("/tag/")) return;
+        // Solo procesar tópicos que contengan "tag/"
+        if (!topic.includes("/tag/")) return;
 
-          // Validación final de variable
-          if (!variable) return;
+        // Validación final de variable
+        if (!variable) return;
 
         const entry = {
           site,
@@ -109,18 +125,13 @@ export function useGatewayData() {
           raw: msg,
         };
 
-        // console.log("KEY:", `${entry.equipment_id}:${entry.variable}`);
-
         // ----------- DEDUPLICACIÓN ROBUSTA -----------
         setAllTags((prev) => {
           const key = `${entry.equipment_id}:${entry.variable}`;
-
           const map = new Map(
             prev.map((t) => [`${t.equipment_id}:${t.variable}`, t])
           );
-
           map.set(key, { ...map.get(key), ...entry });
-
           return Array.from(map.values());
         });
 
@@ -129,28 +140,27 @@ export function useGatewayData() {
       }
     });
 
-    // CLEANUP CORRECTO DEL USEEFFECT
+    // CLEANUP CORRECTO
     return () => {
-      try {
-        c.end(true);
-      } catch (_) {}
+      if (c) {
+        try {
+          c.end(true);
+        } catch (_) {}
+      }
     };
+  }, []); // Se ejecuta una vez al montar
 
-  }, []);
-
-  // -------- WATCHDOG: detecta si NO llegan datos -----------
+  // -------- WATCHDOG -----------
   useEffect(() => {
     const interval = setInterval(() => {
       if (!lastMessageAt) {
         setDataStale(true);
         return;
       }
-
       if (Date.now() - lastMessageAt > 10000) {
         setDataStale(true);
       }
     }, 2000);
-
     return () => clearInterval(interval);
   }, [lastMessageAt]);
 

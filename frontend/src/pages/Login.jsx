@@ -1,77 +1,78 @@
-// Login.jsx
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../services/api'; // Tu instancia de axios con withCredentials
+import { useAuthStore } from '../store/useAuthStore';
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { login } from "@/services/authService"; 
-import { useAuthStore } from '../store/useAuthStore'; // ⬅️ ¡Importamos el Store de Zustand!
+const Login = () => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  
+  const navigate = useNavigate();
+  const setAuth = useAuthStore((state) => state.setAuth);
 
-import "../styles/Login.css"; 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
 
-function Login() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+    try {
+      // 1. Enviamos credenciales al nuevo LoginView de Django.
+      // El servidor responderá inyectando las cookies HttpOnly directamente.
+      const response = await api.post('/api/token/', { username, password });
 
-  // 🔑 Acceder a la acción 'login' del Store
-  const zustandLogin = useAuthStore((state) => state.login); 
+      // 2. 'response.data' ahora solo contiene el objeto del usuario {username, email, ...}
+      // Ya no recibimos tokens aquí porque van en las cookies.
+      const userData = response.data;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+      // 3. Guardamos los datos del usuario en el store (Zustand)
+      setAuth(userData);
+      
+      // 4. Redirigimos al inicio (o al dashboard según prefieras)
+      navigate('/');
+      
+    } catch (err) {
+      console.error("Error en login:", err);
+      // Capturamos el error que viene del backend o ponemos uno por defecto
+      setError(err.response?.data?.detail || "Credenciales inválidas o error de servidor.");
+    }
+  };
 
-    try {
-      // 1. Llama al servicio: Realiza la petición a Django y guarda los tokens en localStorage
-      await login(username, password); 
-      
-      // 🔑 2. CLAVE: Informar a Zustand que el login fue exitoso
-      // Esto actualiza isAuthenticated = true
-      zustandLogin(username); 
-      
-      // 3. Navega al inicio (Home)
-      navigate("/");
-
-    } catch (err) {
-      console.error("Error de conexión/autenticación:", err);
-      
-      // ... (Manejo de errores se mantiene igual) ...
-      if (err.response && err.response.status === 401) {
-        setError("Usuario o contraseña incorrectos");
-      } else if (err.code === 'ERR_NETWORK' || !err.response) {
-        setError("Error al conectar con el servidor. ¿Está el backend activo? (Network Error)");
-      } else {
-        setError("Error al conectar con el servidor o error desconocido.");
-      }
-    }
-  };
-
-  return (
-    <div className="login-container">
-      <h2 className="login-title">Inicio de Sesión</h2>
-      <form onSubmit={handleSubmit} className="login-form">
-        <input
-          type="text"
-          placeholder="Usuario"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="login-input"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="login-input"
-          required
-        />
-        <button type="submit" className="login-button">
-          Entrar
-        </button>
-      </form>
-      {error && <p className="login-error">{error}</p>}
-    </div>
-  );
-}
+  return (
+    <div style={{ maxWidth: '400px', margin: '100px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px', backgroundColor: '#fff' }}>
+      <h2 style={{ textAlign: 'center' }}>Iniciar Sesión</h2>
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '10px' }}>
+          <label style={{ display: 'block', marginBottom: '5px' }}>Usuario:</label>
+          <input 
+            type="text" 
+            style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+            value={username} 
+            onChange={(e) => setUsername(e.target.value)} 
+            required 
+          />
+        </div>
+        <div style={{ marginBottom: '10px' }}>
+          <label style={{ display: 'block', marginBottom: '5px' }}>Contraseña:</label>
+          <input 
+            type="password" 
+            style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+            value={password} 
+            onChange={(e) => setPassword(e.target.value)} 
+            required 
+          />
+        </div>
+        
+        {error && <p style={{ color: 'red', fontSize: '14px' }}>{error}</p>}
+        
+        <button 
+          type="submit" 
+          style={{ width: '100%', padding: '10px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+        >
+          Entrar
+        </button>
+      </form>
+    </div>
+  );
+};
 
 export default Login;

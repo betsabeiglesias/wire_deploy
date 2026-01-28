@@ -18,9 +18,8 @@ import { NeedleGauge } from "../components/gauges/NeedleGauge";
 // Otros componentes
 import { Filters } from "../components/Filters";
 import { GatewayTable } from "../components/GatewayTable";
-import OrganizarScadaButton from "../../../components/OrganizarScadaButton";
 import HomeButton from "../../../components/HomeButton";
-import ConfigurarComunicacionesButton from "../../../components/CommunicationsConfigButton";
+// import ConfigurarComunicacionesButton from "../components/ConfigurarComunicacionesButton";
 
 export default function Communications() {
   const { connected, dataStale, allTags } = useGatewayData();

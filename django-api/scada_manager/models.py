@@ -8,6 +8,7 @@ class Country(models.Model):
     
 
 class Location(models.Model):
+    client = models.ForeignKey('auth_manager.Client', on_delete=models.CASCADE, related_name='locations')
     city = models.CharField(max_length=50)
     gps_x = models.FloatField(blank=True, null=True)
     gps_y = models.FloatField(blank=True, null=True)

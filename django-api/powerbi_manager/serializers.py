@@ -10,3 +10,5 @@ class MyPowerBiSerializer(serializers.ModelSerializer):
     class Meta:
         model = MyPowerBi
         fields = '__all__'
+        # Evita que el serializador exija el campo 'client' en el POST
+        read_only_fields = ['client']
