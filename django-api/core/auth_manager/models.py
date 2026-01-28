@@ -35,7 +35,9 @@ class ClientMembership(models.Model):
         unique_together = ("user", "client")
 
     def __str__(self):
-        return f"{self.user.username} @ {self.client.id} ({self.role.code})"
+        # 🛡️ CORRECCIÓN: Manejamos el caso donde el rol sea None
+        role_display = self.role.code if self.role else "Sin Rol"
+        return f"{self.user.username} @ {self.client_id} ({role_display})"
 
 class Plant(models.Model):
     """Preparada para el futuro: Varias plantas por cliente"""
@@ -45,4 +47,4 @@ class Plant(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.client.id} - {self.name}"
+        return f"{self.client_id} - {self.name}"
