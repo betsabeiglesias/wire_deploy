@@ -3,27 +3,27 @@ import { useAuthStore } from '../store/useAuthStore';
 
 const api = axios.create({
   baseURL: "http://localhost:8000",
-  withCredentials: true, // Crucial para cookies
+  withCredentials: true, // Obligatorio para enviar/recibir cookies
 });
 
-// Interceptor de respuesta para manejar el refresco de token vía cookies
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Si el error es 401 y NO viene de la ruta de login
+    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes('/api/token/')) {
       originalRequest._retry = true;
 
       try {
-        // En cookies, el refresh token ya está en el navegador. 
-        // Solo llamamos al endpoint de refresh.
+        // En cookies, no enviamos nada en el body. El navegador envía la cookie 'refresh_token' sola.
         await axios.post('http://localhost:8000/api/token/refresh/', {}, { withCredentials: true });
         
+        // Si el refresh tiene éxito, reintentamos la petición original
         return api(originalRequest);
       } catch (refreshError) {
+        // Si el refresh falla (ej: cookie expirada), limpiamos todo y al login
         useAuthStore.getState().clearAuth();
-        window.location.href = '/login'; 
         return Promise.reject(refreshError);
       }
     }

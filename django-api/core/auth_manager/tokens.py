@@ -1,14 +1,10 @@
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.conf import settings
 
 class CustomRefreshToken(RefreshToken):
-
+    """
+    Token personalizado. Mantenemos la lógica al mínimo aquí 
+    para que la View se encargue de inyectar los datos.
+    """
     @classmethod
     def for_user(cls, user):
-        token = super().for_user(user)
-
-        # Claims globales del sistema
-        token['iss'] = settings.JWT_ISSUER
-        token['user_id'] = user.id  # redundante pero explícito
-
-        return token
+        return super().for_user(user)

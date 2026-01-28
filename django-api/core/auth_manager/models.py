@@ -18,7 +18,7 @@ class Role(models.Model):
     code = models.CharField(max_length=32, primary_key=True) # ej: 'operator'
     name = models.CharField(max_length=64)
     description = models.TextField(blank=True)
-    scopes = models.JSONField(default=list) # ej: ["realtime:read", "config:write"]
+    scopes = models.JSONField(default=list, null=True, blank=True) # ej: ["realtime:read", "config:write"]
 
     def __str__(self):
         return self.name
@@ -27,7 +27,7 @@ class ClientMembership(models.Model):
     """El corazón: Vincula Usuario + Cliente + Rol"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='memberships')
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='members')
-    role = models.ForeignKey(Role, on_delete=models.PROTECT)
+    role = models.ForeignKey(Role, on_delete=models.PROTECT, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
