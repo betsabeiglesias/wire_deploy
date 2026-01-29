@@ -1,4 +1,3 @@
-// docker-suite\frontend\src\modules\scada\components\CommunicationsConfigButton.jsx
 
 import React from "react";
 import { useNavigate } from "react-router-dom";

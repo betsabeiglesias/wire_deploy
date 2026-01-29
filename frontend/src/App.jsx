@@ -6,10 +6,16 @@ import { useAuthStore } from "@/store/useAuthStore";
 
 function App() {
   const fetchFavorites = useFavoriteStore((s) => s.fetchFavorites);
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { isAuthenticated, fetchCurrentUser } = useAuthStore();
 
   useEffect(() => {
-    // Solo pedimos favoritos si el usuario está autenticado
+    // 1. Verificación obligatoria al cargar la aplicación
+    // Esto actualizará el estado 'loading' de true a false
+    fetchCurrentUser();
+  }, [fetchCurrentUser]);
+
+  useEffect(() => {
+    // 2. Solo pedimos favoritos si el usuario está autenticado
     if (isAuthenticated) {
       fetchFavorites();
     }

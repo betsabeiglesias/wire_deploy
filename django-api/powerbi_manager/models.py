@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 
 class MyPowerBi(models.Model):
+    client = models.ForeignKey('auth_manager.Client', on_delete=models.CASCADE, related_name='dashboards') # <-- CLAVE
     name = models.CharField(max_length=200)
     embed_url = models.CharField(max_length=700)
     description = models.CharField(max_length=200)

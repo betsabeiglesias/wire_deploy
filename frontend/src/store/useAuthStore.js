@@ -1,61 +1,56 @@
 import { create } from 'zustand';
-import { useFavoriteStore } from './useFavoriteStore';
 import api from '../services/api';
 
 export const useAuthStore = create((set) => ({
-  // Solo persistimos la info básica del usuario para UI, no el token.
+  // --- ESTADO INICIAL ---
   user: JSON.parse(localStorage.getItem('user')) || null,
   isAuthenticated: !!localStorage.getItem('user'),
-  loading: false,
+  // Importante: Empezamos en true si hay un rastro de usuario para evitar saltos
+  loading: !!localStorage.getItem('user'), 
   error: null,
 
-  // Al loguear, el backend ya habrá seteado la cookie. 
-  // Aquí solo guardamos la info del perfil (roles, cliente, etc.)
   setAuth: (userData) => {
     localStorage.setItem('user', JSON.stringify(userData));
-    set({ user: userData, isAuthenticated: true, error: null });
+    set({ user: userData, isAuthenticated: true, loading: false, error: null });
   },
 
-  // Carga el perfil completo desde el endpoint /api/me/
   fetchCurrentUser: async () => {
-    set({ loading: true, error: null });
+    // Si no hay rastro de usuario en localStorage, no hace falta validar
+    if (!localStorage.getItem('user')) {
+      set({ loading: false });
+      return;
+    }
+
+    set({ loading: true });
     try {
       const response = await api.get('/api/me/');
       const userData = response.data;
-
       localStorage.setItem('user', JSON.stringify(userData));
-      set({ 
-        user: userData, 
-        isAuthenticated: true, 
-        loading: false 
-      });
+      set({ user: userData, isAuthenticated: true, loading: false });
     } catch (err) {
-      console.error("Error cargando usuario:", err);
-      // Si falla, limpiamos porque la sesión no es válida
-      localStorage.removeItem('user');
-      set({ 
-        user: null, 
-        isAuthenticated: false, 
-        loading: false,
-        error: "Sesión no válida o expirada"
-      });
+      console.error("❌ [AuthStore] Error de validación:", err.response?.status);
+      // Solo limpiamos si es un error de autenticación real
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem('user');
+        set({ user: null, isAuthenticated: false, loading: false });
+      } else {
+        // Si es error de red o 500, mantenemos lo que tenemos pero quitamos loading
+        set({ loading: false });
+      }
     }
   },
 
-  // Logout: Limpia el perfil y los favoritos.
   clearAuth: async () => {
     try {
-      // Opcional: Llamada al backend para invalidar la cookie
-      // await api.post('/api/logout/');
+      await api.post('/api/logout/');
+    } catch (err) {
+      console.warn("Error en logout backend", err);
     } finally {
       localStorage.removeItem('user');
-      useFavoriteStore.getState().clearFavorites();
-      set({ 
-        user: null, 
-        isAuthenticated: false, 
-        loading: false, 
-        error: null 
-      });
+      set({ user: null, isAuthenticated: false, loading: false });
+      window.location.href = '/login';
     }
   },
+
+  clearError: () => set({ error: null }),
 }));
