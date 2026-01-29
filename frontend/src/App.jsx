@@ -1,25 +1,15 @@
 import './styles/App.css'
 import AppRoutes from './routes/AppRoutes';
 import { useEffect } from "react";
-import { useFavoriteStore } from "@/store/useFavoriteStore";
 import { useAuthStore } from "@/store/useAuthStore";
 
 function App() {
-  const fetchFavorites = useFavoriteStore((s) => s.fetchFavorites);
-  const { isAuthenticated, fetchCurrentUser } = useAuthStore();
+  const fetchCurrentUser = useAuthStore((state) => state.fetchCurrentUser);
 
   useEffect(() => {
-    // 1. Verificación obligatoria al cargar la aplicación
-    // Esto actualizará el estado 'loading' de true a false
+    // Al cargar la app, si hay sesión (cookie), traemos los datos frescos
     fetchCurrentUser();
-  }, [fetchCurrentUser]);
-
-  useEffect(() => {
-    // 2. Solo pedimos favoritos si el usuario está autenticado
-    if (isAuthenticated) {
-      fetchFavorites();
-    }
-  }, [isAuthenticated, fetchFavorites]);
+  }, [fetchCurrentUser]); 
 
   return (
     <>
