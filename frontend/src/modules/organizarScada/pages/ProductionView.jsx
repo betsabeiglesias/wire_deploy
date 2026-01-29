@@ -4,7 +4,6 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import { useGatewayData } from "@/hooks/useGatewayData";
 import api from "../../../services/api";
-import { attemptRefreshToken } from "../../../services/authService";
 
 import {
   parseNumericValue,
@@ -80,35 +79,6 @@ const ProductionView = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const refreshAccessToken = async () => {
-    const refresh = localStorage.getItem("refresh");
-
-    if (!refresh) return null;
-
-    try {
-      const res = await api.post("/api/token/refresh/", {
-        method: "POST",
-
-        headers: { "Content-Type": "application/json" },
-
-        body: JSON.stringify({ refresh }),
-      });
-
-      if (!res.ok) return null;
-
-      const data = await res.json();
-
-      if (data?.access) {
-        localStorage.setItem("token", data.access);
-
-        return data.access;
-      }
-    } catch (err) {
-      console.error("No se pudo refrescar el token en producci�n", err);
-    }
-
-    return null;
-  };
 
   const loadFromLocalPublished = (id) => {
     const raw = localStorage.getItem(PUBLISHED_VIEWS_KEY);
@@ -163,43 +133,8 @@ const ProductionView = () => {
 
       setIsLoading(true);
 
-      let token = localStorage.getItem("token");
-
-      if (!token) {
-        token = await refreshAccessToken();
-
-        if (!token) {
-          alert("Sesion caducada. Inicia sesion de nuevo.");
-
-          navigate("/login");
-
-          setIsLoading(false);
-
-          return;
-        }
-      }
-
       try {
-        const doRequest = async (activeToken) =>
-          api.get(`/api/scada-manager/layout/${routeViewId}/`, {
-            headers: {
-              Authorization: `Bearer ${activeToken}`,
-
-              "Content-Type": "application/json",
-            },
-          });
-
-        let res = await doRequest(token);
-
-        if (res.status === 401) {
-          const newToken = await refreshAccessToken();
-
-          if (newToken) {
-            token = newToken;
-
-            res = await doRequest(token);
-          }
-        }
+        const res = await api.get(`/api/scada-manager/layout/${routeViewId}/`);
 
         if (res.status === 200) {
           const data = res.data;
@@ -691,3 +626,5 @@ const ProductionView = () => {
 };
 
 export default ProductionView;
+
+

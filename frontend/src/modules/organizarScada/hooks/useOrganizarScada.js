@@ -88,17 +88,15 @@ export const useOrganizarScada = () => {
   }, []);
 
   const getAuthToken = useCallback(async () => {
-    let token = localStorage.getItem("token");
-    if (!token) {
-      token = await refreshAccessToken();
+    try {
+      await refreshAccessToken();
+      return true;
+    } catch (_err) {
+      return false;
     }
-    return token;
   }, [refreshAccessToken]);
 
   const loadPublishedViews = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     try {
       const response = await api.get("/api/scada-manager/my-layouts/");
       const layouts = response.data || [];
@@ -144,8 +142,8 @@ export const useOrganizarScada = () => {
     setIsLoadingViews(true);
     setViewsError("");
 
-    const initialToken = await getAuthToken();
-    if (!initialToken) {
+    const hasSession = await getAuthToken();
+    if (!hasSession) {
       setViews(viewsRef.current);
       setIsLoadingViews(false);
       return viewsRef.current;
@@ -185,8 +183,8 @@ export const useOrganizarScada = () => {
 
   const loadViewDetail = useCallback(
     async (viewId) => {
-      const token = await getAuthToken();
-      if (!token) {
+      const hasSession = await getAuthToken();
+      if (!hasSession) {
         throw new Error("Sesión caducada. Inicia sesión nuevamente.");
       }
       const response = await api.get(`/api/scada-manager/layout/${viewId}/`);
@@ -300,8 +298,8 @@ export const useOrganizarScada = () => {
         return;
       }
 
-      const token = await getAuthToken();
-      if (!token) {
+      const hasSession = await getAuthToken();
+      if (!hasSession) {
         alert("Sesion caducada. Inicia sesion nuevamente.");
         return;
       }
@@ -494,15 +492,13 @@ export const useOrganizarScada = () => {
     }
 
     try {
-        const token = await getAuthToken();
-        if (!token) {
+        const hasSession = await getAuthToken();
+        if (!hasSession) {
             alert("Sesión caducada. Inicia sesión para continuar.");
             return;
         }
 
-        await api.delete(`/api/scada-manager/layout/${viewId}/`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.delete(`/api/scada-manager/layout/${viewId}/`);
 
         const raw = localStorage.getItem(PUBLISHED_VIEWS_KEY);
         if (raw) {
@@ -700,3 +696,5 @@ export const useOrganizarScada = () => {
 };
 
 export default useOrganizarScada;
+
+

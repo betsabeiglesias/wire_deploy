@@ -182,7 +182,7 @@ export default function LayOutDetail() {
               layoutName={layoutName}
             />
             <DeleteLayOutButton layoutId={id} layoutName={layoutName} />
-            {/* <button
+            <button
               onClick={() => navigate(`/scada/production/${id}`)}
               className="border border-blue-600
                           text-blue-600
@@ -195,7 +195,7 @@ export default function LayOutDetail() {
               title="Ver modo Producción"
             >
               Abrir proyecto HMI
-            </button> */}
+            </button>
             <div className="h-6 w-px bg-gray-300 mx-2"></div>
             <HomeButton />
           </div>

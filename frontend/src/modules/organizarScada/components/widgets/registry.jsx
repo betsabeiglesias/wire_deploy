@@ -5,6 +5,11 @@ import SvgGauge from "@/modules/organizarScada/components/widgets/standard/SvgGa
 import EnergyBarChart from "@/modules/organizarScada/components/widgets/standard/EnergyBarChart";
 import TemperatureLineChart from "@/modules/organizarScada/components/widgets/standard/TemperatureLineChart";
 import HmiProgressBar from "@/modules/organizarScada/components/widgets/standard/HmiProgressBar";
+import HmiTankLevel from "@/modules/organizarScada/components/widgets/standard/HmiTankLevel";
+import HmiStatusCard from "@/modules/organizarScada/components/widgets/standard/HmiStatusCard";
+import HmiTrendCard from "@/modules/organizarScada/components/widgets/standard/HmiTrendCard";
+import HmiScadaGauge from "@/modules/organizarScada/components/widgets/standard/HmiScadaGauge";
+import HmiHorizontalGauge from "@/modules/organizarScada/components/widgets/standard/HmiHorizontalGauge";
 import RingGauge from "@/modules/organizarScada/components/widgets/mini/RingGauge";
 import MiniHorizontalBar from "@/modules/organizarScada/components/widgets/mini/MiniHorizontalBar";
 import BlueDonutGauge from "@/modules/organizarScada/components/widgets/mini/BlueDonutGauge";
@@ -268,6 +273,105 @@ export const renderWidget = ({ data, live, width, height, theme, valueHistory })
         <HmiProgressBar
           percent={percent}
           label={settings.caption || data.label || "LOREM IPSUM"}
+          width={width}
+          height={height}
+        />
+      );
+    }
+    case "hmi-tank-level": {
+      const min =
+        typeof settings.minValue !== "undefined" ? settings.minValue : 0;
+      const max =
+        typeof settings.maxValue !== "undefined" ? settings.maxValue : 100;
+      const rawValue =
+        typeof live.value !== "undefined" ? live.value : settings.initialValue;
+      const numericValue =
+        parseNumericValue(rawValue) ??
+        parseNumericValue(settings.initialValue) ??
+        0;
+      const percent = normalizePercent(numericValue, min, max);
+      return <HmiTankLevel percent={percent} width={width} height={height} />;
+    }
+    case "hmi-status-card": {
+      const status = settings.status || "ok";
+      const title = settings.title || data.label || "SISTEMA OK";
+      const subtitle = settings.subtitle || "STATUS: READY";
+      return (
+        <HmiStatusCard
+          status={status}
+          title={title}
+          subtitle={subtitle}
+          width={width}
+          height={height}
+        />
+      );
+    }
+    case "hmi-trend-card": {
+      const title = settings.title || data.label || "Caudal de Proceso - Cuba 2";
+      const unitLabel = settings.unitLabel || "LOREM IPSUM";
+      const minValue =
+        typeof settings.minValue !== "undefined" ? settings.minValue : 0;
+      const maxValue =
+        typeof settings.maxValue !== "undefined" ? settings.maxValue : 10000;
+      const rawValue =
+        typeof live.value !== "undefined" ? live.value : settings.initialValue;
+      const numericValue =
+        parseNumericValue(rawValue) ??
+        parseNumericValue(settings.initialValue) ??
+        0;
+      const series = Array.isArray(settings.series) ? settings.series : [];
+      return (
+        <HmiTrendCard
+          title={title}
+          unitLabel={unitLabel}
+          value={numericValue}
+          minValue={minValue}
+          maxValue={maxValue}
+          series={series}
+          width={width}
+          height={height}
+        />
+      );
+    }
+    case "hmi-scada-gauge": {
+      const min = typeof settings.min !== "undefined" ? settings.min : 0;
+      const max = typeof settings.max !== "undefined" ? settings.max : 100;
+      const rawValue =
+        typeof live.value !== "undefined" ? live.value : settings.initialValue;
+      const numericValue =
+        parseNumericValue(rawValue) ??
+        parseNumericValue(settings.initialValue) ??
+        0;
+      const zones = Array.isArray(settings.zones) ? settings.zones : [];
+      return (
+        <HmiScadaGauge
+          value={numericValue}
+          min={min}
+          max={max}
+          unit={settings.unit || ""}
+          themeColor={settings.themeColor || "#94a3b8"}
+          zones={zones}
+          width={width}
+          height={height}
+        />
+      );
+    }
+    case "hmi-horizontal-gauge": {
+      const min = typeof settings.min !== "undefined" ? settings.min : 0;
+      const max = typeof settings.max !== "undefined" ? settings.max : 100;
+      const rawValue =
+        typeof live.value !== "undefined" ? live.value : settings.initialValue;
+      const numericValue =
+        parseNumericValue(rawValue) ??
+        parseNumericValue(settings.initialValue) ??
+        0;
+      return (
+        <HmiHorizontalGauge
+          value={numericValue}
+          min={min}
+          max={max}
+          variant={settings.variant || "precision"}
+          accentColor={settings.accentColor}
           width={width}
           height={height}
         />

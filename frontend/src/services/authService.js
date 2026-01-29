@@ -14,14 +14,18 @@ export const loginRequest = async (username, password) => {
  * Intenta obtener un nuevo access token usando el refresh token
  */
 export const refreshAccessToken = async () => {
-  const refreshToken = localStorage.getItem('refresh');
-  if (!refreshToken) throw new Error("No hay refresh token");
+  const response = await axios.post(
+    `${BASE_URL}/api/token/refresh/`,
+    {},
+    { withCredentials: true }
+  );
 
-  const response = await axios.post(`${BASE_URL}/api/token/refresh/`, {
-    refresh: refreshToken,
-  });
-  
-  const newToken = response.data.access;
-  localStorage.setItem('token', newToken);
-  return newToken;
+  const newToken = response.data?.access;
+  if (newToken) {
+    localStorage.setItem('token', newToken);
+  }
+  return newToken || null;
 };
+
+// Mantiene compatibilidad con imports antiguos
+export const attemptRefreshToken = refreshAccessToken;
