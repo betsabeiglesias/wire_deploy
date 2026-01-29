@@ -1,12 +1,10 @@
 import { create } from 'zustand';
 import api from '../services/api';
 
-export const useAuthStore = create((set) => ({
-  // --- ESTADO INICIAL ---
+export const useAuthStore = create((set, get) => ({
   user: JSON.parse(localStorage.getItem('user')) || null,
   isAuthenticated: !!localStorage.getItem('user'),
-  // Importante: Empezamos en true si hay un rastro de usuario para evitar saltos
-  loading: !!localStorage.getItem('user'), 
+  loading: false,
   error: null,
 
   setAuth: (userData) => {
@@ -15,28 +13,29 @@ export const useAuthStore = create((set) => ({
   },
 
   fetchCurrentUser: async () => {
-    // Si no hay rastro de usuario en localStorage, no hace falta validar
-    if (!localStorage.getItem('user')) {
-      set({ loading: false });
-      return;
+    // Si no hay rastro de usuario, no intentamos nada
+    if (!localStorage.getItem('user') && !get().isAuthenticated) {
+      return null;
     }
 
     set({ loading: true });
     try {
       const response = await api.get('/api/me/');
       const userData = response.data;
+      
       localStorage.setItem('user', JSON.stringify(userData));
-      set({ user: userData, isAuthenticated: true, loading: false });
+      set({ user: userData, isAuthenticated: true, loading: false, error: null });
+      return userData;
     } catch (err) {
-      console.error("❌ [AuthStore] Error de validación:", err.response?.status);
-      // Solo limpiamos si es un error de autenticación real
+      console.error("❌ Error validando sesión:", err.response?.status);
+      
       if (err.response?.status === 401 || err.response?.status === 403) {
         localStorage.removeItem('user');
         set({ user: null, isAuthenticated: false, loading: false });
       } else {
-        // Si es error de red o 500, mantenemos lo que tenemos pero quitamos loading
         set({ loading: false });
       }
+      return null;
     }
   },
 
@@ -44,7 +43,7 @@ export const useAuthStore = create((set) => ({
     try {
       await api.post('/api/logout/');
     } catch (err) {
-      console.warn("Error en logout backend", err);
+      console.warn("Logout en backend fallido o sesión ya expirada");
     } finally {
       localStorage.removeItem('user');
       set({ user: null, isAuthenticated: false, loading: false });

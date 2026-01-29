@@ -1,39 +1,42 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api'; // Tu instancia de axios con withCredentials
+import api from '../services/api'; 
 import { useAuthStore } from '../store/useAuthStore';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const fetchCurrentUser = useAuthStore((state) => state.fetchCurrentUser);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setIsSubmitting(true);
 
     try {
-      // 1. Enviamos credenciales al nuevo LoginView de Django.
-      // El servidor responderá inyectando las cookies HttpOnly directamente.
+      // 1. Login para establecer las cookies
       const response = await api.post('/api/token/', { username, password });
-
-      // 2. 'response.data' ahora solo contiene el objeto del usuario {username, email, ...}
-      // Ya no recibimos tokens aquí porque van en las cookies.
-      const userData = response.data;
-
-      // 3. Guardamos los datos del usuario en el store (Zustand)
-      setAuth(userData);
       
-      // 4. Redirigimos al inicio (o al dashboard según prefieras)
+      // 2. Guardamos lo que nos de el login inicialmente
+      setAuth(response.data);
+
+      // 3. ¡IMPORTANTE! Pedimos los datos completos (date_joined, etc.) 
+      // y esperamos a que termine antes de redirigir.
+      await fetchCurrentUser();
+      
+      // 4. Ahora que el store está lleno, navegamos
       navigate('/');
       
     } catch (err) {
       console.error("Error en login:", err);
-      // Capturamos el error que viene del backend o ponemos uno por defecto
       setError(err.response?.data?.detail || "Credenciales inválidas o error de servidor.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -49,6 +52,7 @@ const Login = () => {
             value={username} 
             onChange={(e) => setUsername(e.target.value)} 
             required 
+            disabled={isSubmitting}
           />
         </div>
         <div style={{ marginBottom: '10px' }}>
@@ -59,6 +63,7 @@ const Login = () => {
             value={password} 
             onChange={(e) => setPassword(e.target.value)} 
             required 
+            disabled={isSubmitting}
           />
         </div>
         
@@ -66,9 +71,18 @@ const Login = () => {
         
         <button 
           type="submit" 
-          style={{ width: '100%', padding: '10px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+          style={{ 
+            width: '100%', 
+            padding: '10px', 
+            backgroundColor: isSubmitting ? '#ccc' : '#007bff', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: '4px', 
+            cursor: isSubmitting ? 'not-allowed' : 'pointer' 
+          }}
+          disabled={isSubmitting}
         >
-          Entrar
+          {isSubmitting ? "Entrando..." : "Entrar"}
         </button>
       </form>
     </div>
