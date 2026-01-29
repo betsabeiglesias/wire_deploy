@@ -47,6 +47,8 @@ const SidebarPropiedades = ({
     selectedElement?.data?.targetViewId ||
     selectedElement?.data?.settings?.targetViewId ||
     "";
+  const currentType = selectedElement?.data?.type || selectedElement?.type;
+  const currentSettings = selectedElement?.data?.settings || {};
 
   const renderViewsSection = () => (
       <div className="space-y-4">
@@ -301,6 +303,83 @@ const SidebarPropiedades = ({
                 </option>
               ))}
             </select>
+          </div>
+        )}
+
+        {(currentType === "shape-rect" ||
+          currentType === "shape-circle" ||
+          currentType === "shape-triangle") && (
+          <div className="rounded border border-slate-200 bg-white p-3 shadow-sm space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+              Estilo forma
+            </p>
+
+            <div>
+              <label className="block text-[10px] text-slate-500">Relleno</label>
+              <input
+                type="color"
+                className="mt-1 h-8 w-full rounded border border-slate-300 p-1"
+                value={currentSettings.fill || "#e2e8f0"}
+                onChange={(e) =>
+                  onChange?.({
+                    data: {
+                      ...(selectedElement.data || {}),
+                      settings: {
+                        ...currentSettings,
+                        fill: e.target.value,
+                      },
+                    },
+                  })
+                }
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] text-slate-500">Borde</label>
+              <input
+                type="color"
+                className="mt-1 h-8 w-full rounded border border-slate-300 p-1"
+                value={currentSettings.stroke || "#94a3b8"}
+                onChange={(e) =>
+                  onChange?.({
+                    data: {
+                      ...(selectedElement.data || {}),
+                      settings: {
+                        ...currentSettings,
+                        stroke: e.target.value,
+                      },
+                    },
+                  })
+                }
+              />
+            </div>
+
+            {currentType === "shape-rect" && (
+              <div>
+                <label className="block text-[10px] text-slate-500">Radio</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
+                  value={
+                    typeof currentSettings.radius === "number"
+                      ? currentSettings.radius
+                      : 8
+                  }
+                  onChange={(e) =>
+                    onChange?.({
+                      data: {
+                        ...(selectedElement.data || {}),
+                        settings: {
+                          ...currentSettings,
+                          radius: Number(e.target.value || 0),
+                        },
+                      },
+                    })
+                  }
+                />
+              </div>
+            )}
           </div>
         )}
 

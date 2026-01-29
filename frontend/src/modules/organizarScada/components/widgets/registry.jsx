@@ -429,6 +429,69 @@ export const renderWidget = ({ data, live, width, height, theme, valueHistory })
         </div>
       );
     }
+    case "shape-rect": {
+      const fill = settings.fill || "#e2e8f0";
+      const stroke = settings.stroke || "#94a3b8";
+      const radius = typeof settings.radius === "number" ? settings.radius : 8;
+      return (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            background: fill,
+            border: `2px solid ${stroke}`,
+            borderRadius: radius,
+          }}
+        />
+      );
+    }
+    case "shape-circle": {
+      const fill = settings.fill || "#e2e8f0";
+      const stroke = settings.stroke || "#94a3b8";
+      const w = Number(width) || 120;
+      const h = Number(height) || 120;
+      return (
+        <svg
+          width="100%"
+          height="100%"
+          viewBox={`0 0 ${w} ${h}`}
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <ellipse
+            cx={w / 2}
+            cy={h / 2}
+            rx={w / 2}
+            ry={h / 2}
+            fill={fill}
+            stroke={stroke}
+            strokeWidth="2"
+          />
+        </svg>
+      );
+    }
+    case "shape-triangle": {
+      const fill = settings.fill || "#cbd5e1";
+      const stroke = settings.stroke || "#94a3b8";
+      const w = Number(width) || 120;
+      const h = Number(height) || 120;
+      const points = `${w / 2},0 ${w},${h} 0,${h}`;
+      return (
+        <svg
+          width="100%"
+          height="100%"
+          viewBox={`0 0 ${w} ${h}`}
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <polygon
+            points={points}
+            fill={fill}
+            stroke={stroke}
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+    }
     default:
       return <div className="p-2 text-gray-600">Componente: {data.label}</div>;
   }

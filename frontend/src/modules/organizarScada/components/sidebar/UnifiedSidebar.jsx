@@ -36,6 +36,7 @@ const UnifiedSidebar = ({
 
   const sidebarSections = [
     {
+      id: "main",
       items: [
         { id: "elements", label: "Elements" },
         // { id: "layout", label: "Layout" },
@@ -542,7 +543,7 @@ const UnifiedSidebar = ({
           {isMainOpen && (
             <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
               {sidebarSections.map((section) => (
-                <div key={section.title}>
+                <div key={section.id}>
                   <ul className="space-y-1">
                     {section.items.map((item) => {
                       const isActive = activeSection === item.id;
@@ -654,4 +655,3 @@ const LayoutCard = ({ label, variant, draggable, onDragStart }) => {
 };
 
 export default UnifiedSidebar;
-
