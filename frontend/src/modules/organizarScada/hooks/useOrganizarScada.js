@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../../services/api";
-import { attemptRefreshToken } from "../../../services/authService";
 
 const PUBLISHED_VIEWS_KEY = "publishedScadaViews";
 const PUBLISHED_LATEST_KEY = "publishedScadaLatest";
@@ -74,28 +73,6 @@ export const useOrganizarScada = () => {
   useEffect(() => {
     viewsRef.current = views;
   }, [views]);
-
-
-
-  const refreshAccessToken = useCallback(async () => {
-    try {
-      const refreshed = await attemptRefreshToken();
-      return refreshed || null;
-    } catch (err) {
-      console.error("No se pudo refrescar el token", err);
-      return null;
-    }
-  }, []);
-
-  const getAuthToken = useCallback(async () => {
-    try {
-      await refreshAccessToken();
-      return true;
-    } catch (_err) {
-      return false;
-    }
-  }, [refreshAccessToken]);
-
   const loadPublishedViews = useCallback(async () => {
     try {
       const response = await api.get("/api/scada-manager/my-layouts/");
@@ -142,13 +119,6 @@ export const useOrganizarScada = () => {
     setIsLoadingViews(true);
     setViewsError("");
 
-    const hasSession = await getAuthToken();
-    if (!hasSession) {
-      setViews(viewsRef.current);
-      setIsLoadingViews(false);
-      return viewsRef.current;
-    }
-
     try {
       const response = await api.get("/api/scada-manager/my-layouts/");
       const data = response.data;
@@ -179,14 +149,11 @@ export const useOrganizarScada = () => {
     } finally {
       setIsLoadingViews(false);
     }
-  }, [getAuthToken, skipRemoteViews]);
+  }, [skipRemoteViews]);
 
   const loadViewDetail = useCallback(
     async (viewId) => {
-      const hasSession = await getAuthToken();
-      if (!hasSession) {
-        throw new Error("Sesión caducada. Inicia sesión nuevamente.");
-      }
+
       const response = await api.get(`/api/scada-manager/layout/${viewId}/`);
       const data = response.data;
       const elementsRaw = Array.isArray(data) ? data : data?.elements || [];
@@ -197,7 +164,7 @@ export const useOrganizarScada = () => {
         viewsData: data?.views_data,
       };
     },
-    [getAuthToken]
+    []
   );
 
   const handleCreateView = useCallback(() => {
@@ -298,12 +265,6 @@ export const useOrganizarScada = () => {
         return;
       }
 
-      const hasSession = await getAuthToken();
-      if (!hasSession) {
-        alert("Sesion caducada. Inicia sesion nuevamente.");
-        return;
-      }
-
       const response = await api.delete(`/api/scada-manager/layout/${layoutIdToDelete}/`);
       if (response.status === 204 || response.status === 200) {
         const updatedViews = viewsRef.current.filter((v) => v.id !== viewId);
@@ -325,7 +286,7 @@ export const useOrganizarScada = () => {
         alert("Error al eliminar la vista.");
       }
     },
-    [currentViewId, getAuthToken, handleSelectView]
+    [currentViewId, handleSelectView]
   );
 
   const addComponentToCanvas = useCallback((data) => {
@@ -492,11 +453,6 @@ export const useOrganizarScada = () => {
     }
 
     try {
-        const hasSession = await getAuthToken();
-        if (!hasSession) {
-            alert("Sesión caducada. Inicia sesión para continuar.");
-            return;
-        }
 
         await api.delete(`/api/scada-manager/layout/${viewId}/`);
 
@@ -515,7 +471,7 @@ export const useOrganizarScada = () => {
         console.error("No se pudo eliminar la pantalla publicada", err);
         alert("Error al eliminar la aplicación del servidor.");
     }
-  }, [loadPublishedViews, getAuthToken]);
+  }, [loadPublishedViews]);
 
   const confirmExport = useCallback(
     async ({ filename, viewsData, isUpdating }) => {
@@ -686,8 +642,6 @@ export const useOrganizarScada = () => {
     handleUpdateComponent,
     handleDeleteComponent,
     handleDropFromSidebar,
-    getAuthToken,
-    refreshAccessToken,
     persistPublishedView,
     confirmExport,
     exportToFile,
@@ -696,5 +650,3 @@ export const useOrganizarScada = () => {
 };
 
 export default useOrganizarScada;
-
-

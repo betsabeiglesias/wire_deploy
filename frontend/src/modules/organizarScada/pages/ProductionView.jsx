@@ -34,6 +34,15 @@ import { NeedleGauge } from "@/modules/scada/components/gauges/NeedleGauge";
 import SvgGauge from "../components/widgets/standard/SvgGauge";
 
 import GaugeMeter from "../components/widgets/standard/GaugeMeter";
+import TempGauge from "../components/widgets/standard/TempGauge";
+import EnergyBarChart from "../components/widgets/standard/EnergyBarChart";
+import TemperatureLineChart from "../components/widgets/standard/TemperatureLineChart";
+import HmiProgressBar from "../components/widgets/standard/HmiProgressBar";
+import HmiTankLevel from "../components/widgets/standard/HmiTankLevel";
+import HmiStatusCard from "../components/widgets/standard/HmiStatusCard";
+import HmiTrendCard from "../components/widgets/standard/HmiTrendCard";
+import HmiScadaGauge from "../components/widgets/standard/HmiScadaGauge";
+import HmiHorizontalGauge from "../components/widgets/standard/HmiHorizontalGauge";
 
 import HomeButton from "../../../components/HomeButton";
 
@@ -383,6 +392,103 @@ const ProductionView = () => {
               value={gaugeValue !== null ? gaugeValue : 0}
               width={w}
               height={h}
+            />
+          );
+        }
+        case "temp-gauge": {
+          const valueToRender =
+            typeof value !== "undefined"
+              ? parseNumericValue(value)
+              : settings?.initialValue ?? 89;
+          return (
+            <TempGauge
+              value={valueToRender}
+              min={settings.min ?? 0}
+              max={settings.max ?? 120}
+              label={settings.label || label}
+              unit={unit || settings.unit || "°C"}
+              size={Math.min(width ?? 0, height ?? 0)}
+            />
+          );
+        }
+        case "energy-bar-chart": {
+          return (
+            <EnergyBarChart
+              title={settings.title || label}
+              valueText={settings.valueText || "420 kW"}
+            />
+          );
+        }
+        case "temperature-line-chart": {
+          return (
+            <TemperatureLineChart
+              label={settings.legendLabel || "Temp °C"}
+              pointLabel={settings.pointLabel || "55°C"}
+            />
+          );
+        }
+        case "hmi-progress-bar": {
+          return (
+            <HmiProgressBar
+              percent={percent}
+              label={settings.caption || label || "LOREM IPSUM"}
+              width={width}
+              height={height}
+            />
+          );
+        }
+        case "hmi-tank-level": {
+          return <HmiTankLevel percent={percent} width={width} height={height} />;
+        }
+        case "hmi-status-card": {
+          return (
+            <HmiStatusCard
+              status={settings.status || "ok"}
+              title={settings.title || label || "SISTEMA OK"}
+              subtitle={settings.subtitle || "STATUS: READY"}
+              width={width}
+              height={height}
+            />
+          );
+        }
+        case "hmi-trend-card": {
+          return (
+            <HmiTrendCard
+              title={settings.title || label || "Caudal de Proceso - Cuba 2"}
+              unitLabel={settings.unitLabel || "LOREM IPSUM"}
+              value={numericValue ?? 0}
+              minValue={settings.minValue ?? 0}
+              maxValue={settings.maxValue ?? 10000}
+              series={Array.isArray(settings.series) ? settings.series : []}
+              width={width}
+              height={height}
+            />
+          );
+        }
+        case "hmi-scada-gauge": {
+          return (
+            <HmiScadaGauge
+              value={numericValue ?? 0}
+              min={settings.min ?? 0}
+              max={settings.max ?? 100}
+              unit={settings.unit || ""}
+              themeColor={settings.themeColor || "#94a3b8"}
+              zones={Array.isArray(settings.zones) ? settings.zones : []}
+              width={width}
+              height={height}
+            />
+          );
+        }
+        case "hmi-horizontal-gauge": {
+          return (
+            <HmiHorizontalGauge
+              value={numericValue ?? 0}
+              min={settings.min ?? 0}
+              max={settings.max ?? 100}
+              variant={settings.variant || "precision"}
+              accentColor={settings.accentColor}
+              width={width}
+              height={height}
             />
           );
         }

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import mqtt from "mqtt";
+import api from "../services/api";
 
 // Build MQTT WebSocket URL
 const scheme = window.location.protocol === "https:" ? "wss" : "ws";
@@ -50,101 +51,114 @@ export function useGatewayData() {
   const clientRef = useRef(null);
 
   useEffect(() => {
-    // 🔑 EXTRAEMOS EL TOKEN PARA MQTT
-    // Asegúrate de que el nombre coincide con cómo lo guardas tras el login ('token' o 'access')
-    const token = localStorage.getItem("token") || localStorage.getItem("access");
+    let cancelled = false;
 
-    const mqttOptions = {
-      reconnectPeriod: 1500,
-      clientId: `web_client_${Math.random().toString(16).slice(2, 8)}`,
-      // Enviamos el token como password
-      username: "jwt", 
-      password: token || "", 
+    const connectMqtt = async () => {
+      let token = "";
+      try {
+        const res = await api.post("/api/token/refresh/", {});
+        token = res?.data?.access || "";
+      } catch (err) {
+        console.warn("No se pudo obtener token para MQTT:", err?.message || err);
+      }
+      if (cancelled) return;
+
+      const mqttOptions = {
+        reconnectPeriod: 1500,
+        clientId: `web_client_${Math.random().toString(16).slice(2, 8)}`,
+        // Enviamos el token como password
+        username: "jwt",
+        password: token || "",
+      };
+
+      const c = mqtt.connect(MQTT_URL, mqttOptions);
+      clientRef.current = c;
+
+      c.on("connect", () => {
+        console.log("✅ MQTT Conectado con Token");
+        setConnected(true);
+        c.subscribe("plant/#");
+      });
+
+      c.on("close", () => {
+        console.warn("❌ MQTT Conexión cerrada");
+        setConnected(false);
+      });
+
+      c.on("error", (err) => {
+        console.error("MQTT error:", err.message);
+      });
+
+      // -----------------------------------------------------
+      // MESSAGE HANDLER
+      // -----------------------------------------------------
+      c.on("message", (topic, payload) => {
+        setLastMessageAt(Date.now());
+        setDataStale(false);
+
+        try {
+          const msg = JSON.parse(payload.toString());
+
+          const { site, area, line, cell, equipment, variable } =
+            parseTopicHierarchy(topic);
+
+          const equipment_id =
+            msg.equipment_id ||
+            equipment ||
+            msg.source?.ip ||
+            msg.source?.endpoint ||
+            "unknown_equipment";
+
+          // Ignorar tópicos de estado del gateway
+          if (topic.includes("/status/")) return;
+
+          // Solo procesar tópicos que contengan "tag/"
+          if (!topic.includes("/tag/")) return;
+
+          // Validación final de variable
+          if (!variable) return;
+
+          const entry = {
+            site,
+            area,
+            line,
+            cell,
+            equipment,
+            equipment_id,
+            variable,
+            value: msg.value,
+            unit: msg.unit,
+            quality: msg.quality,
+            timestamp: msg.timestamp,
+            source: msg.source || {},
+            raw: msg,
+          };
+
+          // ----------- DEDUPLICACIÓN ROBUSTA -----------
+          setAllTags((prev) => {
+            const key = `${entry.equipment_id}:${entry.variable}`;
+            const map = new Map(
+              prev.map((t) => [`${t.equipment_id}:${t.variable}`, t])
+            );
+            map.set(key, { ...map.get(key), ...entry });
+            return Array.from(map.values());
+          });
+
+        } catch (err) {
+          console.warn("Mensaje MQTT inválido:", err);
+        }
+      });
     };
 
-    const c = mqtt.connect(MQTT_URL, mqttOptions);
-    clientRef.current = c;
-
-    c.on("connect", () => {
-      console.log("✅ MQTT Conectado con Token");
-      setConnected(true);
-      c.subscribe("plant/#");
-    });
-
-    c.on("close", () => {
-      console.warn("❌ MQTT Conexión cerrada");
-      setConnected(false);
-    });
-
-    c.on("error", (err) => {
-      console.error("MQTT error:", err.message);
-    });
-
-    // -----------------------------------------------------
-    // MESSAGE HANDLER
-    // -----------------------------------------------------
-    c.on("message", (topic, payload) => {
-      setLastMessageAt(Date.now());
-      setDataStale(false);
-
-      try {
-        const msg = JSON.parse(payload.toString());
-
-        const { site, area, line, cell, equipment, variable } =
-          parseTopicHierarchy(topic);
-
-        const equipment_id =
-          msg.equipment_id ||
-          equipment ||
-          msg.source?.ip ||
-          msg.source?.endpoint ||
-          "unknown_equipment";
-
-        // Ignorar tópicos de estado del gateway
-        if (topic.includes("/status/")) return;
-
-        // Solo procesar tópicos que contengan "tag/"
-        if (!topic.includes("/tag/")) return;
-
-        // Validación final de variable
-        if (!variable) return;
-
-        const entry = {
-          site,
-          area,
-          line,
-          cell,
-          equipment,
-          equipment_id,
-          variable,
-          value: msg.value,
-          unit: msg.unit,
-          quality: msg.quality,
-          timestamp: msg.timestamp,
-          source: msg.source || {},
-          raw: msg,
-        };
-
-        // ----------- DEDUPLICACIÓN ROBUSTA -----------
-        setAllTags((prev) => {
-          const key = `${entry.equipment_id}:${entry.variable}`;
-          const map = new Map(
-            prev.map((t) => [`${t.equipment_id}:${t.variable}`, t])
-          );
-          map.set(key, { ...map.get(key), ...entry });
-          return Array.from(map.values());
-        });
-
-      } catch (err) {
-        console.warn("Mensaje MQTT inválido:", err);
-      }
-    });
+    connectMqtt();
 
     // CLEANUP CORRECTO
     return () => {
-      if (c) {
+      cancelled = true;
+      const current = clientRef.current;
+      if (current) {
         try {
-          c.end(true);
+          current.end(true);
         } catch (_) {}
       }
     };
