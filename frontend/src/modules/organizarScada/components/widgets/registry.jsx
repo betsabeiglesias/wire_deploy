@@ -10,6 +10,7 @@ import HmiStatusCard from "@/modules/organizarScada/components/widgets/standard/
 import HmiTrendCard from "@/modules/organizarScada/components/widgets/standard/HmiTrendCard";
 import HmiScadaGauge from "@/modules/organizarScada/components/widgets/standard/HmiScadaGauge";
 import HmiHorizontalGauge from "@/modules/organizarScada/components/widgets/standard/HmiHorizontalGauge";
+import HmiEnergySummaryCard from "@/modules/organizarScada/components/widgets/standard/HmiEnergySummaryCard";
 import RingGauge from "@/modules/organizarScada/components/widgets/mini/RingGauge";
 import MiniHorizontalBar from "@/modules/organizarScada/components/widgets/mini/MiniHorizontalBar";
 import BlueDonutGauge from "@/modules/organizarScada/components/widgets/mini/BlueDonutGauge";
@@ -372,6 +373,21 @@ export const renderWidget = ({ data, live, width, height, theme, valueHistory })
           max={max}
           variant={settings.variant || "precision"}
           accentColor={settings.accentColor}
+          width={width}
+          height={height}
+        />
+      );
+    }
+    case "hmi-energy-summary": {
+      return (
+        <HmiEnergySummaryCard
+          title={settings.title || data.label || "Consumo Medido em Maio 2023"}
+          value={settings.value || "1.627.009,26"}
+          unit={settings.unit || "kWh"}
+          subtitle={settings.subtitle || "Electric Energy"}
+          deltaText={settings.deltaText || "Higher than previous month"}
+          deltaValue={settings.deltaValue || "2%"}
+          deltaDirection={settings.deltaDirection || "up"}
           width={width}
           height={height}
         />

@@ -235,6 +235,26 @@ export const elementos_scada = {
         },
       },
     },
+    {
+      id: "tpl-hmi-energy-summary",
+      title: "Tarjeta Energy Summary",
+      thumbnailUrl: gaugeDefaultIcon,
+      data: {
+        type: "hmi-energy-summary",
+        width: 380,
+        height: 140,
+        label: "Consumo Medido em Maio 2023",
+        settings: {
+          title: "Consumo Medido em Maio 2023",
+          value: "1.627.009,26",
+          unit: "kWh",
+          subtitle: "Electric Energy",
+          deltaText: "Higher than previous month",
+          deltaValue: "2%",
+          deltaDirection: "up",
+        },
+      },
+    },
   ],
   graficas: [
     {
