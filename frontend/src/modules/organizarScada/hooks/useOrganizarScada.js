@@ -341,7 +341,7 @@ export const useOrganizarScada = () => {
   }, []);
 
   const handleDropFromSidebar = useCallback(
-    (event, canvasEl) => {
+    (event, canvasEl, zoom = 1, stageSize) => {
       if (!canvasEl) return;
       const tplRaw = event.dataTransfer.getData("application/x-scada-template");
       if (!tplRaw) return;
@@ -349,12 +349,15 @@ export const useOrganizarScada = () => {
       try {
         const tpl = JSON.parse(tplRaw);
         const rect = canvasEl.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
+        const zoomFactor = zoom || 1;
+        const x = (event.clientX - rect.left) / zoomFactor;
+        const y = (event.clientY - rect.top) / zoomFactor;
         const width = tpl.width || tpl.data?.width || 220;
         const height = tpl.height || tpl.data?.height || 220;
-        const canvasWidth = rect.width;
-        const canvasHeight = rect.height;
+        const canvasWidth =
+          stageSize?.width || rect.width / zoomFactor || rect.width;
+        const canvasHeight =
+          stageSize?.height || rect.height / zoomFactor || rect.height;
         let newX = x - width / 2;
         let newY = y - height / 2;
         const maxX = canvasWidth - width;

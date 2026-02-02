@@ -1,11 +1,12 @@
 // Contenedor orquestador del editor SCADA con vistas múltiples y publicación.
 // Se apoya en el hook useOrganizarScada para mantener la lógica y en componentes modulares.
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import UnifiedSidebar from "../components/sidebar/UnifiedSidebar";
 import CanvasEditor from "../components/canvas/CanvasEditor";
 import SidebarPropiedades from "../components/sidebar/SidebarPropiedades";
 import NavbarPLCs from "../components/sidebar/NavbarPLCs";
+import NavbarEditor from "../components/canvas/NavbarEditor";
 
 import PublishModal from "../components/modals/PublishModal";
 import { buildViewsData } from "../utils/viewsSerializer";
@@ -61,6 +62,10 @@ const OrganizarScada = () => {
     handleNewDashboard,
   } = useOrganizarScada();
 
+  const [zoom, setZoom] = useState(1);
+  const editorViewportRef = useRef(null);
+  const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
+
   // Inicialización: carga publicadas y garantiza una vista inicial.
   useEffect(() => {
     loadPublishedViews();
@@ -93,6 +98,61 @@ const OrganizarScada = () => {
     canvasElements.find((el) => el.id === selectedId) || null;
   const isPropsPanelOpen = true;
   const canvasWidth = "clamp(720px, calc(102vw - 38rem), 1400px)";
+  const zoomLabel = useMemo(
+    () => `${Math.round((zoom || 1) * 100)}%`,
+    [zoom],
+  );
+
+  const ZOOM_STEP = 0.1;
+  const MIN_ZOOM = 0.3;
+  const MAX_ZOOM = 2.5;
+
+  const handleZoomIn = () =>
+    setZoom((prev) => Math.min(prev + ZOOM_STEP, MAX_ZOOM));
+  const handleZoomOut = () =>
+    setZoom((prev) => Math.max(prev - ZOOM_STEP, MIN_ZOOM));
+  const handleResetZoom = () => setZoom(1);
+  const handleFitToScreen = () => {
+    const viewport = editorViewportRef.current;
+    if (!viewport || !stageSize.width || !stageSize.height) {
+      setZoom(1);
+      return;
+    }
+    const padding = 32; // algo de margen visual
+    const availableW = Math.max(viewport.clientWidth - padding, 100);
+    const availableH = Math.max(viewport.clientHeight - padding, 100);
+    const scale = Math.min(
+      availableW / stageSize.width,
+      availableH / stageSize.height,
+    );
+    if (!Number.isFinite(scale) || scale <= 0) {
+      setZoom(1);
+      return;
+    }
+    const nextZoom = Math.max(MIN_ZOOM, Math.min(scale, MAX_ZOOM));
+    setZoom(nextZoom);
+  };
+
+  const handleDuplicateSelected = () => {
+    if (!selectedElement) return;
+    const offset = 24;
+    const newId = `dup-${Date.now()}`;
+    const clone = {
+      ...selectedElement,
+      id: newId,
+      x: (selectedElement.x ?? 0) + offset,
+      y: (selectedElement.y ?? 0) + offset,
+      data: { ...selectedElement.data },
+    };
+    setCanvasElements((prev) => [...prev, clone]);
+    setSelectedId(newId);
+    setIsPropsOpen(true);
+  };
+
+  const handleDeleteSelected = () => {
+    if (!selectedId) return;
+    handleDeleteComponent(selectedId);
+  };
 
   /*
    * Ejecuta la lógica de guardado/publicación al API.
@@ -431,7 +491,21 @@ const OrganizarScada = () => {
           />
           {/* Contenedor del Canvas */}
           <main className="flex-1 relative bg-slate-200/50 overflow-hidden flex justify-center items-center p-4 transition-all duration-300">
-            <div className="relative w-full h-full flex justify-center items-center">
+            <div
+              ref={editorViewportRef}
+              className="relative w-full h-full flex justify-center items-center pt-14"
+            >
+              <div className="absolute left-1/2 top-3 z-20 -translate-x-1/2">
+                <NavbarEditor
+                  onZoomIn={handleZoomIn}
+                  onZoomOut={handleZoomOut}
+                  onResetZoom={handleResetZoom}
+                  onFitToScreen={handleFitToScreen}
+                  zoomLabel={zoomLabel}
+                  onDuplicate={handleDuplicateSelected}
+                  onDeleteSelected={handleDeleteSelected}
+                />
+              </div>
               {/* <h3 className="absolute top-13 left-1/2 transform -translate-x-1/2 p-2 text-xl font-semibold text-gray-700 z-10">
               {currentViewId
                 ? `Editando Vista: ${
@@ -450,8 +524,12 @@ const OrganizarScada = () => {
                 }}
                 onUpdate={(id, changes) => handleUpdateComponent(id, changes)}
                 onDelete={handleDeleteComponent}
-                onDrop={handleDropFromSidebar}
+                onDrop={(event, canvasEl) =>
+                  handleDropFromSidebar(event, canvasEl, zoom, stageSize)
+                }
                 canvasWidth={canvasWidth}
+                zoom={zoom}
+                onStageSize={setStageSize}
                 isEditMode
               />
             </div>

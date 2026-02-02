@@ -1,6 +1,6 @@
 //CanvasEditor
 // ScadaCanvasWrapper.jsx
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import DraggableBox from "@/modules/organizarScada/components/canvas/DraggableBox";
 
 /**
@@ -22,6 +22,8 @@ const CanvasEditor = ({
   onDrop,
   canvasWidth = "80vw",
   canvasHeight = "92vh",
+  zoom = 1,
+  onStageSize,
 }) => {
   const canvasRef = useRef(null);
   const stageRef = useRef(null);
@@ -129,9 +131,28 @@ const CanvasEditor = ({
     if (guideHRef.current) guideHRef.current.style.opacity = "0";
   };
 
+  useEffect(() => {
+    if (!stageRef.current || !onStageSize || typeof ResizeObserver === "undefined") return;
+    const updateSize = () =>
+      onStageSize({
+        width: stageRef.current.offsetWidth,
+        height: stageRef.current.offsetHeight,
+      });
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(stageRef.current);
+    return () => observer.disconnect();
+  }, [onStageSize, zoom]);
+
   const handleDrop = (e) => {
     e.preventDefault();
-    onDrop?.(e, canvasRef.current);
+    const size = stageRef.current
+      ? {
+          width: stageRef.current.offsetWidth,
+          height: stageRef.current.offsetHeight,
+        }
+      : undefined;
+    onDrop?.(e, canvasRef.current, zoom, size);
   };
 
   return (
@@ -149,6 +170,8 @@ const CanvasEditor = ({
             width: canvasWidth,
             height: canvasHeight,
             minWidth: 640,
+            transform: `scale(${zoom})`,
+            transformOrigin: "top left",
             backgroundImage:
               "radial-gradient(circle at 1px 1px, #e2e8f0 1px, transparent 0)",
             backgroundSize: "16px 16px",
@@ -174,6 +197,7 @@ const CanvasEditor = ({
               initialHeight={el.data?.height || 180}
               data={el.data}
               isSelected={selectedId === el.id}
+              scale={zoom}
               onSelect={() => onSelect?.(el.id)}
               onDrag={(id) => {
                 const node = stageRef.current?.querySelector(

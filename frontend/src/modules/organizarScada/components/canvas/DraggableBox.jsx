@@ -22,6 +22,7 @@ export default function DraggableBox({
   onDelete,
   isSelected = false,
   isReadOnly = false,
+  scale = 1,
 }) {
   if (!data) return null;
 
@@ -112,6 +113,7 @@ export default function DraggableBox({
       // Usamos el estado local para size y position
       size={{ width: width, height: height }}
       position={{ x: x, y: y }}
+      scale={scale}
       onDrag={(e, d) => onDrag?.(id, e, d)}
       onDragStop={handleDragStop}
       onResize={(e, dir, ref, delta, pos) => onResize?.(id, e, dir, ref, delta, pos)}
