@@ -129,7 +129,7 @@ def token_health_check(request):
     })
 
 
-# 4. USUARIO ACTUAL (ENDPOINT /api/me/)
+# 4. USUARIO ACTUAL (ENDPOINT /api/auth/me/)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def current_user(request):
