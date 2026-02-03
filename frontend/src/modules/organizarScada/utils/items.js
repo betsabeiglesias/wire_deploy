@@ -29,14 +29,14 @@ export const buttons_labels_items = [
   },
   {
     id: "card-soft",
-    label: "Caja suave",
+    // label: "Caja suave",
     kind: "card",
     previewClass:
       "rounded-lg border border-slate-200 bg-slate-50 text-[11px] px-3 py-2 shadow-sm",
   },
   {
     id: "card-elevated",
-    label: "Caja elevada",
+    // label: "Caja elevada",
     kind: "card",
     previewClass:
       "rounded-lg border border-slate-200 bg-white text-[11px] px-3 py-2 shadow-md",

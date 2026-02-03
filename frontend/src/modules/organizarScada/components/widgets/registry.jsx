@@ -21,24 +21,34 @@ import KwShieldGauge from "@/modules/organizarScada/components/widgets/mini/KwSh
 import PressTrendGauge from "@/modules/organizarScada/components/widgets/mini/PressTrendGauge";
 import MiniTable from "@/modules/organizarScada/components/widgets/mini/MiniTable";
 import MiniTrendChart from "@/modules/organizarScada/components/widgets/mini/MiniTrendChart";
-import { parseNumericValue, normalizePercent } from "@/modules/organizarScada/utils/numbers";
-import { formatNumericValue, formatValueWithDecimals } from "@/modules/organizarScada/utils/formatters";
+import {
+  parseNumericValue,
+  normalizePercent,
+} from "@/modules/organizarScada/utils/numbers";
+import {
+  formatNumericValue,
+  formatValueWithDecimals,
+} from "@/modules/organizarScada/utils/formatters";
 
 const buildNumericMiniProps = (settings, liveData) => {
   const min = typeof settings.minValue !== "undefined" ? settings.minValue : 0;
-  const max = typeof settings.maxValue !== "undefined" ? settings.maxValue : 100;
+  const max =
+    typeof settings.maxValue !== "undefined" ? settings.maxValue : 100;
   const rawValue =
-    typeof liveData.value !== "undefined" ? liveData.value : settings.initialValue;
+    typeof liveData.value !== "undefined"
+      ? liveData.value
+      : settings.initialValue;
   const numericValue = parseNumericValue(rawValue);
-  const fallbackNumeric = numericValue ?? parseNumericValue(settings.initialValue) ?? 0;
+  const fallbackNumeric =
+    numericValue ?? parseNumericValue(settings.initialValue) ?? 0;
   const percent = normalizePercent(fallbackNumeric, min, max);
   const formattedValue = formatNumericValue(fallbackNumeric) ?? "-";
   const labelText =
     formattedValue === "-"
       ? "-"
       : liveData.unit
-      ? `${formattedValue} ${liveData.unit}`
-      : formattedValue;
+        ? `${formattedValue} ${liveData.unit}`
+        : formattedValue;
   const bubbleValue = formatValueWithDecimals(rawValue);
   return {
     percent,
@@ -49,7 +59,14 @@ const buildNumericMiniProps = (settings, liveData) => {
   };
 };
 
-export const renderWidget = ({ data, live, width, height, theme, valueHistory }) => {
+export const renderWidget = ({
+  data,
+  live,
+  width,
+  height,
+  theme,
+  valueHistory,
+}) => {
   if (!data) return null;
   const settings = data.settings || {};
   const history = valueHistory || [];
@@ -62,9 +79,13 @@ export const renderWidget = ({ data, live, width, height, theme, valueHistory })
         <div className="w-full h-full flex flex-col items-center">
           <GaugeMeter
             initialValue={
-              typeof live.value !== "undefined" ? live.value : settings.initialValue ?? 0
+              typeof live.value !== "undefined"
+                ? live.value
+                : (settings.initialValue ?? 0)
             }
-            minValue={typeof settings.minValue !== "undefined" ? settings.minValue : 0}
+            minValue={
+              typeof settings.minValue !== "undefined" ? settings.minValue : 0
+            }
             maxValue={
               typeof settings.maxValue !== "undefined" ? settings.maxValue : 100
             }
@@ -93,9 +114,15 @@ export const renderWidget = ({ data, live, width, height, theme, valueHistory })
             label={numericProps.labelText}
           />
         ) : data.type === "mini-donut" ? (
-          <BlueDonutGauge percent={numericProps.percent} label={numericProps.labelText} />
+          <BlueDonutGauge
+            percent={numericProps.percent}
+            label={numericProps.labelText}
+          />
         ) : data.type === "mini-bubble" ? (
-          <ValueBubble value={numericProps.bubbleValue} unit={numericProps.unit} />
+          <ValueBubble
+            value={numericProps.bubbleValue}
+            unit={numericProps.unit}
+          />
         ) : (
           <RingGauge
             percent={numericProps.percent}
@@ -153,7 +180,9 @@ export const renderWidget = ({ data, live, width, height, theme, valueHistory })
         typeof live.value === "boolean"
           ? live.value
           : Boolean(
-              typeof settings.initialValue !== "undefined" ? settings.initialValue : false
+              typeof settings.initialValue !== "undefined"
+                ? settings.initialValue
+                : false,
             );
       return (
         <div className="scada-mini-widget">
@@ -180,7 +209,7 @@ export const renderWidget = ({ data, live, width, height, theme, valueHistory })
         ? [...history]
             .slice(-10)
             .reverse()
-            .map((entry) => ({
+            .map(entry => ({
               site: entry.site || settings.site,
               equipment: entry.equipment || settings.equipment,
               variable: entry.variable || settings.attributeKey || data.label,
@@ -198,11 +227,13 @@ export const renderWidget = ({ data, live, width, height, theme, valueHistory })
     case "mini-chart": {
       const label = settings.attributeLabel || data.label;
       const historySeries = history
-        .map((entry) => entry.numericValue)
-        .filter((val) => typeof val === "number");
+        .map(entry => entry.numericValue)
+        .filter(val => typeof val === "number");
       const fallbackSeries =
         typeof live.value !== "undefined"
-          ? [parseNumericValue(live.value)].filter((val) => typeof val === "number")
+          ? [parseNumericValue(live.value)].filter(
+              val => typeof val === "number",
+            )
           : settings.series || [];
       const series = historySeries.length >= 2 ? historySeries : fallbackSeries;
       return (
@@ -214,7 +245,9 @@ export const renderWidget = ({ data, live, width, height, theme, valueHistory })
     }
     case "svg-gauge": {
       const valueToRender =
-        typeof live.value !== "undefined" ? live.value : data.gaugeOptions?.value ?? 0;
+        typeof live.value !== "undefined"
+          ? live.value
+          : (data.gaugeOptions?.value ?? 0);
       return (
         <SvgGauge
           options={data.gaugeOptions}
@@ -229,7 +262,7 @@ export const renderWidget = ({ data, live, width, height, theme, valueHistory })
       const valueToRender =
         typeof live.value !== "undefined"
           ? parseNumericValue(live.value)
-          : settings.initialValue ?? 89;
+          : (settings.initialValue ?? 89);
 
       return (
         <TempGauge
@@ -308,7 +341,8 @@ export const renderWidget = ({ data, live, width, height, theme, valueHistory })
       );
     }
     case "hmi-trend-card": {
-      const title = settings.title || data.label || "Caudal de Proceso - Cuba 2";
+      const title =
+        settings.title || data.label || "Caudal de Proceso - Cuba 2";
       const unitLabel = settings.unitLabel || "LOREM IPSUM";
       const minValue =
         typeof settings.minValue !== "undefined" ? settings.minValue : 0;
@@ -402,15 +436,10 @@ export const renderWidget = ({ data, live, width, height, theme, valueHistory })
       return (
         <button
           className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-semibold transition cursor-default ${variantClass}`}
-          onClick={(e) => e.preventDefault()}
+          onClick={e => e.preventDefault()}
           title="Bot?n de navegaci?n (activo solo en Producci?n)"
         >
           {label}
-          {data.targetViewId && (
-            <span className="ml-2 inline-flex items-center rounded bg-white/20 px-2 py-0.5 text-[10px] font-normal">
-              {data.targetViewId}
-            </span>
-          )}
         </button>
       );
     }
@@ -432,7 +461,6 @@ export const renderWidget = ({ data, live, width, height, theme, valueHistory })
     }
     case "card-soft":
     case "card-elevated": {
-      const label = data.label || "Caja";
       const elevated = data.type === "card-elevated";
       return (
         <div
@@ -440,9 +468,7 @@ export const renderWidget = ({ data, live, width, height, theme, valueHistory })
             "w-full h-full rounded-lg border px-3 py-2 text-slate-700 text-sm flex items-center",
             elevated ? "bg-white shadow-md" : "bg-slate-50 shadow-sm",
           ].join(" ")}
-        >
-          {label}
-        </div>
+        ></div>
       );
     }
     case "shape-rect": {
