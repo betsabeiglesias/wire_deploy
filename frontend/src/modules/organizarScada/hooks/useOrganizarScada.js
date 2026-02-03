@@ -392,6 +392,7 @@ export const useOrganizarScada = () => {
     setCurrentLayoutId(null);
     setIsEditMode(false);
     setExportName("Nuevo Layout");
+    localStorage.removeItem(CURRENT_VIEW_KEY);
     
     // 2. Resetear vistas a estado inicial (una vista vacía)
     const newView = {

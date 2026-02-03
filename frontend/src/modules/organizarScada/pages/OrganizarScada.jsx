@@ -64,36 +64,12 @@ const OrganizarScada = () => {
   const bootstrappedRef = useRef(false);
   const [showPropsPanel, setShowPropsPanel] = useState(true);
 
-  // Inicialización: garantiza una vista inicial.
+  // Inicialización: siempre empezar en blanco
   useEffect(() => {
     if (bootstrappedRef.current) return;
     bootstrappedRef.current = true;
-
-    (async () => {
-      const fetched = await fetchUserViews();
-      const effectiveViews =
-        (Array.isArray(fetched) && fetched.length && fetched) || views;
-
-      if (effectiveViews?.length) {
-        const first = effectiveViews[0];
-        setCurrentViewId(first.id);
-        setCanvasElements(first.elements || []);
-        setSelectedId(null);
-        return;
-      }
-
-      const initialView = handleCreateView();
-      setCurrentViewId(initialView.id);
-      setCanvasElements(initialView.elements || []);
-    })();
-  }, [
-    fetchUserViews,
-    handleCreateView,
-    setCanvasElements,
-    setCurrentViewId,
-    views,
-    setSelectedId,
-  ]);
+    handleNewDashboard();
+  }, [handleNewDashboard]);
 
   // Mantener sincronizados los elementos del canvas con la vista actual (para exportar/contar)
   useEffect(() => {
