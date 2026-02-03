@@ -7,6 +7,7 @@ import CanvasEditor from "../components/canvas/CanvasEditor";
 import SidebarPropiedades from "../components/sidebar/SidebarPropiedades";
 import NavbarPLCs from "../components/sidebar/NavbarPLCs";
 import NavbarEditor from "../components/canvas/NavbarEditor";
+import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
 import PublishModal from "../components/modals/PublishModal";
 import { buildViewsData } from "../utils/viewsSerializer";
@@ -18,7 +19,6 @@ const OrganizarScada = () => {
   const {
     state: {
       canvasElements,
-      publishedViews,
       selectedId,
       isPropsOpen,
       views,
@@ -44,14 +44,10 @@ const OrganizarScada = () => {
       setExportName,
     },
     normalizeCanvasElements,
-    loadPublishedViews,
     fetchUserViews,
     handleCreateView,
     handleSelectView,
     handleDeleteView,
-    handleLoadPublishedView,
-    handleOpenPublishedView,
-    handleDeletePublishedView,
     addComponentToCanvas,
     addTemplateElements,
     handleUpdateComponent,
@@ -65,23 +61,37 @@ const OrganizarScada = () => {
   const [zoom, setZoom] = useState(1);
   const editorViewportRef = useRef(null);
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
+  const bootstrappedRef = useRef(false);
 
-  // Inicialización: carga publicadas y garantiza una vista inicial.
+  // Inicialización: garantiza una vista inicial.
   useEffect(() => {
-    loadPublishedViews();
-    fetchUserViews();
-    if (!views.length) {
+    if (bootstrappedRef.current) return;
+    bootstrappedRef.current = true;
+
+    (async () => {
+      const fetched = await fetchUserViews();
+      const effectiveViews =
+        (Array.isArray(fetched) && fetched.length && fetched) || views;
+
+      if (effectiveViews?.length) {
+        const first = effectiveViews[0];
+        setCurrentViewId(first.id);
+        setCanvasElements(first.elements || []);
+        setSelectedId(null);
+        return;
+      }
+
       const initialView = handleCreateView();
       setCurrentViewId(initialView.id);
       setCanvasElements(initialView.elements || []);
-    }
+    })();
   }, [
     fetchUserViews,
     handleCreateView,
-    loadPublishedViews,
     setCanvasElements,
     setCurrentViewId,
-    views.length,
+    views,
+    setSelectedId,
   ]);
 
   // Mantener sincronizados los elementos del canvas con la vista actual (para exportar/contar)
@@ -443,6 +453,14 @@ const OrganizarScada = () => {
   return (
     <>
       <div className="flex flex-col h-screen w-full overflow-hidden bg-slate-100">
+        {(isLoadingViews || isLoadingCanvas) && (
+          <LoadingOverlay message="Cargando vistas del SCADA..." />
+        )}
+        {viewsError && (
+          <div className="mx-6 mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-amber-800 shadow-sm">
+            {viewsError}
+          </div>
+        )}
         <NavbarPLCs
           toolbar={{
             showActions: true,
@@ -481,10 +499,6 @@ const OrganizarScada = () => {
             }
             onDeleteView={handleDeleteView}
             addComponentToCanvas={addComponentToCanvas}
-            publishedViews={publishedViews}
-            onLoadScreen={handleLoadPublishedView}
-            onOpenScreen={handleOpenPublishedView}
-            onDeleteScreen={handleDeletePublishedView}
             viewsLoading={isLoadingViews}
             viewsError={viewsError}
             onRefreshViews={fetchUserViews}
@@ -546,10 +560,6 @@ const OrganizarScada = () => {
               )
             }
             onDeleteView={handleDeleteView}
-            publishedViews={publishedViews}
-            onLoadScreen={handleLoadPublishedView}
-            onOpenScreen={handleOpenPublishedView}
-            onDeleteScreen={handleDeletePublishedView}
             viewsLoading={isLoadingViews}
             viewsError={viewsError}
             onRefreshViews={fetchUserViews}

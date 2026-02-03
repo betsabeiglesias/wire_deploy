@@ -4,6 +4,7 @@ import { useGatewayData } from "@/hooks/useGatewayData";
 import { elementos_scada } from "@/modules/organizarScada/templates/elementos_scada";
 import { buttons_labels_items } from "@/modules/organizarScada/utils/items";
 import { renderWidget } from "@/modules/organizarScada/components/widgets/registry.jsx";
+import SkeletonBlock from "@/components/ui/SkeletonBlock";
 
 const UnifiedSidebar = ({
   views = [],
@@ -13,11 +14,6 @@ const UnifiedSidebar = ({
   onRenameView,
   onDeleteView,
   addComponentToCanvas,
-  publishedViews = [],
-  onLoadScreen,
-  onOpenScreen,
-  onDeleteScreen,
-  userId,
   viewsLoading = false,
   viewsError = "",
   onRefreshViews,
@@ -274,130 +270,123 @@ const UnifiedSidebar = ({
             </div>
           )}
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {views.map((view) => {
-              const isSelected = view.id === selectedViewId;
-              return (
-                <div
-                  key={view.id}
-                  className={[
-                    "flex items-center justify-between rounded-md border px-3 py-2 transition",
-                    isSelected
-                      ? "border-sky-400 bg-sky-50"
-                      : "border-slate-200 bg-white hover:bg-slate-50",
-                  ].join(" ")}
-                >
-                  <div className="flex items-start gap-2 w-full">
-                    <button
-                      onClick={() => onSelectView(view.id)}
-                      className="flex-1 text-left"
-                    >
-                      <div className="flex items-center gap-2">
-                        {editingViewId === view.id ? (
-                          <input
-                            autoFocus
-                            value={editingName}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            onBlur={() => commitInlineRename(view.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter")
-                                commitInlineRename(view.id);
-                              if (e.key === "Escape") cancelInlineRename();
-                            }}
-                            className="w-full rounded border border-sky-300 px-2 py-1 text-[12px] text-slate-800 focus:outline-none focus:border-sky-500"
-                          />
-                        ) : (
-                          <span
-                            className={
-                              isSelected
-                                ? "text-sky-800 font-semibold"
-                                : "text-slate-700"
-                            }
-                          >
-                            {view.name}
-                          </span>
-                        )}
-                        {isSelected && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                        )}
-                      </div>
-                      <div className="text-[10px] text-slate-500 mt-1">
-                        {view.elements?.length || 0} elementos
-                      </div>
-                    </button>
-                    <div className="flex items-center gap-1 pt-1">
-                      <button
-                        onClick={() => startInlineRename(view)}
-                        className="p-1 text-slate-400 hover:text-sky-600"
-                        title="Renombrar"
-                      >
-                        ?
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (confirm(`?Eliminar vista "${view.name}"?`)) {
-                            onDeleteView(view.id);
-                          }
-                        }}
-                        className="p-1 text-slate-400 hover:text-red-600"
-                        title="Eliminar"
-                      >
-                        ??
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold tracking-[0.16em] uppercase text-slate-400">
-              Pantallas publicadas
-            </p>
-            <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">
-              {publishedViews.length ? (
-                publishedViews.map((pub) => (
+            {viewsLoading && (
+              <div className="space-y-2" data-testid="views-skeleton">
+                {[1, 2, 3].map((i) => (
                   <div
-                    key={pub.id}
-                    className="rounded-md border border-slate-200 bg-slate-50 px-2 py-2"
+                    key={i}
+                    className="rounded-md border border-slate-200 bg-white px-3 py-3"
                   >
-                    {/* <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-semibold text-slate-800">
-                        {pub.name || pub.button_name || pub.id}
-                      </span>
-                      <span className="text-[10px] text-slate-500">
-                        {pub.updatedAt
-                          ? new Date(pub.updatedAt).toLocaleString()
-                          : ""}
-                      </span>
-                    </div> */}
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      <button
-                        onClick={() => onLoadScreen?.(pub.id)}
-                        className="rounded border border-slate-300 bg-white px-2 py-1 text-[10px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
-                      >
-                        Cargar
-                      </button>
-                      <button
-                        onClick={() => onOpenScreen?.(pub.id)}
-                        className="rounded border border-slate-300 bg-white px-2 py-1 text-[10px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
-                      >
-                        Abrir
-                      </button>
-                      <button
-                        onClick={() => onDeleteScreen?.(pub.id)}
-                        className="rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-semibold text-rose-600 hover:border-rose-300 hover:bg-rose-100"
-                      >
-                        Borrar
-                      </button>
+                    <div className="flex items-center gap-2">
+                      <SkeletonBlock width="w-32" height="h-3.5" />
+                      <SkeletonBlock width="w-4" height="h-4" rounded="rounded-full" />
+                    </div>
+                    <div className="mt-2">
+                      <SkeletonBlock width="w-16" height="h-2.5" />
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-[11px] text-slate-500">
-                  No hay pantallas publicadas.
+                ))}
+              </div>
+            )}
+            {!viewsLoading && views.length === 0 && (
+              <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-[11px] text-slate-600">
+                <p className="font-semibold text-slate-700">
+                  Aún no tienes vistas.
+                </p>
+                <p className="mt-1 text-slate-500">
+                  Crea tu primera vista o importa un JSON existente.
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={onCreateView}
+                    className="rounded border border-sky-300 bg-sky-50 px-2 py-1 text-[11px] font-semibold text-sky-700 hover:border-sky-400"
+                  >
+                    + Crear vista
+                  </button>
+                  <button
+                    onClick={onRefreshViews}
+                    className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400"
+                  >
+                    Reintentar carga
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+            {!viewsLoading &&
+              views.map((view) => {
+                const isSelected = view.id === selectedViewId;
+                return (
+                  <div
+                    key={view.id}
+                    className={[
+                      "flex items-center justify-between rounded-md border px-3 py-2 transition",
+                      isSelected
+                        ? "border-sky-400 bg-sky-50"
+                        : "border-slate-200 bg-white hover:bg-slate-50",
+                    ].join(" ")}
+                  >
+                    <div className="flex items-start gap-2 w-full">
+                      <button
+                        onClick={() => onSelectView(view.id)}
+                        className="flex-1 text-left"
+                      >
+                        <div className="flex items-center gap-2">
+                          {editingViewId === view.id ? (
+                            <input
+                              autoFocus
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              onBlur={() => commitInlineRename(view.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter")
+                                  commitInlineRename(view.id);
+                                if (e.key === "Escape") cancelInlineRename();
+                              }}
+                              className="w-full rounded border border-sky-300 px-2 py-1 text-[12px] text-slate-800 focus:outline-none focus:border-sky-500"
+                            />
+                          ) : (
+                            <span
+                              className={
+                                isSelected
+                                  ? "text-sky-800 font-semibold"
+                                  : "text-slate-700"
+                              }
+                            >
+                              {view.name}
+                            </span>
+                          )}
+                          {isSelected && (
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                          )}
+                        </div>
+                        <div className="text-[10px] text-slate-500 mt-1">
+                          {view.elements?.length || 0} elementos
+                        </div>
+                      </button>
+                      <div className="flex items-center gap-1 pt-1">
+                        <button
+                          onClick={() => startInlineRename(view)}
+                          className="p-1 text-slate-400 hover:text-sky-600"
+                          title="Renombrar"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`¿Eliminar vista "${view.name}"?`)) {
+                              onDeleteView(view.id);
+                            }
+                          }}
+                          className="p-1 text-slate-400 hover:text-red-600"
+                          title="Eliminar"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </div>
       );

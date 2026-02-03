@@ -12,10 +12,6 @@ const SidebarPropiedades = ({
   onCreateView,
   onRenameView,
   onDeleteView,
-  publishedViews = [],
-  onLoadScreen,
-  onOpenScreen,
-  onDeleteScreen,
   viewsLoading = false,
   viewsError = "",
   onRefreshViews,
@@ -154,67 +150,6 @@ const SidebarPropiedades = ({
             No hay vistas disponibles.
           </div>
         )}
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h4 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-            Pantallas publicadas
-          </h4>
-          {onRefreshViews && (
-            <button
-              onClick={onRefreshViews}
-              className="rounded border border-slate-300 bg-white px-2 py-1 text-[10px] text-slate-600 hover:border-sky-400 hover:bg-slate-50"
-              disabled={viewsLoading}
-            >
-              Recargar
-            </button>
-          )}
-        </div>
-        <div className="max-h-130 overflow-y-auto space-y-2">
-          {publishedViews.map((pub) => (
-            <div
-              key={pub.id}
-              className="rounded-md border border-slate-200 bg-slate-50 px-2 py-2 text-[11px]"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-slate-800">
-                  {pub.name || pub.button_name || pub.id}
-                </span>
-                <span className="text-[10px] text-slate-500">
-                  {pub.updatedAt
-                    ? new Date(pub.updatedAt).toLocaleString()
-                    : ""}
-                </span>
-              </div>
-              <div className="mt-1 flex flex-wrap gap-1">
-                <button
-                  onClick={() => onLoadScreen?.(pub.id)}
-                  className="rounded border border-slate-300 bg-white px-2 py-1 text-[10px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
-                >
-                  Cargar
-                </button>
-                <button
-                  onClick={() => onOpenScreen?.(pub.id)}
-                  className="rounded border border-slate-300 bg-white px-2 py-1 text-[10px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
-                >
-                  Abrir
-                </button>
-                <button
-                  onClick={() => onDeleteScreen?.(pub.id)}
-                  className="rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[10px] font-semibold text-rose-600 hover:border-rose-300 hover:bg-rose-100"
-                >
-                  Borrar
-                </button>
-              </div>
-            </div>
-          ))}
-          {!publishedViews.length && (
-            <div className="text-[11px] text-slate-500">
-              No hay pantallas publicadas.
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );

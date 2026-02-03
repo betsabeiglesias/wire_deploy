@@ -2,28 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../../services/api";
 
-const PUBLISHED_VIEWS_KEY = "publishedScadaViews";
-const PUBLISHED_LATEST_KEY = "publishedScadaLatest";
-const LEGACY_LAYOUT_KEY = "publishedScadaLayout";
-const VIEWS_LIBRARY_KEY = "scadaViewsLibrary";
 const CURRENT_VIEW_KEY = "scadaCurrentView";
-
-const persistPublishedView = (viewId, viewsData, name) => {
-  const payload = {
-    id: viewId,
-    views_data: viewsData,
-    button_name: name,
-    updatedAt: new Date().toISOString(),
-  };
-
-  const existingRaw = localStorage.getItem(PUBLISHED_VIEWS_KEY);
-  const existing = existingRaw ? JSON.parse(existingRaw) : {};
-  const updated = { ...existing, [viewId]: payload };
-
-  localStorage.setItem(PUBLISHED_VIEWS_KEY, JSON.stringify(updated));
-  localStorage.setItem(PUBLISHED_LATEST_KEY, viewId);
-  localStorage.setItem(LEGACY_LAYOUT_KEY, JSON.stringify(viewsData));
-};
 
 const sanitizeForSave = (value) =>
   JSON.parse(
@@ -49,7 +28,6 @@ export const useOrganizarScada = () => {
   const location = useLocation();
 
   const [canvasElements, setCanvasElements] = useState([]);
-  const [publishedViews, setPublishedViews] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [isPropsOpen, setIsPropsOpen] = useState(false);
   const [views, setViews] = useState([]);
@@ -73,46 +51,6 @@ export const useOrganizarScada = () => {
   useEffect(() => {
     viewsRef.current = views;
   }, [views]);
-  const loadPublishedViews = useCallback(async () => {
-    try {
-      const response = await api.get("/api/scada-manager/my-layouts/");
-      const layouts = response.data || [];
-      const asArray = layouts.map((item) => ({
-        id: item.id,
-        name: item.button_name,
-        updatedAt: item.updated_at || new Date().toISOString(),
-        views_data: item.views_data,
-        layout: item.elements,
-        is_application: !!item.views_data,
-      }));
-      asArray.sort(
-        (a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0)
-      );
-      setPublishedViews(asArray);
-      localStorage.setItem(
-        PUBLISHED_VIEWS_KEY,
-        JSON.stringify(
-          asArray.reduce((acc, curr) => ({ ...acc, [curr.id]: curr }), {})
-        )
-      );
-    } catch (err) {
-      console.error("Error cargando vistas publicadas:", err);
-      const raw = localStorage.getItem(PUBLISHED_VIEWS_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) || {};
-        const asArray = Object.values(parsed).map((view) => ({
-          id: view.id,
-          layout: view.layout || [],
-          views_data: view.views_data,
-          updatedAt: view.updatedAt,
-          name: view.button_name || view.name,
-        }));
-        setPublishedViews(asArray);
-      } else {
-        setPublishedViews([]);
-      }
-    }
-  }, []);
 
   const fetchUserViews = useCallback(async () => {
     if (skipRemoteViews) return viewsRef.current;
@@ -390,91 +328,17 @@ export const useOrganizarScada = () => {
   );
 
   const handleLoadPublishedView = useCallback(
-    (viewId) => {
-      const fromMemory = publishedViews.find((view) => view.id === viewId);
-      let target = fromMemory;
-      if (!target) {
-        const raw = localStorage.getItem(PUBLISHED_VIEWS_KEY);
-        if (raw) {
-          try {
-            const parsed = JSON.parse(raw) || {};
-            target = parsed[viewId] || null;
-          } catch (err) {
-            console.error("No se pudo leer la pantalla solicitada", err);
-          }
-        }
-      }
-      if (!target) return;
-
-      if (target.views_data?.views?.length) {
-        const mappedViews = target.views_data.views.map((v) => ({
-          ...v,
-          elements: normalizeCanvasElements(v.elements || []),
-          layoutId: target.id,
-        }));
-        setViews(mappedViews);
-        const firstId = mappedViews[0]?.id || null;
-        setCurrentViewId(firstId);
-        setCanvasElements(mappedViews[0]?.elements || []);
-        setCurrentLayoutId(target.id);
-        setExportName(target.button_name || target.name || "Aplicacion");
-        setIsEditMode(true);
-        return;
-      }
-
-      if (target?.layout?.length) {
-        const normalized = normalizeCanvasElements(target.layout);
-        setViews([
-          {
-            id: `view-${target.id}`,
-            name: target.button_name || target.name || "Vista",
-            elements: normalized,
-            layoutId: target.id,
-          },
-        ]);
-        setCurrentViewId(`view-${target.id}`);
-        setCanvasElements(normalized);
-        setCurrentLayoutId(target.id);
-        setExportName(target.button_name || target.name || "Aplicacion");
-        setIsEditMode(true);
-      }
-    },
-    [publishedViews]
+    () => {}
   );
 
   const handleOpenPublishedView = useCallback(
-    (viewId) => {
-      if (!viewId) return;
-      navigate(`/scada/production/${encodeURIComponent(viewId)}`);
-    },
-    [navigate]
+    () => {}
   );
 
   const handleDeletePublishedView = useCallback(async (viewId) => {
-    if (!window.confirm("¿Estás seguro de que deseas eliminar esta aplicación publicada? Esta acción no se puede deshacer.")) {
-        return;
-    }
-
-    try {
-
-        await api.delete(`/api/scada-manager/layout/${viewId}/`);
-
-        const raw = localStorage.getItem(PUBLISHED_VIEWS_KEY);
-        if (raw) {
-            const parsed = JSON.parse(raw) || {};
-            if (parsed[viewId]) {
-                 delete parsed[viewId];
-                 localStorage.setItem(PUBLISHED_VIEWS_KEY, JSON.stringify(parsed));
-            }
-        }
-        
-        alert("Aplicación eliminada correctamente.");
-        loadPublishedViews();
-    } catch (err) {
-        console.error("No se pudo eliminar la pantalla publicada", err);
-        alert("Error al eliminar la aplicación del servidor.");
-    }
-  }, [loadPublishedViews]);
+    console.warn("handleDeletePublishedView llamado pero publicaciones están deshabilitadas");
+    return viewId;
+  }, []);
 
   const confirmExport = useCallback(
     async ({ filename, viewsData, isUpdating }) => {
@@ -495,15 +359,13 @@ export const useOrganizarScada = () => {
           setCurrentLayoutId(savedLayoutId);
           setIsEditMode(true);
         }
-        persistPublishedView(savedLayoutId, viewsData, filename);
-        loadPublishedViews();
         return savedLayoutId;
       } catch (err) {
         console.error("Error al guardar/publicar el layout", err);
         throw err;
       }
     },
-    [currentLayoutId, loadPublishedViews]
+    [currentLayoutId]
   );
 
   const exportToFile = useCallback((viewsData, name = "Layout") => {
@@ -569,43 +431,30 @@ export const useOrganizarScada = () => {
        hasLoadedFromStateRef.current = stateLoadId; // Marcar como procesado YA
 
        // Opción A: Intentar cargarlo desde la memoria si ya tenemos la lista
-       const inMemory = publishedViews.find(p => p.id === stateLoadId);
-       
-       if (inMemory) {
-          handleLoadPublishedView(stateLoadId);
-       } else {
-         // Opción B: Si no está en memoria, cargar el detalle INDIVIDUALMENTE
-         // Esto es más seguro que esperar a loadPublishedViews
-         loadViewDetail(stateLoadId).then((detail) => {
-             // Construir un objeto compatible con handleLoadPublishedView o setear manual
-             // Como handleLoadPublishedView espera encontrarlo en publishedViews o localStorage,
-             // podemos inyectarlo o usar la data directa.
-             // Para simplificar y reusar lógica, usaremos setSets manuales similares a handleLoadPublishedView
-             if (detail.viewsData?.views?.length) {
-                const mappedViews = detail.viewsData.views.map((v) => ({
-                  ...v,
-                  elements: normalizeCanvasElements(v.elements || []),
-                  layoutId: stateLoadId, // ID principal
-                }));
-                setViews(mappedViews);
-                setCurrentViewId(mappedViews[0]?.id || null);
-                setCanvasElements(mappedViews[0]?.elements || []);
-                setCurrentLayoutId(stateLoadId);
-                setExportName(detail.name || "Aplicacion");
-                setIsEditMode(true);
-             }
-         }).catch(err => console.error("Error cargando detalle para editar:", err));
-       }
+       loadViewDetail(stateLoadId).then((detail) => {
+         if (detail.viewsData?.views?.length) {
+            const mappedViews = detail.viewsData.views.map((v) => ({
+              ...v,
+              elements: normalizeCanvasElements(v.elements || []),
+              layoutId: stateLoadId,
+            }));
+            setViews(mappedViews);
+            setCurrentViewId(mappedViews[0]?.id || null);
+            setCanvasElements(mappedViews[0]?.elements || []);
+            setCurrentLayoutId(stateLoadId);
+            setExportName(detail.name || "Aplicacion");
+            setIsEditMode(true);
+         }
+       }).catch(err => console.error("Error cargando detalle para editar:", err));
        // Limpiar el estado de navegación para que F5 no intente recargar si no es necesario
        // (aunque el ref protege, es buena práctica limpiar)
        window.history.replaceState({}, document.title);
     }
-  }, [location.state, publishedViews, loadViewDetail, handleLoadPublishedView]);
+  }, [location.state, loadViewDetail, normalizeCanvasElements]);
 
   return {
     state: {
       canvasElements,
-      publishedViews,
       selectedId,
       isPropsOpen,
       views,
@@ -631,7 +480,6 @@ export const useOrganizarScada = () => {
       setExportName,
     },
     normalizeCanvasElements,
-    loadPublishedViews,
     fetchUserViews,
     loadViewDetail,
     handleCreateView,
@@ -645,7 +493,6 @@ export const useOrganizarScada = () => {
     handleUpdateComponent,
     handleDeleteComponent,
     handleDropFromSidebar,
-    persistPublishedView,
     confirmExport,
     exportToFile,
     handleNewDashboard,
