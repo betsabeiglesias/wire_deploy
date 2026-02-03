@@ -5,6 +5,7 @@ import { elementos_scada } from "@/modules/organizarScada/templates/elementos_sc
 import { buttons_labels_items } from "@/modules/organizarScada/utils/items";
 import { renderWidget } from "@/modules/organizarScada/components/widgets/registry.jsx";
 import SkeletonBlock from "@/components/ui/SkeletonBlock";
+import DeviceManagerModal from "@/modules/organizarScada/components/devices/DeviceManagerModal";
 
 const UnifiedSidebar = ({
   views = [],
@@ -19,7 +20,8 @@ const UnifiedSidebar = ({
   onRefreshViews,
 }) => {
   const [isMainOpen, setIsMainOpen] = useState(true);
-  const [activeSection, setActiveSection] = useState("views");
+  const [activeSection, setActiveSection] = useState("pantallas");
+  const [showDevices, setShowDevices] = useState(false);
 
   const { allTags } = useGatewayData();
   const [selectedSite, setSelectedSite] = useState("");
@@ -34,8 +36,9 @@ const UnifiedSidebar = ({
     {
       id: "main",
       items: [
+        { id: "pantallas", label: "Pantallas" },
+        { id: "devices", label: "Dispositivos" },
         { id: "elements", label: "Elements" },
-        // { id: "layout", label: "Layout" },
         { id: "buttons", label: "Buttons & Labels" },
       ],
     },
@@ -241,26 +244,19 @@ const UnifiedSidebar = ({
   };
 
   const renderSectionContent = (sectionId) => {
-    if (sectionId === "views") {
+    if (sectionId === "pantallas") {
       return (
         <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-800">
-              Biblioteca de Vistas
+              Pantallas
             </h3>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => onRefreshViews?.()}
-                disabled={viewsLoading}
-                className="inline-flex items-center justify-center rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50 disabled:opacity-60"
-              >
-                {viewsLoading ? "Recargando" : "Recargar"}
-              </button>
               <button
                 onClick={onCreateView}
                 className="inline-flex items-center justify-center rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
               >
-                + Nueva vista
+                + Nueva pantalla
               </button>
             </div>
           </div>
@@ -388,6 +384,24 @@ const UnifiedSidebar = ({
                 );
               })}
           </div>
+        </div>
+      );
+    }
+    if (sectionId === "devices") {
+      return (
+        <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-800">Dispositivos</h3>
+            <button
+              onClick={() => setShowDevices(true)}
+              className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
+            >
+              Abrir gestor
+            </button>
+          </div>
+          <p className="text-[11px] text-slate-600">
+            Administra PLCs y tablas de tags en una vista tipo árbol + tabla.
+          </p>
         </div>
       );
     }
@@ -571,6 +585,9 @@ const UnifiedSidebar = ({
           )}
         </aside>
       </div>
+      {showDevices && (
+        <DeviceManagerModal open={showDevices} onClose={() => setShowDevices(false)} />
+      )}
     </>
   );
 };

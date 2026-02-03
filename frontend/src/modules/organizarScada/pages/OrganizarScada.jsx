@@ -551,18 +551,6 @@ const OrganizarScada = () => {
 
           <SidebarPropiedades
             isOpen={isPropsPanelOpen}
-            selectedViewId={currentViewId}
-            onSelectView={handleSelectView}
-            onCreateView={handleCreateView}
-            onRenameView={(id, name) =>
-              setViews((prev) =>
-                prev.map((v) => (v.id === id ? { ...v, name } : v)),
-              )
-            }
-            onDeleteView={handleDeleteView}
-            viewsLoading={isLoadingViews}
-            viewsError={viewsError}
-            onRefreshViews={fetchUserViews}
             exportName={exportName}
             onExportNameChange={setExportName}
             selectedElement={selectedElement}
