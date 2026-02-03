@@ -1,16 +1,16 @@
 // SidebarPropiedades.jsx
-// Panel tipo Siemens TIA Portal, ubicado debajo del canvas.
-import React, { useMemo } from "react";
+// Panel de propiedades con tabs horizontales ligeros (estilo barra clara).
+import React, { useMemo, useState } from "react";
 import { useGatewayData } from "@/hooks/useGatewayData";
 
 const tabs = [
   "General",
-  "Settings",
-  "Range",
-  "Linear scaling",
-  "Values",
-  "Comment",
-  "Multiplexing",
+  "Dipositivo",
+  "Estilo",
+  // "Cambios",
+  // "Compatibilidad",
+  // "Tipografía",
+  // "Animaciones",
 ];
 
 const SidebarPropiedades = ({
@@ -22,6 +22,7 @@ const SidebarPropiedades = ({
   onExportNameChange,
 }) => {
   const { allTags } = useGatewayData();
+  const [activeTab, setActiveTab] = useState("General");
 
   const uniquePlcVariables = useMemo(() => {
     const variables = allTags.map((tag) => tag.variable).filter(Boolean);
@@ -41,62 +42,60 @@ const SidebarPropiedades = ({
     "";
   const currentType = selectedElement?.data?.type || selectedElement?.type;
   const currentSettings = selectedElement?.data?.settings || {};
-
   const selectedName = selectedElement?.data?.name || selectedElement?.name || currentLabel;
 
   const renderEmpty = () => (
-    <div className="flex flex-col gap-3 p-4">
+    <div className="flex flex-col gap-3 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
       <div className="flex items-center gap-2">
         <p className="text-sm font-semibold text-slate-700">Propiedades</p>
         <span className="text-[11px] text-slate-500">Selecciona un elemento del canvas.</span>
-      </div>
-      <div className="grid grid-cols-[180px_1fr] gap-4 bg-slate-50 border border-slate-200 rounded-lg p-4">
-        <div className="space-y-2">
-          {tabs.slice(0, 5).map((t) => (
-            <div
-              key={t}
-              className="rounded px-2 py-2 text-[12px] text-slate-500 bg-white border border-slate-200"
-            >
-              {t}
-            </div>
-          ))}
-        </div>
-        <div className="flex items-center justify-center text-slate-500 text-sm">
-          Sin selección
-        </div>
       </div>
     </div>
   );
 
   const renderContent = () => (
-    <div className="p-4 bg-slate-100 border-t border-slate-200">
-      <div className="flex items-center gap-3 mb-3">
+    <div className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm space-y-4">
+      <div className="flex items-center gap-3">
         <p className="text-sm font-semibold text-slate-800">
           {selectedName || "Elemento seleccionado"}
         </p>
         <span className="text-[11px] text-slate-500">Tipo: {currentType || "N/A"}</span>
       </div>
 
-      <div className="grid grid-cols-[200px_1fr] gap-4">
-        {/* Tabs laterales */}
-        <div className="bg-white border border-slate-200 rounded-md divide-y divide-slate-100">
-          {tabs.map((tab) => (
+      {/* Tabs horizontales estilo barra continua */}
+      <nav className="flex items-center gap-1 overflow-x-auto px-1 py-1 bg-white border-b border-slate-200 no-scrollbar" style={{ margin: 0 }}>
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab;
+          return (
             <button
               key={tab}
-              className="w-full text-left px-3 py-2 text-[12px] text-slate-700 hover:bg-sky-50"
+              onClick={() => setActiveTab(tab)}
+              className={[
+                "min-w-[72px] px-4 py-2 text-[12px] font-medium transition-colors border border-transparent rounded-t-sm",
+                isActive
+                  ? "bg-slate-100 text-slate-900 border-slate-300 border-b-2 border-b-sky-500"
+                  : "bg-white text-slate-600 hover:text-slate-900",
+              ].join(" ")}
               type="button"
             >
               {tab}
             </button>
-          ))}
-        </div>
+          );
+        })}
+        <button
+          type="button"
+          className="ml-auto px-3 py-2 text-slate-500 hover:text-slate-800"
+          title="Más opciones (futuro)"
+        >
+          ...
+        </button>
+      </nav>
 
-        {/* Panel derecho */}
-        <div className="bg-white border border-slate-200 rounded-md p-4 space-y-4 shadow-sm">
+      <div className="bg-white border border-slate-200 border-t-0 rounded-sm p-4 min-h-[240px]">
+        {activeTab === "General" && (
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-slate-800">General</h4>
-              <label className="text-[11px] text-slate-600">Name</label>
+              <label className="text-[11px] text-slate-600">Name (SVG)</label>
               <input
                 className="w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
                 value={selectedName || ""}
@@ -114,6 +113,90 @@ const SidebarPropiedades = ({
                   })
                 }
               />
+
+              <label className="text-[11px] text-slate-600">Min value</label>
+              <input
+                type="number"
+                className="w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
+                value={
+                  typeof currentSettings.min === "number"
+                    ? currentSettings.min
+                    : ""
+                }
+                onChange={(e) =>
+                  onChange?.({
+                    data: {
+                      ...(selectedElement?.data || {}),
+                      settings: {
+                        ...(currentSettings || {}),
+                        min: e.target.value === "" ? undefined : Number(e.target.value),
+                      },
+                    },
+                  })
+                }
+              />
+
+              <label className="text-[11px] text-slate-600">Max value</label>
+              <input
+                type="number"
+                className="w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
+                value={
+                  typeof currentSettings.max === "number"
+                    ? currentSettings.max
+                    : ""
+                }
+                onChange={(e) =>
+                  onChange?.({
+                    data: {
+                      ...(selectedElement?.data || {}),
+                      settings: {
+                        ...(currentSettings || {}),
+                        max: e.target.value === "" ? undefined : Number(e.target.value),
+                      },
+                    },
+                  })
+                }
+              />
+
+              <label className="inline-flex items-center gap-2 text-[12px] text-slate-700">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
+                  checked={!!currentSettings.showValue}
+                  onChange={(e) =>
+                    onChange?.({
+                      data: {
+                        ...(selectedElement?.data || {}),
+                        settings: {
+                          ...(currentSettings || {}),
+                          showValue: e.target.checked,
+                        },
+                      },
+                    })
+                  }
+                />
+                Mostrar valor del SVG
+              </label>
+
+              <label className="inline-flex items-center gap-2 text-[12px] text-slate-700">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
+                  checked={currentSettings.visible !== false}
+                  onChange={(e) =>
+                    onChange?.({
+                      data: {
+                        ...(selectedElement?.data || {}),
+                        settings: {
+                          ...(currentSettings || {}),
+                          visible: e.target.checked,
+                        },
+                      },
+                    })
+                  }
+                />
+                Visible
+              </label>
 
               <label className="text-[11px] text-slate-600">Display name</label>
               <input
@@ -137,7 +220,7 @@ const SidebarPropiedades = ({
               <label className="text-[11px] text-slate-600">Connection</label>
               <input
                 disabled
-                className="w-full rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[12px] text-slate-500"
+                className="w-full rounded border border-slate-200 bg-slate-100 px-2 py-1 text-[12px] text-slate-500"
                 value={currentSettings.connection || "INTENANCE"}
                 readOnly
               />
@@ -167,7 +250,6 @@ const SidebarPropiedades = ({
             </div>
 
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-slate-800">Settings</h4>
               <label className="text-[11px] text-slate-600">Data type</label>
               <select
                 className="w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
@@ -216,62 +298,13 @@ const SidebarPropiedades = ({
               />
             </div>
           </div>
+        )}
 
-          {/* <div className="rounded border border-slate-200 bg-slate-50 p-3">
-            <h4 className="text-sm font-semibold text-slate-800 mb-2">Variables PLC</h4>
-            <div className="grid grid-cols-4 gap-2 max-h-48 overflow-y-auto">
-              {uniquePlcVariables.length === 0 && (
-                <p className="text-xs text-slate-500 col-span-4">Cargando variables...</p>
-              )}
-              {uniquePlcVariables.map((variableName) => {
-                const tagMatch = allTags.find((t) => t.variable === variableName);
-                const isSelectedVar =
-                  selectedElement?.variable === variableName ||
-                  selectedElement?.settings?.variable === variableName ||
-                  selectedElement?.data?.settings?.variable === variableName;
-                return (
-                  <button
-                    key={variableName}
-                    onClick={() => {
-                      const nextSettings = {
-                        ...(selectedElement?.data?.settings || {}),
-                        variable: variableName,
-                        attributeKey: variableName,
-                        attributeLabel: variableName,
-                        equipment: tagMatch?.equipment,
-                        site: tagMatch?.site,
-                        area: tagMatch?.area,
-                        line: tagMatch?.line,
-                        cell: tagMatch?.cell,
-                        unit: tagMatch?.unit,
-                      };
-
-                      onChange?.({
-                        variable: variableName,
-                        equipment: tagMatch?.equipment,
-                        data: {
-                          ...(selectedElement?.data || {}),
-                          variable: variableName,
-                          equipment: tagMatch?.equipment,
-                          attributeLabel: variableName,
-                          settings: nextSettings,
-                        },
-                      });
-                    }}
-                    className={`w-full text-left px-2 py-1 rounded text-[11px] truncate transition-colors ${
-                      isSelectedVar
-                        ? "bg-sky-100 text-sky-800 font-semibold"
-                        : "hover:bg-slate-100 text-slate-700"
-                    }`}
-                    title={variableName}
-                  >
-                    {variableName}
-                  </button>
-                );
-              })}
-            </div>
-          </div> */}
-        </div>
+        {activeTab !== "General" && (
+          <div className="text-[12px] text-slate-500">
+            Contenido pendiente para “{activeTab}”. (Próximamente)
+          </div>
+        )}
       </div>
     </div>
   );

@@ -8,9 +8,11 @@ export default function NavbarEditor({
   zoomLabel,
   onDuplicate,
   onDeleteSelected,
+  showProps = true,
+  onToggleProps,
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+    <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
       <div className="flex items-center gap-2 pr-3 border-r border-slate-200">
         <button
           className="px-2 py-1 rounded border hover:bg-gray-50 text-xs"
@@ -64,6 +66,16 @@ export default function NavbarEditor({
         >
           Eliminar
         </button>
+        {onToggleProps && (
+          <button
+            className="px-2 py-1 rounded border hover:bg-gray-50 text-xs"
+            onClick={onToggleProps}
+            title="Mostrar/Ocultar Propiedades"
+            type="button"
+          >
+            {showProps ? "Ocultar props" : "Mostrar props"}
+          </button>
+        )}
       </div>
     </div>
   );

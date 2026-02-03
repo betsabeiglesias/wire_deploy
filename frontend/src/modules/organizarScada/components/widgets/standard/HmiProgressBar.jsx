@@ -35,6 +35,9 @@ const HmiProgressBar = ({
     labelColor = "#999",
   } = colors;
 
+  const centerX = 175;
+  const centerY = 35;
+
   return (
     <svg
       width={width}
@@ -95,25 +98,16 @@ const HmiProgressBar = ({
       />
 
       <text
-        x="380"
-        y="38"
+        x={centerX}
+        y={centerY}
         fill={percentColor}
         fontSize="28px"
         fontWeight="700"
+        textAnchor="middle"
+        alignmentBaseline="middle"
         fontFamily="'Segoe UI', Roboto, Arial, sans-serif"
       >
         {Math.round(safePercent)}%
-      </text>
-      <text
-        x="380"
-        y="58"
-        fill={labelColor}
-        fontSize="16px"
-        fontWeight="300"
-        letterSpacing="1px"
-        fontFamily="'Segoe UI', Roboto, Arial, sans-serif"
-      >
-        {label}
       </text>
     </svg>
   );

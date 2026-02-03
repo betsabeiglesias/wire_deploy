@@ -62,6 +62,7 @@ const OrganizarScada = () => {
   const editorViewportRef = useRef(null);
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   const bootstrappedRef = useRef(false);
+  const [showPropsPanel, setShowPropsPanel] = useState(true);
 
   // Inicialización: garantiza una vista inicial.
   useEffect(() => {
@@ -106,7 +107,7 @@ const OrganizarScada = () => {
 
   const selectedElement =
     canvasElements.find((el) => el.id === selectedId) || null;
-  const isPropsPanelOpen = true;
+  const isPropsPanelOpen = showPropsPanel;
   const canvasWidth = "clamp(1100px, 88vw, 1600px)";
   const canvasHeight = "720px";
   const zoomLabel = useMemo(
@@ -164,6 +165,15 @@ const OrganizarScada = () => {
     if (!selectedId) return;
     handleDeleteComponent(selectedId);
   };
+
+  // Abrir panel al seleccionar; cerrarlo al limpiar selección
+  useEffect(() => {
+    if (selectedElement) {
+      setShowPropsPanel(true);
+    } else {
+      setShowPropsPanel(false);
+    }
+  }, [selectedElement]);
 
   /*
    * Ejecuta la lógica de guardado/publicación al API.
@@ -504,7 +514,7 @@ const OrganizarScada = () => {
             viewsError={viewsError}
             onRefreshViews={fetchUserViews}
           />
-          {/* Zona central: canvas arriba, propiedades abajo */}
+          {/* Zona central: canvas + propiedades docking */}
           <div className="flex-1 bg-slate-100 overflow-hidden flex flex-col">
             <div className="px-6 pt-4">
               <NavbarEditor
@@ -515,46 +525,62 @@ const OrganizarScada = () => {
                 zoomLabel={zoomLabel}
                 onDuplicate={handleDuplicateSelected}
                 onDeleteSelected={handleDeleteSelected}
+                showProps={showPropsPanel}
+                onToggleProps={() => setShowPropsPanel((p) => !p)}
               />
             </div>
 
-            <main className="relative bg-slate-200/50 overflow-hidden flex justify-center items-center p-4 transition-all duration-300 flex-1">
+            <div className="flex flex-1 overflow-hidden px-4 pb-4 gap-4">
+              <main className="relative bg-slate-200/50 overflow-hidden flex justify-center items-center p-4 transition-all duration-300 flex-1 rounded-xl border border-slate-200">
+                <div
+                  ref={editorViewportRef}
+                  className="relative w-full h-full flex justify-center items-center"
+                >
+                  <CanvasEditor
+                    elements={canvasElements}
+                    selectedId={selectedId}
+                    onSelect={(id) => {
+                      setSelectedId(id);
+                      setIsPropsOpen(true);
+                    }}
+                    onUpdate={(id, changes) => handleUpdateComponent(id, changes)}
+                    onDelete={handleDeleteComponent}
+                    onDrop={(event, canvasEl) =>
+                      handleDropFromSidebar(event, canvasEl, zoom, stageSize)
+                    }
+                    canvasWidth={canvasWidth}
+                    canvasHeight={canvasHeight}
+                    zoom={zoom}
+                    onStageSize={setStageSize}
+                    isEditMode
+                  />
+                </div>
+              </main>
+
+              {/* Panel de propiedades: dock derecho en desktop, drawer en mobile */}
               <div
-                ref={editorViewportRef}
-                className="relative w-full h-full flex justify-center items-center"
+                className={[
+                  "md:static md:w-96 md:translate-x-0 md:translate-y-0 md:opacity-100",
+                  "fixed left-0 right-0 bottom-0 z-30",
+                  "transition-all duration-250 ease-out",
+                  showPropsPanel
+                    ? "translate-y-0 opacity-100"
+                    : "md:-translate-x-full md:opacity-0 translate-y-full opacity-0 pointer-events-none",
+                ].join(" ")}
               >
-                <CanvasEditor
-                  elements={canvasElements}
-                  selectedId={selectedId}
-                  onSelect={(id) => {
-                    setSelectedId(id);
-                    setIsPropsOpen(true);
-                  }}
-                  onUpdate={(id, changes) => handleUpdateComponent(id, changes)}
-                  onDelete={handleDeleteComponent}
-                  onDrop={(event, canvasEl) =>
-                    handleDropFromSidebar(event, canvasEl, zoom, stageSize)
+                <SidebarPropiedades
+                  isOpen={isPropsPanelOpen}
+                  exportName={exportName}
+                  onExportNameChange={setExportName}
+                  selectedElement={selectedElement}
+                  views={views}
+                  onChange={(changes) =>
+                    selectedElement &&
+                    handleUpdateComponent(selectedElement.id, changes)
                   }
-                  canvasWidth={canvasWidth}
-                  canvasHeight={canvasHeight}
-                  zoom={zoom}
-                  onStageSize={setStageSize}
-                  isEditMode
                 />
               </div>
-            </main>
-
-            <SidebarPropiedades
-              isOpen={isPropsPanelOpen}
-              exportName={exportName}
-              onExportNameChange={setExportName}
-              selectedElement={selectedElement}
-              views={views}
-              onChange={(changes) =>
-                selectedElement &&
-                handleUpdateComponent(selectedElement.id, changes)
-              }
-            />
+            </div>
           </div>
         </div>
       </div>

@@ -6,18 +6,20 @@ const STATUS_MAP = {
     text: "#2ecc71",
     gradStart: "#2ecc71",
     gradEnd: "#27ae60",
-    gradStartOpacity: 0.2,
-    gradEndOpacity: 0.1,
+    gradStartOpacity: 0.18,
+    gradEndOpacity: 0.08,
     border: "#3f4551",
+    className: "ok",
   },
   warning: {
     stroke: "#f1c40f",
     text: "#f1c40f",
     gradStart: "#f1c40f",
     gradEnd: "#f39c12",
-    gradStartOpacity: 0.3,
+    gradStartOpacity: 0.25,
     gradEndOpacity: 0.1,
     border: "#3f4551",
+    className: "warning",
   },
   emergency: {
     stroke: "#ff4d4d",
@@ -27,6 +29,7 @@ const STATUS_MAP = {
     gradStartOpacity: 0.4,
     gradEndOpacity: 0.2,
     border: "#ff4d4d",
+    className: "emergency",
   },
 };
 
@@ -59,15 +62,25 @@ const HmiStatusCard = ({
       <style>{`
         @keyframes pulse-red {
           0% { opacity: 1; filter: brightness(1); }
-          50% { opacity: 0.8; filter: brightness(1.5) drop-shadow(0 0 10px #ff4d4d); }
+          50% { opacity: 0.85; filter: brightness(1.4) drop-shadow(0 0 10px #ff4d4d); }
           100% { opacity: 1; filter: brightness(1); }
         }
-        .emergency-${uid} {
-          animation: pulse-red 1.5s infinite ease-in-out;
+        @keyframes pulse-amber {
+          0% { opacity: 1; }
+          50% { opacity: 0.85; filter: drop-shadow(0 0 8px rgba(241,196,15,0.6)); }
+          100% { opacity: 1; }
         }
+        @keyframes glow-green {
+          0% { filter: drop-shadow(0 0 0px rgba(46,204,113,0.0)); }
+          50% { filter: drop-shadow(0 0 8px rgba(46,204,113,0.35)); }
+          100% { filter: drop-shadow(0 0 0px rgba(46,204,113,0.0)); }
+        }
+        .emergency-${uid} { animation: pulse-red 1.4s infinite ease-in-out; }
+        .warning-${uid} { animation: pulse-amber 1.6s infinite ease-in-out; }
+        .ok-${uid} { animation: glow-green 2.2s infinite ease-in-out; }
       `}</style>
 
-      <g className={safeStatus === "emergency" ? `emergency-${uid}` : undefined}>
+      <g className={`${cfg.className}-${uid}`}>
         <rect
           width="280"
           height="90"

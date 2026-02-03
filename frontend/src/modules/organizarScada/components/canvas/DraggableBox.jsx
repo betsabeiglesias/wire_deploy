@@ -70,16 +70,6 @@ export default function DraggableBox({
   // Contenido del widget (unificado desde la rama develop)
   const WidgetContent = (
     <div className="relative flex flex-col h-full w-full">
-      {!isReadOnly && isSelected && (
-        <button
-          onClick={handleDelete}
-          className="absolute right-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-white text-gray-500 shadow hover:bg-red-100 hover:text-red-600 text-lg font-bold"
-          aria-label="Eliminar componente"
-          title="Eliminar"
-        >
-          &times;
-        </button>
-      )}
       {/* Contenido principal del componente */}
       <div className="flex-grow p-2 overflow-hidden flex items-center justify-center">
         {renderContent()}
@@ -114,6 +104,24 @@ export default function DraggableBox({
       size={{ width: width, height: height }}
       position={{ x: x, y: y }}
       scale={scale}
+      style={
+        isSelected
+          ? {
+              border: "1px dashed #38bdf8",
+              boxShadow: "0 0 0 1px rgba(56,189,248,0.25)",
+            }
+          : {}
+      }
+      resizeHandleStyles={
+        isSelected
+          ? {
+              topLeft: handleStyle,
+              topRight: handleStyle,
+              bottomLeft: handleStyle,
+              bottomRight: handleStyle,
+            }
+          : undefined
+      }
       onDrag={(e, d) => onDrag?.(id, e, d)}
       onDragStop={handleDragStop}
       onResize={(e, dir, ref, delta, pos) => onResize?.(id, e, dir, ref, delta, pos)}
@@ -133,7 +141,26 @@ export default function DraggableBox({
       resizeHandleClasses={{ bottomRight: "resize-handle-br" }}
       onClick={() => onSelect?.()}
     >
+      {!isReadOnly && isSelected && (
+        <button
+          onClick={handleDelete}
+          className="absolute -right-3 -top-3 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-white text-gray-500 shadow hover:bg-red-100 hover:text-red-600 text-lg font-bold"
+          aria-label="Eliminar componente"
+          title="Eliminar"
+        >
+          &times;
+        </button>
+      )}
       {WidgetContent}
     </Rnd>
   );
 }
+
+const handleStyle = {
+  width: "12px",
+  height: "12px",
+  background: "#38bdf8",
+  borderRadius: "9999px",
+  border: "2px solid white",
+  boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+};
