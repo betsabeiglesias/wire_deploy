@@ -290,14 +290,14 @@ export const useOrganizarScada = () => {
         const zoomFactor = zoom || 1;
         const x = (event.clientX - rect.left) / zoomFactor;
         const y = (event.clientY - rect.top) / zoomFactor;
-        const width = tpl.width || tpl.data?.width || 220;
-        const height = tpl.height || tpl.data?.height || 220;
+        const width = Number(tpl.width ?? tpl.data?.width) || 220;
+        const height = Number(tpl.height ?? tpl.data?.height) || 220;
         const canvasWidth =
           stageSize?.width || rect.width / zoomFactor || rect.width;
         const canvasHeight =
           stageSize?.height || rect.height / zoomFactor || rect.height;
-        let newX = x - width / 2;
-        let newY = y - height / 2;
+        let newX = Number(x - width / 2);
+        let newY = Number(y - height / 2);
         const maxX = canvasWidth - width;
         const maxY = canvasHeight - height;
         const isOutside =
@@ -308,6 +308,11 @@ export const useOrganizarScada = () => {
         } else {
           newX = Math.max(0, Math.min(newX, maxX));
           newY = Math.max(0, Math.min(newY, maxY));
+        }
+        // Si por algún motivo quedan valores no finitos, caer al centro
+        if (!Number.isFinite(newX) || !Number.isFinite(newY)) {
+          newX = canvasWidth / 2 - width / 2;
+          newY = canvasHeight / 2 - height / 2;
         }
         const element = {
           id: Date.now(),

@@ -69,7 +69,7 @@ export default function DraggableBox({
 
   // Contenido del widget (unificado desde la rama develop)
   const WidgetContent = (
-    <div className="relative flex flex-col h-full w-full">
+    <div className="drag-handle relative flex flex-col h-full w-full">
       {/* Contenido principal del componente */}
       <div className="flex-grow p-2 overflow-hidden flex items-center justify-center">
         {renderContent()}
@@ -139,6 +139,7 @@ export default function DraggableBox({
       }
       dragHandleClassName={showFrame ? "box-header" : undefined}
       resizeHandleClasses={{ bottomRight: "resize-handle-br" }}
+      dragHandleClassName="drag-handle"
       onClick={() => onSelect?.()}
     >
       {!isReadOnly && isSelected && (
