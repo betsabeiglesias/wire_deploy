@@ -20,7 +20,7 @@ export const useAuthStore = create((set, get) => ({
 
     set({ loading: true });
     try {
-      const response = await api.get('/api/me/');
+      const response = await api.get('/api/auth/me/');
       const userData = response.data;
       
       localStorage.setItem('user', JSON.stringify(userData));
@@ -41,7 +41,7 @@ export const useAuthStore = create((set, get) => ({
 
   clearAuth: async () => {
     try {
-      await api.post('/api/logout/');
+      await api.post('/api/auth/logout/');
     } catch (err) {
       console.warn("Logout en backend fallido o sesión ya expirada");
     } finally {

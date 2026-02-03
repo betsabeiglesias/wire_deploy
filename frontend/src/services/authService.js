@@ -6,7 +6,7 @@
 //  * Realiza el login y devuelve los datos
 //  */
 // export const loginRequest = async (username, password) => {
-//   const response = await axios.post(`${BASE_URL}/api/token/`, { username, password });
+//   const response = await axios.post(`${BASE_URL}/api/auth/token/`, { username, password });
 //   return response.data; // { access, refresh, user_data... }
 // };
 
@@ -17,7 +17,7 @@
 //   const refreshToken = localStorage.getItem('refresh');
 //   if (!refreshToken) throw new Error("No hay refresh token");
 
-//   const response = await axios.post(`${BASE_URL}/api/token/refresh/`, {
+//   const response = await axios.post(`${BASE_URL}/api/auth/token/refresh/`, {
 //     refresh: refreshToken,
 //   });
   
