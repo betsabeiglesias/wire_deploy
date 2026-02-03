@@ -18,7 +18,7 @@ api.interceptors.response.use(
     // 1. Si el error NO es 401, o es una petición de login/refresh, no hacemos nada
     if (
       error.response?.status !== 401 || 
-      originalRequest.url.includes('/api/token/') || 
+      originalRequest.url.includes('api/auth/token/') || 
       originalRequest._retry
     ) {
       return Promise.reject(error);
@@ -37,7 +37,7 @@ api.interceptors.response.use(
     try {
       // 3. Intentar renovar la sesión (el refresh_token va en la cookie)
       await axios.post(
-        'http://localhost:8000/api/token/refresh/', 
+        'http://localhost:8000/api/auth/token/refresh/', 
         {}, 
         { withCredentials: true }
       );

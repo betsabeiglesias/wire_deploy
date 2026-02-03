@@ -20,7 +20,7 @@ const Login = () => {
 
     try {
       // 1. Login para establecer las cookies
-      const response = await api.post('/api/token/', { username, password });
+      const response = await api.post('api/auth/token/', { username, password });
       
       // 2. Guardamos lo que nos de el login inicialmente
       setAuth(response.data);
