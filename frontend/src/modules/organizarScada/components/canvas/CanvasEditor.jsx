@@ -20,8 +20,8 @@ const CanvasEditor = ({
   onUpdate,
   onDelete,
   onDrop,
-  canvasWidth = "80vw",
-  canvasHeight = "92vh",
+  canvasWidth = "1280px",
+  canvasHeight = "720px",
   zoom = 1,
   onStageSize,
 }) => {
@@ -171,7 +171,7 @@ const CanvasEditor = ({
             height: canvasHeight,
             minWidth: 640,
             transform: `scale(${zoom})`,
-            transformOrigin: "top left",
+            transformOrigin: "center center",
             backgroundImage:
               "radial-gradient(circle at 1px 1px, #e2e8f0 1px, transparent 0)",
             backgroundSize: "16px 16px",
