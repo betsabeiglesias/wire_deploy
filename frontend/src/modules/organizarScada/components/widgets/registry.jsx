@@ -270,8 +270,24 @@ export const renderWidget = ({
           min={settings.min ?? 0}
           max={settings.max ?? 120}
           label={settings.label || data.label}
-          unit={live.unit || settings.unit || "??C"}
+          unit={live.unit || settings.unit || "C"}
           size={Math.min(width, height)}
+          labelColor={settings.labelColor}
+          valueColor={settings.valueColor}
+          labelOffsetX={settings.labelOffsetX}
+          labelOffsetY={settings.labelOffsetY}
+          valueOffsetX={settings.valueOffsetX}
+          valueOffsetY={settings.valueOffsetY}
+          needleColor={settings.needleColor}
+          tickColor={settings.tickColor}
+          arcStartColor={settings.arcStartColor}
+          arcMidColor={settings.arcMidColor}
+          arcEndColor={settings.arcEndColor}
+          showMinMax={settings.showMinMax}
+          showLabel={settings.showLabel}
+          showValue={settings.showValue}
+          minMaxColor={settings.minMaxColor}
+          minMaxFontSize={settings.minMaxFontSize}
         />
       );
     }

@@ -5,12 +5,28 @@ const TempGauge = ({
   min = 0,
   max = 120,
   label = "TEMP",
-  unit = "°C",
+  unit = "C",
   size = 220,
   className = "",
+  labelColor = "rgba(248,113,113,0.95)",
+  valueColor = "rgba(248,113,113,0.98)",
+  labelOffsetX = 0,
+  labelOffsetY = 0,
+  valueOffsetX = 0,
+  valueOffsetY = 0,
+  needleColor = "rgba(255,255,255,0.95)",
+  tickColor = "rgba(251,146,60,0.95)",
+  arcStartColor = "rgba(251,146,60,1)",
+  arcMidColor = "rgba(249,115,22,1)",
+  arcEndColor = "rgba(239,68,68,1)",
+  showMinMax = true,
+  showLabel = true,
+  showValue = true,
+  minMaxColor = "rgba(148,163,184,0.9)",
+  minMaxFontSize = 14,
 }) => {
-  // Constantes de diseño
-  const sizeViewBox = 200;
+  // Constantes de diseno
+  const sizeViewBox = 180;
   const center = sizeViewBox / 2;
   const radiusPlate = 90;
   const radiusInner = 78;
@@ -18,20 +34,31 @@ const TempGauge = ({
   const startDeg = 140;
   const sweepDeg = 260; // Recorrido total
 
-  // Cálculo de la aguja y valor
-  const clampedValue = Math.max(min, Math.min(max, value));
-  const ratio = (clampedValue - min) / (max - min);
-  const rotation = startDeg + ratio * sweepDeg; // Grados de rotación de la aguja
+  // Calculo de la aguja y valor
+  const safeMax = max === min ? min + 1 : max;
+  const clampedValue = Math.max(min, Math.min(safeMax, value));
+  const ratio = (clampedValue - min) / (safeMax - min);
+  const rotation = startDeg + ratio * sweepDeg; // Grados de rotacion de la aguja
 
-  // Cálculo del arco de gradiente (dasharray)
-  // Perímetro = 2 * PI * r
+  // Calculo del arco de gradiente (dasharray)
+  // Perimetro = 2 * PI * r
   const circumference = 2 * Math.PI * radiusArc;
-  // Queremos que el arco cubra el 72% del círculo (aprox lo que cubre sweepDeg/360)
   // sweepDeg 260 / 360 ~= 0.722
   const arcLength = circumference * (sweepDeg / 360);
   const gapLength = circumference - arcLength;
 
-  // Generación de ticks (marcas)
+  const polarToXY = (deg, r) => {
+    const rad = (deg * Math.PI) / 180;
+    return {
+      x: center + Math.cos(rad) * r,
+      y: center + Math.sin(rad) * r,
+    };
+  };
+
+  const minPos = polarToXY(startDeg, 84);
+  const maxPos = polarToXY(startDeg + sweepDeg, 84);
+
+  // Generacion de ticks (marcas)
   const tickCount = 13;
   const ticks = useMemo(() => {
     return Array.from({ length: tickCount }).map((_, i) => {
@@ -54,13 +81,13 @@ const TempGauge = ({
           y1={y1}
           x2={x2}
           y2={y2}
-          stroke="rgba(251,146,60,0.95)"
+          stroke={tickColor}
           strokeWidth={i === 0 || i === tickCount - 1 ? 3 : 2}
           strokeLinecap="round"
         />
       );
     });
-  }, [startDeg, sweepDeg, center]);
+  }, [startDeg, sweepDeg, center, tickColor]);
 
   return (
     <div
@@ -69,13 +96,13 @@ const TempGauge = ({
     >
       <svg
         viewBox={`0 0 ${sizeViewBox} ${sizeViewBox}`}
-        className="w-full h-full drop-shadow-[0_10px_25px_rgba(0,0,0,0.35)]"
+        className="w-full h-full"
       >
         <defs>
           <linearGradient id="tempGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="rgba(251,146,60,1)" />
-            <stop offset="70%" stopColor="rgba(249,115,22,1)" />
-            <stop offset="100%" stopColor="rgba(239,68,68,1)" />
+            <stop offset="0%" stopColor={arcStartColor} />
+            <stop offset="70%" stopColor={arcMidColor} />
+            <stop offset="100%" stopColor={arcEndColor} />
           </linearGradient>
         </defs>
 
@@ -115,6 +142,33 @@ const TempGauge = ({
         {/* Ticks group */}
         <g>{ticks}</g>
 
+        {showMinMax && (
+          <>
+            <text
+              x={minPos.x}
+              y={minPos.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill={minMaxColor}
+              fontSize={minMaxFontSize}
+              fontWeight="900"
+            >
+              {min}
+            </text>
+            <text
+              x={maxPos.x}
+              y={maxPos.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fill={minMaxColor}
+              fontSize={minMaxFontSize}
+              fontWeight="700"
+            >
+              {max}
+            </text>
+          </>
+        )}
+
         {/* Aguja y Centro */}
         <g
           className="transition-transform duration-500 ease-out"
@@ -125,7 +179,7 @@ const TempGauge = ({
         >
           <path
             d="M -3 6 L 0 -58 L 3 6 Z"
-            fill="rgba(255,255,255,0.95)"
+            fill={needleColor}
             stroke="rgba(0,0,0,0.15)"
             strokeWidth="1"
             transform={`translate(${center} ${center})`}
@@ -141,23 +195,26 @@ const TempGauge = ({
         </g>
 
         {/* Textos */}
-        <text
-          x={center}
-          y={center - 22}
+        {showLabel && (
+          <text
+          x={center + Number(labelOffsetX || 0)}
+          y={center - 22 + Number(labelOffsetY || 0)}
           textAnchor="middle"
-          fill="rgba(248,113,113,0.95)"
+          fill={labelColor}
           fontSize="14"
           fontWeight="800"
           className="font-sans"
         >
           {label}
         </text>
+        )}
 
-        <text
-          x={center}
-          y={center + 20}
+        {showValue && (
+          <text
+          x={center + Number(valueOffsetX || 0)}
+          y={center + 20 + Number(valueOffsetY || 0)}
           textAnchor="middle"
-          fill="rgba(248,113,113,0.98)"
+          fill={valueColor}
           fontSize="26"
           fontWeight="900"
           className="font-sans"
@@ -165,8 +222,9 @@ const TempGauge = ({
           {Math.round(clampedValue)}
           {unit}
         </text>
+        )}
 
-        {/* Decoración dots */}
+        {/* Decoracion dots */}
         <g transform={`translate(${center} ${center})`}>
           <circle cx="-18" cy="60" r="4.5" fill="rgba(148,163,184,0.35)" />
           <circle cx="0" cy="60" r="4.5" fill="rgba(148,163,184,0.35)" />

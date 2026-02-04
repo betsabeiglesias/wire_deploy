@@ -24,8 +24,6 @@ export default function DraggableBox({
   isReadOnly = false,
   scale = 1,
 }) {
-  if (!data) return null;
-
   // Estado local para Rnd, importado de la rama develop
   const [x, setX] = useState(initialX);
   const [y, setY] = useState(initialY);
@@ -60,6 +58,8 @@ export default function DraggableBox({
     e.stopPropagation();
     onDelete(id);
   };
+
+  if (!data) return null;
 
   const showFrame = data?.settings?.showFrame ?? false;
 
@@ -137,9 +137,8 @@ export default function DraggableBox({
           ? 150
           : 50
       }
-      dragHandleClassName={showFrame ? "box-header" : undefined}
+      dragHandleClassName={showFrame ? "box-header drag-handle" : "drag-handle"}
       resizeHandleClasses={{ bottomRight: "resize-handle-br" }}
-      dragHandleClassName="drag-handle"
       onClick={() => onSelect?.()}
     >
       {!isReadOnly && isSelected && (

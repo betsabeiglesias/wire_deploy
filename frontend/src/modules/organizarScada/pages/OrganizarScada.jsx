@@ -86,10 +86,7 @@ const OrganizarScada = () => {
   const isPropsPanelOpen = showPropsPanel;
   const canvasWidth = "clamp(1100px, 88vw, 1600px)";
   const canvasHeight = "720px";
-  const zoomLabel = useMemo(
-    () => `${Math.round((zoom || 1) * 100)}%`,
-    [zoom],
-  );
+  const zoomLabel = useMemo(() => `${Math.round((zoom || 1) * 100)}%`, [zoom]);
 
   const ZOOM_STEP = 0.1;
   const MIN_ZOOM = 0.3;
@@ -492,22 +489,21 @@ const OrganizarScada = () => {
           />
           {/* Zona central: canvas + propiedades docking */}
           <div className="flex-1 bg-slate-100 overflow-hidden flex flex-col">
-            <div className="px-6 pt-4">
-              <NavbarEditor
-                onZoomIn={handleZoomIn}
-                onZoomOut={handleZoomOut}
-                onResetZoom={handleResetZoom}
-                onFitToScreen={handleFitToScreen}
-                zoomLabel={zoomLabel}
-                onDuplicate={handleDuplicateSelected}
-                onDeleteSelected={handleDeleteSelected}
-                showProps={showPropsPanel}
-                onToggleProps={() => setShowPropsPanel((p) => !p)}
-              />
-            </div>
-
             <div className="flex flex-1 overflow-hidden px-4 pb-4 gap-4">
-              <main className="relative bg-slate-200/50 overflow-hidden flex justify-center items-center p-4 transition-all duration-300 flex-1 rounded-xl border border-slate-200">
+              <main className="relative bg-slate-200/50 overflow-hidden flex-col justify-center items-center p-4 transition-all duration-300 flex-1 rounded-xl border border-slate-200">
+                <div className="px-1 pt-1">
+                  <NavbarEditor
+                    onZoomIn={handleZoomIn}
+                    onZoomOut={handleZoomOut}
+                    onResetZoom={handleResetZoom}
+                    onFitToScreen={handleFitToScreen}
+                    zoomLabel={zoomLabel}
+                    onDuplicate={handleDuplicateSelected}
+                    onDeleteSelected={handleDeleteSelected}
+                    showProps={showPropsPanel}
+                    onToggleProps={() => setShowPropsPanel((p) => !p)}
+                  />
+                </div>
                 <div
                   ref={editorViewportRef}
                   className="relative w-full h-full flex justify-center items-center"
@@ -519,7 +515,9 @@ const OrganizarScada = () => {
                       setSelectedId(id);
                       setIsPropsOpen(true);
                     }}
-                    onUpdate={(id, changes) => handleUpdateComponent(id, changes)}
+                    onUpdate={(id, changes) =>
+                      handleUpdateComponent(id, changes)
+                    }
                     onDelete={handleDeleteComponent}
                     onDrop={(event, canvasEl) =>
                       handleDropFromSidebar(event, canvasEl, zoom, stageSize)
@@ -533,7 +531,10 @@ const OrganizarScada = () => {
                 </div>
               </main>
 
-              {/* Panel de propiedades: dock derecho en desktop, drawer en mobile */}
+             
+            </div>
+          </div>
+           {/* Panel de propiedades: dock derecho en desktop, drawer en mobile */}
               <div
                 className={[
                   "md:static md:w-96 md:translate-x-0 md:translate-y-0 md:opacity-100",
@@ -556,8 +557,6 @@ const OrganizarScada = () => {
                   }
                 />
               </div>
-            </div>
-          </div>
         </div>
       </div>
     </>

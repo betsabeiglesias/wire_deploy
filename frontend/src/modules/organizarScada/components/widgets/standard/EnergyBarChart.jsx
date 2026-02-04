@@ -6,7 +6,7 @@ export default function EnergyBarChart({
 }) {
   return (
     <svg
-      width="auto"
+      width="220"
       height="250"
       viewBox="0 0 400 250"
       xmlns="http://www.w3.org/2000/svg"
@@ -75,17 +75,68 @@ export default function EnergyBarChart({
         strokeWidth="2"
       />
 
-      <rect x="65" y="90" width="35" height="90" fill="url(#barGradient)" rx="2">
-        <animate attributeName="height" from="0" to="90" dur="1s" fill="freeze" />
+      <rect
+        x="65"
+        y="90"
+        width="35"
+        height="90"
+        fill="url(#barGradient)"
+        rx="2"
+      >
+        <animate
+          attributeName="height"
+          from="0"
+          to="90"
+          dur="1s"
+          fill="freeze"
+        />
         <animate attributeName="y" from="180" to="90" dur="1s" fill="freeze" />
       </rect>
-      <rect x="115" y="70" width="35" height="110" fill="url(#barGradient)" rx="2">
-        <animate attributeName="height" from="0" to="110" dur="1.2s" fill="freeze" />
-        <animate attributeName="y" from="180" to="70" dur="1.2s" fill="freeze" />
+      <rect
+        x="115"
+        y="70"
+        width="35"
+        height="110"
+        fill="url(#barGradient)"
+        rx="2"
+      >
+        <animate
+          attributeName="height"
+          from="0"
+          to="110"
+          dur="1.2s"
+          fill="freeze"
+        />
+        <animate
+          attributeName="y"
+          from="180"
+          to="70"
+          dur="1.2s"
+          fill="freeze"
+        />
       </rect>
-      <rect x="165" y="110" width="35" height="70" fill="url(#barGradient)" rx="2">
-        <animate attributeName="height" from="0" to="70" dur="0.8s" fill="freeze" />
-        <animate attributeName="y" from="180" to="110" dur="0.8s" fill="freeze" />
+      <rect
+        x="165"
+        y="110"
+        width="35"
+        height="70"
+        fill="url(#barGradient)"
+        rx="2"
+      >
+        <animate
+          attributeName="height"
+          from="0"
+          to="70"
+          dur="0.8s"
+          fill="freeze"
+        />
+        <animate
+          attributeName="y"
+          from="180"
+          to="110"
+          dur="0.8s"
+          fill="freeze"
+        />
       </rect>
       <rect x="215" y="50" width="35" height="130" fill="#ff7675" rx="2">
         <animate
@@ -95,8 +146,22 @@ export default function EnergyBarChart({
           repeatCount="indefinite"
         />
       </rect>
-      <rect x="265" y="85" width="35" height="95" fill="url(#barGradient)" rx="2" />
-      <rect x="315" y="100" width="35" height="80" fill="url(#barGradient)" rx="2" />
+      <rect
+        x="265"
+        y="85"
+        width="35"
+        height="95"
+        fill="url(#barGradient)"
+        rx="2"
+      />
+      <rect
+        x="315"
+        y="100"
+        width="35"
+        height="80"
+        fill="url(#barGradient)"
+        rx="2"
+      />
 
       <g fontFamily="Arial" fontSize="10" fill="#95a5a6" textAnchor="middle">
         <text x="82.5" y="200">

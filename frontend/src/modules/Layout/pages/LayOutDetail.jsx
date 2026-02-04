@@ -18,8 +18,8 @@ const normalizeElements = (items = []) =>
 
 // Componente para renderizar una vista individual en miniatura (Tarjeta)
 const ViewCard = ({ view, scale = 0.35 }) => {
-  // Asumimos un tamaño base grande para el canvas original, ej. 1300x800
-  // El contenedor "escalado" tendrá ese tamaño, pero transformado.
+  // Asumimos un tamaÃ±o base grande para el canvas original, ej. 1300x800
+  // El contenedor "escalado" tendrÃ¡ ese tamaÃ±o, pero transformado.
   const originalWidth = 1400; // Ancho estimado del canvas original
   const originalHeight = 900; // Alto estimado del canvas original
 
@@ -32,7 +32,7 @@ const ViewCard = ({ view, scale = 0.35 }) => {
         <h3 className="font-semibold text-slate-700 truncate" title={view.name}>
           {view.name || "Vista sin nombre"}
         </h3>
-        {/* Aquí se podrían agregar botones de acción por tarjeta (editar, expandir) */}
+        {/* Aqu?? se podr??an agregar botones de acci??n por tarjeta (editar, expandir) */}
       </div>
 
       <div className="relative flex-grow bg-slate-50/50 w-full overflow-hidden">
@@ -54,7 +54,7 @@ const ViewCard = ({ view, scale = 0.35 }) => {
               initialWidth={item.data?.width || item.width || 150}
               initialHeight={item.data?.height || item.height || 150}
               data={item.data}
-              isReadOnly={true} // Solo visualización en el dashboard
+              isReadOnly={true} // Solo visualizaci??n en el dashboard
               onDragStop={() => {}}
               onResizeStop={() => {}}
               onDelete={() => {}}
@@ -205,7 +205,7 @@ export default function LayOutDetail() {
       {/* Grid de Vistas */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
         {views.map((view) => (
-          <div key={view.id} className="h-full">
+          <div key={view.id} className="h-[560px] w-[560px]">
             <ViewCard view={view} />
           </div>
         ))}

@@ -92,7 +92,7 @@ const OrganizarScada = () => {
   const selectedElement =
     canvasElements.find((el) => el.id === selectedId) || null;
   const isPropsPanelOpen = true;
-  const canvasWidth = "clamp(720px, calc(102vw - 38rem), 1400px)";
+  const canvasWidth = "clamp(720px, calc(102vw - 38rem), 1200px)";
 
   /*
    * Ejecuta la lógica de guardado/publicación al API.

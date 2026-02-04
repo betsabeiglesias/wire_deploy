@@ -46,9 +46,9 @@ const CanvasEditor = ({
 
   const computeAlignmentGuides = (activeNode, rect) => {
     if (!stageRef.current || !rect) return {};
-    const nodes = [
-      ...stageRef.current.querySelectorAll(".node"),
-    ].filter((n) => n !== activeNode);
+    const nodes = [...stageRef.current.querySelectorAll(".node")].filter(
+      (n) => n !== activeNode,
+    );
 
     const ax1 = rect.left;
     const ay1 = rect.top;
@@ -132,17 +132,33 @@ const CanvasEditor = ({
   };
 
   useEffect(() => {
-    if (!stageRef.current || !onStageSize || typeof ResizeObserver === "undefined") return;
-    const updateSize = () =>
-      onStageSize({
-        width: stageRef.current.offsetWidth,
-        height: stageRef.current.offsetHeight,
-      });
-    updateSize();
-    const observer = new ResizeObserver(updateSize);
-    observer.observe(stageRef.current);
-    return () => observer.disconnect();
-  }, [onStageSize, zoom]);
+    // Definimos la función fuera del IF para que siempre exista en el scope del efecto
+    const updateSize = () => {
+      if (stageRef.current && onStageSize) {
+        onStageSize({
+          width: stageRef.current.offsetWidth,
+          height: stageRef.current.offsetHeight,
+        });
+      }
+    };
+
+    // Solo ejecutamos la lógica de suscripción si se cumplen las condiciones
+    // pero NO hacemos un return prematuro del Hook completo.
+    let observer = null;
+
+    if (stageRef.current && onStageSize && typeof ResizeObserver !== "undefined") {
+      updateSize();
+      observer = new ResizeObserver(updateSize);
+      observer.observe(stageRef.current);
+    }
+
+    // La función de limpieza siempre debe devolverse de la misma manera
+    return () => {
+      if (observer) {
+        observer.disconnect();
+      }
+    };
+  }, [onStageSize, zoom]); // Los hooks siempre terminan aquí
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -201,7 +217,7 @@ const CanvasEditor = ({
               onSelect={() => onSelect?.(el.id)}
               onDrag={(id) => {
                 const node = stageRef.current?.querySelector(
-                  `[data-node-id="${id}"]`
+                  `[data-node-id="${id}"]`,
                 );
                 const rect = getNodeRect(node);
                 const align = computeAlignmentGuides(node, rect);
@@ -213,7 +229,8 @@ const CanvasEditor = ({
               }}
               onResize={(id, _e, _dir, ref) => {
                 const node =
-                  ref || stageRef.current?.querySelector(`[data-node-id="${id}"]`);
+                  ref ||
+                  stageRef.current?.querySelector(`[data-node-id="${id}"]`);
                 const rect = getNodeRect(node);
                 const align = computeAlignmentGuides(node, rect);
                 renderGuides(align);
