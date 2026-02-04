@@ -3,36 +3,51 @@ import React from "react";
 export default function EnergyBarChart({
   title = "CONSUMO ENERGÉTICO (kW)",
   valueText = "420 kW",
+  width = 400,
+  height = 250,
+  bgColor = "#1e272e",
+  gridColor = "#2f3640",
+  axisColor = "#57606f",
+  titleColor = "#ecf0f1",
+  valueColor = "#00d2d3",
+  labelColor = "#95a5a6",
+  barGradientFrom = "#00d2d3",
+  barGradientTo = "#0984e3",
+  alertBarColor = "#ff7675",
+  limitColor = "#d63031",
+  showGrid = true,
+  showLimit = true,
+  showTitle = true,
+  showValue = true,
 }) {
   return (
     <svg
-      width="220"
-      height="250"
+      width={width}
+      height={height}
       viewBox="0 0 400 250"
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
         <linearGradient id="barGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style={{ stopColor: "#00d2d3", stopOpacity: 1 }} />
-          <stop
-            offset="100%"
-            style={{ stopColor: "#0984e3", stopOpacity: 1 }}
-          />
+          <stop offset="0%" style={{ stopColor: barGradientFrom, stopOpacity: 1 }} />
+          <stop offset="100%" style={{ stopColor: barGradientTo, stopOpacity: 1 }} />
         </linearGradient>
       </defs>
 
-      <rect x="0" y="0" width="400" height="250" fill="#1e272e" rx="10" />
+      <rect x="0" y="0" width="400" height="250" fill={bgColor} rx="10" />
 
-      <text
-        x="20"
-        y="30"
-        fontFamily="Arial"
-        fontSize="14"
-        fontWeight="bold"
-        fill="#ecf0f1"
-      >
-        {title}
-      </text>
+      {showTitle && (
+        <text
+          x="20"
+          y="30"
+          fontFamily="Arial"
+          fontSize="14"
+          fontWeight="bold"
+          fill={titleColor}
+        >
+          {title}
+        </text>
+      )}
 
       <g fontFamily="Arial" fontSize="10" fill="#95a5a6" textAnchor="end">
         <text x="40" y="60">
@@ -49,31 +64,14 @@ export default function EnergyBarChart({
         </text>
       </g>
 
-      <line x1="50" y1="60" x2="370" y2="60" stroke="#2f3640" strokeWidth="1" />
-      <line
-        x1="50"
-        y1="100"
-        x2="370"
-        y2="100"
-        stroke="#2f3640"
-        strokeWidth="1"
-      />
-      <line
-        x1="50"
-        y1="140"
-        x2="370"
-        y2="140"
-        stroke="#2f3640"
-        strokeWidth="1"
-      />
-      <line
-        x1="50"
-        y1="180"
-        x2="370"
-        y2="180"
-        stroke="#57606f"
-        strokeWidth="2"
-      />
+      {showGrid && (
+        <>
+          <line x1="50" y1="60" x2="370" y2="60" stroke={gridColor} strokeWidth="1" />
+          <line x1="50" y1="100" x2="370" y2="100" stroke={gridColor} strokeWidth="1" />
+          <line x1="50" y1="140" x2="370" y2="140" stroke={gridColor} strokeWidth="1" />
+          <line x1="50" y1="180" x2="370" y2="180" stroke={axisColor} strokeWidth="2" />
+        </>
+      )}
 
       <rect
         x="65"
@@ -138,7 +136,7 @@ export default function EnergyBarChart({
           fill="freeze"
         />
       </rect>
-      <rect x="215" y="50" width="35" height="130" fill="#ff7675" rx="2">
+      <rect x="215" y="50" width="35" height="130" fill={alertBarColor} rx="2">
         <animate
           attributeName="opacity"
           values="1;0.7;1"
@@ -184,38 +182,44 @@ export default function EnergyBarChart({
         </text>
       </g>
 
-      <line
-        x1="50"
-        y1="80"
-        x2="370"
-        y2="80"
-        stroke="#d63031"
-        strokeWidth="2"
-        strokeDasharray="5,3"
-      />
-      <text
-        x="370"
-        y="75"
-        fontFamily="Arial"
-        fontSize="9"
-        fill="#d63031"
-        textAnchor="end"
-        fontWeight="bold"
-      >
-        LÍMITE: 1250 kW
-      </text>
+      {showLimit && (
+        <>
+          <line
+            x1="50"
+            y1="80"
+            x2="370"
+            y2="80"
+            stroke={limitColor}
+            strokeWidth="2"
+            strokeDasharray="5,3"
+          />
+          <text
+            x="370"
+            y="75"
+            fontFamily="Arial"
+            fontSize="9"
+            fill={limitColor}
+            textAnchor="end"
+            fontWeight="bold"
+          >
+            LÍMITE: 1250 kW
+          </text>
+        </>
+      )}
 
-      <text
-        x="380"
-        y="30"
-        fontFamily="Arial"
-        fontSize="20"
-        fontWeight="bold"
-        fill="#00d2d3"
-        textAnchor="end"
-      >
-        {valueText}
-      </text>
+      {showValue && (
+        <text
+          x="380"
+          y="30"
+          fontFamily="Arial"
+          fontSize="20"
+          fontWeight="bold"
+          fill={valueColor}
+          textAnchor="end"
+        >
+          {valueText}
+        </text>
+      )}
     </svg>
   );
 }

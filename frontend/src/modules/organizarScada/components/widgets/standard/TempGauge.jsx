@@ -91,9 +91,12 @@ const TempGauge = ({
 
   return (
     <div
-      className={`relative select-none flex items-center justify-center ${className}`}
-      style={{ width: size, height: size }}
-    >
+  className={`relative select-none flex items-center justify-center ${className}`}
+  style={{ 
+    width: `${size || 220}px`, 
+    height: `${size || 220}px` 
+  }}
+>
       <svg
         viewBox={`0 0 ${sizeViewBox} ${sizeViewBox}`}
         className="w-full h-full"

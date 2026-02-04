@@ -23,7 +23,18 @@ const HmiScadaGauge = ({
   zones = [],
   width = 220,
   height = 220,
+  showValue = true,
+  visible = true,
+  showLabel = true,
+  valueOffsetX = 0,
+  valueOffsetY = 0,
+  unitOffsetX = 0,
+  unitOffsetY = 0,
+  valueColor = "#ffffff",
+  unitColor = "#64748b",
 }) => {
+  if (visible === false) return null;
+
   const size = 200;
   const center = size / 2;
   const startAngle = 150;
@@ -119,28 +130,34 @@ const HmiScadaGauge = ({
         />
       </g>
 
-      <text
-        x={center}
-        y={center + 45}
-        textAnchor="middle"
-        fill="#ffffff"
-        fontSize="22"
-        fontWeight="800"
-        fontFamily="monospace"
-      >
-        {safeValue.toFixed(1)}
-      </text>
-      <text
-        x={center}
-        y={center + 60}
-        textAnchor="middle"
-        fill="#64748b"
-        fontSize="9"
-        fontWeight="700"
-        fontFamily="monospace"
-      >
-        {unit}
-      </text>
+      {showValue && (
+        <>
+          <text
+            x={center + Number(valueOffsetX || 0)}
+            y={center + 45 + Number(valueOffsetY || 0)}
+            textAnchor="middle"
+            fill={valueColor}
+            fontSize="22"
+            fontWeight="800"
+            fontFamily="monospace"
+          >
+            {safeValue.toFixed(1)}
+          </text>
+          {showLabel && (
+            <text
+              x={center + Number(unitOffsetX || 0)}
+              y={center + 60 + Number(unitOffsetY || 0)}
+              textAnchor="middle"
+              fill={unitColor}
+              fontSize="9"
+              fontWeight="700"
+              fontFamily="monospace"
+            >
+              {unit}
+            </text>
+          )}
+        </>
+      )}
     </svg>
   );
 };

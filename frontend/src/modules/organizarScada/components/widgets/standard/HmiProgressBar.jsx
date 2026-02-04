@@ -10,7 +10,19 @@ const HmiProgressBar = ({
   label = "LOREM IPSUM",
   width = 450,
   height = 90,
-  colors = {},
+  trackFill = "#1e2a3e",
+  trackStroke = "#2c6993",
+  gradientFrom = "#3498db",
+  gradientTo = "#2980b9",
+  hatchStroke = "#2c6993",
+  labelColor = "#999",
+  percentColorOverride,
+  showValue = true,
+  showLabel = false,
+  labelOffsetX = 0,
+  labelOffsetY = -12,
+  valueOffsetX = 0,
+  valueOffsetY = 0,
 }) => {
   const safePercent = clampPercent(percent);
   const maxWidth = 350;
@@ -26,14 +38,7 @@ const HmiProgressBar = ({
     return "#ffffff";
   }, [safePercent]);
 
-  const {
-    trackFill = "#1e2a3e",
-    trackStroke = "#2c6993",
-    gradientFrom = "#3498db",
-    gradientTo = "#2980b9",
-    hatchStroke = "#2c6993",
-    labelColor = "#999",
-  } = colors;
+  const textColor = percentColorOverride || percentColor;
 
   const centerX = 175;
   const centerY = 35;
@@ -97,18 +102,35 @@ const HmiProgressBar = ({
         fill={`url(#${hatchId})`}
       />
 
-      <text
-        x={centerX}
-        y={centerY}
-        fill={percentColor}
-        fontSize="28px"
-        fontWeight="700"
-        textAnchor="middle"
-        alignmentBaseline="middle"
-        fontFamily="'Segoe UI', Roboto, Arial, sans-serif"
-      >
-        {Math.round(safePercent)}%
-      </text>
+      {showValue && (
+        <text
+          x={centerX + Number(valueOffsetX || 0)}
+          y={centerY + Number(valueOffsetY || 0)}
+          fill={textColor}
+          fontSize="28px"
+          fontWeight="700"
+          textAnchor="middle"
+          alignmentBaseline="middle"
+          fontFamily="'Segoe UI', Roboto, Arial, sans-serif"
+        >
+          {Math.round(safePercent)}%
+        </text>
+      )}
+
+      {showLabel && (
+        <text
+          x={10 + Number(labelOffsetX || 0)}
+          y={20 + Number(labelOffsetY || 0)}
+          fill={labelColor}
+          fontSize="12px"
+          fontWeight="600"
+          textAnchor="start"
+          alignmentBaseline="middle"
+          fontFamily="'Segoe UI', Roboto, Arial, sans-serif"
+        >
+          {label}
+        </text>
+      )}
     </svg>
   );
 };

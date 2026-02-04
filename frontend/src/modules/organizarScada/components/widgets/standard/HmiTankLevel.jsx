@@ -9,23 +9,31 @@ const HmiTankLevel = ({
   percent = 50,
   width = 150,
   height = 200,
-  colors = {},
+  tankDark = "#1a1f35",
+  tankTop = "#252b45",
+  fluidBase = "#8e44ad",
+  gradientFrom = "#9b59b6",
+  gradientTo = "#8e44ad",
+  topFrom = "#d49cf2",
+  topTo = "#9b59b6",
+  percentColorOverride,
+  showValue = true,
+  valueOffsetX = 0,
+  valueOffsetY = 0,
+  label = "",
+  labelColor = "#e2e8f0",
+  labelOffsetX = 0,
+  labelOffsetY = -6,
+  fontFamily = "Arial, sans-serif",
+  waveEnabled = true,
+  fluidOpacity = 1,
 }) => {
   const safePercent = clampPercent(percent);
   const uid = useId().replace(/:/g, "");
   const tankGradId = `tankGrad-${uid}`;
   const topGradId = `topGrad-${uid}`;
-  const percentColor = safePercent > 80 ? "#ff4d4d" : "#ffffff";
-
-  const {
-    tankDark = "#1a1f35",
-    tankTop = "#252b45",
-    fluidBase = "#8e44ad",
-    gradientFrom = "#9b59b6",
-    gradientTo = "#8e44ad",
-    topFrom = "#d49cf2",
-    topTo = "#9b59b6",
-  } = colors;
+  const percentColor =
+    percentColorOverride || (safePercent > 80 ? "#ff4d4d" : "#ffffff");
 
   const viewBox = "0 0 120 180";
   const maxHeight = 110;
@@ -50,21 +58,37 @@ const HmiTankLevel = ({
         justifyContent: "center",
         gap: 6,
         color: "#fff",
-        fontFamily: "Arial, sans-serif",
+        fontFamily,
         userSelect: "none",
       }}
     >
-      <div
-        style={{
-          fontSize,
-          fontWeight: 700,
-          color: percentColor,
-          textShadow: "0 0 10px rgba(255,255,255,0.5)",
-          lineHeight: 1,
-        }}
-      >
-        {Math.round(safePercent)}%
-      </div>
+      {label && (
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 700,
+            color: labelColor,
+            lineHeight: 1,
+            transform: `translate(${Number(labelOffsetX || 0)}px, ${Number(labelOffsetY || 0)}px)`,
+          }}
+        >
+          {label}
+        </div>
+      )}
+      {showValue && (
+        <div
+          style={{
+            fontSize,
+            fontWeight: 700,
+            color: percentColor,
+            textShadow: "0 0 10px rgba(255,255,255,0.5)",
+            lineHeight: 1,
+            transform: `translate(${Number(valueOffsetX || 0)}px, ${Number(valueOffsetY || 0)}px)`,
+          }}
+        >
+          {Math.round(safePercent)}%
+        </div>
+      )}
       <svg
         width={Math.min(width, 140)}
         height={Math.min(height, 180)}
@@ -104,15 +128,17 @@ const HmiTankLevel = ({
             width="100"
             height={fluidHeight}
             fill={`url(#${tankGradId})`}
+            opacity={fluidOpacity}
           />
-          <ellipse cx="60" cy="150" rx="50" ry="20" fill={fluidBase} />
+          <ellipse cx="60" cy="150" rx="50" ry="20" fill={fluidBase} opacity={fluidOpacity} />
           <ellipse
-            className={`fluid-top-${uid}`}
+            className={waveEnabled ? `fluid-top-${uid}` : undefined}
             cx="60"
             cy={fluidY}
             rx="50"
             ry="20"
             fill={`url(#${topGradId})`}
+            opacity={fluidOpacity}
           />
         </g>
 

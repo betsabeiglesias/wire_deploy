@@ -296,6 +296,22 @@ export const renderWidget = ({
         <EnergyBarChart
           title={settings.title || data.label}
           valueText={settings.valueText || "420 kW"}
+          width={width}
+          height={height}
+          bgColor={settings.bgColor || "#1e272e"}
+          gridColor={settings.gridColor || "#2f3640"}
+          axisColor={settings.axisColor || "#57606f"}
+          titleColor={settings.titleColor || "#ecf0f1"}
+          valueColor={settings.valueColor || "#00d2d3"}
+          labelColor={settings.labelColor || "#95a5a6"}
+          barGradientFrom={settings.barGradientFrom || "#00d2d3"}
+          barGradientTo={settings.barGradientTo || "#0984e3"}
+          alertBarColor={settings.alertBarColor || "#ff7675"}
+          limitColor={settings.limitColor || "#d63031"}
+          showGrid={settings.showGrid !== false}
+          showLimit={settings.showLimit !== false}
+          showTitle={settings.showTitle !== false}
+          showValue={settings.showValue !== false}
         />
       );
     }
@@ -325,6 +341,19 @@ export const renderWidget = ({
           label={settings.caption || data.label || "LOREM IPSUM"}
           width={width}
           height={height}
+          trackFill={settings.trackFill || "#1e2a3e"}
+          trackStroke={settings.trackStroke || "#2c6993"}
+          gradientFrom={settings.gradientFrom || "#3498db"}
+          gradientTo={settings.gradientTo || "#2980b9"}
+          hatchStroke={settings.hatchStroke || "#2c6993"}
+          labelColor={settings.labelColor || "#999"}
+          percentColorOverride={settings.percentColor || undefined}
+          showValue={settings.showValue !== false}
+          showLabel={settings.showLabel === true}
+          labelOffsetX={settings.labelOffsetX || 0}
+          labelOffsetY={settings.labelOffsetY || 0}
+          valueOffsetX={settings.valueOffsetX || 0}
+          valueOffsetY={settings.valueOffsetY || 0}
         />
       );
     }
@@ -340,7 +369,35 @@ export const renderWidget = ({
         parseNumericValue(settings.initialValue) ??
         0;
       const percent = normalizePercent(numericValue, min, max);
-      return <HmiTankLevel percent={percent} width={width} height={height} />;
+      return (
+        <HmiTankLevel
+          percent={percent}
+          width={width}
+          height={height}
+          tankDark={settings.tankDark || "#1a1f35"}
+          tankTop={settings.tankTop || "#252b45"}
+          fluidBase={settings.fluidBase || "#8e44ad"}
+          gradientFrom={settings.gradientFrom || "#9b59b6"}
+          gradientTo={settings.gradientTo || "#8e44ad"}
+          topFrom={settings.topFrom || "#d49cf2"}
+          topTo={settings.topTo || "#9b59b6"}
+          percentColorOverride={settings.percentColor || undefined}
+          showValue={settings.showValue !== false}
+          valueOffsetX={settings.valueOffsetX || 0}
+          valueOffsetY={settings.valueOffsetY || 0}
+          label={settings.label || ""}
+          labelColor={settings.labelColor || "#e2e8f0"}
+          labelOffsetX={settings.labelOffsetX || 0}
+          labelOffsetY={settings.labelOffsetY || -6}
+          fontFamily={settings.fontFamily || "Arial, sans-serif"}
+          waveEnabled={settings.waveEnabled !== false}
+          fluidOpacity={
+            typeof settings.fluidOpacity === "number"
+              ? settings.fluidOpacity
+              : 1
+          }
+        />
+      );
     }
     case "hmi-status-card": {
       const status = settings.status || "ok";
@@ -404,6 +461,15 @@ export const renderWidget = ({
           zones={zones}
           width={width}
           height={height}
+          showValue={settings.showValue !== false}
+          visible={settings.visible !== false}
+          showLabel={settings.showLabel !== false}
+          valueOffsetX={settings.valueOffsetX || 0}
+          valueOffsetY={settings.valueOffsetY || 0}
+          unitOffsetX={settings.unitOffsetX || 0}
+          unitOffsetY={settings.unitOffsetY || 0}
+          valueColor={settings.valueColor || "#ffffff"}
+          unitColor={settings.unitColor || "#64748b"}
         />
       );
     }

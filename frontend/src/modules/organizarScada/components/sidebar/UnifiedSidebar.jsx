@@ -38,8 +38,8 @@ const UnifiedSidebar = ({
       items: [
         { id: "pantallas", label: "Pantallas" },
         { id: "devices", label: "Dispositivos" },
-        { id: "elements", label: "Elements" },
-        { id: "buttons", label: "Buttons & Labels" },
+        { id: "elements", label: "Iconos hmi" },
+        { id: "buttons", label: "Iconos basicos" },
       ],
     },
   ];

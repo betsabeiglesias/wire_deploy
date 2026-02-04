@@ -37,28 +37,28 @@ export const elementos_scada = {
     },
       // },
     // },
-    // {
-    //   id: "tpl-hmi-scada-gauge-thermal",
-    //   title: "SCADA Gauge Thermal",
-    //   thumbnailUrl: gaugeDefaultIcon,
-    //   data: {
-    //     type: "hmi-scada-gauge",
-    //     width: 220,
-    //     height: 220,
-    //     label: "Reactor_Temp_01",
-    //     settings: {
-    //       unit: "CELSIUS",
-    //       min: 0,
-    //       max: 200,
-    //       themeColor: "#f43f5e",
-    //       initialValue: 140,
-    //       zones: [
-    //         { start: 160, end: 200, color: "#f43f5e" },
-    //         { start: 130, end: 160, color: "#f59e0b" },
-    //       ],
-    //     },
-    //   },
-    // },
+    {
+      id: "tpl-hmi-scada-gauge-thermal",
+      title: "SCADA Gauge Thermal",
+      thumbnailUrl: gaugeDefaultIcon,
+      data: {
+        type: "hmi-scada-gauge",
+        width: 220,
+        height: 220,
+        label: "Reactor_Temp_01",
+        settings: {
+          unit: "CELSIUS",
+          min: 0,
+          max: 200,
+          themeColor: "#f43f5e",
+          initialValue: 140,
+          zones: [
+            { start: 160, end: 200, color: "#f43f5e" },
+            { start: 130, end: 160, color: "#f59e0b" },
+          ],
+        },
+      },
+    },
     // {
     //   id: "tpl-hmi-scada-gauge-pressure",
     //   title: "SCADA Gauge Pressure",
