@@ -37,7 +37,6 @@ export const elementos_scada = {
     },
       // },
     // },
-<<<<<<< .mine
     {
       id: "tpl-hmi-scada-gauge-thermal",
       title: "SCADA Gauge Thermal",
@@ -60,78 +59,6 @@ export const elementos_scada = {
         },
       },
     },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-=======
-    {
-      id: "tpl-hmi-scada-gauge-thermal",
-      title: "SCADA Gauge Thermal",
-      thumbnailUrl: gaugeDefaultIcon,
-      data: {
-        type: "hmi-scada-gauge",
-        width: 150,
-        height: 140,
-        label: "Reactor_Temp_01",
-        settings: {
-          unit: "CELSIUS",
-          min: 0,
-          max: 200,
-          themeColor: "#f43f5e",
-          initialValue: 140,
-          zones: [
-            { start: 160, end: 200, color: "#f43f5e" },
-            { start: 130, end: 160, color: "#f59e0b" },
-          ],
-        },
-      },
-    },
-     {
-      id: "tpl-mini-ring",
-      title: "Mini Ring",
-      thumbnailUrl: gaugeDefaultIcon,
-      data: {
-        type: "mini-ring",
-        width: 140,
-        height: 140,
-        label: "Disponibilidad",
-        settings: { minValue: 0, maxValue: 100, initialValue: 72 },
-      },
-    },
-    {
-      id: "tpl-mini-needle",
-      title: "Mini Needle",
-      thumbnailUrl: gaugeDefaultIcon,
-      data: {
-        type: "mini-needle",
-        width: 160,
-        height: 120,
-        label: "RPM",
-        settings: { minValue: 0, maxValue: 100, initialValue: 64, unit: "%" },
-      },
-    },
->>>>>>> .theirs
     // {
     //   id: "tpl-hmi-scada-gauge-pressure",
     //   title: "SCADA Gauge Pressure",
