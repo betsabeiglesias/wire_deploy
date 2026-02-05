@@ -1,11 +1,11 @@
 import React from "react";
 
 const HmiEnergySummaryCard = ({
-  title = "Consumo Medido em Maio 2023",
+  title = "Consumo Energetico 2026",
   value = "1.627.009,26",
   unit = "kWh",
   subtitle = "Electric Energy",
-  deltaText = "Higher than previous month",
+  deltaText = "Alto nivel de consumo en este mes",
   deltaValue = "2%",
   deltaDirection = "up",
   width = 380,

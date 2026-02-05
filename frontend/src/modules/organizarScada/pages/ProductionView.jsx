@@ -10,29 +10,17 @@ import {
   formatNumericValue,
   clampPercent,
 } from "@/modules/scada/utils";
-
 import "@/styles/gateway.css";
-
 import "../../../styles/Scada.css";
-
 import { RingGauge } from "@/modules/scada/components/gauges/RingGauge";
-
 import { MiniHorizontalBar } from "@/modules/scada/components/gauges/MiniHorizontalBar";
-
 import { ValueBubble } from "@/modules/scada/components/gauges/ValueBubble";
-
 import { BooleanLamp } from "@/modules/scada/components/gauges/BooleanLamp";
-
 import { KwShieldGauge } from "@/modules/scada/components/gauges/KwShieldGauge";
-
 import { PressTrendGauge } from "@/modules/scada/components/gauges/PressTrendGauge";
-
 import { BlueDonutGauge } from "@/modules/scada/components/gauges/BlueDonutGauge";
-
 import { NeedleGauge } from "@/modules/scada/components/gauges/NeedleGauge";
-
 import SvgGauge from "../components/widgets/standard/SvgGauge";
-
 import GaugeMeter from "../components/widgets/standard/GaugeMeter";
 import TempGauge from "../components/widgets/standard/TempGauge";
 import EnergyBarChart from "../components/widgets/standard/EnergyBarChart";
@@ -43,6 +31,8 @@ import HmiStatusCard from "../components/widgets/standard/HmiStatusCard";
 import HmiTrendCard from "../components/widgets/standard/HmiTrendCard";
 import HmiScadaGauge from "../components/widgets/standard/HmiScadaGauge";
 import HmiHorizontalGauge from "../components/widgets/standard/HmiHorizontalGauge";
+import HmiEnergySummaryCard from "../components/widgets/standard/HmiEnergySummaryCard";
+import LuxuriesStackedBarChart from "../components/widgets/standard/LuxuriesStackedBarChart";
 
 import HomeButton from "../../../components/HomeButton";
 
@@ -227,11 +217,11 @@ const ProductionView = () => {
 
     const variable =
       settings.variable ||
-      settings.attributeKey ||
-      settings.attributeLabel ||
-      item.data?.label;
+      settings.attributeKey;
+      // settings.attributeLabel ||
+      // item.data?.label;
 
-    const equipment = settings.equipment || item.data?.equipment;
+    // const equipment = settings.equipment || item.data?.equipment;
 
     const site = settings.site;
 
@@ -288,26 +278,15 @@ const ProductionView = () => {
 
     const style = {
       position: "absolute",
-
       left: x,
-
       top: y,
-
       width: w,
-
       height: h,
-
-      backgroundColor: "white",
-
-      boxShadow:
-        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-
-      borderRadius: "0.5rem",
-
-      padding: "1rem",
-
-      overflow: "hidden",
-
+      padding: 0,
+      backgroundColor: "transparent",
+      boxShadow: "none",
+      borderRadius: 0,
+      overflow: "visible",
       zIndex: 10,
     };
 
@@ -352,10 +331,10 @@ const ProductionView = () => {
           );
 
         case "mini-horizontal":
-          return <MiniHorizontalBar percent={percent} label={labelText} />;
+          return <MiniHorizontalBar percent={percent}  />;
 
         case "mini-donut":
-          return <BlueDonutGauge percent={percent} label={labelText} />;
+          return <BlueDonutGauge percent={percent} />;
 
         case "mini-bubble":
           return <ValueBubble value={displayValue} unit={unit} />;
@@ -405,17 +384,40 @@ const ProductionView = () => {
               value={valueToRender}
               min={settings.min ?? 0}
               max={settings.max ?? 120}
-              label={settings.label || label}
+              // label={settings.label || label}
               unit={unit || settings.unit || "°C"}
               size={Math.min(width ?? 0, height ?? 0)}
             />
           );
         }
         case "energy-bar-chart": {
+        }
+        case "luxuries-stacked-bar": {
+          return <LuxuriesStackedBarChart width={width} height={height} />;
+        }
+        case "EnergyBarChart": {
           return (
             <EnergyBarChart
               title={settings.title || label}
               valueText={settings.valueText || "420 kW"}
+            />
+          );
+        }
+        case "temperature-line-chart": {
+
+        }
+        case "hmi-energy-summary":{
+          return (
+            <HmiEnergySummaryCard
+              width={width}
+              height={height}
+              title={settings.title || label || "Consumo"}
+              value={settings.value || "0"}
+              unit={settings.unit || ""}
+              subtitle={settings.subtitle}
+              deltaText={settings.deltaText}
+              deltaValue={settings.deltaValue}
+              deltaDirection={settings.deltaDirection}
             />
           );
         }

@@ -8,6 +8,7 @@ const clampPercent = (value) => {
 const HmiProgressBar = ({
   percent = 0,
   label = "LOREM IPSUM",
+<<<<<<< .mine
   width = 450,
   height = 90,
   trackFill = "#1e2a3e",
@@ -23,6 +24,23 @@ const HmiProgressBar = ({
   labelOffsetY = -12,
   valueOffsetX = 0,
   valueOffsetY = 0,
+=======
+  width = 350,
+  height = 60,
+  trackFill = "#1e2a3e",
+  trackStroke = "#2c6993",
+  gradientFrom = "#3498db",
+  gradientTo = "#2980b9",
+  hatchStroke = "#2c6993",
+  labelColor = "#999",
+  percentColorOverride,
+  showValue = true,
+  showLabel = false,
+  labelOffsetX = 0,
+  labelOffsetY = 0,
+  valueOffsetX = 0,
+  valueOffsetY = 0,
+>>>>>>> .theirs
 }) => {
   const safePercent = clampPercent(percent);
   const maxWidth = 350;
@@ -47,7 +65,7 @@ const HmiProgressBar = ({
     <svg
       width={width}
       height={height}
-      viewBox="0 0 450 90"
+      viewBox="0 0 350 60"
       xmlns="http://www.w3.org/2000/svg"
       style={{ display: "block" }}
     >

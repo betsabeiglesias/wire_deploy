@@ -15,7 +15,7 @@ const sanitizeForSave = (value) =>
 
 const normalizeCanvasElements = (items = []) => {
   const baseId = Date.now();
-  return items.map((item, idx) => ({
+  return (items || []).map((item, idx) => ({
     id: item.id || baseId + idx,
     x: item.x ?? 100,
     y: item.y ?? 100,
@@ -456,7 +456,7 @@ export const useOrganizarScada = () => {
        // (aunque el ref protege, es buena práctica limpiar)
        window.history.replaceState({}, document.title);
     }
-  }, [location.state, loadViewDetail, normalizeCanvasElements]);
+  }, [location.state, loadViewDetail]);
 
   return {
     state: {

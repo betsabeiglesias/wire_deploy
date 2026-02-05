@@ -411,6 +411,7 @@ const UnifiedSidebar = ({
         { id: "barras", label: "Barras", items: elementos_scada.barras || [] },
         { id: "tarjetas", label: "Tarjetas", items: elementos_scada.tarjetas || [] },
         { id: "graficas", label: "Gráficas", items: elementos_scada.graficas || [] },
+        { id: "minis", label: "Mini", items: elementos_scada.minis || [] },
       ];
 
       return (

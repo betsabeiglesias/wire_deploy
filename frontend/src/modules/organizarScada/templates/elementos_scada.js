@@ -37,6 +37,7 @@ export const elementos_scada = {
     },
       // },
     // },
+<<<<<<< .mine
     {
       id: "tpl-hmi-scada-gauge-thermal",
       title: "SCADA Gauge Thermal",
@@ -59,6 +60,78 @@ export const elementos_scada = {
         },
       },
     },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+=======
+    {
+      id: "tpl-hmi-scada-gauge-thermal",
+      title: "SCADA Gauge Thermal",
+      thumbnailUrl: gaugeDefaultIcon,
+      data: {
+        type: "hmi-scada-gauge",
+        width: 150,
+        height: 140,
+        label: "Reactor_Temp_01",
+        settings: {
+          unit: "CELSIUS",
+          min: 0,
+          max: 200,
+          themeColor: "#f43f5e",
+          initialValue: 140,
+          zones: [
+            { start: 160, end: 200, color: "#f43f5e" },
+            { start: 130, end: 160, color: "#f59e0b" },
+          ],
+        },
+      },
+    },
+     {
+      id: "tpl-mini-ring",
+      title: "Mini Ring",
+      thumbnailUrl: gaugeDefaultIcon,
+      data: {
+        type: "mini-ring",
+        width: 140,
+        height: 140,
+        label: "Disponibilidad",
+        settings: { minValue: 0, maxValue: 100, initialValue: 72 },
+      },
+    },
+    {
+      id: "tpl-mini-needle",
+      title: "Mini Needle",
+      thumbnailUrl: gaugeDefaultIcon,
+      data: {
+        type: "mini-needle",
+        width: 160,
+        height: 120,
+        label: "RPM",
+        settings: { minValue: 0, maxValue: 100, initialValue: 64, unit: "%" },
+      },
+    },
+>>>>>>> .theirs
     // {
     //   id: "tpl-hmi-scada-gauge-pressure",
     //   title: "SCADA Gauge Pressure",
@@ -162,8 +235,8 @@ export const elementos_scada = {
       thumbnailUrl: gaugeDefaultIcon,
       data: {
         type: "hmi-progress-bar",
-        width: 450,
-        height: 90,
+        width: 230,
+        height: 60,
         settings: {
           minValue: 0,
           maxValue: 100,
@@ -187,6 +260,18 @@ export const elementos_scada = {
         },
       },
     },
+    {
+      id: "tpl-mini-horizontal",
+      title: "Mini Horizontal",
+      thumbnailUrl: gaugeDefaultIcon,
+      data: {
+        type: "mini-horizontal",
+        width: 160,
+        height: 90,
+        label: "Carga",
+        settings: { minValue: 0, maxValue: 100, initialValue: 55 },
+      },
+    },
   ],
   tarjetas: [
     {
@@ -206,24 +291,36 @@ export const elementos_scada = {
       },
     },
     {
-      id: "tpl-hmi-trend-card",
-      title: "Tarjeta Dashboard",
+      id: "tpl-power-card",
+      title: "Power Card",
       thumbnailUrl: gaugeDefaultIcon,
       data: {
-        type: "hmi-trend-card",
-        width: 400,
-        height: 220,
-        label: "Caudal de Proceso - Cuba 2",
-        settings: {
-          title: "Caudal de Proceso - Cuba 2",
-          unitLabel: "LOREM IPSUM",
-          minValue: 0,
-          maxValue: 10000,
-          initialValue: 5684,
-          series: [110, 115, 108, 120, 130, 125, 140, 135, 150, 145],
-        },
+        type: "power-card",
+        width: 180,
+        height: 120,
+        label: "Potencia",
+        settings: { initialValue: 415, unit: "kW" },
       },
     },
+    // { SE BORRA TEMPORALMENTE PARA REEMPLAZAR POR OTRA TARJETA
+    //   id: "tpl-hmi-trend-card",
+    //   title: "Tarjeta Dashboard",
+    //   thumbnailUrl: gaugeDefaultIcon,
+    //   data: {
+    //     type: "hmi-trend-card",
+    //     width: 400,
+    //     height: 220,
+    //     label: "Caudal de Proceso - Cuba 2",
+    //     settings: {
+    //       title: "Caudal de Proceso - Cuba 2",
+    //       unitLabel: "LOREM IPSUM",
+    //       minValue: 0,
+    //       maxValue: 10000,
+    //       initialValue: 5684,
+    //       series: [110, 115, 108, 120, 130, 125, 140, 135, 150, 145],
+    //     },
+    //   },
+    // },
     {
       id: "tpl-hmi-energy-summary",
       title: "Tarjeta Energy Summary",
@@ -276,5 +373,51 @@ export const elementos_scada = {
         },
       },
     },
+    {
+      id: "tpl-luxuries-stacked-bar",
+      title: "Luxuries Stacked Bar (full)",
+      thumbnailUrl: gaugeDefaultIcon,
+      data: {
+        type: "luxuries-stacked-bar",
+        width: 600,
+        height: 340,
+        label: "Luxuries spend",
+        settings: {},
+      },
+    },
+    
+    {
+      id: "tpl-mini-chart",
+      title: "Mini Trend",
+      thumbnailUrl: gaugeDefaultIcon,
+      data: {
+        type: "mini-chart",
+        width: 220,
+        height: 140,
+        label: "Tendencia",
+        settings: { series: [20, 30, 45, 38, 52, 60, 54] },
+      },
+    },
+  ],
+  minis: [
+   
+   {
+      id: "tpl-mini-table",
+      title: "Mini Table",
+      thumbnailUrl: gaugeDefaultIcon,
+      data: {
+        type: "mini-table",
+        width: 220,
+        height: 160,
+        label: "Histórico",
+        settings: {
+          rows: [
+            { site: "PL1", equipment: "Línea A", variable: "Temp", value: "72.1", timestamp: "2026-02-05T10:00:00Z" },
+            { site: "PL1", equipment: "Línea A", variable: "Temp", value: "71.4", timestamp: "2026-02-05T09:55:00Z" },
+          ],
+        },
+      },
+    },
+    
   ],
 };

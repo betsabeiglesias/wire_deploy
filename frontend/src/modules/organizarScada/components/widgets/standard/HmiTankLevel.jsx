@@ -142,7 +142,22 @@ const HmiTankLevel = ({
           />
         </g>
 
-        <rect x="20" y="40" width="15" height="110" fill="#ffffff" opacity="0.05" />
+        <rect x="20" y="40" width="15" height="110" fill="#000000" opacity="0.05" />
+
+        {showValue && (
+          <text
+            x={60 + Number(valueOffsetX || 0)}
+            y={110 + Number(valueOffsetY || 0)}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontFamily={fontFamily}
+            fontSize={fontSize}
+            fontWeight="700"
+            fill={percentColor}
+          >
+            {Math.round(safePercent)}%
+          </text>
+        )}
       </svg>
     </div>
   );

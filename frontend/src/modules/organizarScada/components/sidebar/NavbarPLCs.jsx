@@ -72,9 +72,9 @@ export default function NavbarPLCs({ toolbar }) {
           <button
             className="px-3 py-1.5 rounded border bg-green-50 text-green-700 hover:bg-green-100 font-medium"
             onClick={toolbar.onPublish}
-            title="Publicar vista"
+            title="Guardar"
           >
-            Publicar
+            Guardar
           </button>
         </div>
       )}

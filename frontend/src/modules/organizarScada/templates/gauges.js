@@ -23,7 +23,7 @@ export const templates = [
       type: "temp-gauge",
       width: 220,
       height: 220,
-      label: "Temperatura",
+      // label: "Temperatura",
       settings: { min: 0, max: 120, unit: "°C" },
     },
   },

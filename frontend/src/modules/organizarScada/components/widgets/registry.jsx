@@ -3,11 +3,13 @@ import TempGauge from "@/modules/organizarScada/components/widgets/standard/Temp
 import GaugeMeter from "@/modules/organizarScada/components/widgets/standard/GaugeMeter";
 import SvgGauge from "@/modules/organizarScada/components/widgets/standard/SvgGauge";
 import EnergyBarChart from "@/modules/organizarScada/components/widgets/standard/EnergyBarChart";
+import LuxuriesStackedBarChart from "@/modules/organizarScada/components/widgets/standard/LuxuriesStackedBarChart";
 import TemperatureLineChart from "@/modules/organizarScada/components/widgets/standard/TemperatureLineChart";
 import HmiProgressBar from "@/modules/organizarScada/components/widgets/standard/HmiProgressBar";
 import HmiTankLevel from "@/modules/organizarScada/components/widgets/standard/HmiTankLevel";
 import HmiStatusCard from "@/modules/organizarScada/components/widgets/standard/HmiStatusCard";
 import HmiTrendCard from "@/modules/organizarScada/components/widgets/standard/HmiTrendCard";
+import SvgShape from "@/modules/organizarScada/components/widgets/standard/SvgShape";
 import HmiScadaGauge from "@/modules/organizarScada/components/widgets/standard/HmiScadaGauge";
 import HmiHorizontalGauge from "@/modules/organizarScada/components/widgets/standard/HmiHorizontalGauge";
 import HmiEnergySummaryCard from "@/modules/organizarScada/components/widgets/standard/HmiEnergySummaryCard";

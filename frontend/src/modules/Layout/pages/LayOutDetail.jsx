@@ -17,7 +17,7 @@ const normalizeElements = (items = []) =>
   }));
 
 // Componente para renderizar una vista individual en miniatura (Tarjeta)
-const ViewCard = ({ view, scale = 0.35 }) => {
+const ViewCard = ({ view, scale = 0.48 }) => {
   // Asumimos un tamaÃ±o base grande para el canvas original, ej. 1300x800
   // El contenedor "escalado" tendrÃ¡ ese tamaÃ±o, pero transformado.
   const originalWidth = 1400; // Ancho estimado del canvas original
@@ -203,9 +203,9 @@ export default function LayOutDetail() {
       )}
 
       {/* Grid de Vistas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+      <div className="flex flex-wrap justify-center grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
         {views.map((view) => (
-          <div key={view.id} className="h-[560px] w-[560px]">
+          <div key={view.id} className="h-[400px] w-[575px]">
             <ViewCard view={view} />
           </div>
         ))}
