@@ -19,6 +19,7 @@ urlpatterns = [
 
     # ─── APPS DE DOMINIO ────────────────────────────────────
     path('api/scada-manager/', include('scada_manager.urls')),
+    path('api/map/', include('map_manager.urls')),
 
     # Path para la configuración de los PLC
     path("api/config/", include("industrial_config_manager.urls")),

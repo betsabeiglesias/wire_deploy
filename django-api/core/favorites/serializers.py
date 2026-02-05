@@ -6,7 +6,7 @@ from .models import Favorite
 CONTENT_TYPE_MAP = {
     "mypowerbi": ("powerbi_manager", "mypowerbi"),
     "mylayout": ("scada_manager", "mylayoutstitle"),
-    "location": ("scada_manager", "location"),
+    "location": ("map_manager", "location"),
 }
 
 class FavoriteSerializer(serializers.ModelSerializer):
