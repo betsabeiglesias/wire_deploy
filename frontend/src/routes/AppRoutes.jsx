@@ -1,6 +1,7 @@
-import { Routes, Route } from "react-router-dom";
-import ProtectedRoute from "./ProtectedRoute";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useAuthStore } from "@/store/useAuthStore";
 
+// --- COMPONENTES ---
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
@@ -8,8 +9,6 @@ import OrganizarScada from "@/modules/organizarScada/pages/OrganizarScada";
 import ProductionView from "@/modules/organizarScada/pages/ProductionView";
 import Map from "@/modules/maps/pages/map";
 import Communications from "@/modules/scada/pages/Communications";
-
-// --- CONFIGURACIÓN PLC'S
 import DevicesPage from "@/modules/scada/pages/DevicesPage";
 import CreateDevicePage from "@/modules/scada/pages/CreateDevicePage";
 import Snap7ConfigPage from "@/modules/scada/pages/Snap7ConfigPage";
@@ -21,36 +20,46 @@ import EditOPCUAConfigPage from "@/modules/scada/pages/EditOPCUAConfigPage";
 import EditModbusTCPConfigPage from "@/modules/scada/pages/EditModbusTCPConfigPage";
 import PLCTagsPage from "@/modules/scada/pages/TagsPLCPage";
 import CreateTagPage from "@/modules/scada/pages/CreateEditTagPage";
-
 import Sitio1 from "@/modules/maps/pages/Sitio1";
 import Sitio2 from "@/modules/maps/pages/Sitio2";
 import Sitio3 from "@/modules/maps/pages/Sitio3";
 import Sitio4 from "@/modules/maps/pages/Sitio4";
-
 import UserPage from "@/pages/UserPage";
 import SavedPage from "@/pages/SavedPage";
 import SettingsPage from "@/pages/SettingsPage";
-
-// import TaskExample from "../pages/TaskExample";
 import Layout from "../modules/Layout/pages/Layout";
 import LayOutDetail from "../modules/Layout/pages/LayOutDetail";
 import PowerBiView from "../modules/powerBI/pages/PowerBiView";
 import PowerBiAll from "../modules/powerBI/pages/PowerBiAll";
 import HmiPage from "../modules/hmi/pages/HmiPage";
 
+// --- SUB-COMPONENTE PROTECTED ROUTE ---
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuthStore();
+  const location = useLocation();
+
+  if (loading) return null;
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+};
+
+// --- RUTAS PRINCIPALES ---
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* LOGIN */}
+      {/* PÚBLICO */}
       <Route path="/login" element={<Login />} />
       
-      {/* RUTAS PROTEGIDAS */}
+      {/* PROTEGIDO */}
       <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
       <Route path="/hmi" element={<ProtectedRoute><HmiPage /></ProtectedRoute>} />
       <Route path="/organizar-scada" element={<ProtectedRoute><OrganizarScada /></ProtectedRoute>} />
       <Route path="/map" element={<ProtectedRoute><Map /></ProtectedRoute>} />
       
-      {/* DEVICES */}
       <Route path="/scada" element={<ProtectedRoute><Communications /></ProtectedRoute>} />
       <Route path="/devices" element={<ProtectedRoute><DevicesPage /></ProtectedRoute>} />
       <Route path="/devices/new" element={<ProtectedRoute><CreateDevicePage /></ProtectedRoute>} />
@@ -68,26 +77,20 @@ export default function AppRoutes() {
       <Route path="/powerbi-view" element={<ProtectedRoute><PowerBiView /></ProtectedRoute>} />
       <Route path="/powerbi-all" element={<ProtectedRoute><PowerBiAll /></ProtectedRoute>} />
 
-      {/* SITIOS ESTÁTICOS */}
       <Route path="/sitio-uno" element={<ProtectedRoute><Sitio1 /></ProtectedRoute>} />
       <Route path="/sitio-dos" element={<ProtectedRoute><Sitio2 /></ProtectedRoute>} />
       <Route path="/sitio-tres" element={<ProtectedRoute><Sitio3 /></ProtectedRoute>} />
       <Route path="/sitio-cuatro" element={<ProtectedRoute><Sitio4 /></ProtectedRoute>} />
 
-      {/* RUTAS SIDEBAR */}
       <Route path="/user" element={<ProtectedRoute><UserPage /></ProtectedRoute>} />
       <Route path="/saved" element={<ProtectedRoute><SavedPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-      {/* <Route path="/task-project" element={<ProtectedRoute><TaskExample /></ProtectedRoute>} /> */}
 
-      {/* LAYOUT Y PRODUCCIÓN */}
       <Route path="/scada/production/:id" element={<ProtectedRoute><ProductionView /></ProtectedRoute>} />
       <Route path="/layout" element={<ProtectedRoute><Layout /></ProtectedRoute>} />
       <Route path="/layout/:id" element={<ProtectedRoute><LayOutDetail /></ProtectedRoute>} />
 
-      {/* 404 */}
       <Route path="*" element={<NotFound />} /> 
-
     </Routes>
   );
 }
