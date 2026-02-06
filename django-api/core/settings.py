@@ -20,10 +20,10 @@ INSTALLED_APPS = [
     'industrial_config_manager',
     'scada_manager',
     'management',
-    'rawdata',
     'powerbi_manager',
     'core.favorites',
     'core.auth_manager',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -89,8 +89,9 @@ SIMPLE_JWT = {
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "AUTH_COOKIE": "access_token",
-    "AUTH_COOKIE_HTTP_ONLY": True,
-    "AUTH_COOKIE_SECURE": False, # False para HTTP (desarrollo)
+    "AUTH_COOKIE_REFRESH": "refresh_token",
+    "AUTH_COOKIE_HTTP_ONLY": True, 
+    "AUTH_COOKIE_SECURE": False, # False para HTTP (desarrollo) RETOMAR
     "AUTH_COOKIE_SAMESITE": "Lax",
 }
 
@@ -102,10 +103,25 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CSRF_TRUSTED_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
-# Evitar bloqueos de sesión en desarrollo
-SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+
+SESSION_COOKIE_SECURE = False   # en local RETOMAR
+CSRF_COOKIE_SECURE = False
+
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+ASGI_APPLICATION = "core.asgi.application"
+
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(os.getenv("REDIS_HOST", "redis"), int(os.getenv("REDIS_PORT", 6379)))],
+        },
+    },
+}

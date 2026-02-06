@@ -1,6 +1,6 @@
 // SidebarPropiedades.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useGatewayData } from "@/hooks/useGatewayData";
+import { useRealtimeData } from "@/hooks/useRealtimeData";
 
 const SidebarPropiedades = ({
   isOpen = true,
@@ -23,7 +23,7 @@ const SidebarPropiedades = ({
   onExportNameChange,
 }) => {
   const [activeTab, setActiveTab] = useState("views");
-  const { allTags } = useGatewayData();
+  const { allTags } = useRealtimeData();
 
   // Cambia autom·ticamente la pestaÒa seg˙n haya elemento seleccionado
   useEffect(() => {

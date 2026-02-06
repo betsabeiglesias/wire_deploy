@@ -1,0 +1,121 @@
+services:
+  gateway:
+    build: ../../edge/gateway
+    container_name: gateway_customerA
+    env_file:
+      - ./customerA.env
+    environment:
+      - TZ=Europe/Madrid
+      - GATEWAY_CONFIG=/opt/suite/config/gateway.yaml
+    volumes:
+      - ./opt/suite/config:/opt/suite/config:ro
+    restart: unless-stopped
+    networks:
+      - suite-central-net
+
+  writer-mssql:
+    build: ../../edge/writer_mssql
+    container_name: writer_customerA
+    env_file:
+      - ./customerA.env
+    depends_on:
+      - mosquitto
+      - sqlserver
+    restart: unless-stopped
+    networks:
+      - suite-central-net
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver_customerA
+    env_file:
+      - ./customerA.env
+    ports:
+      - "1433:1433"   # solo en dev
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - suite-central-net
+
+  # ---------- MOSQUITTO ----------
+  mosquitto:
+    image: eclipse-mosquitto:2.0.18
+    container_name: mosquitto
+    ports:
+      - "127.0.0.1:1884:1883"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - ./mosquitto:/mosquitto
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    networks:
+      - suite-central-net
+
+  redis:
+    image: redis:7
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - suite-central-net
+
+  mqtt_bridge:
+    build:
+      context: ../../edge/core_backend
+    command: python -m mqtt_bridge.run
+    env_file:
+      - ./customerA.env
+    depends_on:
+      - mosquitto
+      - redis
+    restart: unless-stopped
+    networks:
+      - suite-central-net
+
+  redis_realtime_consumer:
+    build:
+      context: ../../edge/core_backend
+    container_name: redis_realtime_consumerA
+    command: python -m realtime.run
+    env_file:
+      - ./customerA.env
+    depends_on:
+      - redis
+      - core-backend
+    restart: unless-stopped
+    networks:
+      - suite-central-net
+
+  core-backend:
+    build:
+      context: ../../edge/core_backend
+    container_name: core-backendA
+    volumes:
+      - ../../edge/core_backend:/app
+      - ../opt/suite/config:/opt/suite/config
+    env_file:
+      - ./customerA.env
+    environment:
+      - DJANGO_SETTINGS_MODULE=core.settings
+      - PYTHONUNBUFFERED=1
+      - TZ=Europe/Madrid
+    ports:
+      - "8001:8000"   # 🔥 OJO: puerto distinto al central
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - suite-central-net
+
+networks:
+  suite-central-net:
+    external: true
+    name: suite-central-net
+
+
+volumes:
+  sqlserver_data:
+  mosquitto_data:
+  mosquitto_log:
+

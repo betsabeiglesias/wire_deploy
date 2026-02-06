@@ -1,7 +1,6 @@
 // frontend/src/modules/scada/pages/Communications.jsx
 
 import "@/styles/gateway.css";
-import { useGatewayData } from "@/hooks/useGatewayData";
 import { useState, useMemo } from "react";
 import { parseNumericValue, formatNumericValue, clampPercent } from "../utils";
 
@@ -21,8 +20,11 @@ import { GatewayTable } from "../components/GatewayTable";
 import HomeButton from "../../../components/HomeButton";
 import ConfigurarComunicacionesButton from "../components/ConfigurarComunicacionesButton";
 
+import { useRealtime } from "@/realtime/RealtimeProvider";
+
 export default function Communications() {
-  const { connected, dataStale, allTags } = useGatewayData();
+  
+  const { connected, dataStale, allTags } = useRealtime();
 
   // ✔ Cambiado: ahora usamos equipment_id
   const [filters, setFilters] = useState({ 

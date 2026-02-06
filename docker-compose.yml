@@ -1,36 +1,4 @@
 services:
-
-  mosquitto:
-    image: eclipse-mosquitto:2.0.18
-    container_name: wire-deploy-mosquitto
-    ports:
-      - "127.0.0.1:1884:1883"
-      - "127.0.0.1:9001:9001"
-    volumes:
-      - ./mosquitto/config:/mosquitto/config
-      - mosquitto_data:/mosquitto/data
-      - mosquitto_log:/mosquitto/log
-    networks:
-      - suite-central-net
-
-
-  # influxdb:
-  #   image: influxdb:2.7
-  #   container_name: wire-deploy-influxdb
-  #   ports:
-  #     - "8086:8086"
-  #   environment:
-  #     DOCKER_INFLUXDB_INIT_MODE: setup
-  #     DOCKER_INFLUXDB_INIT_USERNAME: admin
-  #     DOCKER_INFLUXDB_INIT_PASSWORD: admin1234
-  #     DOCKER_INFLUXDB_INIT_ORG: acme
-  #     DOCKER_INFLUXDB_INIT_BUCKET: scada
-  #   volumes:
-  #     - influxdb_data:/var/lib/influxdb2
-  #   networks:
-  #     - suite-central-net
-
-
   postgres:
     image: postgres:16
     container_name: wire-deploy-postgres
@@ -49,30 +17,52 @@ services:
 
   # ---------- BACKEND CORE ----------
   django-api:
-    build: ./django-api
-    container_name: wire-deploy-django-api
-    volumes:
-      - ./django-api:/app
-      - ./opt/suite/config:/opt/suite/config
-      - /var/run/docker.sock:/var/run/docker.sock
-    env_file:
-      - ./.env
-    environment:
-      DJANGO_SETTINGS_MODULE: core.settings
-      PYTHONUNBUFFERED: "1"
-      TZ: Europe/Madrid
-      POSTGRES_HOST: postgres
-      POSTGRES_DB: industry4_v2
-      POSTGRES_USER: django
-      POSTGRES_PASSWORD: django1234
-      DOCKER_HOST: unix:///var/run/docker.sock
-      INFLUX_URL: http://influxdb:8086
+      build:
+        context: ./django-api
+      container_name: django-api
+      volumes:
+        - ./django-api:/app
+        - ./opt/suite/config:/opt/suite/config
+        - /var/run/docker.sock:/var/run/docker.sock
+      env_file:
+        - .env
+      environment:
+        - DJANGO_SETTINGS_MODULE=core.settings
+        - PYTHONUNBUFFERED=1
+        - TZ=Europe/Madrid
+
+        # Postgres
+        - POSTGRES_HOST=postgres
+        - POSTGRES_DB=industry4_v2
+        - POSTGRES_USER=django
+        - POSTGRES_PASSWORD=django1234
+
+        # Docker
+        - DOCKER_HOST=unix:///var/run/docker.sock
+
+      ports:
+        - "8000:8000"
+      depends_on:
+        - postgres
+      command: python manage.py runserver 0.0.0.0:8000
+      networks:
+        - suite-central-net
+
+  django-ws:
+    build:
+      context: ./django-api
+    container_name: django-ws
+    command: daphne -b 0.0.0.0 -p 8002 core.asgi:application
     ports:
-      - "8000:8000"
+      - "8002:8002"
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=core.settings
+      - PYTHONUNBUFFERED=1
+      - TZ=Europe/Madrid
     depends_on:
       - postgres
-      - mosquitto
-    command: python manage.py runserver 0.0.0.0:8000
     networks:
       - suite-central-net
 
@@ -94,14 +84,29 @@ services:
     networks:
       - suite-central-net
 
-
+  redis-to-ws:
+    build:
+      context: ./django-api
+    container_name: redis-to-ws
+    command: python manage.py redis_to_websocket --tenants=customerA
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=core.settings
+      - PYTHONUNBUFFERED=1
+      - REDIS_HOST=host.docker.internal
+      - REDIS_PORT=6379
+      - TENANTS=customerA
+    networks:
+      - suite-central-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      
+# ---------- VOLUMES ----------
 volumes:
-  mosquitto_data:
-  mosquitto_log:
-  influxdb_data:
   postgres_data_v2:
 
-
+# ---------- NETWORKS ----------
 networks:
   suite-central-net:
     driver: bridge

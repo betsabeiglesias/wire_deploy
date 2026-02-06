@@ -1,6 +1,6 @@
 // UnifiedSidebar.jsx
 import React, { useMemo, useState } from "react";
-import { useGatewayData } from "@/hooks/useGatewayData";
+import { useRealtimeData } from "@/hooks/useRealtimeData";
 import { templates } from "../utils/gauges";
 import { buttons_labels_items} from "../utils/items";
 
@@ -25,7 +25,7 @@ const UnifiedSidebar = ({
   const [isMainOpen, setIsMainOpen] = useState(true);
   const [activeSection, setActiveSection] = useState("views");
 
-  const { allTags } = useGatewayData();
+  const { allTags } = useRealtimeData();
   const [selectedSite, setSelectedSite] = useState("");
   const [selectedArea, setSelectedArea] = useState("");
   const [expandedLines, setExpandedLines] = useState({});

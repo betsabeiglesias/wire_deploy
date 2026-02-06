@@ -1,0 +1,58 @@
+# Conexión S7 le decimos qué leer y cómo leer
+driver: "snap7"
+ip: "10.100.100.200"     # ← pon la IP real del PLC
+rack: 0                # S7-300/400: normalmente 0; S7-1200/1500: suele ser 0
+slot: 1                # S7-300: CPU a menudo en slot 2; S7-1200/1500: normalmente 1
+timeout_ms: 2000       # opcional
+pdu_size: 960          # opcional, si lo necesitas
+watchdog:
+  max_emit_age_sec: 10
+timeouts_sec:
+  no_emit: 10  
+
+
+# Identidad lógica (CDC)
+equipment_id: "Line1/SiteAlberto/PLC_S7"
+
+# Política de lectura
+mode: "polling"
+# poll_ms: 500           # lee cíclicamente cada 500 ms (para el probe continuo)
+# batch_by_db: true      # agrupa lecturas por DB para eficiencia
+
+# Items: DB absolutos (no optimizados)
+items:
+  # # DB<numero>.DB<tipo><offset>
+  - address: "DB1.DBW0"
+    variable: "status_code"
+    datatype: "Int16"
+    unit: "-"
+
+  - address: "DB1.DBD2"
+    variable: "temperature"
+    datatype: "Float"
+    unit: "°C"
+
+  - address: "DB1.DBB7"
+    variable: "un_char"
+    datatype: "Char"
+    unit: "-"
+
+  - address: "DB1.DBX18.0"
+    variable: "Primera_posicion_array"
+    datatype: "Boolean"
+    unit: "-"
+
+  - address: "DB1.DBX18.1"
+    variable: "Segunda_posicion_array"
+    datatype: "Boolean"
+    unit: "-"
+
+  - address: "DB1.DBX18.2"
+    variable: "Tercera_posicion_array"
+    datatype: "Boolean"
+    unit: "-"
+
+  - address: "DB1.DBD22"
+    variable: "Temperatura_otra"
+    datatype: "Float"
+    unit: "°C"

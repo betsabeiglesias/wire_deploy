@@ -21,6 +21,7 @@ urlpatterns = [
     path('api/logout/', logout_view, name='logout'),
     path('api/auth/check/', token_health_check, name='token-health-check'),
     path("api/me/", current_user, name="current-user"),
+    path("api/realtime/", include("realtime.urls")),
 
     # ─── APPS DE DOMINIO ────────────────────────────────────
     path('api/scada-manager/', include('scada_manager.urls')),
@@ -28,9 +29,6 @@ urlpatterns = [
     # Path para la configuración de los PLC
     path("api/config/", include("industrial_config_manager.urls")),
     path('api/management/', include('management.urls')),
-
-    # Path raw data API
-    path('api/raw-data/', include('rawdata.urls')),
 
     path('api/powerbi-manager/', include('powerbi_manager.urls')),
 

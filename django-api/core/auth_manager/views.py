@@ -16,6 +16,7 @@ from core.auth_manager.permissions import IsAuthenticatedAndActive
 # 1. VISTA DE LOGIN (MULTITENANT + JWT EN COOKIES)
 class LoginView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = [] 
 
     def post(self, request):
         username = request.data.get('username')

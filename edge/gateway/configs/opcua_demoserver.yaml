@@ -1,0 +1,66 @@
+# ===== OPC UA Gateway Mapping =====
+driver: "opcua"
+
+connection:
+  endpoint: "opc.tcp://127.0.0.1:4840/freeopcua/server/"
+  # endpoint: "opc.tcp://host.docker.internal:127.0.0.1:4840/freeopcua/server/"
+  namespace_uri: "http://ebw-simulator.local"
+  # seguridad opcional
+  security_mode: "None"
+  security_policy: "None"
+  timeouts_ms:
+    connect: 5000
+    session: 10000
+  reconnect:
+    enable: true
+    min_delay_ms: 1000
+    max_delay_ms: 10000
+  # (opcional) Healthcheck explícito de sesión: ServerStatus.CurrentTime (i=2258)
+  # healthcheck:
+  #   node_id: "i=2258"
+  #   interval_ms: 10000
+  #   timeout_ms: 2000
+
+equipment_id: "DemoLab/Bench/EBW_SIM"
+
+# Suscripción (modo data change)
+subscription:
+  publishing_interval_ms: 500
+  sampling_interval_ms: 200
+  queue_size: 10
+  discard_oldest: true
+  # # --- supervisor de silencio ---
+  # watchdog_ms: 180000        # 3 minutos → no “recuperar” por quietud normal
+  # debounce_ms: 5000          # evita recuperar en ráfaga tras un pico puntual
+
+# Política común
+defaults:
+  quality_on_bad: "drop"
+  deadband:
+    type: "none"
+    value: 0
+  on_change_only: false       # déjalo en false si quieres ver periódicos “keep alive” impresos
+
+# ===== Señales a leer =====
+items:
+  # --- Variable booleana principal (PLC_E0_3) ---
+  - name: "PLC_E0_3"
+    addressing:
+      node_id: "ns=2;s=Node_test_01"
+    datatype: "Boolean"
+    cdc:
+      tag: "process/state_ok"
+      unit: "-"
+      description: "Variable de estado principal simulada"
+    overrides:
+      sampling_interval_ms: 200
+
+  # --- Variable booleana secundaria (PLC_E0_4) ---
+  - name: "PLC_E0_4"
+    addressing:
+      node_id: "ns=2;s=Node_test_02"
+    datatype: "Boolean"
+    cdc:
+      tag: "process/aux_ok"
+      unit: "-"
+      description: "Variable auxiliar simulada"

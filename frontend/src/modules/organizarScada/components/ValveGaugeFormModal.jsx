@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { useGatewayData } from "@/hooks/useGatewayData";
+import { useRealtimeData } from "@/hooks/useRealtimeData";
 
 const ValveGaugeFormModal = ({ component, userId, onClose, onSave }) => {
-    const { allTags } = useGatewayData();
+    const { allTags } = useRealtimeData();
 
     const [site, setSite] = useState('');
     const [area, setArea] = useState('');

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useGatewayData } from "@/hooks/useGatewayData";
+import { useRealtimeData } from "@/hooks/useRealtimeData";
 import api from "../../../services/api";
 
 import {
@@ -30,7 +30,7 @@ const PUBLISHED_VIEWS_KEY = "publishedScadaViews";
 const ProductionView = () => {
   const { id: routeViewId } = useParams();
   const navigate = useNavigate();
-  const { allTags, connected } = useGatewayData();
+  const { allTags, connected } = useRealtimeData();
 
   const [layout, setLayout] = useState([]);
   const [activeViewId, setActiveViewId] = useState(null);
