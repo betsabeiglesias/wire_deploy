@@ -27,7 +27,7 @@ export function useRealtimeData(tenant) {
         console.log("🔌 Conectando WS");
 
         ws = new WebSocket(
-          `ws://localhost:8002/ws/realtime/${tenant}/?token=${token}`
+          `ws://localhost:8002/ws/realtime/?token=${token}`
         );
 
         wsRef.current = ws;

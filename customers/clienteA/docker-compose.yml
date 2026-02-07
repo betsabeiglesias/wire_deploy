@@ -40,7 +40,7 @@ services:
   # ---------- MOSQUITTO ----------
   mosquitto:
     image: eclipse-mosquitto:2.0.18
-    container_name: mosquitto
+    container_name:  mosquitto_customerA
     ports:
       - "127.0.0.1:1884:1883"
       - "127.0.0.1:9001:9001"
@@ -53,16 +53,16 @@ services:
 
   redis:
     image: redis:7
-    container_name: redis
+    container_name: redis_customerA
     restart: unless-stopped
-    ports:
-      - "6379:6379"
+ 
     networks:
       - suite-central-net
 
   mqtt_bridge:
     build:
       context: ../../edge/core_backend
+    container_name: mqtt_bridge_customerA
     command: python -m mqtt_bridge.run
     env_file:
       - ./customerA.env
@@ -73,16 +73,25 @@ services:
     networks:
       - suite-central-net
 
-  redis_realtime_consumer:
+  redis-bridge:
     build:
       context: ../../edge/core_backend
-    container_name: redis_realtime_consumerA
-    command: python -m realtime.run
+    container_name: redis_bridge_customerA
+    command: python -m realtime.redis_bridge
     env_file:
       - ./customerA.env
+    environment:
+      - LOCAL_REDIS_HOST=redis_customerA
+      - LOCAL_REDIS_PORT=6379
+
+      # 🔥 Redis CENTRAL (no local)
+      - CENTRAL_REDIS_HOST=redis-central
+      - CENTRAL_REDIS_PORT=6379
+
+      # Identidad del cliente
+      - TENANT_ID=customerA
     depends_on:
       - redis
-      - core-backend
     restart: unless-stopped
     networks:
       - suite-central-net

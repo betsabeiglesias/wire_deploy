@@ -1,4 +1,5 @@
 services:
+  # ---------- DATABASE ----------
   postgres:
     image: postgres:16
     container_name: wire-deploy-postgres
@@ -14,40 +15,67 @@ services:
     networks:
       - suite-central-net
 
+  # ---------- REDIS CENTRAL ----------
+  redis-central:
+    image: redis:7
+    container_name: redis-central
+    restart: unless-stopped
+    volumes:
+      - redis_central_data:/data
+    networks:
+      - suite-central-net
 
-  # ---------- BACKEND CORE ----------
+  redis-stream-consumer:
+    build:
+      context: ./django-api
+    command: python -m realtime.redis_stream_consumer
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=redis-central
+      - REDIS_PORT=6379
+      - DJANGO_SETTINGS_MODULE=core.settings
+    depends_on:
+      - redis-central
+    networks:
+      - suite-central-net
+
+  # ---------- BACKEND CORE (HTTP) ----------
   django-api:
-      build:
-        context: ./django-api
-      container_name: django-api
-      volumes:
-        - ./django-api:/app
-        - ./opt/suite/config:/opt/suite/config
-        - /var/run/docker.sock:/var/run/docker.sock
-      env_file:
-        - .env
-      environment:
-        - DJANGO_SETTINGS_MODULE=core.settings
-        - PYTHONUNBUFFERED=1
-        - TZ=Europe/Madrid
+    build:
+      context: ./django-api
+    container_name: django-api
+    volumes:
+      - ./django-api:/app
+      - ./opt/suite/config:/opt/suite/config
+      - /var/run/docker.sock:/var/run/docker.sock
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=core.settings
+      - PYTHONUNBUFFERED=1
+      - TZ=Europe/Madrid
 
-        # Postgres
-        - POSTGRES_HOST=postgres
-        - POSTGRES_DB=industry4_v2
-        - POSTGRES_USER=django
-        - POSTGRES_PASSWORD=django1234
+      # Postgres
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=industry4_v2
+      - POSTGRES_USER=django
+      - POSTGRES_PASSWORD=django1234
 
-        # Docker
-        - DOCKER_HOST=unix:///var/run/docker.sock
+      # Redis CENTRAL
+      - REDIS_HOST=redis-central
+      - REDIS_PORT=6379
 
-      ports:
-        - "8000:8000"
-      depends_on:
-        - postgres
-      command: python manage.py runserver 0.0.0.0:8000
-      networks:
-        - suite-central-net
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis-central
+    command: python manage.py runserver 0.0.0.0:8000
+    networks:
+      - suite-central-net
 
+  # ---------- BACKEND CORE (WEBSOCKET) ----------
   django-ws:
     build:
       context: ./django-api
@@ -61,11 +89,16 @@ services:
       - DJANGO_SETTINGS_MODULE=core.settings
       - PYTHONUNBUFFERED=1
       - TZ=Europe/Madrid
+
+      # Redis CENTRAL
+      - REDIS_HOST=redis-central
+      - REDIS_PORT=6379
+
     depends_on:
       - postgres
+      - redis-central
     networks:
       - suite-central-net
-
 
   # ---------- FRONTEND ----------
   frontend:
@@ -84,27 +117,10 @@ services:
     networks:
       - suite-central-net
 
-  redis-to-ws:
-    build:
-      context: ./django-api
-    container_name: redis-to-ws
-    command: python manage.py redis_to_websocket --tenants=customerA
-    env_file:
-      - .env
-    environment:
-      - DJANGO_SETTINGS_MODULE=core.settings
-      - PYTHONUNBUFFERED=1
-      - REDIS_HOST=host.docker.internal
-      - REDIS_PORT=6379
-      - TENANTS=customerA
-    networks:
-      - suite-central-net
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-      
 # ---------- VOLUMES ----------
 volumes:
   postgres_data_v2:
+  redis_central_data:
 
 # ---------- NETWORKS ----------
 networks:

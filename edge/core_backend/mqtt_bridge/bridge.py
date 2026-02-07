@@ -132,6 +132,13 @@ class MQTTEventBridge:
 
             pv = ProcessValue.from_tag(data)
             if not pv:
+                logger.warning(
+                    "❌ Discarded tag | tenant=%s topic=%s equipment_id=%s variable=%s",
+                    self.tenant,
+                    topic,
+                    data.get("equipment_id"),
+                    data.get("variable"),
+                )
                 return
 
             event = pv.to_event(tenant=self.tenant)

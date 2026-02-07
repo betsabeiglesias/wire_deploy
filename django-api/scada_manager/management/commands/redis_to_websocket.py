@@ -76,11 +76,12 @@ class Command(BaseCommand):
         - reintenta si hay fallo
         """
         stream_key = f"scada:stream:{tenant}"
-        group_name = f"realtime_data_{tenant}"
+        group_name = f"realtime.{tenant}"
         channel_layer = get_channel_layer()
 
         while True:
             try:
+                self.stdout.write(f"🔄 [{tenant}] Trying Redis connection...")
                 r = redis.Redis(
                     host=config["host"],
                     port=config["port"],
@@ -102,6 +103,7 @@ class Command(BaseCommand):
                 last_id = self.load_offset(tenant)
 
                 while True:
+                    self.stdout.write(f"👂 [{tenant}] Waiting for data on {stream_key} from {last_id}")
                     messages = r.xread(
                         {stream_key: last_id},
                         count=10,
