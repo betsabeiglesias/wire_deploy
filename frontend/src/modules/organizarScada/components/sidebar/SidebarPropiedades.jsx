@@ -515,7 +515,7 @@ const SidebarPropiedades = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          {/* <div className="grid grid-cols-3 gap-2">
             <div>
               <label className="block text-[10px] text-slate-500">
                 Arco inicio
@@ -551,7 +551,7 @@ const SidebarPropiedades = ({
                 onChange={e => updateSettings({ arcEndColor: e.target.value })}
               />
             </div>
-          </div>
+          </div> */}
         </div>
       )}
 
