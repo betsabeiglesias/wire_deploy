@@ -57,6 +57,7 @@ class JWTAuthMiddleware:
         scope["auth"] = auth
         scope["user_id"] = auth.user_id
         scope["client_id"] = auth.client_id
+        scope["exp"] = auth.expires_at
 
         # 4️⃣ Continuar handshake
         return await self.app(scope, receive, send)

@@ -37,8 +37,8 @@ def realtime_token(request):
         "client_id": str(membership.client.id),
         "scopes": ["realtime"],
         "roles": [], # RETOMAR
-        "iat": datetime.now(tz=timezone.utc),
-        "exp": datetime.now(tz=timezone.utc) + timedelta(minutes=5),
+        "iat": int(datetime.now(tz=timezone.utc).timestamp()),
+        "exp": int((datetime.now(tz=timezone.utc) + timedelta(minutes=5)).timestamp()),
         "iss": "realtime-gateway",
     }
 

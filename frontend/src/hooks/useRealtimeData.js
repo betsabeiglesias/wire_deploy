@@ -37,9 +37,17 @@ export function useRealtimeData(tenant) {
           setConnected(true);
         };
 
-        ws.onclose = () => {
-          console.warn("🔌 Realtime WS closed");
+        ws.onclose = async (event) => {
+          console.warn("🔌 Realtime WS closed", event.code);
           setConnected(false);
+
+          // 🔐 token expirado → pedir uno nuevo y reconectar
+          if (event.code === 4401 && !cancelled) {
+            console.log("🔄 Token expirado, renovando WS…");
+            setTimeout(() => {
+                connect();
+              }, 500);
+           }
         };
 
         ws.onerror = (err) => {

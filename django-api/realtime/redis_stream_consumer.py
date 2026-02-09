@@ -37,8 +37,6 @@ class CentralRedisStreamConsumer:
         self.channel_layer = get_channel_layer()
 
     async def run(self):
-        logger.info("🟢 Central Redis Stream Consumer started")
-
         while True:
             try:
                 # 🔥 Descubrir streams dinámicamente

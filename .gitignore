@@ -72,3 +72,6 @@ chatbot-service/data/
 # django-api/migrations/        <-- TODAS
 # django-api/fixtures/          <-- DATOS SEED
 # .env.example                  <-- CONFIG DE EJEMPLO
+
+
+Makefile
