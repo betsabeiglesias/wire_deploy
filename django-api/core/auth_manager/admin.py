@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
-from .models import Client, Role, ClientMembership
+from .models import Client, Role, ClientMembership, Plant
 
 class ClientMembershipInline(admin.StackedInline):
     model = ClientMembership
@@ -26,3 +26,4 @@ admin.site.register(User, UserAdmin)
 # Registros estándar para los maestros
 admin.site.register(Client)
 admin.site.register(Role)
+admin.site.register(Plant)

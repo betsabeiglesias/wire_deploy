@@ -15,7 +15,7 @@ L.Icon.Default.mergeOptions({
 });
 
 // Constantes de configuración
-const API_URL = '/api/scada-manager/locations/';
+const API_URL = '/api/map/locations/';
 const DEFAULT_CENTER = [40.4168, -3.7038]; // Madrid
 const INITIAL_ZOOM = 6;
 const ZOOM_THRESHOLD = 8;
