@@ -618,6 +618,15 @@ export const renderWidget = ({
         </svg>
       );
     }
+    case "luxuries-stacked-bar": {
+      return (
+        <LuxuriesStackedBarChart
+          width={width}
+          height={height}
+          style={{ maxWidth: "100%", maxHeight: "100%" }}
+        />
+      );
+    }
     default:
       return <div className="p-2 text-gray-600">Componente: {data.label}</div>;
   }

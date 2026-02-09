@@ -14,12 +14,20 @@ const sanitizeForSave = (value) =>
   );
 
 const normalizeCanvasElements = (items = []) => {
+  // Acepta arrays, objetos con .elements o diccionarios; evita fallar si no es iterable
+  const arr = Array.isArray(items)
+    ? items
+    : items && typeof items === "object"
+      ? Array.isArray(items.elements)
+        ? items.elements
+        : Object.values(items)
+      : [];
   const baseId = Date.now();
-  return (items || []).map((item, idx) => ({
-    id: item.id || baseId + idx,
-    x: item.x ?? 100,
-    y: item.y ?? 100,
-    data: item.data || item,
+  return arr.map((item, idx) => ({
+    id: item?.id || `${baseId}-${idx}`,
+    x: item?.x ?? 100,
+    y: item?.y ?? 100,
+    data: item?.data || item || {},
   }));
 };
 

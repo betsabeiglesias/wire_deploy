@@ -20,8 +20,8 @@ const CanvasEditor = ({
   onUpdate,
   onDelete,
   onDrop,
-  canvasWidth = "1920px",
-  canvasHeight = "1080px",
+  canvasWidth = "720px",
+  canvasHeight = "500px",
   zoom = 1,
   onStageSize,
 }) => {

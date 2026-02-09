@@ -187,18 +187,18 @@ export const elementos_scada = {
         },
       },
     },
-    {
-      id: "tpl-mini-horizontal",
-      title: "Mini Horizontal",
-      thumbnailUrl: gaugeDefaultIcon,
-      data: {
-        type: "mini-horizontal",
-        width: 160,
-        height: 90,
-        label: "Carga",
-        settings: { minValue: 0, maxValue: 100, initialValue: 55 },
-      },
-    },
+    // {
+    //   id: "tpl-mini-horizontal",
+    //   title: "Mini Horizontal",
+    //   thumbnailUrl: gaugeDefaultIcon,
+    //   data: {
+    //     type: "mini-horizontal",
+    //     width: 160,
+    //     height: 90,
+    //     label: "Carga",
+    //     settings: { minValue: 0, maxValue: 100, initialValue: 55 },
+    //   },
+    // },
   ],
   tarjetas: [
     {
@@ -217,18 +217,18 @@ export const elementos_scada = {
         },
       },
     },
-    {
-      id: "tpl-power-card",
-      title: "Power Card",
-      thumbnailUrl: gaugeDefaultIcon,
-      data: {
-        type: "power-card",
-        width: 180,
-        height: 120,
-        label: "Potencia",
-        settings: { initialValue: 415, unit: "kW" },
-      },
-    },
+    // {
+    //   id: "tpl-power-card",
+    //   title: "Power Card",
+    //   thumbnailUrl: gaugeDefaultIcon,
+    //   data: {
+    //     type: "power-card",
+    //     width: 180,
+    //     height: 120,
+    //     label: "Potencia",
+    //     settings: { initialValue: 415, unit: "kW" },
+    //   },
+    // },
     // { SE BORRA TEMPORALMENTE PARA REEMPLAZAR POR OTRA TARJETA
     //   id: "tpl-hmi-trend-card",
     //   title: "Tarjeta Dashboard",

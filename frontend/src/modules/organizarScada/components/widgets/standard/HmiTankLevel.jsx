@@ -75,20 +75,6 @@ const HmiTankLevel = ({
           {label}
         </div>
       )}
-      {showValue && (
-        <div
-          style={{
-            fontSize,
-            fontWeight: 700,
-            color: percentColor,
-            textShadow: "0 0 10px rgba(255,255,255,0.5)",
-            lineHeight: 1,
-            transform: `translate(${Number(valueOffsetX || 0)}px, ${Number(valueOffsetY || 0)}px)`,
-          }}
-        >
-          {Math.round(safePercent)}%
-        </div>
-      )}
       <svg
         width={Math.min(width, 140)}
         height={Math.min(height, 180)}
