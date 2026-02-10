@@ -1,3 +1,4 @@
+// src/modules/organizarScada/components/CanvasActions.js (Se mantiene igual, solo para referencia)
 
 import React from 'react';
 import NavbarPLCs from "./NavbarPLCs"; // Asumimos que NavbarPLCs está en el mismo directorio
