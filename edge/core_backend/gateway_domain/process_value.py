@@ -42,18 +42,27 @@ class ProcessValue:
     @staticmethod
     def _normalize_timestamp(ts: Optional[Union[datetime, str, int]]) -> str:
         if ts is None:
-            ts = datetime.now(timezone.utc)
-        
-        if isinstance(ts, datetime):
-            return ts.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+            dt = datetime.now(timezone.utc)
+
+        elif isinstance(ts, datetime):
+            dt = ts.astimezone(timezone.utc)
+
         elif isinstance(ts, int):
-            return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat().replace("+00:00", "Z")
+            # Detectar milisegundos vs segundos
+            if ts > 10_000_000_000:  # > año 2286 en segundos
+                ts = ts / 1000
+            dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+
         elif isinstance(ts, str):
             if "Z" in ts or "+" in ts:
                 return ts.replace("+00:00", "Z")
             return ts + "Z"
-        
-        return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+        else:
+            dt = datetime.now(timezone.utc)
+
+        return dt.isoformat().replace("+00:00", "Z")
+            
     
     @staticmethod
     def _normalize_quality(quality: str) -> str:
@@ -106,6 +115,21 @@ class ProcessValue:
             "quality": self.quality,
             "source": self.source
         }
+    
+    def to_event(self, *, tenant: str) -> Dict[str, Any]:
+        return {
+            "schema": "v1.process_value",
+            "tenant": tenant,
+            "equipment_id": self.equipment_id,
+            "variable": self.variable,
+            "value": self.value,
+            "datatype": self.datatype,
+            "unit": self.unit,
+            "quality": self.quality.upper(),
+            "ts": self.timestamp,
+            "source": self.source,
+        }
+
     
     @classmethod
     def from_tag(cls, tag: Dict[str, Any]) -> Optional['ProcessValue']:

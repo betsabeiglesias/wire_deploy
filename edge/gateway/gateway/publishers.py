@@ -167,6 +167,7 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
         Publica un ProcessValue en MQTT adaptándolo al contrato v1.tag
         y a las restricciones de InfluxDB (value_* tipados).
         """
+        logger.info(f"MQTT CONNECT user={mqtt_user}")
 
         payload = {
             "schema": "v1.tag",
@@ -211,6 +212,11 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
         payload_str = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
 
         logger.debug("[MQTT] topic=%s payload=%s", topic, payload_str)
+        logger.info(
+                "[MQTT PUBLISH] topic=%s payload=%s",
+                topic,
+                payload_str
+            )
 
         client.publish(
             topic,
