@@ -34,7 +34,7 @@ class FavoriteViewSet(ViewSet):
                 section = "scada"
                 fav_type = "mylayout"
 
-            # 🟢 LOCATIONS (App: scada_manager)
+            # 🟢 LOCATIONS (App: map_manager)
             elif model_name == "location":
                 route = "/map"
                 title = getattr(obj, 'city', 'Sin ciudad')

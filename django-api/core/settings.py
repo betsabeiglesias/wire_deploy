@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'industrial_config_manager',
     'scada_manager',
+    'map_manager',
     'management',
     'powerbi_manager',
     'core.favorites',

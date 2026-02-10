@@ -11,8 +11,8 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (
-      error.response?.status !== 401 ||
-      originalRequest.url.includes('/api/token/') ||
+      error.response?.status !== 401 || 
+      originalRequest.url.includes('api/auth/token/') || 
       originalRequest._retry
     ) {
       return Promise.reject(error);
@@ -25,9 +25,10 @@ api.interceptors.response.use(
     originalRequest._retry = true;
 
     try {
-      await api.post(
-        '/api/token/refresh/',
-        null,
+      // 3. Intentar renovar la sesión (el refresh_token va en la cookie)
+      await axios.post(
+        'http://localhost:8000/api/auth/token/refresh/', 
+        {}, 
         { withCredentials: true }
       );
       return api(originalRequest);

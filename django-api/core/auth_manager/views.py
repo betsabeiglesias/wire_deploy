@@ -6,6 +6,8 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
+from rest_framework_simplejwt.views import TokenRefreshView
+
 # Custom JWT e Invariantes
 from core.auth_manager.tokens import CustomRefreshToken
 
@@ -130,7 +132,7 @@ def token_health_check(request):
     })
 
 
-# 4. USUARIO ACTUAL (ENDPOINT /api/me/)
+# 4. USUARIO ACTUAL (ENDPOINT /api/auth/me/)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def current_user(request):
@@ -162,3 +164,33 @@ def current_user(request):
         "date_joined": user.date_joined,
         "client": client_info,
     })
+
+
+# si el access token caduca, con esto leemos la cookie y lo actualizamos :
+
+class CustomTokenRefreshView(TokenRefreshView):
+    def post(self, request, *args, **kwargs):
+        # 1. Extraemos el refresh token de la cookie
+        refresh_token = request.COOKIES.get('refresh_token')
+        
+        # 2. Si existe, lo inyectamos en el body para que la vista madre lo procese
+        if refresh_token:
+            request.data['refresh'] = refresh_token
+        
+        response = super().post(request, *args, **kwargs)
+        
+        # 3. Si la renovación fue exitosa, actualizamos la cookie del Access Token
+        if response.status_code == 200:
+            response.set_cookie(
+                key=settings.SIMPLE_JWT['AUTH_COOKIE'],
+                value=response.data['access'],
+                expires=settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
+                secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
+                httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
+                samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
+                path='/',
+            )
+            # Opcional: Eliminar el access del body para que solo viaje en cookies
+            del response.data['access']
+            
+        return response
