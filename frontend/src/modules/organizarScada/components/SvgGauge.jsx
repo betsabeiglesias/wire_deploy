@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react"
 import Gauge from "svg-gauge"
-import "../../../../../styles/SvgGauge.css"
+import "../../../styles/SvgGauge.css"
 
 export default function SvgGauge({ options, value, className = "", width, height }) {
   const ref = useRef(null)
