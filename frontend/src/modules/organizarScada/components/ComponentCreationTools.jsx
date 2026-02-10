@@ -1,4 +1,3 @@
-// src/modules/organizarScada/components/ComponentCreationTools.js
 
 export const createMiniGaugeData = (label, type, config = {}) => ({
     type,

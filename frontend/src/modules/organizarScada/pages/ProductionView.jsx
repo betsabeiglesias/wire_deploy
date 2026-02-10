@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
+
 import { useParams, useNavigate } from "react-router-dom";
+
 import { useGatewayData } from "@/hooks/useGatewayData";
 import api from "../../../services/api";
 
@@ -8,11 +10,8 @@ import {
   formatNumericValue,
   clampPercent,
 } from "@/modules/scada/utils";
-
 import "@/styles/gateway.css";
 import "../../../styles/Scada.css";
-
-// Gauges
 import { RingGauge } from "@/modules/scada/components/gauges/RingGauge";
 import { MiniHorizontalBar } from "@/modules/scada/components/gauges/MiniHorizontalBar";
 import { ValueBubble } from "@/modules/scada/components/gauges/ValueBubble";
@@ -21,209 +20,719 @@ import { KwShieldGauge } from "@/modules/scada/components/gauges/KwShieldGauge";
 import { PressTrendGauge } from "@/modules/scada/components/gauges/PressTrendGauge";
 import { BlueDonutGauge } from "@/modules/scada/components/gauges/BlueDonutGauge";
 import { NeedleGauge } from "@/modules/scada/components/gauges/NeedleGauge";
-import SvgGauge from "../components/SvgGauge";
-import GaugeMeter from "../components/GaugeMeter";
+import SvgGauge from "../components/widgets/standard/SvgGauge";
+import GaugeMeter from "../components/widgets/standard/GaugeMeter";
+import TempGauge from "../components/widgets/standard/TempGauge";
+import EnergyBarChart from "../components/widgets/standard/EnergyBarChart";
+import TemperatureLineChart from "../components/widgets/standard/TemperatureLineChart";
+import HmiProgressBar from "../components/widgets/standard/HmiProgressBar";
+import HmiTankLevel from "../components/widgets/standard/HmiTankLevel";
+import HmiStatusCard from "../components/widgets/standard/HmiStatusCard";
+import HmiTrendCard from "../components/widgets/standard/HmiTrendCard";
+import HmiScadaGauge from "../components/widgets/standard/HmiScadaGauge";
+import HmiHorizontalGauge from "../components/widgets/standard/HmiHorizontalGauge";
+import HmiEnergySummaryCard from "../components/widgets/standard/HmiEnergySummaryCard";
+import LuxuriesStackedBarChart from "../components/widgets/standard/LuxuriesStackedBarChart";
+
 import HomeButton from "../../../components/HomeButton";
 
 const PUBLISHED_VIEWS_KEY = "publishedScadaViews";
 
 const ProductionView = () => {
   const { id: routeViewId } = useParams();
+
   const navigate = useNavigate();
-  const { allTags, connected } = useGatewayData();
 
   const [layout, setLayout] = useState([]);
+
   const [activeViewId, setActiveViewId] = useState(null);
+
   const [isLoading, setIsLoading] = useState(true);
+
   const [layoutName, setLayoutName] = useState("");
+
   const [appViewsData, setAppViewsData] = useState(null);
 
-  // Cargar desde LocalStorage (Fallback)
-  const loadFromLocalPublished = useCallback((id) => {
+  const { allTags, connected } = useGatewayData();
+
+  // Lógica de Escalado Responsivo (Moved to top to prevent conditional hook error)
+  const [scale, setScale] = useState(1);
+  const baseWidth = 1291; // Ancho base del diseño
+
+  useEffect(() => {
+    const handleResize = () => {
+      const padding = 32; // Espacio lateral
+      const availableWidth = window.innerWidth - padding;
+
+      // Calcular escala basada en ancho (prioridad)
+      let newScale = availableWidth / baseWidth;
+
+      // Limitar escala máxima a 1
+      if (newScale > 1) newScale = 1;
+
+      setScale(newScale);
+    };
+
+    handleResize(); // Calculo inicial
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+
+  const loadFromLocalPublished = (id) => {
     const raw = localStorage.getItem(PUBLISHED_VIEWS_KEY);
+
     if (!raw) return false;
+
     try {
       const parsed = JSON.parse(raw) || {};
+
       const target = parsed[id];
+
       if (!target) return false;
 
-      setLayoutName(target.name || target.button_name || "Layout Local");
-      const viewsData = target.views_data || target;
-      
-      if (viewsData.views?.length) {
-        setAppViewsData(viewsData);
-        setLayout(viewsData.views[0].elements || []);
-        setActiveViewId(viewsData.views[0].id);
+      setLayoutName(
+        target.button_name ||
+          target.name ||
+          target?.views_data?.app_name ||
+          `Layout ${id}`,
+      );
+
+      if (target.views_data?.views?.length) {
+        const firstView = target.views_data.views[0];
+
+        setLayout(firstView?.elements || []);
+
+        setActiveViewId(id);
+
+        return true;
+      }
+
+      if (Array.isArray(target.layout)) {
+        setLayout(target.layout);
+
+        setActiveViewId(id);
+
         return true;
       }
     } catch (err) {
-      console.error("Error cargando local:", err);
+      console.error("No se pudo cargar la publicaci�n local", err);
     }
-    return false;
-  }, []);
 
-  // Cargar desde Servidor
+    return false;
+  };
+
   useEffect(() => {
-    const loadLayout = async () => {
-      if (!routeViewId) return;
+    const loadLayoutFromServer = async () => {
+      if (!routeViewId) {
+        setIsLoading(false);
+
+        return;
+      }
+
       setIsLoading(true);
 
       try {
         const res = await api.get(`/api/scada-manager/layout/${routeViewId}/`);
-        const data = res.data;
 
-        setLayoutName(data.name || data.button_name || `HMI ${routeViewId}`);
-        const viewsData = data.views_data || null;
-        setAppViewsData(viewsData);
+        if (res.status === 200) {
+          const data = res.data;
 
-        if (viewsData?.views?.length) {
-          setLayout(viewsData.views[0].elements || []);
-          setActiveViewId(viewsData.views[0].id);
-        } else if (data.elements) {
-          setLayout(data.elements);
+          setLayoutName(
+            data.button_name ||
+              data.name ||
+              data?.views_data?.app_name ||
+              `Layout ${routeViewId}`,
+          );
+
+          setAppViewsData(data?.views_data || null);
+
+          if (data?.views_data?.views?.length) {
+            const viewsArr = data.views_data.views;
+
+            const selectedView = viewsArr[0];
+
+            setLayout(selectedView?.elements || []);
+          } else if (Array.isArray(data)) {
+            setLayout(data);
+          } else if (data && Array.isArray(data.elements)) {
+            setLayout(data.elements);
+          } else {
+            setLayout([]);
+          }
+
+          setActiveViewId(routeViewId);
+        } else {
+          console.error(
+            "Error al cargar el layout desde el servidor",
+            res.status,
+          );
+
+          if (res.status === 403) {
+            const loadedLocal = loadFromLocalPublished(routeViewId);
+
+            if (!loadedLocal) {
+              alert(
+                "No tienes permiso para ver esta vista. Inicia sesi�n nuevamente.",
+              );
+
+              navigate("/login");
+
+              return;
+            }
+          } else if (!loadFromLocalPublished(routeViewId)) {
+            setLayout([]);
+          }
         }
       } catch (err) {
-        console.error("Error en producción:", err);
+        console.error("Error al cargar el layout:", err);
+
         if (!loadFromLocalPublished(routeViewId)) {
-          // Si falla el servidor y no hay local, error.
+          setLayout([]);
         }
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadLayout();
-  }, [routeViewId, loadFromLocalPublished]);
+    loadLayoutFromServer();
+  }, [routeViewId]);
 
   const handleNavigate = (targetViewId) => {
     if (!targetViewId || !appViewsData) return;
     const targetView = appViewsData.views?.find((v) => v.id === targetViewId);
+
     if (targetView) {
       setLayout(targetView.elements || []);
       setActiveViewId(targetView.id);
+      // Opcional: actualizar URL sin recargar si se desea
+      // window.history.pushState(null, "", `/scada/production/${encodeURIComponent(routeViewId)}#${targetViewId}`);
+    } else {
+      console.warn("Vista destino no encontrada:", targetViewId);
     }
   };
 
   const resolveLiveData = (item) => {
     const settings = item.data?.settings || {};
-    const variable = settings.variable || item.data?.label;
-    const equipment = settings.equipment || item.data?.equipment;
 
-    const tag = allTags.find(
-      (t) => t.variable === variable && (!equipment || t.equipment === equipment)
-    ) || allTags.find((t) => t.variable === variable);
+    const variable =
+      settings.variable ||
+      settings.attributeKey;
+      // settings.attributeLabel ||
+      // item.data?.label;
+
+    // const equipment = settings.equipment || item.data?.equipment;
+
+    const site = settings.site;
+
+    const area = settings.area;
+
+    const line = settings.line;
+
+    const cell = settings.cell;
+
+    const preferred = allTags.find(
+      (tag) =>
+        tag.variable === variable &&
+        (!equipment || tag.equipment === equipment) &&
+        (!site || tag.site === site) &&
+        (!area || tag.area === area) &&
+        (!line || tag.line === line) &&
+        (!cell || tag.cell === cell),
+    );
+
+    const fallback = allTags.find((tag) => tag.variable === variable);
+
+    const tag = preferred || fallback || null;
 
     return {
-      value: tag?.value ?? settings?.initialValue ?? 0,
+      value:
+        typeof tag?.value !== "undefined"
+          ? tag.value
+          : (settings?.initialValue ?? 0),
+
       unit: tag?.unit || settings?.unit,
+
       tag,
     };
   };
 
   const renderComponent = (item) => {
     const { type, settings = {}, width, height } = item.data;
+
     const label = settings?.attributeLabel || item.data.label;
+
     const live = resolveLiveData(item);
-    
+
+    const value = live.value;
+
+    const unit = live.unit;
+
+    const w = typeof width === "number" ? `${width}px` : width || "200px";
+
+    const h = typeof height === "number" ? `${height}px` : height || "180px";
+
+    const x = typeof item.x === "number" ? `${item.x}px` : item.x || "0px";
+
+    const y = typeof item.y === "number" ? `${item.y}px` : item.y || "0px";
+
     const style = {
       position: "absolute",
-      left: item.x,
-      top: item.y,
-      width: width || "200px",
-      height: height || "180px",
-      backgroundColor: "white",
-      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-      borderRadius: "0.5rem",
-      padding: "1rem",
+      left: x,
+      top: y,
+      width: w,
+      height: h,
+      padding: 0,
+      backgroundColor: "transparent",
+      boxShadow: "none",
+      borderRadius: 0,
+      overflow: "visible",
       zIndex: 10,
     };
 
-    const numericValue = parseNumericValue(live.value);
-    const percent = clampPercent(numericValue, settings?.minValue ?? 0, settings?.maxValue ?? 100);
-    const displayValue = formatNumericValue(numericValue) ?? "-";
-    const labelText = live.unit ? `${displayValue} ${live.unit}` : displayValue;
+    const renderGaugeContent = () => {
+      const numericValue = parseNumericValue(value);
 
-    const renderInner = () => {
+      const percent = clampPercent(
+        numericValue,
+        settings?.minValue ?? 0,
+        settings?.maxValue ?? 100,
+      );
+
+      const displayValue = formatNumericValue(numericValue) ?? "-";
+
+      const labelText = unit ? `${displayValue} ${unit}` : displayValue;
+
       switch (type) {
         case "speedometer":
-        case "temperature-gauge":
+
+        case "temperature-gauge": {
+          const isThermo = type === "temperature-gauge";
+
           return (
             <GaugeMeter
-              initialValue={numericValue || 0}
+              initialValue={numericValue !== null ? numericValue : 0}
               minValue={settings?.minValue ?? 0}
               maxValue={settings?.maxValue ?? 100}
-              unit={live.unit}
+              unit={unit}
               label={label}
-              isThermometer={type === "temperature-gauge"}
+              isThermometer={isThermo}
             />
           );
+        }
+
         case "mini-ring":
-          return <RingGauge percent={percent} displayValue={displayValue} unit={live.unit} />;
+          return (
+            <RingGauge
+              percent={percent}
+              displayValue={displayValue}
+              unit={unit}
+            />
+          );
+
+        case "mini-horizontal":
+          return <MiniHorizontalBar percent={percent}  />;
+
+        case "mini-donut":
+          return <BlueDonutGauge percent={percent} />;
+
+        case "mini-bubble":
+          return <ValueBubble value={displayValue} unit={unit} />;
+
         case "mini-lamp":
-          return <BooleanLamp active={!!live.value} />;
+          return <BooleanLamp active={!!value} />;
+
+        case "mini-needle":
+          return (
+            <NeedleGauge percent={percent} value={displayValue} unit={unit} />
+          );
+
+        case "power-card":
+          return (
+            <KwShieldGauge value={displayValue} unit={unit} label={label} />
+          );
+
+        case "press-card":
+          return (
+            <PressTrendGauge
+              value={displayValue}
+              unit={unit}
+              label={label}
+              trend={0}
+            />
+          );
+
+        case "svg-gauge": {
+          const gaugeValue = parseNumericValue(value);
+
+          return (
+            <SvgGauge
+              options={settings?.gaugeOptions || item.data?.gaugeOptions}
+              value={gaugeValue !== null ? gaugeValue : 0}
+              width={w}
+              height={h}
+            />
+          );
+        }
+        case "temp-gauge": {
+          const valueToRender =
+            typeof value !== "undefined"
+              ? parseNumericValue(value)
+              : settings?.initialValue ?? 89;
+          return (
+            <TempGauge
+              value={valueToRender}
+              min={settings.min ?? 0}
+              max={settings.max ?? 120}
+              // label={settings.label || label}
+              unit={unit || settings.unit || "°C"}
+              size={Math.min(width ?? 0, height ?? 0)}
+            />
+          );
+        }
+        case "energy-bar-chart": {
+        }
+        case "luxuries-stacked-bar": {
+          return <LuxuriesStackedBarChart width={width} height={height} />;
+        }
+        case "EnergyBarChart": {
+          return (
+            <EnergyBarChart
+              title={settings.title || label}
+              valueText={settings.valueText || "420 kW"}
+            />
+          );
+        }
+        case "temperature-line-chart": {
+
+        }
+        case "hmi-energy-summary":{
+          return (
+            <HmiEnergySummaryCard
+              width={width}
+              height={height}
+              title={settings.title || label || "Consumo"}
+              value={settings.value || "0"}
+              unit={settings.unit || ""}
+              subtitle={settings.subtitle}
+              deltaText={settings.deltaText}
+              deltaValue={settings.deltaValue}
+              deltaDirection={settings.deltaDirection}
+            />
+          );
+        }
+        case "temperature-line-chart": {
+          return (
+            <TemperatureLineChart
+              label={settings.legendLabel || "Temp °C"}
+              pointLabel={settings.pointLabel || "55°C"}
+            />
+          );
+        }
+        case "hmi-progress-bar": {
+          return (
+            <HmiProgressBar
+              percent={percent}
+              label={settings.caption || label || "LOREM IPSUM"}
+              width={width}
+              height={height}
+            />
+          );
+        }
+        case "hmi-tank-level": {
+          return <HmiTankLevel percent={percent} width={width} height={height} />;
+        }
+        case "hmi-status-card": {
+          return (
+            <HmiStatusCard
+              status={settings.status || "ok"}
+              title={settings.title || label || "SISTEMA OK"}
+              subtitle={settings.subtitle || "STATUS: READY"}
+              width={width}
+              height={height}
+            />
+          );
+        }
+        case "hmi-trend-card": {
+          return (
+            <HmiTrendCard
+              title={settings.title || label || "Caudal de Proceso - Cuba 2"}
+              unitLabel={settings.unitLabel || "LOREM IPSUM"}
+              value={numericValue ?? 0}
+              minValue={settings.minValue ?? 0}
+              maxValue={settings.maxValue ?? 10000}
+              series={Array.isArray(settings.series) ? settings.series : []}
+              width={width}
+              height={height}
+            />
+          );
+        }
+        case "hmi-scada-gauge": {
+          return (
+            <HmiScadaGauge
+              value={numericValue ?? 0}
+              min={settings.min ?? 0}
+              max={settings.max ?? 100}
+              unit={settings.unit || ""}
+              themeColor={settings.themeColor || "#94a3b8"}
+              zones={Array.isArray(settings.zones) ? settings.zones : []}
+              width={width}
+              height={height}
+            />
+          );
+        }
+        case "hmi-horizontal-gauge": {
+          return (
+            <HmiHorizontalGauge
+              value={numericValue ?? 0}
+              min={settings.min ?? 0}
+              max={settings.max ?? 100}
+              variant={settings.variant || "precision"}
+              accentColor={settings.accentColor}
+              width={width}
+              height={height}
+            />
+          );
+        }
+
         case "nav-button":
+
         case "btn-primary":
-          const targetId = item.data?.targetViewId || settings?.targetViewId;
+
+        case "btn-outline": {
+          const buttonLabel = item.data?.label || label || "Button";
+
+          const isPrimary = type === "btn-primary" || type === "nav-button";
+          const targetViewId =
+            item.data?.targetViewId || item.data?.settings?.targetViewId;
+
+          const isActive = targetViewId && activeViewId === targetViewId;
+          const hasAction = !!targetViewId;
+
+          const baseClass =
+            "px-4 py-2 rounded-md shadow-sm font-medium transition-all active:scale-95 flex items-center justify-center";
+
+          const primaryClass = isPrimary
+            ? hasAction
+              ? "bg-sky-600 hover:bg-sky-700 text-white cursor-pointer"
+              : "bg-gray-400 text-white cursor-default"
+            : hasAction
+              ? "border border-sky-500 text-sky-600 hover:bg-sky-50 cursor-pointer"
+              : "border border-gray-300 text-gray-400 cursor-default";
+
+          // Estilo extra para indicar que es el activo actual (si fuera una navegación tipo tabs)
+          const activeClass = isActive
+            ? "ring-2 ring-offset-1 ring-sky-500"
+            : "";
+
           return (
             <button
-              className={`w-full h-full rounded transition-all active:scale-95 ${
-                targetId === activeViewId ? "bg-sky-700 ring-2 ring-sky-300" : "bg-sky-600 hover:bg-sky-500"
-              } text-white font-bold`}
-              onClick={() => targetId && handleNavigate(targetId)}
+              className={`${baseClass} ${primaryClass} ${activeClass}`}
+              onClick={() => hasAction && handleNavigate(targetViewId)}
             >
-              {item.data?.label || "Ir a Vista"}
+              {buttonLabel}
             </button>
           );
-        // ... (resto de casos del switch simplificados)
+        }
+
+        case "label-pill":
+
+        case "label-badge": {
+          const labelTextFinal = item.data?.label || label || "Label";
+
+          const isPill = type === "label-pill";
+
+          const labelClass = isPill
+            ? "inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 text-sm px-4 py-1 border border-emerald-100"
+            : "inline-flex items-center rounded bg-slate-800 text-slate-50 text-xs px-3 py-1 uppercase tracking-wide";
+
+          return <span className={labelClass}>{labelTextFinal}</span>;
+        }
+
+        case "card-soft":
+
+        case "card-elevated": {
+          const cardText = item.data?.label || label || "Card Content";
+
+          const isElevated = type === "card-elevated";
+
+          const cardClass = isElevated
+            ? "rounded-lg border border-slate-200 bg-white text-sm px-4 py-3 shadow-md"
+            : "rounded-lg border border-slate-200 bg-slate-50 text-sm px-4 py-3 shadow-sm";
+
+          return <div className={cardClass}>{cardText}</div>;
+        }
+
         default:
-          return <ValueBubble value={displayValue} unit={live.unit} />;
+          return <div className="text-red-500 text-xs">Unknown: {type}</div>;
       }
     };
 
+    if (type === "mini-table") {
+      return (
+        <div key={item.id} style={style}>
+          <h3 className="font-bold mb-2 text-sm" title={label}>
+            {label}
+          </h3>
+
+          <div className="overflow-auto h-[calc(100%-2rem)]">
+            <table className="min-w-full text-xs">
+              <thead>
+                <tr className="bg-gray-50">
+                  <th className="text-left p-1">Var</th>
+
+                  <th className="text-left p-1">Val</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {settings?.rows?.map((row, idx) => (
+                  <tr key={idx} className="border-t">
+                    <td className="p-1">{row.variable}</td>
+
+                    <td className="p-1">{row.value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    if (type === "mini-chart") {
+      return (
+        <div key={item.id} style={style}>
+          <h3 className="font-bold mb-2 text-sm" title={label}>
+            {label}
+          </h3>
+
+          <div className="flex items-end justify-between h-[calc(100%-2rem)] gap-1 pb-2">
+            {settings?.series?.map((val, idx) => (
+              <div
+                key={idx}
+                style={{ height: `${val}%` }}
+                className="flex-1 bg-blue-500 rounded-t opacity-80 hover:opacity-100 transition-opacity"
+              ></div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div key={item.id} style={style}>
-        {type !== "nav-button" && (
-           <div className="text-xs font-semibold text-gray-400 mb-1 truncate uppercase">{label}</div>
-        )}
-        <div className="flex justify-center items-center h-[calc(100%-1.5rem)]">
-          {renderInner()}
+        <div
+          className="text-sm font-medium text-gray-500 mb-2 truncate"
+          title={label}
+        >
+          {label}
+        </div>
+
+        <div className="flex justify-center items-center h-[calc(100%-2rem)]">
+          {renderGaugeContent()}
         </div>
       </div>
     );
   };
 
-  if (isLoading) return <div className="loading-screen">Cargando HMI...</div>;
+  if (isLoading) {
+    return (
+      <div className="w-full h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-xl text-gray-600">Cargando vista... ?</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full h-screen bg-gray-100 relative overflow-auto">
-      {/* Barra de Herramientas Flotante */}
+    <div className="w-full h-screen bg-gray-100 relative overflow-hidden flex flex-col items-center">
       <div className="fixed top-4 left-4 z-50 flex flex-col gap-2">
+        {/* Fila superior */}
         <div className="flex gap-2">
           <HomeButton />
-          <button className="btn-secondary" onClick={() => navigate("/layout")}>Mis HMIs</button>
+
+          <button
+            className="px-3 py-1.5 rounded border hover:bg-gray-50 bg-white shadow-sm font-medium text-sm text-gray-700"
+            onClick={() => navigate("/layout")}
+            title="Volver a SCADA"
+          >
+            Mis HMIs
+          </button>
         </div>
-        <button 
-          className="btn-edit-hmi mt-4"
-          onClick={() => navigate("/organizar-scada", { state: { loadPublishedId: routeViewId } })}
+
+        {/* Botón inferior */}
+        <button
+          className="border border-green-600
+      text-green-600
+      px-4 py-2
+      mt-2
+      rounded
+      bg-white
+      hover:bg-green-50
+      hover:text-green-700
+      transition-colors
+      cursor-pointer shadow-sm text-sm font-semibold"
+          onClick={() =>
+            navigate("/organizar-scada", {
+              state: {
+                loadPublishedId: routeViewId,
+                layoutId: activeViewId,
+              },
+            })
+          }
         >
-          Editar este HMI
+          Editar HMI
         </button>
       </div>
 
-      {/* Status de Conexión */}
-      <div className="fixed top-4 right-4 z-50 bg-white p-2 rounded shadow text-xs">
-        <div className={connected ? "text-green-600" : "text-red-600"}>
-          ● {connected ? "En Vivo" : "Desconectado"}
-        </div>
-        <div className="font-bold border-t mt-1 pt-1">{layoutName}</div>
+      <div className="fixed top-4 right-4 z-50 bg-white px-3 py-1 rounded shadow text-sm border border-gray-200">
+        {connected ? (
+          <span className="text-green-600 font-bold flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            Conectado
+          </span>
+        ) : (
+          <span className="text-red-600 font-bold flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-red-500"></span>
+            Desconectado
+          </span>
+        )}
+
+        {layoutName && (
+          <div
+            className="text-gray-700 text-xs mt-1 font-semibold text-right truncate max-w-[150px]"
+            title={layoutName}
+          >
+            {layoutName}
+          </div>
+        )}
       </div>
 
-      {/* Canvas de Producción */}
-      <div className="relative w-[1280px] h-[800px] mx-auto mt-16 bg-white shadow-2xl border border-gray-200 overflow-hidden">
-        {layout.map(renderComponent)}
+      {layout.length === 0 && !isLoading && (
+        <div className="flex flex-col items-center justify-center h-full text-gray-500">
+          <p className="text-xl mb-4">No hay vista disponible.</p>
+
+          <p>Selecciona un layout desde el editor.</p>
+        </div>
+      )}
+
+      {/* Contenedor Escalable Centrado */}
+      <div
+        className="mt-16 transition-transform duration-200 ease-out origin-top"
+        style={{
+          transform: `scale(${scale})`,
+          width: `${baseWidth}px`,
+          height: "840px", // Altura base fija o auto si se prefiere
+        }}
+      >
+        <div className="relative w-full h-full bg-white shadow-lg border border-gray-200 rounded-lg overflow-hidden">
+          {layout.map((item) => renderComponent(item))}
+        </div>
       </div>
     </div>
   );
 };
 
 export default ProductionView;
+
+
