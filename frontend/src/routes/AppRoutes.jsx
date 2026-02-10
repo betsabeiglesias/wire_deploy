@@ -27,6 +27,7 @@ import Sitio4 from "@/modules/maps/pages/Sitio4";
 import UserPage from "@/pages/UserPage";
 import SavedPage from "@/pages/SavedPage";
 import SettingsPage from "@/pages/SettingsPage";
+import TaskExample from "@/pages/TaskExample";
 import Layout from "../modules/Layout/pages/Layout";
 import LayOutDetail from "../modules/Layout/pages/LayOutDetail";
 import PowerBiView from "../modules/powerBI/pages/PowerBiView";
@@ -85,6 +86,7 @@ export default function AppRoutes() {
       <Route path="/user" element={<ProtectedRoute><UserPage /></ProtectedRoute>} />
       <Route path="/saved" element={<ProtectedRoute><SavedPage /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+      <Route path="/task" element={<ProtectedRoute><TaskExample /></ProtectedRoute>} />
 
       <Route path="/scada/production/:id" element={<ProtectedRoute><ProductionView /></ProtectedRoute>} />
       <Route path="/layout" element={<ProtectedRoute><Layout /></ProtectedRoute>} />

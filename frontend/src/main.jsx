@@ -1,17 +1,15 @@
-// src/main.jsx (Código Completo con Solución)
-
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { BrowserRouter, useNavigate } from 'react-router-dom' // 👈 AÑADIMOS useNavigate
-import React, { useEffect } from 'react'; // 👈 AÑADIMOS React y useEffect
-import { navigateRef } from './services/router'; // 👈 IMPORTACIÓN CLAVE
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react'; 
+import { navigateRef } from './services/router';
 
 import './styles/index.css'
 import App from './App.jsx'
 import 'leaflet/dist/leaflet.css';
 import HomeButton from './components/HomeButton.jsx'
 
-// 🛑 COMPONENTE DE INICIALIZACIÓN DE NAVEGACIÓN
+// COMPONENTE DE INICIALIZACIÓN DE NAVEGACIÓN
 // Este componente usa el hook useNavigate y pasa la función a la referencia global
 function AppNavigationInitializer() {
     const navigate = useNavigate();
@@ -33,7 +31,7 @@ createRoot(document.getElementById('root')).render(
         rel="stylesheet"
       />
       
-      {/* 🔑 INYECTAMOS el inicializador dentro del Router */}
+      {/* INYECTAMOS el inicializador dentro del Router */}
       <AppNavigationInitializer /> 
       
       <App />

@@ -1,11 +1,6 @@
 // import TaskListExample from "@/components/TaskListExample";
 
-// function TaskExample() {
-//   return (
-//     <div className="container mx-auto mt-8">
-//       <TaskListExample />
-//     </div>
-//   );
-// }
+export default function TaskExample() {
+  return <h1 className="text-2xl">TaskExample Page</h1>;
+}
 
-// export default TaskExample;

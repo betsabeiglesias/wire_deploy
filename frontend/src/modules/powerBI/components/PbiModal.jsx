@@ -18,7 +18,7 @@ const PbiModal = ({ showModal, setShowModal, initialData, isEditMode = false }) 
     const navigate = useNavigate();
     const { isAuthenticated } = useAuthStore(); // Asumiendo esta store
     
-    // 🔥 Zustand: Desestructurar fetchPowerBis y updatePowerBi
+    // Zustand: Desestructurar fetchPowerBis y updatePowerBi
     const { fetchPowerBis, updatePowerBi } = usePowerBiStore(); 
 
     // Estados Locales del Formulario
@@ -28,7 +28,7 @@ const PbiModal = ({ showModal, setShowModal, initialData, isEditMode = false }) 
     const [pbiDescription, setPiDescription] = useState("");
     const [error, setError] = useState(null); // Estado para manejar errores
 
-    // 🆕 EFECTO: Rellenar estados si estamos en modo edición (Tu cambio principal)
+    // EFECTO: Rellenar estados si estamos en modo edición (Cambio principal)
     useEffect(() => {
         if (showModal && isEditMode && initialData) {
             setPbiName(initialData.name || "");
@@ -75,7 +75,7 @@ const PbiModal = ({ showModal, setShowModal, initialData, isEditMode = false }) 
         
         try {
             if (isEditMode) {
-                // 🆕 Lógica de Edición: Usamos updatePowerBi de Zustand
+                // Lógica de Edición: Usamos updatePowerBi de Zustand
                 if (!initialData || !initialData.id) throw new Error("ID de Power BI no encontrado para editar.");
                 await updatePowerBi(initialData.id, requestBody);
                 
@@ -117,7 +117,7 @@ const PbiModal = ({ showModal, setShowModal, initialData, isEditMode = false }) 
                 onClick={(e) => e.stopPropagation()} 
             >
                 <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">
-                    {isEditMode ? "Editar Vista Power BI" : "Crear Nueva Vista Power BI"} {/* 🆕 Título dinámico */}
+                    {isEditMode ? "Editar Vista Power BI" : "Crear Nueva Vista Power BI"} {/* Título dinámico */}
                 </h2>
 
                 {/* Mensaje de Error */}
@@ -213,7 +213,7 @@ const PbiModal = ({ showModal, setShowModal, initialData, isEditMode = false }) 
                             ? "Guardando..." 
                             : isEditMode 
                                 ? "Guardar Cambios" 
-                                : "Crear Vista PBI"} {/* 🆕 Texto dinámico */}
+                                : "Crear Vista PBI"} {/* Texto dinámico */}
                     </button>
                 </div>
             </div>

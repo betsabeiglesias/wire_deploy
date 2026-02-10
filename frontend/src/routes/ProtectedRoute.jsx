@@ -6,17 +6,17 @@ const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuthStore();
   const location = useLocation();
 
-  // ⏳ MIENTRAS VALIDA: No redirigimos, esperamos.
+  // MIENTRAS VALIDA: No redirigimos, esperamos.
   if (loading) {
     return <div className="loading-screen">Validando sesión...</div>; 
   }
 
-  // 🚫 SI TERMINÓ Y NO ESTÁ AUTENTICADO: Al login.
+  // SI TERMINÓ Y NO ESTÁ AUTENTICADO: Al login.
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // ✅ TODO OK
+  // TOODO OK
   return children;
 };
 

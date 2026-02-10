@@ -51,7 +51,7 @@ export default function Sidebar() {
         <SidebarItem open={open} icon="bx bx-user" label="User" to="/user" />
         <SidebarItem open={open} icon="bx bx-heart" label="Saved" to="/saved" />
         <SidebarItem open={open} icon="bx bx-cog" label="Settings" to="/settings" />
-        <SidebarItem open={open} icon="bx bx-edit" label="Task/Project" to="/task-project" />
+        <SidebarItem open={open} icon="bx bx-edit" label="Task/Project" to="/task" />
       </ul>
 
       {/* PROFILE */}

@@ -1,4 +1,6 @@
 // frontend/src/modules/scada/utils.js
+
+// BORRAR?
 export const parseNumericValue = (raw) => {
   if (typeof raw === "number" && Number.isFinite(raw)) return raw;
   if (typeof raw === "string") {
@@ -7,7 +9,7 @@ export const parseNumericValue = (raw) => {
     if (Number.isFinite(parsed)) return parsed;
   }
   return null;
-};
+}; 
 
 export const formatNumericValue = (value) => {
   const numericValue = parseNumericValue(value);

@@ -47,7 +47,7 @@ api.interceptors.response.use(
       
     } catch (refreshError) {
       // 5. Si el refresh falla (cookie caducada o borrada), limpieza total y al login
-      console.error("❌ Sesión expirada. Limpiando...");
+      console.error("Sesión expirada. Limpiando...");
       useAuthStore.getState().clearAuth();
       
       // Forzamos redirección solo si no estamos ya en el login

@@ -9,7 +9,7 @@ export const usePowerBiStore = create((set) => ({
     fetchPowerBis: async () => {
         set({ isLoading: true });
         try {
-            const res = await api.get("/api/powerbi-manager/mypowerbis/"); // ⚠️ Usar 'mypowerbis' (singular o plural según el router)
+            const res = await api.get("/api/powerbi-manager/mypowerbis/"); // Usar 'mypowerbis' (singular o plural según el router)
             set({ powerBis: res.data });
         } catch (error) {
             console.error("Error fetching PowerBIs:", error);
@@ -18,7 +18,7 @@ export const usePowerBiStore = create((set) => ({
         }
     },
 
-    // 🆕 Nuevo: Función para editar un PowerBi
+    // Nuevo: Función para editar un PowerBi
     updatePowerBi: async (id, data) => {
         try {
             const res = await api.put(`/api/powerbi-manager/mypowerbis/${id}/`, data); // Petición PUT
@@ -36,7 +36,7 @@ export const usePowerBiStore = create((set) => ({
         }
     },
 
-    // 🆕 Nuevo: Función para eliminar un PowerBi
+    // Nuevo: Función para eliminar un PowerBi
     deletePowerBi: async (id) => {
         try {
             await api.delete(`/api/powerbi-manager/mypowerbis/${id}/`); // Petición DELETE

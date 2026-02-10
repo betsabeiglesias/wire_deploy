@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../modules/sidebar/Sidebar";
 import "../styles/Home.css"; 
-import { SERVICE_URLS } from "../routes/service_urls"; // Ruta corregida y centralizada
+import { SERVICE_URLS } from "../routes/service_urls"; 
 import MapView from '@/modules/maps/components/MapView';
 
 const Home = () => {
