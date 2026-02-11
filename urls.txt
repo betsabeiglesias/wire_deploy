@@ -54,7 +54,7 @@ docker compose logs -f opcua-gateway
 ------------------------------------------------------------------------------------------------------------
 
 
-PASOS GIT CREAR RAMA NUEVA: 
+PASOS GIT CREAR RAMA NUEVA:    
 
 git checkout -b feature/nueva-rama
 git add .
