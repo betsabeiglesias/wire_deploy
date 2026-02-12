@@ -13,17 +13,24 @@ export const useAuthStore = create((set, get) => ({
   },
  
   fetchCurrentUser: async () => {
+    // 1. COMPROBACIÓN PREVIA: Si no hay usuario en localStorage, 
+    // cancelamos la petición antes de enviarla para evitar el 401
+    if (!localStorage.getItem('user')) {
+      set({ user: null, isAuthenticated: false, loading: false });
+      return null;
+    }
+
     set({ loading: true });
     try {
       // Intentamos obtener el usuario (la cookie viaja sola por withCredentials)
       const response = await api.get('/api/auth/me/');
       const userData = response.data;
-     
+      
       localStorage.setItem('user', JSON.stringify(userData));
       set({ user: userData, isAuthenticated: true, loading: false });
       return userData;
     } catch (err) {
-      // Si falla (401), limpiamos rastro de usuario
+      // Si falla (token caducado o error), limpiamos
       localStorage.removeItem('user');
       set({ user: null, isAuthenticated: false, loading: false });
       return null;
