@@ -15,6 +15,7 @@ export const useAuthStore = create((set, get) => ({
   fetchCurrentUser: async () => {
     // 1. COMPROBACIÓN PREVIA: Si no hay usuario en localStorage, 
     // cancelamos la petición antes de enviarla para evitar el 401
+    console.log(localStorage)
     if (!localStorage.getItem('user')) {
       set({ user: null, isAuthenticated: false, loading: false });
       return null;
