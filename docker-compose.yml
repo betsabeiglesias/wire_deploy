@@ -99,7 +99,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      VITE_API_URL: ${BACKEND_URL} # esto lo he cambiado (usa la URL dinámica del .env)
+      VITE_API_URL: http://localhost:${DJANGO_PORT}
       VITE_WS_URL: ws://localhost:${WS_PORT_HOST}
       # URLs de servicios externos (para service_urls.jsx)
       VITE_CHATBOT_URL: http://localhost:${CHATBOT_PORT}/chat
