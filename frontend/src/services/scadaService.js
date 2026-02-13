@@ -1,13 +1,4 @@
-// frontend/src/services/scadaService.js
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
-
-const api = axios.create({
-  baseURL: API_URL,
-  withCredentials: true,
-});
+import api from './api';
 
 export const scadaService = {
   /**
@@ -71,7 +62,7 @@ export const scadaService = {
    * Obtener configuración de equipos (desde DB)
    */
   async getEquipmentConfig() {
-    const response = await api.get('/apiscada-manager/scada/equipment/');
+    const response = await api.get('/api/scada-manager/scada/equipment/');
     return response.data;
   },
 

@@ -1,11 +1,14 @@
+
 // import axios from 'axios';
 
-// const BASE_URL = "http://localhost:8000";
+// // Usamos la URL completa que ya incluye el http://localhost:puerto
+// const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // /**
 //  * Realiza el login y devuelve los datos
 //  */
 // export const loginRequest = async (username, password) => {
+//   // La variable BASE_URL ya trae todo, solo concatenamos el endpoint
 //   const response = await axios.post(`${BASE_URL}/api/auth/token/`, { username, password });
 //   return response.data; // { access, refresh, user_data... }
 // };
