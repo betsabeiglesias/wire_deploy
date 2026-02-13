@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import api from "@/services/api";
 
+// 1. Extraemos la URL del WebSocket de las variables de entorno de Vite
+const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8002";
+
 export function useRealtimeData(tenant) {
   const [connected, setConnected] = useState(false);
   const [allTags, setAllTags] = useState([]);
@@ -26,9 +29,8 @@ export function useRealtimeData(tenant) {
 
         console.log("🔌 Conectando WS");
 
-        ws = new WebSocket(
-          `ws://localhost:8002/ws/realtime/?token=${token}`
-        );
+        // Usamos la variable dinamica
+        ws = new WebSocket(`${WS_URL}/ws/realtime/?token=${token}`);
 
         wsRef.current = ws;
 
