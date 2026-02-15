@@ -74,15 +74,15 @@ const OrganizarScada = () => {
   // Mantener sincronizados los elementos del canvas con la vista actual (para exportar/contar)
   useEffect(() => {
     if (!currentViewId) return;
-    setViews((prev) =>
-      prev.map((v) =>
+    setViews(prev =>
+      prev.map(v =>
         v.id === currentViewId ? { ...v, elements: canvasElements } : v,
       ),
     );
   }, [canvasElements, currentViewId, setViews]);
 
   const selectedElement =
-    canvasElements.find((el) => el.id === selectedId) || null;
+    canvasElements.find(el => el.id === selectedId) || null;
   const isPropsPanelOpen = showPropsPanel;
   const canvasWidth = "clamp(1100px, 88vw, 1600px)";
   const canvasHeight = "720px";
@@ -93,9 +93,9 @@ const OrganizarScada = () => {
   const MAX_ZOOM = 2.5;
 
   const handleZoomIn = () =>
-    setZoom((prev) => Math.min(prev + ZOOM_STEP, MAX_ZOOM));
+    setZoom(prev => Math.min(prev + ZOOM_STEP, MAX_ZOOM));
   const handleZoomOut = () =>
-    setZoom((prev) => Math.max(prev - ZOOM_STEP, MIN_ZOOM));
+    setZoom(prev => Math.max(prev - ZOOM_STEP, MIN_ZOOM));
   const handleResetZoom = () => setZoom(1);
   const handleFitToScreen = () => {
     const viewport = editorViewportRef.current;
@@ -129,7 +129,7 @@ const OrganizarScada = () => {
       y: (selectedElement.y ?? 0) + offset,
       data: { ...selectedElement.data },
     };
-    setCanvasElements((prev) => [...prev, clone]);
+    setCanvasElements(prev => [...prev, clone]);
     setSelectedId(newId);
     setIsPropsOpen(true);
   };
@@ -152,10 +152,10 @@ const OrganizarScada = () => {
    * Ejecuta la lógica de guardado/publicación al API.
    * Se llama directamente si es UPDATE (tras confirmar) o desde el Modal si es NEW.
    */
-  const performPublish = async (nameOverride) => {
+  const performPublish = async nameOverride => {
     const viewsData = buildViewsData(views, currentViewId);
     const hasAnyElements = viewsData.views.some(
-      (v) => Array.isArray(v.elements) && v.elements.length,
+      v => Array.isArray(v.elements) && v.elements.length,
     );
     if (!hasAnyElements) {
       Swal.fire("Error", "No hay elementos válidos que guardar.", "error");
@@ -209,7 +209,7 @@ const OrganizarScada = () => {
     // 1. Validar que haya algo que guardar antes de preguntar nada
     const viewsData = buildViewsData(views, currentViewId);
     const hasAnyElements = viewsData.views.some(
-      (v) => Array.isArray(v.elements) && v.elements.length,
+      v => Array.isArray(v.elements) && v.elements.length,
     );
 
     if (!hasAnyElements) {
@@ -231,12 +231,12 @@ const OrganizarScada = () => {
         showCancelButton: true,
         confirmButtonText: "Publicar",
         cancelButtonText: "Cancelar",
-        inputValidator: (value) => {
+        inputValidator: value => {
           if (!value) {
             return "¡Debes escribir un nombre para el proyecto!";
           }
         },
-      }).then((result) => {
+      }).then(result => {
         if (result.isConfirmed) {
           performPublish(result.value);
         }
@@ -252,7 +252,7 @@ const OrganizarScada = () => {
         cancelButtonColor: "#d33",
         confirmButtonText: "Sí, guardar cambios",
         cancelButtonText: "Cancelar",
-      }).then((result) => {
+      }).then(result => {
         if (result.isConfirmed) {
           performPublish();
         }
@@ -270,17 +270,17 @@ const OrganizarScada = () => {
       cancelButtonColor: "#d33",
       confirmButtonText: "Sí, empezar nuevo",
       cancelButtonText: "Cancelar",
-    }).then((result) => {
+    }).then(result => {
       if (result.isConfirmed) {
         handleNewDashboard();
       }
     });
   };
 
-  const handleImportCanvas = (file) => {
+  const handleImportCanvas = file => {
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = event => {
       try {
         const parsed = JSON.parse(event.target.result);
         let newViewsCandidates = [];
@@ -313,13 +313,13 @@ const OrganizarScada = () => {
         }
 
         // 2. Normalizar elementos
-        const processedCandidates = newViewsCandidates.map((v) => ({
+        const processedCandidates = newViewsCandidates.map(v => ({
           ...v,
           elements: normalizeCanvasElements(v.elements || []),
         }));
 
         // 3. Función auxiliar para ejecutar la acción elegida
-        const executeImport = (action) => {
+        const executeImport = action => {
           if (action === "add") {
             // --- MODO ADITIVO (Concatenar) ---
             const timestamp = Date.now();
@@ -340,7 +340,7 @@ const OrganizarScada = () => {
               };
             });
 
-            setViews((prev) => [...prev, ...importedViews]);
+            setViews(prev => [...prev, ...importedViews]);
 
             if (importedViews.length > 0) {
               const firstImported = importedViews[0];
@@ -357,7 +357,7 @@ const OrganizarScada = () => {
             });
           } else {
             // --- MODO REEMPLAZO ---
-            const mappedViews = processedCandidates.map((v) => ({
+            const mappedViews = processedCandidates.map(v => ({
               ...v,
               id: v.id || `view-${Date.now()}-${Math.random()}`,
             }));
@@ -396,7 +396,7 @@ const OrganizarScada = () => {
             confirmButtonText: "Añadir nuevos",
             denyButtonText: "Reemplazar todo",
             cancelButtonText: "Cancelar",
-          }).then((result) => {
+          }).then(result => {
             if (result.isConfirmed) {
               executeImport("add");
             } else if (result.isDenied) {
@@ -417,7 +417,7 @@ const OrganizarScada = () => {
   const handleExportToFile = () => {
     const viewsData = buildViewsData(views, currentViewId);
     const hasAnyElements = viewsData.views.some(
-      (v) => Array.isArray(v.elements) && v.elements.length,
+      v => Array.isArray(v.elements) && v.elements.length,
     );
     if (!hasAnyElements) {
       Swal.fire("Error", "No hay elementos válidos que exportar.", "error");
@@ -477,8 +477,8 @@ const OrganizarScada = () => {
             onCreateView={handleCreateView}
             onSelectView={handleSelectView}
             onRenameView={(id, name) =>
-              setViews((prev) =>
-                prev.map((v) => (v.id === id ? { ...v, name } : v)),
+              setViews(prev =>
+                prev.map(v => (v.id === id ? { ...v, name } : v)),
               )
             }
             onDeleteView={handleDeleteView}
@@ -489,21 +489,21 @@ const OrganizarScada = () => {
           />
           {/* Zona central: canvas + propiedades docking */}
           <div className="flex-1 bg-slate-100 overflow-hidden flex flex-col">
-            <div className="flex flex-1 overflow-hidden px-4 pb-4 gap-4">
+            <div className="flex flex-1 overflow-hidden px-4 pb-4 gap-4 flex-col ">
+              <div className="px-1 pt-1">
+                <NavbarEditor
+                  onZoomIn={handleZoomIn}
+                  onZoomOut={handleZoomOut}
+                  onResetZoom={handleResetZoom}
+                  onFitToScreen={handleFitToScreen}
+                  zoomLabel={zoomLabel}
+                  onDuplicate={handleDuplicateSelected}
+                  onDeleteSelected={handleDeleteSelected}
+                  showProps={showPropsPanel}
+                  onToggleProps={() => setShowPropsPanel(p => !p)}
+                />
+              </div>
               <main className="relative bg-slate-200/50 overflow-hidden flex-col justify-center items-center p-4 transition-all duration-300 flex-1 rounded-xl border border-slate-200">
-                <div className="px-1 pt-1">
-                  <NavbarEditor
-                    onZoomIn={handleZoomIn}
-                    onZoomOut={handleZoomOut}
-                    onResetZoom={handleResetZoom}
-                    onFitToScreen={handleFitToScreen}
-                    zoomLabel={zoomLabel}
-                    onDuplicate={handleDuplicateSelected}
-                    onDeleteSelected={handleDeleteSelected}
-                    showProps={showPropsPanel}
-                    onToggleProps={() => setShowPropsPanel((p) => !p)}
-                  />
-                </div>
                 <div
                   ref={editorViewportRef}
                   className="relative w-full h-full flex justify-center items-center"
@@ -511,7 +511,7 @@ const OrganizarScada = () => {
                   <CanvasEditor
                     elements={canvasElements}
                     selectedId={selectedId}
-                    onSelect={(id) => {
+                    onSelect={id => {
                       setSelectedId(id);
                       setIsPropsOpen(true);
                     }}
@@ -530,33 +530,31 @@ const OrganizarScada = () => {
                   />
                 </div>
               </main>
-
-             
             </div>
           </div>
-           {/* Panel de propiedades: dock derecho en desktop, drawer en mobile */}
-              <div
-                className={[
-                  "md:static md:w-96 md:translate-x-0 md:translate-y-0 md:opacity-100",
-                  "fixed left-0 right-0 bottom-0 z-30",
-                  "transition-all duration-250 ease-out",
-                  showPropsPanel
-                    ? "translate-y-0 opacity-100"
-                    : "md:-translate-x-full md:opacity-0 translate-y-full opacity-0 pointer-events-none",
-                ].join(" ")}
-              >
-                <SidebarPropiedades
-                  isOpen={isPropsPanelOpen}
-                  exportName={exportName}
-                  onExportNameChange={setExportName}
-                  selectedElement={selectedElement}
-                  views={views}
-                  onChange={(changes) =>
-                    selectedElement &&
-                    handleUpdateComponent(selectedElement.id, changes)
-                  }
-                />
-              </div>
+          {/* Panel de propiedades: dock derecho en desktop, drawer en mobile */}
+          <div
+            className={[
+              "md:static md:w-96 md:translate-x-0 md:translate-y-0 md:opacity-100",
+              "fixed left-0 right-0 bottom-0 z-30",
+              "transition-all duration-250 ease-out",
+              showPropsPanel
+                ? "translate-y-0 opacity-100"
+                : "md:-translate-x-full md:opacity-0 translate-y-full opacity-0 pointer-events-none",
+            ].join(" ")}
+          >
+            <SidebarPropiedades
+              isOpen={isPropsPanelOpen}
+              exportName={exportName}
+              onExportNameChange={setExportName}
+              selectedElement={selectedElement}
+              views={views}
+              onChange={changes =>
+                selectedElement &&
+                handleUpdateComponent(selectedElement.id, changes)
+              }
+            />
+          </div>
         </div>
       </div>
     </>

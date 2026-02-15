@@ -1054,15 +1054,6 @@ const SidebarPropiedades = ({
 
   const renderContent = () => (
     <div className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm space-y-4">
-      <div className="flex items-center gap-3">
-        <p className="text-sm font-semibold text-slate-800">
-          {selectedName || "Elemento seleccionado"}
-        </p>
-        <span className="text-[11px] text-slate-500">
-          Tipo: {currentType || "N/A"}
-        </span>
-      </div>
-
       {/* Tabs horizontales estilo barra continua */}
       <nav
         className="flex items-center gap-1 overflow-x-auto px-1 py-1 bg-white border-b border-slate-200 no-scrollbar"

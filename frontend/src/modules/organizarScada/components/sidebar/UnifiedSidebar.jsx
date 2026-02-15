@@ -44,8 +44,8 @@ const UnifiedSidebar = ({
     },
   ];
 
-  const handleSectionClick = (id) => {
-    setActiveSection((prev) => (prev === id ? null : id));
+  const handleSectionClick = id => {
+    setActiveSection(prev => (prev === id ? null : id));
   };
 
   const handleElementDragStart = (e, type) => {
@@ -65,12 +65,12 @@ const UnifiedSidebar = ({
     };
     e.dataTransfer.setData(
       "application/x-scada-template",
-      JSON.stringify(tplWithEquipment)
+      JSON.stringify(tplWithEquipment),
     );
     e.dataTransfer.effectAllowed = "copy";
   };
 
-  const renderTemplatePreview = (tpl) =>
+  const renderTemplatePreview = tpl =>
     renderWidget({
       data: tpl.data,
       live: { value: undefined, unit: tpl.data?.settings?.unit },
@@ -80,34 +80,35 @@ const UnifiedSidebar = ({
       valueHistory: [],
     });
 
-  const handleButtonDragStart = (e, item) => {
-    const baseData = (() => {
-      if (item.kind === "button") {
-        return {
-          type: "nav-button",
-          variant: item.id,
-          label: item.label,
-          targetViewId: null,
-          width: 160,
-          height: 48,
-        };
-      }
-      if (item.kind === "label") {
-        return {
-          type: item.id,
-          label: item.label,
-          width: 160,
-          height: 40,
-        };
-      }
+  const getButtonBaseData = item => {
+    if (item.kind === "button") {
+      return {
+        type: "nav-button",
+        variant: item.id,
+        label: item.label,
+        targetViewId: null,
+        width: 160,
+        height: 48,
+      };
+    }
+    if (item.kind === "label") {
       return {
         type: item.id,
         label: item.label,
-        width: 200,
-        height: 120,
+        width: 160,
+        height: 40,
       };
-    })();
+    }
+    return {
+      type: item.id,
+      label: item.label,
+      width: 200,
+      height: 120,
+    };
+  };
 
+  const handleButtonDragStart = (e, item) => {
+    const baseData = getButtonBaseData(item);
     const tpl = {
       id: `tpl-${item.id}`,
       data: baseData,
@@ -115,40 +116,46 @@ const UnifiedSidebar = ({
     handleTemplateDragStart(e, tpl);
   };
 
+  const handlePickButton = item => {
+    const data = getButtonBaseData(item);
+    // addComponentToCanvas expects raw data object
+    addComponentToCanvas?.(data);
+  };
+
   const handleLayoutDragStart = (e, layoutType) => {
     e.dataTransfer.setData("application/x-element-type", layoutType);
   };
 
   const sites = useMemo(
-    () => [...new Set(allTags.map((t) => t.site).filter(Boolean))],
-    [allTags]
+    () => [...new Set(allTags.map(t => t.site).filter(Boolean))],
+    [allTags],
   );
 
   const areas = useMemo(() => {
     const subset = allTags.filter(
-      (t) => !selectedSite || t.site === selectedSite
+      t => !selectedSite || t.site === selectedSite,
     );
-    return [...new Set(subset.map((t) => t.area).filter(Boolean))];
+    return [...new Set(subset.map(t => t.area).filter(Boolean))];
   }, [allTags, selectedSite]);
 
   const lines = useMemo(() => {
     const subset = allTags.filter(
-      (t) =>
+      t =>
         (!selectedSite || t.site === selectedSite) &&
-        (!selectedArea || t.area === selectedArea)
+        (!selectedArea || t.area === selectedArea),
     );
-    return [...new Set(subset.map((t) => t.line).filter(Boolean))];
+    return [...new Set(subset.map(t => t.line).filter(Boolean))];
   }, [allTags, selectedSite, selectedArea]);
 
   const treeCellsByLine = useMemo(() => {
     const map = {};
     allTags
       .filter(
-        (t) =>
+        t =>
           (!selectedSite || t.site === selectedSite) &&
-          (!selectedArea || t.area === selectedArea)
+          (!selectedArea || t.area === selectedArea),
       )
-      .forEach((t) => {
+      .forEach(t => {
         if (!t.line || !t.cell) return;
         if (!map[t.line]) map[t.line] = new Set();
         map[t.line].add(t.cell);
@@ -160,11 +167,11 @@ const UnifiedSidebar = ({
     const map = {};
     allTags
       .filter(
-        (t) =>
+        t =>
           (!selectedSite || t.site === selectedSite) &&
-          (!selectedArea || t.area === selectedArea)
+          (!selectedArea || t.area === selectedArea),
       )
-      .forEach((t) => {
+      .forEach(t => {
         if (!t.line || !t.cell || !t.equipment) return;
         const key = `${t.line}///${t.cell}`;
         if (!map[key]) map[key] = new Set();
@@ -173,38 +180,38 @@ const UnifiedSidebar = ({
     return Object.fromEntries(Object.entries(map).map(([k, v]) => [k, [...v]]));
   }, [allTags, selectedSite, selectedArea]);
 
-  const variablesForEquipment = (eq) => {
+  const variablesForEquipment = eq => {
     const subset = allTags.filter(
-      (t) =>
+      t =>
         (!selectedSite || t.site === selectedSite) &&
         (!selectedArea || t.area === selectedArea) &&
-        t.equipment === eq
+        t.equipment === eq,
     );
-    return [...new Set(subset.map((t) => t.variable).filter(Boolean))];
+    return [...new Set(subset.map(t => t.variable).filter(Boolean))];
   };
 
-  const attrsMetaForSelection = (eq) => {
+  const attrsMetaForSelection = eq => {
     const subset = allTags.filter(
-      (t) =>
+      t =>
         (!selectedSite || t.site === selectedSite) &&
         (!selectedArea || t.area === selectedArea) &&
-        t.equipment === eq
+        t.equipment === eq,
     );
     const byVar = {};
-    subset.forEach((t) => {
+    subset.forEach(t => {
       byVar[t.variable] = t;
     });
     return byVar;
   };
 
-  const toggleLine = (line) =>
-    setExpandedLines((prev) => ({ ...prev, [line]: !prev[line] }));
+  const toggleLine = line =>
+    setExpandedLines(prev => ({ ...prev, [line]: !prev[line] }));
   const toggleCell = (line, cell) => {
     const key = `${line}///${cell}`;
-    setExpandedCells((prev) => ({ ...prev, [key]: !prev[key] }));
+    setExpandedCells(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handlePickTemplate = (tpl) => {
+  const handlePickTemplate = tpl => {
     const baseSettings = tpl.data?.settings || {};
     const dataToCanvas = {
       ...tpl.data,
@@ -219,12 +226,12 @@ const UnifiedSidebar = ({
     addComponentToCanvas?.(dataToCanvas);
   };
 
-  const startInlineRename = (view) => {
+  const startInlineRename = view => {
     setEditingViewId(view.id);
     setEditingName(view.name);
   };
 
-  const commitInlineRename = (viewId) => {
+  const commitInlineRename = viewId => {
     if (editingName && editingName.trim()) {
       onRenameView?.(viewId, editingName.trim());
     }
@@ -237,20 +244,18 @@ const UnifiedSidebar = ({
     setEditingName("");
   };
 
-  const formatUpdatedAt = (ts) => {
+  const formatUpdatedAt = ts => {
     if (!ts) return "Sin fecha";
     const d = new Date(ts);
     return Number.isNaN(d.getTime()) ? "Sin fecha" : d.toLocaleString();
   };
 
-  const renderSectionContent = (sectionId) => {
+  const renderSectionContent = sectionId => {
     if (sectionId === "pantallas") {
       return (
         <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-800">
-              Pantallas
-            </h3>
+            <h3 className="text-sm font-semibold text-slate-800">Pantallas</h3>
             <div className="flex items-center gap-2">
               <button
                 onClick={onCreateView}
@@ -268,14 +273,18 @@ const UnifiedSidebar = ({
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {viewsLoading && (
               <div className="space-y-2" data-testid="views-skeleton">
-                {[1, 2, 3].map((i) => (
+                {[1, 2, 3].map(i => (
                   <div
                     key={i}
                     className="rounded-md border border-slate-200 bg-white px-3 py-3"
                   >
                     <div className="flex items-center gap-2">
                       <SkeletonBlock width="w-32" height="h-3.5" />
-                      <SkeletonBlock width="w-4" height="h-4" rounded="rounded-full" />
+                      <SkeletonBlock
+                        width="w-4"
+                        height="h-4"
+                        rounded="rounded-full"
+                      />
                     </div>
                     <div className="mt-2">
                       <SkeletonBlock width="w-16" height="h-2.5" />
@@ -309,7 +318,7 @@ const UnifiedSidebar = ({
               </div>
             )}
             {!viewsLoading &&
-              views.map((view) => {
+              views.map(view => {
                 const isSelected = view.id === selectedViewId;
                 return (
                   <div
@@ -331,9 +340,9 @@ const UnifiedSidebar = ({
                             <input
                               autoFocus
                               value={editingName}
-                              onChange={(e) => setEditingName(e.target.value)}
+                              onChange={e => setEditingName(e.target.value)}
                               onBlur={() => commitInlineRename(view.id)}
-                              onKeyDown={(e) => {
+                              onKeyDown={e => {
                                 if (e.key === "Enter")
                                   commitInlineRename(view.id);
                                 if (e.key === "Escape") cancelInlineRename();
@@ -391,7 +400,9 @@ const UnifiedSidebar = ({
       return (
         <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-800">Dispositivos</h3>
+            <h3 className="text-sm font-semibold text-slate-800">
+              Dispositivos
+            </h3>
             <button
               onClick={() => setShowDevices(true)}
               className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
@@ -409,8 +420,16 @@ const UnifiedSidebar = ({
       const scadaGroups = [
         { id: "gauges", label: "Gauges", items: elementos_scada.gauges || [] },
         { id: "barras", label: "Barras", items: elementos_scada.barras || [] },
-        { id: "tarjetas", label: "Tarjetas", items: elementos_scada.tarjetas || [] },
-        { id: "graficas", label: "Gráficas", items: elementos_scada.graficas || [] },
+        {
+          id: "tarjetas",
+          label: "Tarjetas",
+          items: elementos_scada.tarjetas || [],
+        },
+        {
+          id: "graficas",
+          label: "Gráficas",
+          items: elementos_scada.graficas || [],
+        },
         { id: "minis", label: "Mini", items: elementos_scada.minis || [] },
       ];
 
@@ -420,18 +439,18 @@ const UnifiedSidebar = ({
             Plantillas SCADA
           </p>
           <div className="space-y-3">
-            {scadaGroups.map((group) =>
+            {scadaGroups.map(group =>
               group.items.length ? (
                 <div key={group.id}>
                   <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 mb-2">
                     {group.label}
                   </div>
                   <div className="grid grid-cols-2 gap-1">
-                    {group.items.map((tpl) => (
+                    {group.items.map(tpl => (
                       <div
                         key={tpl.id}
                         draggable
-                        onDragStart={(e) => handleTemplateDragStart(e, tpl)}
+                        onDragStart={e => handleTemplateDragStart(e, tpl)}
                         onClick={() => handlePickTemplate(tpl)}
                         className="cursor-grab select-none rounded-lg border border-slate-200 bg-white text-left shadow-sm hover:border-sky-400 hover:bg-sky-50 active:cursor-grabbing"
                         title="Arrastra al canvas"
@@ -445,7 +464,7 @@ const UnifiedSidebar = ({
                     ))}
                   </div>
                 </div>
-              ) : null
+              ) : null,
             )}
           </div>
         </div>
@@ -458,11 +477,12 @@ const UnifiedSidebar = ({
             Buttons & Labels
           </p>
           <div className="grid grid-cols-2 gap-3">
-            {buttons_labels_items.map((item) => (
+            {buttons_labels_items.map(item => (
               <div
                 key={item.id}
                 draggable
-                onDragStart={(e) => handleButtonDragStart(e, item)}
+                onDragStart={e => handleButtonDragStart(e, item)}
+                onClick={() => handlePickButton(item)}
                 className="cursor-grab select-none rounded-md border border-slate-200 bg-white px-2 py-2 text-[10px] text-slate-700 hover:border-sky-400 hover:bg-sky-50 active:cursor-grabbing"
               >
                 {/* <div className="mb-1 text-[10px] text-slate-400">
@@ -472,8 +492,8 @@ const UnifiedSidebar = ({
                   {item.kind === "button"
                     ? "Button"
                     : item.kind === "label"
-                    ? "Label"
-                    : "Caja"}
+                      ? "Label"
+                      : "Caja"}
                 </div>
               </div>
             ))}
@@ -546,10 +566,10 @@ const UnifiedSidebar = ({
 
           {isMainOpen && (
             <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-              {sidebarSections.map((section) => (
+              {sidebarSections.map(section => (
                 <div key={section.id}>
                   <ul className="space-y-1">
-                    {section.items.map((item) => {
+                    {section.items.map(item => {
                       const isActive = activeSection === item.id;
                       return (
                         <li key={item.id}>
@@ -560,8 +580,8 @@ const UnifiedSidebar = ({
                               isActive
                                 ? "bg-sky-100 text-sky-800 border border-sky-300"
                                 : item.subtle
-                                ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
-                                : "text-slate-700 hover:text-slate-900 hover:bg-slate-100",
+                                  ? "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                                  : "text-slate-700 hover:text-slate-900 hover:bg-slate-100",
                             ].join(" ")}
                           >
                             <span className="truncate">{item.label}</span>
@@ -587,7 +607,10 @@ const UnifiedSidebar = ({
         </aside>
       </div>
       {showDevices && (
-        <DeviceManagerModal open={showDevices} onClose={() => setShowDevices(false)} />
+        <DeviceManagerModal
+          open={showDevices}
+          onClose={() => setShowDevices(false)}
+        />
       )}
     </>
   );

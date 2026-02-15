@@ -1,14 +1,14 @@
 export const buttons_labels_items = [
   {
     id: "btn-primary",
-    label: "Boton primario",
+    label: "Boton",
     kind: "button",
     previewClass:
       "bg-sky-600 hover:bg-sky-700 text-white text-[11px] px-3 py-1 rounded-md shadow-sm",
   },
   {
     id: "btn-outline",
-    label: "Boton outline",
+    label: "Boton",
     kind: "button",
     previewClass:
       "border border-sky-500 text-sky-600 hover:bg-sky-50 text-[11px] px-3 py-1 rounded-md",

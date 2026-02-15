@@ -1,18 +1,6 @@
-//CanvasEditor
-// ScadaCanvasWrapper.jsx
 import React, { useEffect, useRef } from "react";
 import DraggableBox from "@/modules/organizarScada/components/canvas/DraggableBox";
 
-/**
- * Lienzo reutilizable con fondo cuadriculado, soporte de drop y elementos Rnd.
- * Props:
- * - elements: array de elementos (deben contener id, x, y, data con width/height)
- * - selectedId: id seleccionado (opcional)
- * - onSelect(id)
- * - onUpdate(id, changes) // cambios de Rnd (x, y, data.width, data.height)
- * - onDelete(id)
- * - onDrop(event) // opcional, para arrastrar desde sidebar (dataTransfer)
- */
 const CanvasEditor = ({
   elements = [],
   selectedId,
@@ -32,7 +20,7 @@ const CanvasEditor = ({
 
   const SNAP_TOL = 6;
 
-  const getNodeRect = (nodeEl) => {
+  const getNodeRect = nodeEl => {
     if (!stageRef.current || !nodeEl) return null;
     const stageRect = stageRef.current.getBoundingClientRect();
     const rect = nodeEl.getBoundingClientRect();
@@ -47,7 +35,7 @@ const CanvasEditor = ({
   const computeAlignmentGuides = (activeNode, rect) => {
     if (!stageRef.current || !rect) return {};
     const nodes = [...stageRef.current.querySelectorAll(".node")].filter(
-      (n) => n !== activeNode,
+      n => n !== activeNode,
     );
 
     const ax1 = rect.left;
@@ -87,7 +75,7 @@ const CanvasEditor = ({
         { a: acy, b: bcy, guide: bcy },
       ];
 
-      vPairs.forEach((p) => {
+      vPairs.forEach(p => {
         const d = Math.abs(p.a - p.b);
         if (d <= SNAP_TOL && d < bestVD) {
           bestVD = d;
@@ -95,7 +83,7 @@ const CanvasEditor = ({
         }
       });
 
-      hPairs.forEach((p) => {
+      hPairs.forEach(p => {
         const d = Math.abs(p.a - p.b);
         if (d <= SNAP_TOL && d < bestHD) {
           bestHD = d;
@@ -107,7 +95,7 @@ const CanvasEditor = ({
     return { vGuideX: bestVX, hGuideY: bestHY };
   };
 
-  const renderGuides = (align) => {
+  const renderGuides = align => {
     if (guideVRef.current) {
       if (align.vGuideX != null) {
         guideVRef.current.style.left = `${Math.round(align.vGuideX)}px`;
@@ -146,7 +134,11 @@ const CanvasEditor = ({
     // pero NO hacemos un return prematuro del Hook completo.
     let observer = null;
 
-    if (stageRef.current && onStageSize && typeof ResizeObserver !== "undefined") {
+    if (
+      stageRef.current &&
+      onStageSize &&
+      typeof ResizeObserver !== "undefined"
+    ) {
       updateSize();
       observer = new ResizeObserver(updateSize);
       observer.observe(stageRef.current);
@@ -160,7 +152,7 @@ const CanvasEditor = ({
     };
   }, [onStageSize, zoom]); // Los hooks siempre terminan aquí
 
-  const handleDrop = (e) => {
+  const handleDrop = e => {
     e.preventDefault();
     const size = stageRef.current
       ? {
@@ -175,7 +167,7 @@ const CanvasEditor = ({
     <div
       ref={canvasRef}
       onDrop={handleDrop}
-      onDragOver={(e) => e.preventDefault()}
+      onDragOver={e => e.preventDefault()}
       className="relative flex-1 overflow-auto bg-slate-100"
     >
       <div className="flex h-full items-center justify-center">
@@ -203,7 +195,7 @@ const CanvasEditor = ({
             className="pointer-events-none absolute z-50 opacity-0 transition-opacity duration-100 left-0 right-0 h-0 border-t-2 border-dashed border-sky-400"
             style={{ filter: "drop-shadow(0 0 6px rgba(96,165,250,.25))" }}
           />
-          {elements.map((el) => (
+          {elements.map(el => (
             <DraggableBox
               key={el.id}
               id={el.id}
@@ -215,7 +207,7 @@ const CanvasEditor = ({
               isSelected={selectedId === el.id}
               scale={zoom}
               onSelect={() => onSelect?.(el.id)}
-              onDrag={(id) => {
+              onDrag={id => {
                 const node = stageRef.current?.querySelector(
                   `[data-node-id="${id}"]`,
                 );
