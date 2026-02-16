@@ -35,6 +35,15 @@ const SidebarPropiedades = ({
   const isTankLevel = currentType === "hmi-tank-level";
   const isEnergyBar =
     currentType === "hmi-energy-bar" || currentType === "energy-bar";
+  const isNavigationButton =
+    currentType === "nav-button" ||
+    currentType === "btn-primary" ||
+    currentType === "btn-outline";
+  const currentTargetView =
+    selectedElement?.targetViewId ??
+    selectedElement?.data?.targetViewId ??
+    selectedElement?.data?.settings?.targetViewId ??
+    "";
   const updateSettings = (patch) =>
     onChange?.({
       data: {
@@ -143,6 +152,42 @@ const SidebarPropiedades = ({
           }
         />
       </div>
+
+      {isNavigationButton && (
+        <div>
+          <label className="block text-[11px] text-slate-600">
+            Vista destino
+          </label>
+          <select
+            className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
+            value={currentTargetView}
+            onChange={(e) => {
+              const nextTargetViewId = e.target.value;
+              onChange?.({
+                targetViewId: nextTargetViewId,
+                data: {
+                  ...(selectedElement?.data || {}),
+                  targetViewId: nextTargetViewId,
+                  settings: {
+                    ...(selectedElement?.data?.settings || {}),
+                    targetViewId: nextTargetViewId,
+                  },
+                },
+              });
+            }}
+          >
+            <option value="">Selecciona una vista</option>
+            {views.map((view) => (
+              <option key={view.id} value={view.id}>
+                {view.name || view.id}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-[10px] text-slate-500">
+            En Producción, este botón navegará a la vista seleccionada.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <div>
