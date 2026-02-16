@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import DraggableBox from "@/modules/organizarScada/components/canvas/DraggableBox";
 
 const CanvasEditor = ({
@@ -17,8 +17,15 @@ const CanvasEditor = ({
   const stageRef = useRef(null);
   const guideVRef = useRef(null);
   const guideHRef = useRef(null);
+  const isPanningRef = useRef(false);
+  const lastPanPointRef = useRef({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
 
   const SNAP_TOL = 6;
+  const parsedCanvasHeight = Number.parseFloat(String(canvasHeight));
+  const scaledCanvasHeight = Number.isFinite(parsedCanvasHeight)
+    ? parsedCanvasHeight * zoom
+    : null;
 
   const getNodeRect = nodeEl => {
     if (!stageRef.current || !nodeEl) return null;
@@ -160,31 +167,81 @@ const CanvasEditor = ({
           height: stageRef.current.offsetHeight,
         }
       : undefined;
-    onDrop?.(e, canvasRef.current, zoom, size);
+    onDrop?.(e, stageRef.current || canvasRef.current, zoom, size);
   };
+
+  const handlePanMouseDown = e => {
+    if (e.button !== 0) return;
+    // No iniciar pan cuando se arrastra/interactúa sobre un widget.
+    if (e.target.closest(".node")) return;
+    if (!canvasRef.current) return;
+
+    isPanningRef.current = true;
+    setIsPanning(true);
+    lastPanPointRef.current = { x: e.clientX, y: e.clientY };
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = e => {
+      if (!isPanningRef.current || !canvasRef.current) return;
+      const dx = e.clientX - lastPanPointRef.current.x;
+      const dy = e.clientY - lastPanPointRef.current.y;
+      canvasRef.current.scrollLeft -= dx;
+      canvasRef.current.scrollTop -= dy;
+      lastPanPointRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const stopPan = () => {
+      if (!isPanningRef.current) return;
+      isPanningRef.current = false;
+      setIsPanning(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", stopPan);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", stopPan);
+    };
+  }, []);
 
   return (
     <div
       ref={canvasRef}
       onDrop={handleDrop}
+      onMouseDown={handlePanMouseDown}
       onDragOver={e => e.preventDefault()}
-      className="relative flex-1 overflow-auto bg-slate-100"
+      className={`relative flex-1 h-full min-h-0 overflow-auto bg-slate-100 ${
+        isPanning ? "cursor-grabbing" : "cursor-grab"
+      }`}
     >
-      <div className="flex h-full items-center justify-center">
+      <div className="p-4">
         <div
-          ref={stageRef}
-          className="relative m-3 rounded-xl border border-slate-300 bg-white shadow-sm transition-all duration-300"
           style={{
-            width: canvasWidth,
-            height: canvasHeight,
-            minWidth: 640,
-            transform: `scale(${zoom})`,
-            transformOrigin: "center center",
-            backgroundImage:
-              "radial-gradient(circle at 1px 1px, #e2e8f0 1px, transparent 0)",
-            backgroundSize: "14px 14px",
+            width: `calc(${canvasWidth} * ${zoom})`,
+            height: scaledCanvasHeight
+              ? `${scaledCanvasHeight}px`
+              : `calc(${canvasHeight} * ${zoom})`,
+            minWidth: 640 * zoom,
+            minHeight: scaledCanvasHeight || 500 * zoom,
+            flex: "0 0 auto",
           }}
         >
+          <div
+            ref={stageRef}
+            className="relative rounded-xl border border-slate-300 bg-white shadow-sm transition-all duration-300"
+            style={{
+              width: canvasWidth,
+              height: canvasHeight,
+              minWidth: 640,
+              transform: `scale(${zoom})`,
+              transformOrigin: "top left",
+              backgroundImage:
+                "radial-gradient(circle at 1px 1px, #e2e8f0 1px, transparent 0)",
+              backgroundSize: "14px 14px",
+            }}
+          >
           <div
             ref={guideVRef}
             className="pointer-events-none absolute z-50 opacity-0 transition-opacity duration-100 top-0 bottom-0 w-0 border-l-2 border-dashed border-sky-400"
@@ -244,6 +301,7 @@ const CanvasEditor = ({
               Arrastra elementos al lienzo para empezar.
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>

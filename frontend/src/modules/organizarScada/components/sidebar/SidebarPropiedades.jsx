@@ -35,7 +35,7 @@ const SidebarPropiedades = ({
   const isTankLevel = currentType === "hmi-tank-level";
   const isEnergyBar =
     currentType === "hmi-energy-bar" || currentType === "energy-bar";
-  const updateSettings = patch =>
+  const updateSettings = (patch) =>
     onChange?.({
       data: {
         ...(selectedElement?.data || {}),
@@ -66,7 +66,7 @@ const SidebarPropiedades = ({
     const r = Number(match[1]);
     const g = Number(match[2]);
     const b = Number(match[3]);
-    if ([r, g, b].some(v => Number.isNaN(v))) return fallback;
+    if ([r, g, b].some((v) => Number.isNaN(v))) return fallback;
     return `#${r.toString(16).padStart(2, "0")}${g
       .toString(16)
       .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
@@ -74,14 +74,14 @@ const SidebarPropiedades = ({
 
   const tables = useMemo(() => {
     const raw = allTags
-      .map(t => t.table || t.device || t.site || "")
+      .map((t) => t.table || t.device || t.site || "")
       .filter(Boolean);
     return Array.from(new Set(raw)).sort();
   }, [allTags]);
 
   const filteredTags = useMemo(() => {
     const term = (searchTerm || "").toLowerCase().trim();
-    return allTags.filter(t => {
+    return allTags.filter((t) => {
       const tableKey = t.table || t.device || t.site || "";
       if (selectedTable && tableKey !== selectedTable) return false;
       const label = (
@@ -97,7 +97,7 @@ const SidebarPropiedades = ({
   }, [allTags, selectedTable, searchTerm]);
 
   const tagOptions = useMemo(() => {
-    return filteredTags.map(t => {
+    return filteredTags.map((t) => {
       const value = t.tag || t.variable || t.name || t.attributeKey || "";
       const unit = t.unit ? ` (${t.unit})` : "";
       return {
@@ -127,7 +127,7 @@ const SidebarPropiedades = ({
         <input
           className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
           value={selectedName || ""}
-          onChange={e =>
+          onChange={(e) =>
             onChange?.({
               data: {
                 ...(selectedElement?.data || {}),
@@ -153,7 +153,7 @@ const SidebarPropiedades = ({
             value={
               typeof currentSettings.min === "number" ? currentSettings.min : ""
             }
-            onChange={e =>
+            onChange={(e) =>
               updateSettings({
                 min: e.target.value === "" ? undefined : Number(e.target.value),
               })
@@ -168,7 +168,7 @@ const SidebarPropiedades = ({
             value={
               typeof currentSettings.max === "number" ? currentSettings.max : ""
             }
-            onChange={e =>
+            onChange={(e) =>
               updateSettings({
                 max: e.target.value === "" ? undefined : Number(e.target.value),
               })
@@ -177,25 +177,27 @@ const SidebarPropiedades = ({
         </div>
       </div>
 
-      <label className="inline-flex items-center gap-2 text-[12px] text-slate-700">
-        <input
-          type="checkbox"
-          className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
-          checked={currentSettings.showLabel !== false}
-          onChange={e => updateSettings({ showLabel: e.target.checked })}
-        />
-        Visualizar nombre
-      </label>
+      <div className="flex flex-col-2 ">
+        <label className="inline-flex items-center gap-2 text-[12px] text-slate-700 ">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
+            checked={currentSettings.showLabel !== false}
+            onChange={(e) => updateSettings({ showLabel: e.target.checked })}
+          />
+          Ver nombre
+        </label>
 
-      <label className="inline-flex items-center gap-2 text-[12px] text-slate-700">
-        <input
-          type="checkbox"
-          className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
-          checked={currentSettings.showValue !== false}
-          onChange={e => updateSettings({ showValue: e.target.checked })}
-        />
-        Mostrar valor del SVG
-      </label>
+        <label className="inline-flex items-center gap-2 text-[12px] text-slate-700">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
+            checked={currentSettings.showValue !== false}
+            onChange={(e) => updateSettings({ showValue: e.target.checked })}
+          />
+          Mostrar valor del SVG
+        </label>
+      </div>
     </div>
   );
 
@@ -206,7 +208,7 @@ const SidebarPropiedades = ({
         <input
           className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Buscar por nombre de tag..."
         />
       </div>
@@ -217,14 +219,14 @@ const SidebarPropiedades = ({
           <select
             className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
             value={selectedTable}
-            onChange={e => {
+            onChange={(e) => {
               setSelectedTable(e.target.value);
               setSelectedTag("");
               updateSettings({ deviceTable: e.target.value, deviceTag: "" });
             }}
           >
             <option value="">Todas</option>
-            {tables.map(t => (
+            {tables.map((t) => (
               <option key={t} value={t}>
                 {t}
               </option>
@@ -236,13 +238,13 @@ const SidebarPropiedades = ({
           <select
             className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
             value={selectedTag}
-            onChange={e => {
+            onChange={(e) => {
               setSelectedTag(e.target.value);
               updateSettings({ deviceTag: e.target.value });
             }}
           >
             <option value="">Selecciona un tag</option>
-            {tagOptions.map(opt => (
+            {tagOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
@@ -284,7 +286,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.themeColor || "#94a3b8"}
-                onChange={e => updateSettings({ themeColor: e.target.value })}
+                onChange={(e) => updateSettings({ themeColor: e.target.value })}
               />
             </div>
             <div>
@@ -295,7 +297,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.valueColor || "#ffffff"}
-                onChange={e => updateSettings({ valueColor: e.target.value })}
+                onChange={(e) => updateSettings({ valueColor: e.target.value })}
               />
             </div>
             <div>
@@ -306,7 +308,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.unitColor || "#64748b"}
-                onChange={e => updateSettings({ unitColor: e.target.value })}
+                onChange={(e) => updateSettings({ unitColor: e.target.value })}
               />
             </div>
           </div>
@@ -320,7 +322,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.valueOffsetX ?? 0}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ valueOffsetX: Number(e.target.value) || 0 })
                 }
               />
@@ -333,7 +335,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.valueOffsetY ?? 0}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ valueOffsetY: Number(e.target.value) || 0 })
                 }
               />
@@ -346,7 +348,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.unitOffsetX ?? 0}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ unitOffsetX: Number(e.target.value) || 0 })
                 }
               />
@@ -359,7 +361,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.unitOffsetY ?? 0}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ unitOffsetY: Number(e.target.value) || 0 })
                 }
               />
@@ -383,7 +385,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.labelOffsetX ?? 0}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ labelOffsetX: Number(e.target.value) || 0 })
                 }
               />
@@ -396,7 +398,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.labelOffsetY ?? 0}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ labelOffsetY: Number(e.target.value) || 0 })
                 }
               />
@@ -409,7 +411,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.valueOffsetX ?? 0}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ valueOffsetX: Number(e.target.value) || 0 })
                 }
               />
@@ -422,7 +424,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.valueOffsetY ?? 0}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ valueOffsetY: Number(e.target.value) || 0 })
                 }
               />
@@ -434,7 +436,7 @@ const SidebarPropiedades = ({
               type="checkbox"
               className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
               checked={currentSettings.showMinMax !== false}
-              onChange={e => updateSettings({ showMinMax: e.target.checked })}
+              onChange={(e) => updateSettings({ showMinMax: e.target.checked })}
             />
             Mostrar min/max
           </label>
@@ -448,7 +450,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.minMaxFontSize ?? 11}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({
                     minMaxFontSize: Number(e.target.value) || 11,
                   })
@@ -463,7 +465,9 @@ const SidebarPropiedades = ({
                 type="color"
                 className="mt-1 h-9 w-full rounded border border-slate-300 px-2 py-1"
                 value={rgbaToHex(currentSettings.minMaxColor, "#94a3b8")}
-                onChange={e => updateSettings({ minMaxColor: e.target.value })}
+                onChange={(e) =>
+                  updateSettings({ minMaxColor: e.target.value })
+                }
               />
             </div>
           </div>
@@ -477,7 +481,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="mt-1 h-9 w-full rounded border border-slate-300 px-2 py-1"
                 value={rgbaToHex(currentSettings.labelColor, "#f87171")}
-                onChange={e => updateSettings({ labelColor: e.target.value })}
+                onChange={(e) => updateSettings({ labelColor: e.target.value })}
               />
             </div>
             <div>
@@ -488,7 +492,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="mt-1 h-9 w-full rounded border border-slate-300 px-2 py-1"
                 value={rgbaToHex(currentSettings.valueColor, "#f87171")}
-                onChange={e => updateSettings({ valueColor: e.target.value })}
+                onChange={(e) => updateSettings({ valueColor: e.target.value })}
               />
             </div>
             <div>
@@ -499,7 +503,9 @@ const SidebarPropiedades = ({
                 type="color"
                 className="mt-1 h-9 w-full rounded border border-slate-300 px-2 py-1"
                 value={rgbaToHex(currentSettings.needleColor, "#ffffff")}
-                onChange={e => updateSettings({ needleColor: e.target.value })}
+                onChange={(e) =>
+                  updateSettings({ needleColor: e.target.value })
+                }
               />
             </div>
             <div>
@@ -510,7 +516,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="mt-1 h-9 w-full rounded border border-slate-300 px-2 py-1"
                 value={rgbaToHex(currentSettings.tickColor, "#fb923c")}
-                onChange={e => updateSettings({ tickColor: e.target.value })}
+                onChange={(e) => updateSettings({ tickColor: e.target.value })}
               />
             </div>
           </div>
@@ -570,7 +576,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.trackFill || "#1e2a3e"}
-                onChange={e => updateSettings({ trackFill: e.target.value })}
+                onChange={(e) => updateSettings({ trackFill: e.target.value })}
               />
             </div>
             <div>
@@ -581,7 +587,9 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.trackStroke || "#2c6993"}
-                onChange={e => updateSettings({ trackStroke: e.target.value })}
+                onChange={(e) =>
+                  updateSettings({ trackStroke: e.target.value })
+                }
               />
             </div>
             <div>
@@ -592,7 +600,9 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.gradientFrom || "#3498db"}
-                onChange={e => updateSettings({ gradientFrom: e.target.value })}
+                onChange={(e) =>
+                  updateSettings({ gradientFrom: e.target.value })
+                }
               />
             </div>
             <div>
@@ -603,7 +613,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.gradientTo || "#2980b9"}
-                onChange={e => updateSettings({ gradientTo: e.target.value })}
+                onChange={(e) => updateSettings({ gradientTo: e.target.value })}
               />
             </div>
             <div>
@@ -614,7 +624,9 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.hatchStroke || "#2c6993"}
-                onChange={e => updateSettings({ hatchStroke: e.target.value })}
+                onChange={(e) =>
+                  updateSettings({ hatchStroke: e.target.value })
+                }
               />
             </div>
             <div>
@@ -625,7 +637,9 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.percentColor || "#ffffff"}
-                onChange={e => updateSettings({ percentColor: e.target.value })}
+                onChange={(e) =>
+                  updateSettings({ percentColor: e.target.value })
+                }
               />
             </div>
           </div>
@@ -639,7 +653,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.valueOffsetX ?? 0}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ valueOffsetX: Number(e.target.value) || 0 })
                 }
               />
@@ -652,7 +666,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.valueOffsetY ?? 0}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ valueOffsetY: Number(e.target.value) || 0 })
                 }
               />
@@ -665,7 +679,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.labelOffsetX ?? 0}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ labelOffsetX: Number(e.target.value) || 0 })
                 }
               />
@@ -678,7 +692,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.labelOffsetY ?? 0}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ labelOffsetY: Number(e.target.value) || 0 })
                 }
               />
@@ -690,7 +704,7 @@ const SidebarPropiedades = ({
               type="checkbox"
               className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
               checked={currentSettings.showLabel === true}
-              onChange={e => updateSettings({ showLabel: e.target.checked })}
+              onChange={(e) => updateSettings({ showLabel: e.target.checked })}
             />
             Mostrar label
           </label>
@@ -699,7 +713,7 @@ const SidebarPropiedades = ({
               type="checkbox"
               className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
               checked={currentSettings.showValue !== false}
-              onChange={e => updateSettings({ showValue: e.target.checked })}
+              onChange={(e) => updateSettings({ showValue: e.target.checked })}
             />
             Mostrar valor
           </label>
@@ -721,7 +735,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.bgColor || "#1e272e"}
-                onChange={e => updateSettings({ bgColor: e.target.value })}
+                onChange={(e) => updateSettings({ bgColor: e.target.value })}
               />
             </div>
             <div>
@@ -732,7 +746,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.gridColor || "#2f3640"}
-                onChange={e => updateSettings({ gridColor: e.target.value })}
+                onChange={(e) => updateSettings({ gridColor: e.target.value })}
               />
             </div>
             <div>
@@ -743,7 +757,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.axisColor || "#57606f"}
-                onChange={e => updateSettings({ axisColor: e.target.value })}
+                onChange={(e) => updateSettings({ axisColor: e.target.value })}
               />
             </div>
             <div>
@@ -754,7 +768,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.titleColor || "#ecf0f1"}
-                onChange={e => updateSettings({ titleColor: e.target.value })}
+                onChange={(e) => updateSettings({ titleColor: e.target.value })}
               />
             </div>
             <div>
@@ -765,7 +779,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.valueColor || "#00d2d3"}
-                onChange={e => updateSettings({ valueColor: e.target.value })}
+                onChange={(e) => updateSettings({ valueColor: e.target.value })}
               />
             </div>
             <div>
@@ -776,7 +790,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.labelColor || "#95a5a6"}
-                onChange={e => updateSettings({ labelColor: e.target.value })}
+                onChange={(e) => updateSettings({ labelColor: e.target.value })}
               />
             </div>
             <div>
@@ -787,7 +801,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.barGradientFrom || "#00d2d3"}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ barGradientFrom: e.target.value })
                 }
               />
@@ -800,7 +814,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.barGradientTo || "#0984e3"}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ barGradientTo: e.target.value })
                 }
               />
@@ -813,7 +827,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.alertBarColor || "#ff7675"}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ alertBarColor: e.target.value })
                 }
               />
@@ -826,7 +840,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.limitColor || "#d63031"}
-                onChange={e => updateSettings({ limitColor: e.target.value })}
+                onChange={(e) => updateSettings({ limitColor: e.target.value })}
               />
             </div>
           </div>
@@ -837,7 +851,9 @@ const SidebarPropiedades = ({
                 type="checkbox"
                 className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
                 checked={currentSettings.showTitle !== false}
-                onChange={e => updateSettings({ showTitle: e.target.checked })}
+                onChange={(e) =>
+                  updateSettings({ showTitle: e.target.checked })
+                }
               />
               Mostrar título
             </label>
@@ -846,7 +862,9 @@ const SidebarPropiedades = ({
                 type="checkbox"
                 className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
                 checked={currentSettings.showValue !== false}
-                onChange={e => updateSettings({ showValue: e.target.checked })}
+                onChange={(e) =>
+                  updateSettings({ showValue: e.target.checked })
+                }
               />
               Mostrar valor
             </label>
@@ -855,7 +873,7 @@ const SidebarPropiedades = ({
                 type="checkbox"
                 className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
                 checked={currentSettings.showGrid !== false}
-                onChange={e => updateSettings({ showGrid: e.target.checked })}
+                onChange={(e) => updateSettings({ showGrid: e.target.checked })}
               />
               Mostrar grid
             </label>
@@ -864,7 +882,9 @@ const SidebarPropiedades = ({
                 type="checkbox"
                 className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
                 checked={currentSettings.showLimit !== false}
-                onChange={e => updateSettings({ showLimit: e.target.checked })}
+                onChange={(e) =>
+                  updateSettings({ showLimit: e.target.checked })
+                }
               />
               Mostrar límite
             </label>
@@ -887,7 +907,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.tankDark || "#1a1f35"}
-                onChange={e => updateSettings({ tankDark: e.target.value })}
+                onChange={(e) => updateSettings({ tankDark: e.target.value })}
               />
             </div>
             <div>
@@ -898,7 +918,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.tankTop || "#252b45"}
-                onChange={e => updateSettings({ tankTop: e.target.value })}
+                onChange={(e) => updateSettings({ tankTop: e.target.value })}
               />
             </div>
             <div>
@@ -909,7 +929,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.fluidBase || "#8e44ad"}
-                onChange={e => updateSettings({ fluidBase: e.target.value })}
+                onChange={(e) => updateSettings({ fluidBase: e.target.value })}
               />
             </div>
             <div>
@@ -920,7 +940,9 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.gradientFrom || "#9b59b6"}
-                onChange={e => updateSettings({ gradientFrom: e.target.value })}
+                onChange={(e) =>
+                  updateSettings({ gradientFrom: e.target.value })
+                }
               />
             </div>
             <div>
@@ -931,7 +953,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.gradientTo || "#8e44ad"}
-                onChange={e => updateSettings({ gradientTo: e.target.value })}
+                onChange={(e) => updateSettings({ gradientTo: e.target.value })}
               />
             </div>
             <div>
@@ -942,7 +964,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.topFrom || "#d49cf2"}
-                onChange={e => updateSettings({ topFrom: e.target.value })}
+                onChange={(e) => updateSettings({ topFrom: e.target.value })}
               />
             </div>
             <div>
@@ -953,7 +975,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.topTo || "#9b59b6"}
-                onChange={e => updateSettings({ topTo: e.target.value })}
+                onChange={(e) => updateSettings({ topTo: e.target.value })}
               />
             </div>
             <div>
@@ -964,7 +986,9 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.percentColor || "#ffffff"}
-                onChange={e => updateSettings({ percentColor: e.target.value })}
+                onChange={(e) =>
+                  updateSettings({ percentColor: e.target.value })
+                }
               />
             </div>
             <div className="col-span-2">
@@ -975,7 +999,7 @@ const SidebarPropiedades = ({
                 type="text"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px]"
                 value={currentSettings.label || ""}
-                onChange={e => updateSettings({ label: e.target.value })}
+                onChange={(e) => updateSettings({ label: e.target.value })}
               />
             </div>
             <div>
@@ -986,7 +1010,7 @@ const SidebarPropiedades = ({
                 type="color"
                 className="h-10 w-full rounded border border-slate-300 bg-white"
                 value={currentSettings.labelColor || "#e2e8f0"}
-                onChange={e => updateSettings({ labelColor: e.target.value })}
+                onChange={(e) => updateSettings({ labelColor: e.target.value })}
               />
             </div>
             <div>
@@ -997,7 +1021,7 @@ const SidebarPropiedades = ({
                 type="text"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px]"
                 value={currentSettings.fontFamily || "Arial, sans-serif"}
-                onChange={e => updateSettings({ fontFamily: e.target.value })}
+                onChange={(e) => updateSettings({ fontFamily: e.target.value })}
               />
             </div>
           </div>
@@ -1011,7 +1035,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.valueOffsetX ?? 0}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ valueOffsetX: Number(e.target.value) || 0 })
                 }
               />
@@ -1024,7 +1048,7 @@ const SidebarPropiedades = ({
                 type="number"
                 className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
                 value={currentSettings.valueOffsetY ?? 0}
-                onChange={e =>
+                onChange={(e) =>
                   updateSettings({ valueOffsetY: Number(e.target.value) || 0 })
                 }
               />
@@ -1036,7 +1060,7 @@ const SidebarPropiedades = ({
               type="checkbox"
               className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
               checked={currentSettings.showValue !== false}
-              onChange={e => updateSettings({ showValue: e.target.checked })}
+              onChange={(e) => updateSettings({ showValue: e.target.checked })}
             />
             Mostrar valor
           </label>
@@ -1059,7 +1083,7 @@ const SidebarPropiedades = ({
         className="flex items-center gap-1 overflow-x-auto px-1 py-1 bg-white border-b border-slate-200 no-scrollbar"
         style={{ margin: 0 }}
       >
-        {tabs.map(tab => {
+        {tabs.map((tab) => {
           const isActive = activeTab === tab;
           return (
             <button

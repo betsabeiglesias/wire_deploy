@@ -410,9 +410,6 @@ const UnifiedSidebar = ({
               Abrir gestor
             </button>
           </div>
-          <p className="text-[11px] text-slate-600">
-            Administra PLCs y tablas de tags en una vista tipo árbol + tabla.
-          </p>
         </div>
       );
     }
