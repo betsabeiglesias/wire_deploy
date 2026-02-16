@@ -17,6 +17,7 @@ const CanvasEditor = ({
   const stageRef = useRef(null);
   const guideVRef = useRef(null);
   const guideHRef = useRef(null);
+  const prevZoomRef = useRef(zoom);
   const isPanningRef = useRef(false);
   const lastPanPointRef = useRef({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
@@ -206,6 +207,34 @@ const CanvasEditor = ({
     };
   }, []);
 
+  useEffect(() => {
+    const viewport = canvasRef.current;
+    const prevZoom = prevZoomRef.current || 1;
+    if (!viewport || prevZoom === zoom) return;
+
+    const anchorX = viewport.clientWidth / 2;
+    const anchorY = viewport.clientHeight / 2;
+
+    const worldX = (viewport.scrollLeft + anchorX) / prevZoom;
+    const worldY = (viewport.scrollTop + anchorY) / prevZoom;
+
+    const nextScrollLeft = worldX * zoom - anchorX;
+    const nextScrollTop = worldY * zoom - anchorY;
+
+    const maxScrollLeft = Math.max(
+      viewport.scrollWidth - viewport.clientWidth,
+      0,
+    );
+    const maxScrollTop = Math.max(
+      viewport.scrollHeight - viewport.clientHeight,
+      0,
+    );
+
+    viewport.scrollLeft = Math.max(0, Math.min(nextScrollLeft, maxScrollLeft));
+    viewport.scrollTop = Math.max(0, Math.min(nextScrollTop, maxScrollTop));
+    prevZoomRef.current = zoom;
+  }, [zoom]);
+
   return (
     <div
       ref={canvasRef}
@@ -216,7 +245,7 @@ const CanvasEditor = ({
         isPanning ? "cursor-grabbing" : "cursor-grab"
       }`}
     >
-      <div className="p-4">
+      <div className="flex min-h-full min-w-full p-4">
         <div
           style={{
             width: `calc(${canvasWidth} * ${zoom})`,
@@ -226,6 +255,7 @@ const CanvasEditor = ({
             minWidth: 640 * zoom,
             minHeight: scaledCanvasHeight || 500 * zoom,
             flex: "0 0 auto",
+            margin: "auto",
           }}
         >
           <div

@@ -43,7 +43,7 @@ export function FavoriteViews({ title, type }) {
                 className="bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden flex flex-col"
               >
                 {/* Miniatura: Iframe para PowerBI o Iframe para la ruta del Layout */}
-                <div className="w-full h-64 bg-gray-100">
+                <div className="h-64 bg-white overflow-hidden relative border-b">
                   {type === "mypowerbi" ? (
                     item.embed_url ? (
                       <iframe
@@ -62,8 +62,13 @@ export function FavoriteViews({ title, type }) {
                       src={`/layout/${item.id}`}
                       title={item.button_name}
                       frameBorder="0"
-                      className="w-full h-full pointer-events-none"
-                      style={{ border: 'none' }}
+                      scrolling="yes"
+                      className="absolute top-0 left-0 border-0 origin-top-left pointer-events-auto"
+                      style={{
+                        width: "166.66%",
+                        height: "166.66%",
+                        transform: "scale(0.6)",
+                      }}
                     />
                   )}
                 </div>

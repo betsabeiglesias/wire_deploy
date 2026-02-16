@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 
 export default function EnergyBarChart({
-  title = "CONSUMO ENERGÉTICO (kW)",
+  title = "CONSUMO ENERGETICO (kW)",
   valueText = "420 kW",
   width = 400,
   height = 250,
@@ -19,7 +19,33 @@ export default function EnergyBarChart({
   showLimit = true,
   showTitle = true,
   showValue = true,
+  bars = [],
+  xLabels = [],
+  maxValue,
+  limitValue = 1250,
 }) {
+  const barsData = useMemo(() => {
+    if (Array.isArray(bars) && bars.length > 0) return bars;
+    return [760, 980, 640, 1220, 860, 710];
+  }, [bars]);
+
+  const labelsData = useMemo(() => {
+    if (Array.isArray(xLabels) && xLabels.length === barsData.length) return xLabels;
+    return ["08:00", "10:00", "12:00", "14:00", "16:00", "18:00"].slice(
+      0,
+      barsData.length,
+    );
+  }, [xLabels, barsData]);
+
+  const yBase = 180;
+  const yTop = 50;
+  const chartHeight = yBase - yTop;
+  const maxScale = Math.max(maxValue || 0, ...barsData, limitValue || 0, 1000);
+  const step = 50;
+  const barWidth = 35;
+  const startX = 65;
+  const alertIdx = barsData.indexOf(Math.max(...barsData));
+
   return (
     <svg
       width={width}
@@ -29,8 +55,14 @@ export default function EnergyBarChart({
     >
       <defs>
         <linearGradient id="barGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style={{ stopColor: barGradientFrom, stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: barGradientTo, stopOpacity: 1 }} />
+          <stop
+            offset="0%"
+            style={{ stopColor: barGradientFrom, stopOpacity: 1 }}
+          />
+          <stop
+            offset="100%"
+            style={{ stopColor: barGradientTo, stopOpacity: 1 }}
+          />
         </linearGradient>
       </defs>
 
@@ -49,15 +81,15 @@ export default function EnergyBarChart({
         </text>
       )}
 
-      <g fontFamily="Arial" fontSize="10" fill="#95a5a6" textAnchor="end">
+      <g fontFamily="Arial" fontSize="10" fill={labelColor} textAnchor="end">
         <text x="40" y="60">
-          1500
+          {Math.round(maxScale)}
         </text>
         <text x="40" y="100">
-          1000
+          {Math.round(maxScale * 0.66)}
         </text>
         <text x="40" y="140">
-          500
+          {Math.round(maxScale * 0.33)}
         </text>
         <text x="40" y="180">
           0
@@ -73,137 +105,58 @@ export default function EnergyBarChart({
         </>
       )}
 
-      <rect
-        x="65"
-        y="90"
-        width="35"
-        height="90"
-        fill="url(#barGradient)"
-        rx="2"
-      >
-        <animate
-          attributeName="height"
-          from="0"
-          to="90"
-          dur="1s"
-          fill="freeze"
-        />
-        <animate attributeName="y" from="180" to="90" dur="1s" fill="freeze" />
-      </rect>
-      <rect
-        x="115"
-        y="70"
-        width="35"
-        height="110"
-        fill="url(#barGradient)"
-        rx="2"
-      >
-        <animate
-          attributeName="height"
-          from="0"
-          to="110"
-          dur="1.2s"
-          fill="freeze"
-        />
-        <animate
-          attributeName="y"
-          from="180"
-          to="70"
-          dur="1.2s"
-          fill="freeze"
-        />
-      </rect>
-      <rect
-        x="165"
-        y="110"
-        width="35"
-        height="70"
-        fill="url(#barGradient)"
-        rx="2"
-      >
-        <animate
-          attributeName="height"
-          from="0"
-          to="70"
-          dur="0.8s"
-          fill="freeze"
-        />
-        <animate
-          attributeName="y"
-          from="180"
-          to="110"
-          dur="0.8s"
-          fill="freeze"
-        />
-      </rect>
-      <rect x="215" y="50" width="35" height="130" fill={alertBarColor} rx="2">
-        <animate
-          attributeName="opacity"
-          values="1;0.7;1"
-          dur="2s"
-          repeatCount="indefinite"
-        />
-      </rect>
-      <rect
-        x="265"
-        y="85"
-        width="35"
-        height="95"
-        fill="url(#barGradient)"
-        rx="2"
-      />
-      <rect
-        x="315"
-        y="100"
-        width="35"
-        height="80"
-        fill="url(#barGradient)"
-        rx="2"
-      />
+      {barsData.map((barValue, idx) => {
+        const normalized = Math.max(0, Math.min(1, barValue / maxScale));
+        const barHeight = Math.max(4, normalized * chartHeight);
+        const y = yBase - barHeight;
+        const x = startX + idx * step;
+        const fill = idx === alertIdx ? alertBarColor : "url(#barGradient)";
+        return (
+          <rect key={`${x}-${barValue}-${idx}`} x={x} y={y} width={barWidth} height={barHeight} fill={fill} rx="2">
+            <animate attributeName="height" from="0" to={barHeight} dur={`${0.5 + idx * 0.1}s`} fill="freeze" />
+            <animate attributeName="y" from={yBase} to={y} dur={`${0.5 + idx * 0.1}s`} fill="freeze" />
+          </rect>
+        );
+      })}
 
-      <g fontFamily="Arial" fontSize="10" fill="#95a5a6" textAnchor="middle">
-        <text x="82.5" y="200">
-          08:00
-        </text>
-        <text x="132.5" y="200">
-          10:00
-        </text>
-        <text x="182.5" y="200">
-          12:00
-        </text>
-        <text x="232.5" y="200">
-          14:00
-        </text>
-        <text x="282.5" y="200">
-          16:00
-        </text>
-        <text x="332.5" y="200">
-          18:00
-        </text>
+      <g fontFamily="Arial" fontSize="10" fill={labelColor} textAnchor="middle">
+        {labelsData.map((lbl, idx) => (
+          <text key={`${lbl}-${idx}`} x={startX + idx * step + barWidth / 2} y="220">
+            {lbl}
+          </text>
+        ))}
       </g>
 
       {showLimit && (
         <>
-          <line
-            x1="50"
-            y1="80"
-            x2="370"
-            y2="80"
-            stroke={limitColor}
-            strokeWidth="2"
-            strokeDasharray="5,3"
-          />
-          <text
-            x="370"
-            y="75"
-            fontFamily="Arial"
-            fontSize="9"
-            fill={limitColor}
-            textAnchor="end"
-            fontWeight="bold"
-          >
-            LÍMITE: 1250 kW
-          </text>
+          {(() => {
+            const normalizedLimit = Math.max(0, Math.min(1, limitValue / maxScale));
+            const limitY = yBase - normalizedLimit * chartHeight;
+            return (
+              <>
+                <line
+                  x1="50"
+                  y1={limitY}
+                  x2="370"
+                  y2={limitY}
+                  stroke={limitColor}
+                  strokeWidth="2"
+                  strokeDasharray="5,3"
+                />
+                <text
+                  x="370"
+                  y={Math.max(12, limitY - 5)}
+                  fontFamily="Arial"
+                  fontSize="9"
+                  fill={limitColor}
+                  textAnchor="end"
+                  fontWeight="bold"
+                >
+                  LIMITE: {Math.round(limitValue)} kW
+                </text>
+              </>
+            );
+          })()}
         </>
       )}
 

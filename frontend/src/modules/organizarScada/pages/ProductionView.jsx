@@ -4,35 +4,9 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import { useGatewayData } from "@/hooks/useGatewayData";
 import api from "../../../services/api";
-
-import {
-  parseNumericValue,
-  formatNumericValue,
-  clampPercent,
-} from "@/modules/scada/utils";
 import "@/styles/gateway.css";
 import "../../../styles/Scada.css";
-import { RingGauge } from "@/modules/scada/components/gauges/RingGauge";
-import { MiniHorizontalBar } from "@/modules/scada/components/gauges/MiniHorizontalBar";
-import { ValueBubble } from "@/modules/scada/components/gauges/ValueBubble";
-import { BooleanLamp } from "@/modules/scada/components/gauges/BooleanLamp";
-import { KwShieldGauge } from "@/modules/scada/components/gauges/KwShieldGauge";
-import { PressTrendGauge } from "@/modules/scada/components/gauges/PressTrendGauge";
-import { BlueDonutGauge } from "@/modules/scada/components/gauges/BlueDonutGauge";
-import { NeedleGauge } from "@/modules/scada/components/gauges/NeedleGauge";
-import SvgGauge from "../components/widgets/standard/SvgGauge";
-import GaugeMeter from "../components/widgets/standard/GaugeMeter";
-import TempGauge from "../components/widgets/standard/TempGauge";
-import EnergyBarChart from "../components/widgets/standard/EnergyBarChart";
-import TemperatureLineChart from "../components/widgets/standard/TemperatureLineChart";
-import HmiProgressBar from "../components/widgets/standard/HmiProgressBar";
-import HmiTankLevel from "../components/widgets/standard/HmiTankLevel";
-import HmiStatusCard from "../components/widgets/standard/HmiStatusCard";
-import HmiTrendCard from "../components/widgets/standard/HmiTrendCard";
-import HmiScadaGauge from "../components/widgets/standard/HmiScadaGauge";
-import HmiHorizontalGauge from "../components/widgets/standard/HmiHorizontalGauge";
-import HmiEnergySummaryCard from "../components/widgets/standard/HmiEnergySummaryCard";
-import LuxuriesStackedBarChart from "../components/widgets/standard/LuxuriesStackedBarChart";
+import { renderWidget } from "../components/widgets/registry.jsx";
 
 import HomeButton from "../../../components/HomeButton";
 
@@ -221,7 +195,7 @@ const ProductionView = () => {
       // settings.attributeLabel ||
       // item.data?.label;
 
-    // const equipment = settings.equipment || item.data?.equipment;
+    const equipment = settings.equipment || item.data?.equipment;
 
     const site = settings.site;
 
@@ -258,30 +232,28 @@ const ProductionView = () => {
   };
 
   const renderComponent = (item) => {
-    const { type, settings = {}, width, height } = item.data;
-
-    const label = settings?.attributeLabel || item.data.label;
-
+    const data = item?.data || {};
+    const { type, settings = {} } = data;
     const live = resolveLiveData(item);
 
-    const value = live.value;
-
-    const unit = live.unit;
-
-    const w = typeof width === "number" ? `${width}px` : width || "200px";
-
-    const h = typeof height === "number" ? `${height}px` : height || "180px";
+    const numericWidth =
+      typeof data.width === "number"
+        ? data.width
+        : Number.parseFloat(data.width) || 200;
+    const numericHeight =
+      typeof data.height === "number"
+        ? data.height
+        : Number.parseFloat(data.height) || 180;
 
     const x = typeof item.x === "number" ? `${item.x}px` : item.x || "0px";
-
     const y = typeof item.y === "number" ? `${item.y}px` : item.y || "0px";
 
     const style = {
       position: "absolute",
       left: x,
       top: y,
-      width: w,
-      height: h,
+      width: `${numericWidth}px`,
+      height: `${numericHeight}px`,
       padding: 0,
       backgroundColor: "transparent",
       boxShadow: "none",
@@ -290,347 +262,46 @@ const ProductionView = () => {
       zIndex: 10,
     };
 
-    const renderGaugeContent = () => {
-      const numericValue = parseNumericValue(value);
+    if (type === "nav-button" || type === "btn-primary" || type === "btn-outline") {
+      const buttonLabel = data?.label || settings?.attributeLabel || "Button";
+      const isPrimary = type === "btn-primary" || type === "nav-button";
+      const targetViewId = data?.targetViewId || settings?.targetViewId;
+      const isActive = targetViewId && activeViewId === targetViewId;
+      const hasAction = !!targetViewId;
+      const baseClass =
+        "px-4 py-2 rounded-md shadow-sm font-medium transition-all active:scale-95 flex items-center justify-center";
+      const primaryClass = isPrimary
+        ? hasAction
+          ? "bg-sky-600 hover:bg-sky-700 text-white cursor-pointer"
+          : "bg-gray-400 text-white cursor-default"
+        : hasAction
+          ? "border border-sky-500 text-sky-600 hover:bg-sky-50 cursor-pointer"
+          : "border border-gray-300 text-gray-400 cursor-default";
+      const activeClass = isActive ? "ring-2 ring-offset-1 ring-sky-500" : "";
 
-      const percent = clampPercent(
-        numericValue,
-        settings?.minValue ?? 0,
-        settings?.maxValue ?? 100,
-      );
-
-      const displayValue = formatNumericValue(numericValue) ?? "-";
-
-      const labelText = unit ? `${displayValue} ${unit}` : displayValue;
-
-      switch (type) {
-        case "speedometer":
-
-        case "temperature-gauge": {
-          const isThermo = type === "temperature-gauge";
-
-          return (
-            <GaugeMeter
-              initialValue={numericValue !== null ? numericValue : 0}
-              minValue={settings?.minValue ?? 0}
-              maxValue={settings?.maxValue ?? 100}
-              unit={unit}
-              label={label}
-              isThermometer={isThermo}
-            />
-          );
-        }
-
-        case "mini-ring":
-          return (
-            <RingGauge
-              percent={percent}
-              displayValue={displayValue}
-              unit={unit}
-            />
-          );
-
-        case "mini-horizontal":
-          return <MiniHorizontalBar percent={percent}  />;
-
-        case "mini-donut":
-          return <BlueDonutGauge percent={percent} />;
-
-        case "mini-bubble":
-          return <ValueBubble value={displayValue} unit={unit} />;
-
-        case "mini-lamp":
-          return <BooleanLamp active={!!value} />;
-
-        case "mini-needle":
-          return (
-            <NeedleGauge percent={percent} value={displayValue} unit={unit} />
-          );
-
-        case "power-card":
-          return (
-            <KwShieldGauge value={displayValue} unit={unit} label={label} />
-          );
-
-        case "press-card":
-          return (
-            <PressTrendGauge
-              value={displayValue}
-              unit={unit}
-              label={label}
-              trend={0}
-            />
-          );
-
-        case "svg-gauge": {
-          const gaugeValue = parseNumericValue(value);
-
-          return (
-            <SvgGauge
-              options={settings?.gaugeOptions || item.data?.gaugeOptions}
-              value={gaugeValue !== null ? gaugeValue : 0}
-              width={w}
-              height={h}
-            />
-          );
-        }
-        case "temp-gauge": {
-          const valueToRender =
-            typeof value !== "undefined"
-              ? parseNumericValue(value)
-              : settings?.initialValue ?? 89;
-          return (
-            <TempGauge
-              value={valueToRender}
-              min={settings.min ?? 0}
-              max={settings.max ?? 120}
-              // label={settings.label || label}
-              unit={unit || settings.unit || "°C"}
-              size={Math.min(width ?? 0, height ?? 0)}
-            />
-          );
-        }
-        case "energy-bar-chart": {
-        }
-        case "luxuries-stacked-bar": {
-          return <LuxuriesStackedBarChart width={width} height={height} />;
-        }
-        case "EnergyBarChart": {
-          return (
-            <EnergyBarChart
-              title={settings.title || label}
-              valueText={settings.valueText || "420 kW"}
-            />
-          );
-        }
-        case "temperature-line-chart": {
-
-        }
-        case "hmi-energy-summary":{
-          return (
-            <HmiEnergySummaryCard
-              width={width}
-              height={height}
-              title={settings.title || label || "Consumo"}
-              value={settings.value || "0"}
-              unit={settings.unit || ""}
-              subtitle={settings.subtitle}
-              deltaText={settings.deltaText}
-              deltaValue={settings.deltaValue}
-              deltaDirection={settings.deltaDirection}
-            />
-          );
-        }
-        case "temperature-line-chart": {
-          return (
-            <TemperatureLineChart
-              label={settings.legendLabel || "Temp °C"}
-              pointLabel={settings.pointLabel || "55°C"}
-            />
-          );
-        }
-        case "hmi-progress-bar": {
-          return (
-            <HmiProgressBar
-              percent={percent}
-              label={settings.caption || label || "LOREM IPSUM"}
-              width={width}
-              height={height}
-            />
-          );
-        }
-        case "hmi-tank-level": {
-          return <HmiTankLevel percent={percent} width={width} height={height} />;
-        }
-        case "hmi-status-card": {
-          return (
-            <HmiStatusCard
-              status={settings.status || "ok"}
-              title={settings.title || label || "SISTEMA OK"}
-              subtitle={settings.subtitle || "STATUS: READY"}
-              width={width}
-              height={height}
-            />
-          );
-        }
-        case "hmi-trend-card": {
-          return (
-            <HmiTrendCard
-              title={settings.title || label || "Caudal de Proceso - Cuba 2"}
-              unitLabel={settings.unitLabel || "LOREM IPSUM"}
-              value={numericValue ?? 0}
-              minValue={settings.minValue ?? 0}
-              maxValue={settings.maxValue ?? 10000}
-              series={Array.isArray(settings.series) ? settings.series : []}
-              width={width}
-              height={height}
-            />
-          );
-        }
-        case "hmi-scada-gauge": {
-          return (
-            <HmiScadaGauge
-              value={numericValue ?? 0}
-              min={settings.min ?? 0}
-              max={settings.max ?? 100}
-              unit={settings.unit || ""}
-              themeColor={settings.themeColor || "#94a3b8"}
-              zones={Array.isArray(settings.zones) ? settings.zones : []}
-              width={width}
-              height={height}
-            />
-          );
-        }
-        case "hmi-horizontal-gauge": {
-          return (
-            <HmiHorizontalGauge
-              value={numericValue ?? 0}
-              min={settings.min ?? 0}
-              max={settings.max ?? 100}
-              variant={settings.variant || "precision"}
-              accentColor={settings.accentColor}
-              width={width}
-              height={height}
-            />
-          );
-        }
-
-        case "nav-button":
-
-        case "btn-primary":
-
-        case "btn-outline": {
-          const buttonLabel = item.data?.label || label || "Button";
-
-          const isPrimary = type === "btn-primary" || type === "nav-button";
-          const targetViewId =
-            item.data?.targetViewId || item.data?.settings?.targetViewId;
-
-          const isActive = targetViewId && activeViewId === targetViewId;
-          const hasAction = !!targetViewId;
-
-          const baseClass =
-            "px-4 py-2 rounded-md shadow-sm font-medium transition-all active:scale-95 flex items-center justify-center";
-
-          const primaryClass = isPrimary
-            ? hasAction
-              ? "bg-sky-600 hover:bg-sky-700 text-white cursor-pointer"
-              : "bg-gray-400 text-white cursor-default"
-            : hasAction
-              ? "border border-sky-500 text-sky-600 hover:bg-sky-50 cursor-pointer"
-              : "border border-gray-300 text-gray-400 cursor-default";
-
-          // Estilo extra para indicar que es el activo actual (si fuera una navegación tipo tabs)
-          const activeClass = isActive
-            ? "ring-2 ring-offset-1 ring-sky-500"
-            : "";
-
-          return (
-            <button
-              className={`${baseClass} ${primaryClass} ${activeClass}`}
-              onClick={() => hasAction && handleNavigate(targetViewId)}
-            >
-              {buttonLabel}
-            </button>
-          );
-        }
-
-        case "label-pill":
-
-        case "label-badge": {
-          const labelTextFinal = item.data?.label || label || "Label";
-
-          const isPill = type === "label-pill";
-
-          const labelClass = isPill
-            ? "inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 text-sm px-4 py-1 border border-emerald-100"
-            : "inline-flex items-center rounded bg-slate-800 text-slate-50 text-xs px-3 py-1 uppercase tracking-wide";
-
-          return <span className={labelClass}>{labelTextFinal}</span>;
-        }
-
-        case "card-soft":
-
-        case "card-elevated": {
-          const cardText = item.data?.label || label || "Card Content";
-
-          const isElevated = type === "card-elevated";
-
-          const cardClass = isElevated
-            ? "rounded-lg border border-slate-200 bg-white text-sm px-4 py-3 shadow-md"
-            : "rounded-lg border border-slate-200 bg-slate-50 text-sm px-4 py-3 shadow-sm";
-
-          return <div className={cardClass}>{cardText}</div>;
-        }
-
-        default:
-          return <div className="text-red-500 text-xs">Unknown: {type}</div>;
-      }
-    };
-
-    if (type === "mini-table") {
       return (
-        <div key={item.id} style={style}>
-          <h3 className="font-bold mb-2 text-sm" title={label}>
-            {label}
-          </h3>
-
-          <div className="overflow-auto h-[calc(100%-2rem)]">
-            <table className="min-w-full text-xs">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="text-left p-1">Var</th>
-
-                  <th className="text-left p-1">Val</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {settings?.rows?.map((row, idx) => (
-                  <tr key={idx} className="border-t">
-                    <td className="p-1">{row.variable}</td>
-
-                    <td className="p-1">{row.value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
-    }
-
-    if (type === "mini-chart") {
-      return (
-        <div key={item.id} style={style}>
-          <h3 className="font-bold mb-2 text-sm" title={label}>
-            {label}
-          </h3>
-
-          <div className="flex items-end justify-between h-[calc(100%-2rem)] gap-1 pb-2">
-            {settings?.series?.map((val, idx) => (
-              <div
-                key={idx}
-                style={{ height: `${val}%` }}
-                className="flex-1 bg-blue-500 rounded-t opacity-80 hover:opacity-100 transition-opacity"
-              ></div>
-            ))}
-          </div>
+        <div key={item.id} style={style} className="flex items-center justify-center">
+          <button
+            className={`${baseClass} ${primaryClass} ${activeClass}`}
+            onClick={() => hasAction && handleNavigate(targetViewId)}
+          >
+            {buttonLabel}
+          </button>
         </div>
       );
     }
 
     return (
       <div key={item.id} style={style}>
-        <div
-          className="text-sm font-medium text-gray-500 mb-2 truncate"
-          title={label}
-        >
-          {label}
-        </div>
-
-        <div className="flex justify-center items-center h-[calc(100%-2rem)]">
-          {renderGaugeContent()}
+        <div className="flex h-full w-full items-center justify-center overflow-hidden">
+          {renderWidget({
+            data,
+            live,
+            width: numericWidth,
+            height: numericHeight,
+            theme: "theme-clean",
+            valueHistory: [],
+          })}
         </div>
       </div>
     );
@@ -721,8 +392,8 @@ const ProductionView = () => {
         className="mt-16 transition-transform duration-200 ease-out origin-top"
         style={{
           transform: `scale(${scale})`,
-          width: `${baseWidth}px`,
-          height: "840px", // Altura base fija o auto si se prefiere
+          width: "1176px",
+          height: "720px", // Altura base fija o auto si se prefiere
         }}
       >
         <div className="relative w-full h-full bg-white shadow-lg border border-gray-200 rounded-lg overflow-hidden">
@@ -734,5 +405,6 @@ const ProductionView = () => {
 };
 
 export default ProductionView;
+
 
 

@@ -83,6 +83,11 @@ const OrganizarScada = () => {
 
   const selectedElement =
     canvasElements.find((el) => el.id === selectedId) || null;
+  const hasCanvasElements =
+    Array.isArray(canvasElements) && canvasElements.length > 0;
+  const hasViewElements =
+    Array.isArray(views) &&
+    views.some((v) => Array.isArray(v?.elements) && v.elements.length > 0);
   const isPropsPanelOpen = showPropsPanel;
   const canvasWidth = "1180px";
   const canvasHeight = "710px";
@@ -261,6 +266,11 @@ const OrganizarScada = () => {
   };
 
   const handleNewDashboardWrapper = () => {
+    if (!hasCanvasElements && !hasViewElements) {
+      handleNewDashboard();
+      return;
+    }
+
     Swal.fire({
       title: "¿Iniciar nuevo proyecto?",
       text: "Si continúas, perderás los cambios no guardados en el lienzo actual.",

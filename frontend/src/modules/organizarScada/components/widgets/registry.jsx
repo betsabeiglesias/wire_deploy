@@ -24,6 +24,10 @@ import PressTrendGauge from "@/modules/organizarScada/components/widgets/mini/Pr
 import MiniTable from "@/modules/organizarScada/components/widgets/mini/MiniTable";
 import MiniTrendChart from "@/modules/organizarScada/components/widgets/mini/MiniTrendChart";
 import {
+  buildEnergyBarChartDemo,
+  buildTemperatureLineChartDemo,
+} from "@/modules/organizarScada/utils/chartDemos";
+import {
   parseNumericValue,
   normalizePercent,
 } from "@/modules/organizarScada/utils/numbers";
@@ -68,6 +72,7 @@ export const renderWidget = ({
   height,
   theme,
   valueHistory,
+  demoNow,
 }) => {
   if (!data) return null;
   const settings = data.settings || {};
@@ -211,7 +216,7 @@ export const renderWidget = ({
         ? [...history]
             .slice(-10)
             .reverse()
-            .map(entry => ({
+            .map((entry) => ({
               site: entry.site || settings.site,
               equipment: entry.equipment || settings.equipment,
               variable: entry.variable || settings.attributeKey || data.label,
@@ -229,12 +234,12 @@ export const renderWidget = ({
     case "mini-chart": {
       const label = settings.attributeLabel || data.label;
       const historySeries = history
-        .map(entry => entry.numericValue)
-        .filter(val => typeof val === "number");
+        .map((entry) => entry.numericValue)
+        .filter((val) => typeof val === "number");
       const fallbackSeries =
         typeof live.value !== "undefined"
           ? [parseNumericValue(live.value)].filter(
-              val => typeof val === "number",
+              (val) => typeof val === "number",
             )
           : settings.series || [];
       const series = historySeries.length >= 2 ? historySeries : fallbackSeries;
@@ -294,10 +299,17 @@ export const renderWidget = ({
       );
     }
     case "energy-bar-chart": {
+      const demo = buildEnergyBarChartDemo({ now: demoNow, settings });
       return (
         <EnergyBarChart
           title={settings.title || data.label}
-          valueText={settings.valueText || "420 kW"}
+          valueText={settings.valueText || demo.valueText || "420 kW"}
+          bars={Array.isArray(settings.series) ? settings.series : demo.bars}
+          xLabels={
+            Array.isArray(settings.xLabels) ? settings.xLabels : demo.labels
+          }
+          maxValue={settings.maxValue || demo.maxScale}
+          limitValue={settings.limitValue || demo.limitValue}
           width={width}
           height={height}
           bgColor={settings.bgColor || "#1e272e"}
@@ -318,10 +330,16 @@ export const renderWidget = ({
       );
     }
     case "temperature-line-chart": {
+      const demo = buildTemperatureLineChartDemo({ now: demoNow, settings });
       return (
         <TemperatureLineChart
           label={settings.legendLabel || "Temp °C"}
-          pointLabel={settings.pointLabel || "55ºC"}
+          pointLabel={settings.pointLabel || demo.pointLabel || "55ºC"}
+          series={
+            Array.isArray(settings.series) ? settings.series : demo.series
+          }
+          yMin={settings.yMin ?? demo.yMin}
+          yMax={settings.yMax ?? demo.yMax}
         />
       );
     }
@@ -499,11 +517,11 @@ export const renderWidget = ({
     case "hmi-energy-summary": {
       return (
         <HmiEnergySummaryCard
-          title={settings.title || data.label || "Consumo Medido em Maio 2023"}
+          title={settings.title || data.label || "Consumo 2026"}
           value={settings.value || "1.627.009,26"}
           unit={settings.unit || "kWh"}
-          subtitle={settings.subtitle || "Electric Energy"}
-          deltaText={settings.deltaText || "Higher than previous month"}
+          subtitle={settings.subtitle || "Energia Electrica"}
+          deltaText={settings.deltaText || "Superior al mes anterior"}
           deltaValue={settings.deltaValue || "2%"}
           deltaDirection={settings.deltaDirection || "up"}
           width={width}
@@ -520,7 +538,7 @@ export const renderWidget = ({
       return (
         <button
           className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-semibold transition cursor-default ${variantClass}`}
-          onClick={e => e.preventDefault()}
+          onClick={(e) => e.preventDefault()}
           title="Bot?n de navegaci?n (activo solo en Producci?n)"
         >
           {label}

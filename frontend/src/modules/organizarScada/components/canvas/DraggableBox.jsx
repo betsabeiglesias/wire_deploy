@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Rnd } from "react-rnd";
 import useLiveTag from "@/modules/organizarScada/hooks/useLiveTag";
 import { renderWidget } from "@/modules/organizarScada/components/widgets/registry.jsx";
+import { isChartDemoType } from "@/modules/organizarScada/utils/chartDemos";
 import "@/styles/gateway.css";
 
 // ==================== DRAGGABLE BOX COMPONENT ====================
@@ -29,6 +30,7 @@ export default function DraggableBox({
   const [y, setY] = useState(initialY);
   const [width, setWidth] = useState(initialWidth);
   const [height, setHeight] = useState(initialHeight);
+  const [demoNow, setDemoNow] = useState(Date.now());
 
   // Sincronizar el estado interno con las props iniciales
   useEffect(() => {
@@ -37,6 +39,15 @@ export default function DraggableBox({
     setWidth(initialWidth);
     setHeight(initialHeight);
   }, [initialX, initialY, initialWidth, initialHeight]);
+
+  const demoEnabled =
+    data?.settings?.demoEnabled !== false && isChartDemoType(data?.type);
+
+  useEffect(() => {
+    if (!demoEnabled) return;
+    const timer = setInterval(() => setDemoNow(Date.now()), 1200);
+    return () => clearInterval(timer);
+  }, [demoEnabled]);
 
   const handleDragStop = (_e, d) => {
     setX(d.x);
@@ -65,7 +76,16 @@ export default function DraggableBox({
 
   const { live, valueHistory } = useLiveTag(data);
 
-  const renderContent = () => renderWidget({ data, live, width, height, theme, valueHistory });
+  const renderContent = () =>
+    renderWidget({
+      data,
+      live,
+      width,
+      height,
+      theme,
+      valueHistory,
+      demoNow,
+    });
 
   // Contenido del widget (unificado desde la rama develop)
   const WidgetContent = (

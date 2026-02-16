@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import DraggableBox from "../../organizarScada/components/canvas/DraggableBox";
 import HomeButton from "../../../components/HomeButton";
 import EditLayOutButton from "../components/EditLayOutButton";
@@ -69,6 +69,7 @@ const ViewCard = ({ view, scale = 0.48 }) => {
 
 export default function LayOutDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [views, setViews] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [layoutName, setLayoutName] = useState("");

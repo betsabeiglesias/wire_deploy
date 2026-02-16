@@ -8,8 +8,8 @@ export const elementos_scada = {
       thumbnailUrl: gaugeDefaultIcon, // Reusamos icono por ahora
       data: {
         type: "temp-gauge",
-        width: 180,
-        height: "auto",
+        width: 160,
+        height: 160,
         label: "Temperatura",
         settings: {
           min: 0,
@@ -256,13 +256,13 @@ export const elementos_scada = {
         type: "hmi-energy-summary",
         width: 380,
         height: 140,
-        label: "Consumo Medido em Maio 2023",
+        label: "Consumo Electrico 2026",
         settings: {
-          title: "Consumo Medido em Maio 2023",
+          title: "Consumo electrico 2026",
           value: "1.627.009,26",
           unit: "kWh",
-          subtitle: "Electric Energy",
-          deltaText: "Higher than previous month",
+          subtitle: "Energia electrica",
+          deltaText: "Consumo 2026",
           deltaValue: "2%",
           deltaDirection: "up",
         },
@@ -276,8 +276,8 @@ export const elementos_scada = {
       thumbnailUrl: gaugeDefaultIcon,
       data: {
         type: "energy-bar-chart",
-        width: 400,
-        height: 250,
+        width: 100,
+        height: 150,
         label: "CONSUMO ENERGÉTICO (kW)",
         settings: {
           title: "CONSUMO ENERGÉTICO (kW)",
