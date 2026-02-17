@@ -89,7 +89,7 @@ services:
       - CENTRAL_REDIS_PORT=6379
 
       # Identidad del cliente
-      - TENANT_ID=customerA
+      - TENANT_ID=cliente1
     depends_on:
       - redis
     restart: unless-stopped
