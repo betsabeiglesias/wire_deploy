@@ -123,7 +123,7 @@ const SidebarPropiedades = ({
       <div className="flex items-center gap-2">
         <p className="text-sm font-semibold text-slate-700">Propiedades</p>
         <span className="text-[11px] text-slate-500">
-          Añade y Selecciona un icono del canvas.
+          Selecciona un icono del canvas.
         </span>
       </div>
     </div>

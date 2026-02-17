@@ -1,9 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../modules/sidebar/Sidebar";
-import "../styles/Home.css"; 
 import { SERVICE_URLS } from "../routes/service_urls"; // Ruta corregida y centralizada
-import MapView from '@/modules/maps/components/MapView';
+import MapView from "@/modules/maps/components/MapView";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -20,14 +19,19 @@ const Home = () => {
       {/* Main con overflow-y-auto permite que solo el contenido haga scroll */}
       <main className="flex-1 p-8 overflow-y-auto transition-all duration-300">
         <header className="content-header">
-          <h1 className="text-5xl font-bold mb-14 mt-6 text-blue-900">RDT WIRE</h1>
+          <h1 className="text-5xl font-bold mb-14 mt-6 text-blue-900">
+            RDT WIRE
+          </h1>
         </header>
 
         {/* Sección de Botones */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          
           {[
-            { label: "Power BI", onClick: goToPowerBi, color: "border-blue-500" },
+            {
+              label: "Power BI",
+              onClick: goToPowerBi,
+              color: "border-blue-500",
+            },
             { label: "HMI", onClick: goToHmi, color: "border-cyan-500" },
             // { label: "Chat bot", onClick: goToChatBot, color: "border-purple-500" },
             // { label: "VR", onClick: null, color: "border-gray-500" }
@@ -39,7 +43,9 @@ const Home = () => {
                 flex items-center justify-center border-l-4 ${item.color}`}
               onClick={item.onClick}
             >
-              <div className="text-2xl text-gray-700 font-bold">{item.label}</div>
+              <div className="text-2xl text-gray-700 font-bold">
+                {item.label}
+              </div>
             </div>
           ))}
         </section>
