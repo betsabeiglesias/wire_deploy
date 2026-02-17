@@ -20,8 +20,8 @@ class Command(BaseCommand):
         parser.add_argument(
             "--tenants",
             type=str,
-            default=os.getenv("TENANTS", "customerA"),
-            help="Comma-separated tenants (customerA,customerB,...)",
+            default=os.getenv("TENANTS", "cliente1"),
+            help="Comma-separated tenants (cliente1,customerB,...)",
         )
 
     def handle(self, *args, **options):

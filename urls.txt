@@ -76,7 +76,7 @@ docker compose exec -it django-api python manage.py createsuperuser
 
 
 USAR dev.bat:
-
+ 
 Abrir CMD o PowerShell en la raíz del proyecto y ejecutar:
 
 | Comando         | Qué hace                                                                          |
