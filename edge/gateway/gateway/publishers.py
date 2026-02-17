@@ -128,13 +128,10 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
     client = mqtt.Client(
             callback_api_version=mqtt.CallbackAPIVersion.VERSION1,
             client_id=client_id,
-            clean_session=True
+            clean_session=False
         )
     
-    client.username_pw_set(
-            username=mqtt_user,
-            password=mqtt_pass
-        )
+    client.username_pw_set(mqtt_user, password=mqtt_pass)
 
     if mqtt_user:
         client.username_pw_set(mqtt_user, mqtt_pass)
@@ -153,11 +150,33 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
     connected = {"ok": False}
 
     def on_connect(_cli, _ud, _flags, rc, _props=None):
-        connected["ok"] = (rc == 0)
-        birth = json.dumps({"online": True, "ts": _utc_iso()}, ensure_ascii=False)
-        _cli.publish(status_tp["online"], birth, qos=qos_status, retain=retain_status)
+        if rc == 0:
+            connected["ok"] = True
+            logger.info("MQTT conectado correctamente")
+
+            birth = json.dumps(
+                {"online": True, "ts": _utc_iso()},
+                ensure_ascii=False
+            )
+            _cli.publish(
+                status_tp["online"],
+                birth,
+                qos=qos_status,
+                retain=retain_status
+            )
+        else:
+            connected["ok"] = False
+            logger.error(f"Error conectando a MQTT: rc={rc}")
+
+    def on_disconnect(_cli, _ud, rc):
+        connected["ok"] = False
+        logger.warning(f"MQTT desconectado rc={rc}")
 
     client.on_connect = on_connect
+    client.on_disconnect = on_disconnect
+
+    client.reconnect_delay_set(min_delay=1, max_delay=30)
+
     client.connect(host, port, keepalive=30)
     client.loop_start()
 
@@ -167,7 +186,9 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
         Publica un ProcessValue en MQTT adaptándolo al contrato v1.tag
         y a las restricciones de InfluxDB (value_* tipados).
         """
-        logger.info(f"MQTT CONNECT user={mqtt_user}")
+        # logger.info(f"MQTT CONNECT user={mqtt_user}")
+        if not connected["ok"]:
+            logger.warning("Publicando sin conexión confirmada al broker")
 
         payload = {
             "schema": "v1.tag",
@@ -218,12 +239,13 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
                 payload_str
             )
 
-        client.publish(
+        info=client.publish(
             topic,
             payload_str,
             qos=qos_tag,
             retain=retain_tag
         )
+        info.wait_for_publish()
 
     return _mqtt_publish
 
