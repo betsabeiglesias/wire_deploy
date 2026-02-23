@@ -1,7 +1,7 @@
 // SidebarPropiedades.jsx
 // Panel de propiedades con tabs horizontales ligeros (estilo barra clara).
-import React, { useMemo, useState } from "react";
-import { useRealtime } from "@/realtime/RealtimeProvider";
+import React, { useEffect, useMemo, useState } from "react";
+import { getPLCs, getPLC } from "@/modules/scada/api/plcApi";
 
 const tabs = ["General", "Dispositivo", "Estilo"];
 
@@ -13,11 +13,14 @@ const SidebarPropiedades = ({
   exportName,
   onExportNameChange,
 }) => {
-  const { allTags } = useRealtime();
   const [activeTab, setActiveTab] = useState("General");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTable, setSelectedTable] = useState("");
   const [selectedTag, setSelectedTag] = useState("");
+  const [plcTables, setPlcTables] = useState([]);
+  const [plcTags, setPlcTags] = useState([]);
+  const [loadingTables, setLoadingTables] = useState(false);
+  const [loadingTags, setLoadingTags] = useState(false);
 
   const currentLabel =
     selectedElement?.label ??
@@ -81,29 +84,14 @@ const SidebarPropiedades = ({
       .padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
   };
 
-  const tables = useMemo(() => {
-    const raw = allTags
-      .map((t) => t.table || t.device || t.site || "")
-      .filter(Boolean);
-    return Array.from(new Set(raw)).sort();
-  }, [allTags]);
-
   const filteredTags = useMemo(() => {
     const term = (searchTerm || "").toLowerCase().trim();
-    return allTags.filter((t) => {
-      const tableKey = t.table || t.device || t.site || "";
-      if (selectedTable && tableKey !== selectedTable) return false;
-      const label = (
-        t.variable ||
-        t.tag ||
-        t.name ||
-        t.attributeKey ||
-        ""
-      ).toString();
+    return plcTags.filter((t) => {
+      const label = (t.name || t.variable || t.tag || t.attributeKey || "").toString();
       if (!term) return true;
       return label.toLowerCase().includes(term);
     });
-  }, [allTags, selectedTable, searchTerm]);
+  }, [plcTags, searchTerm]);
 
   const tagOptions = useMemo(() => {
     return filteredTags.map((t) => {
@@ -115,6 +103,55 @@ const SidebarPropiedades = ({
       };
     });
   }, [filteredTags]);
+
+  // Cargar listado de PLC/Tablas al montar
+  useEffect(() => {
+    let alive = true;
+    setLoadingTables(true);
+    getPLCs()
+      .then((list) => {
+        if (!alive) return;
+        setPlcTables(Array.isArray(list) ? list : []);
+      })
+      .catch((err) => {
+        console.error("No se pudieron cargar los PLCs", err);
+        if (alive) setPlcTables([]);
+      })
+      .finally(() => {
+        if (alive) setLoadingTables(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  // Cargar tags cuando cambia la tabla seleccionada
+  useEffect(() => {
+    let alive = true;
+    if (!selectedTable) {
+      setPlcTags([]);
+      return () => {
+        alive = false;
+      };
+    }
+    setLoadingTags(true);
+    getPLC(selectedTable)
+      .then((plc) => {
+        if (!alive) return;
+        const tags = plc?.tags || plc?.variables || [];
+        setPlcTags(Array.isArray(tags) ? tags : []);
+      })
+      .catch((err) => {
+        console.error("No se pudieron cargar tags del PLC", err);
+        if (alive) setPlcTags([]);
+      })
+      .finally(() => {
+        if (alive) setLoadingTags(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [selectedTable]);
 
   if (!isOpen) return null;
 
@@ -260,7 +297,7 @@ const SidebarPropiedades = ({
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-[11px] text-slate-600">Tabla</label>
+          <label className="block text-[11px] text-slate-600">Tabla / PLC</label>
           <select
             className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
             value={selectedTable}
@@ -270,10 +307,12 @@ const SidebarPropiedades = ({
               updateSettings({ deviceTable: e.target.value, deviceTag: "" });
             }}
           >
-            <option value="">Todas</option>
-            {tables.map((t) => (
-              <option key={t} value={t}>
-                {t}
+            <option value="" disabled>
+              {loadingTables ? "Cargando tablas..." : "Selecciona una tabla/PLC"}
+            </option>
+            {plcTables.map((plc) => (
+              <option key={plc.id} value={plc.id}>
+                {plc.name || plc.id}
               </option>
             ))}
           </select>
@@ -283,12 +322,15 @@ const SidebarPropiedades = ({
           <select
             className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
             value={selectedTag}
+            disabled={!selectedTable || loadingTags}
             onChange={(e) => {
               setSelectedTag(e.target.value);
               updateSettings({ deviceTag: e.target.value });
             }}
           >
-            <option value="">Selecciona un tag</option>
+            <option value="">
+              {loadingTags ? "Cargando tags..." : "Selecciona un tag"}
+            </option>
             {tagOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}

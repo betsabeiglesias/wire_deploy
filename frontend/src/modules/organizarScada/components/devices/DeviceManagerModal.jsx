@@ -2,49 +2,8 @@ import React, { useMemo, useState } from "react";
 import { useRealtime } from "@/realtime/RealtimeProvider";
 
 // Modal flotante para gestionar PLCs/tablas y tags de ejemplo (mock local).
-const mockDevices = [
-  {
-    id: "PLC 1",
-    name: "PLC 1",
-    tags: [
-      {
-        id: "t1",
-        name: "AI01",
-        type: "Float",
-        conn: "INTENANCE",
-        plcName: "PLC1",
-      },
-    ],
-  },
-  {
-    id: "PLC 2",
-    name: "PLC 2",
-    tags: [
-      {
-        id: "t2",
-        name: "DB2.DBD00_FAST",
-        type: "UInt32",
-        conn: "INTENANCE",
-        plcName: "PLC1",
-      },
-      {
-        id: "t3",
-        name: "T_CUBA2_FAST",
-        type: "Float",
-        conn: "INTENANCE",
-        plcName: "PLC1",
-      },
-      {
-        id: "t4",
-        name: "DB2.DBD22_FAST",
-        type: "Float",
-        conn: "INTENANCE",
-        plcName: "PLC1",
-      },
-    ],
-  },
-  { id: "general", name: "GENERAL", tags: [] },
-];
+// Arrancamos vacío para que el usuario cree sus propias tablas/PLC
+const mockDevices = [];
 
 const DeviceManagerModal = ({ open, onClose }) => {
   const [devices, setDevices] = useState(mockDevices);
