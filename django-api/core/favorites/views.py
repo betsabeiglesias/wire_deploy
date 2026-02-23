@@ -1,3 +1,4 @@
+
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -7,6 +8,24 @@ from .serializers import FavoriteSerializer
 
 class FavoriteViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
+
+    dicc_conf = {
+            "mylayoutstitle": {
+                "route":  "/layout/",
+                "section": "scada",
+                "fav_type": "mylayout",
+            },
+            "location": {
+                "route": "/map",
+                "section": "location",
+                "fav_type": "location",
+            },
+            "mypowerbi":{
+                "route": "/powerbi-view",
+                "section": "powerbi",
+                "fav_type": "mypowerbi",
+            }
+        }
 
     def list(self, request):
         """
@@ -27,36 +46,22 @@ class FavoriteViewSet(ViewSet):
             model_name = fav.content_type.model
             route, title, section, fav_type = None, None, None, None
 
-            # 🔵 LAYOUTS (App: scada_manager)
-            if model_name == "mylayoutstitle":
-                route = f"/layout/{obj.id}"
-                title = getattr(obj, 'button_name', 'Sin nombre')
-                section = "scada"
-                fav_type = "mylayout"
-
-            # 🟢 LOCATIONS (App: map_manager)
-            elif model_name == "location":
-                route = "/map"
-                title = getattr(obj, 'city', 'Sin ciudad')
-                section = "location"
-                fav_type = "location"
-
-            # 🟣 POWER BI (App: powerbi_manager)
-            elif model_name == "mypowerbi":
-                route = "/powerbi-view"
+            if model_name in self.dicc_conf:
+                route = self.dicc_conf[model_name]["route"] if model_name != "mylayoutstitle" else self.dicc_conf[model_name]["route"] + str(obj.id)
                 title = getattr(obj, 'name', 'Sin nombre')
-                section = "powerbi"
-                fav_type = "mypowerbi"
+                section = self.dicc_conf[model_name]["section"]
+                fav_type = self.dicc_conf[model_name]["fav_type"]
 
-            if fav_type:
-                data.append({
-                    "id": fav.id,
-                    "type": fav_type,
-                    "section": section,
-                    "object_id": fav.object_id,
-                    "title": title,
-                    "route": route,
-                })
+                if fav_type:
+                    data.append({
+                        "id": fav.id,
+                        "type": fav_type,
+                        "section": section,
+                        "object_id": fav.object_id,
+                        "title": title,
+                        "route": route,
+                    })
+            
 
         return Response(data)
 

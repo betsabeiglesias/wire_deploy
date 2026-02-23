@@ -66,7 +66,7 @@ const ProductionView = () => {
       if (!target) return false;
 
       setLayoutName(
-        target.button_name ||
+        target.name ||
           target.name ||
           target?.views_data?.app_name ||
           `Layout ${id}`,
@@ -113,7 +113,7 @@ const ProductionView = () => {
           const data = res.data;
 
           setLayoutName(
-            data.button_name ||
+            data.name ||
               data.name ||
               data?.views_data?.app_name ||
               `Layout ${routeViewId}`,

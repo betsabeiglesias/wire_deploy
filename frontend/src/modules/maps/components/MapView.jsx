@@ -28,7 +28,7 @@ const WORLD_BOUNDS = [[-85, -180], [85, 180]];
 // ============================================================
 //     COMPONENTE INTERNO FLYTOMARKER
 // ============================================================
-const FlyToMarker = ({ position, city, countryName, direction, postalCode, detailUrl }) => {
+const FlyToMarker = ({ position, name, countryName, direction, postalCode, detailUrl }) => {
     const map = useMap();
     const navigate = useNavigate();
     const markerRef = useRef(null);
@@ -90,7 +90,7 @@ const FlyToMarker = ({ position, city, countryName, direction, postalCode, detai
         if (currentZoom >= ZOOM_THRESHOLD) {
             return (
                 <div onClick={handleZoomClick} className="cursor-pointer text-base">
-                    <p className="font-bold text-lg mb-1">{city}, {countryName}</p>
+                    <p className="font-bold text-lg mb-1">{name}, {countryName}</p>
                     <p className="text-sm mb-1">
                         Dirección: {direction}
                         {postalCode && <><br />CP: {postalCode}</>}
@@ -103,7 +103,7 @@ const FlyToMarker = ({ position, city, countryName, direction, postalCode, detai
         // Zoom lejano → ciudad y país
         return (
             <div className="text-base font-bold">
-                {city}, {countryName}
+                {name}, {countryName}
             </div>
         );
     };
@@ -187,7 +187,7 @@ const MapView = () => {
                         <FlyToMarker
                             key={loc.id}
                             position={[loc.gps_x, loc.gps_y]}
-                            city={loc.city}
+                            name={loc.name}
                             countryName={loc.country_name}
                             direction={loc.direction}
                             postalCode={loc.postal_code}
