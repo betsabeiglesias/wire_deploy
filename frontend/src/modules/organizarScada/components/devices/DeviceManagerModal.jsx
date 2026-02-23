@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useRealtime } from "@/realtime/RealtimeProvider";
 
 // Modal flotante para gestionar PLCs/tablas y tags de ejemplo (mock local).
 const mockDevices = [
@@ -48,6 +49,15 @@ const mockDevices = [
 const DeviceManagerModal = ({ open, onClose }) => {
   const [devices, setDevices] = useState(mockDevices);
   const [selectedId, setSelectedId] = useState(devices[0]?.id || null);
+  const { allTags } = useRealtime();
+
+  // Opciones de PLC/variables provenientes del gateway (MQTT)
+  const plcOptions = useMemo(() => {
+    return allTags.map((t) => ({
+      value: t.variable,
+      label: `${t.equipment_id || t.equipment || "equipo"}/${t.variable}`,
+    }));
+  }, [allTags]);
 
   const selected = useMemo(
     () => devices.find(d => d.id === selectedId) || { tags: [] },
@@ -212,6 +222,7 @@ const DeviceManagerModal = ({ open, onClose }) => {
                     <th className="px-3 py-2 text-left w-28">Data type</th>
                     <th className="px-3 py-2 text-left w-32">Connection</th>
                     <th className="px-3 py-2 text-left w-32">PLC name</th>
+                    <th className="px-3 py-2 text-left w-64">PLC</th>
                     <th className="px-3 py-2 text-left">Notes</th>
                   </tr>
                 </thead>
@@ -272,6 +283,35 @@ const DeviceManagerModal = ({ open, onClose }) => {
                       <td className="px-3 py-2 text-slate-700">
                         {tag.plcName}
                       </td>
+                      <td className="px-3 py-2 text-slate-700">
+                        <select
+                          className="w-full bg-transparent border border-slate-200 rounded px-1 text-[12px]"
+                          value={tag.plcVariable || ""}
+                          onChange={(e) =>
+                            setDevices((prev) =>
+                              prev.map((d) =>
+                                d.id === selectedId
+                                  ? {
+                                      ...d,
+                                      tags: d.tags.map((t) =>
+                                        t.id === tag.id
+                                          ? { ...t, plcVariable: e.target.value }
+                                          : t
+                                      ),
+                                    }
+                                  : d
+                              )
+                            )
+                          }
+                        >
+                          <option value="">Selecciona variable</option>
+                          {plcOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
                       <td className="px-3 py-2 text-slate-500">
                         <input
                           className="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-sky-400 focus:outline-none rounded px-1"
@@ -283,7 +323,7 @@ const DeviceManagerModal = ({ open, onClose }) => {
                   {!selected.tags?.length && (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={6}
                         className="px-3 py-4 text-center text-slate-500"
                       >
                         No hay tags. Usa “+ Añadir tag”.

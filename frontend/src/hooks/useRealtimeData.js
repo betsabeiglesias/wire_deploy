@@ -64,6 +64,11 @@ export function useRealtimeData(tenant) {
             const msg = JSON.parse(evt.data);
 
             const entry = {
+              site: msg.site,
+              area: msg.area,
+              line: msg.line,
+              cell: msg.cell,
+              equipment: msg.equipment,
               equipment_id: msg.equipment_id,
               variable: msg.variable,
               value: msg.value,

@@ -1,6 +1,6 @@
 // UnifiedSidebar.jsx
 import React, { useMemo, useState } from "react";
-import { useGatewayData } from "@/hooks/useGatewayData";
+import { useRealtime } from "@/realtime/RealtimeProvider";
 import { elementos_scada } from "@/modules/organizarScada/templates/elementos_scada";
 import { buttons_labels_items } from "@/modules/organizarScada/utils/items";
 import { renderWidget } from "@/modules/organizarScada/components/widgets/registry.jsx";
@@ -23,7 +23,7 @@ const UnifiedSidebar = ({
   const [activeSection, setActiveSection] = useState("pantallas");
   const [showDevices, setShowDevices] = useState(false);
 
-  const { allTags } = useGatewayData();
+  const { allTags } = useRealtime();
   const [selectedSite, setSelectedSite] = useState("");
   const [selectedArea, setSelectedArea] = useState("");
   const [expandedLines, setExpandedLines] = useState({});

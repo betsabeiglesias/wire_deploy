@@ -1,7 +1,7 @@
 // SidebarPropiedades.jsx
 // Panel de propiedades con tabs horizontales ligeros (estilo barra clara).
 import React, { useMemo, useState } from "react";
-import { useGatewayData } from "@/hooks/useGatewayData";
+import { useRealtime } from "@/realtime/RealtimeProvider";
 
 const tabs = ["General", "Dispositivo", "Estilo"];
 
@@ -13,7 +13,7 @@ const SidebarPropiedades = ({
   exportName,
   onExportNameChange,
 }) => {
-  const { allTags } = useGatewayData();
+  const { allTags } = useRealtime();
   const [activeTab, setActiveTab] = useState("General");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTable, setSelectedTable] = useState("");
