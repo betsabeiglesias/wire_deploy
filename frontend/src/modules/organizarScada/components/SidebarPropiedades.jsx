@@ -177,7 +177,7 @@ const SidebarPropiedades = ({
             >
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-slate-800">
-                  {pub.name || pub.button_name || pub.id}
+                  {pub.name || pub.name || pub.id}
                 </span>
                 <span className="text-[10px] text-slate-500">
                   {pub.updatedAt

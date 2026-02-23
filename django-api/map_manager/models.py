@@ -9,7 +9,7 @@ class Country(models.Model):
 
 class Location(models.Model):
     client = models.ForeignKey('auth_manager.Client', on_delete=models.CASCADE, related_name='locations')
-    city = models.CharField(max_length=50)
+    name = models.CharField(max_length=50)
     gps_x = models.FloatField(blank=True, null=True)
     gps_y = models.FloatField(blank=True, null=True)
     country = models.ForeignKey(Country, on_delete=models.PROTECT)
@@ -18,7 +18,7 @@ class Location(models.Model):
     llevar_a_url = models.CharField(max_length=200, blank=True, null=True, help_text="URL a la que llevar al hacer clic en 'Ir al sitio'")
     
     def __str__(self):
-        return f"{self.city} - {self.direction}"
+        return f"{self.name} - {self.direction}"
     
 class Factory(models.Model):
     name = models.CharField(max_length=50)

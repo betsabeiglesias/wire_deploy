@@ -67,7 +67,7 @@ export function FavoriteViews({ title, type }) {
                     /* Para Layouts, usamos la ruta interna /layout/id */
                     <iframe
                       src={`/layout/${item.id}`}
-                      title={item.button_name}
+                      title={item.name}
                       frameBorder="0"
                       scrolling="yes"
                       className="absolute top-0 left-0 border-0 origin-top-left pointer-events-auto"
@@ -83,7 +83,7 @@ export function FavoriteViews({ title, type }) {
                 {/* Contenido */}
                 <div className="p-4 flex flex-col flex-grow">
                   <h3 className="text-xl font-semibold mb-2">
-                    {type === "mypowerbi" ? item.name : item.button_name}
+                    {type === "mypowerbi" ? item.name : item.name}
                   </h3>
 
                   <p className="text-gray-600 text-sm flex-grow mb-4">

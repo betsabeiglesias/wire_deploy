@@ -84,7 +84,7 @@ export default function LayOutDetail() {
       try {
         const res = await api.get(`/api/scada-manager/layout/${id}/`);
         const data = res.data;
-        setLayoutName(data?.button_name || data?.name || "Layout");
+        setLayoutName(data?.name || data?.name || "Layout");
 
         let parsedViews = [];
 

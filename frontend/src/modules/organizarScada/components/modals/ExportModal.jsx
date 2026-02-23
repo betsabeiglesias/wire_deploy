@@ -46,7 +46,7 @@ const ExportModal = ({
         }
 
         const requestBody = {
-            button_name: filename,
+            name: filename,
             elements: canvasElements,
         };
         
