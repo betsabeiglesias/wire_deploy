@@ -112,13 +112,13 @@ Archivos en custommer:
 
 
     docker-compose.yml:
-    - CENTRAL_REDIS_HOST tiene que ser == que el container_name de redis-central en el .yml general
-            CENTRAL_REDIS_HOST=prueba1-redis             CENTRAL_REDIS_HOST=text-santanderina-redis
+                - CENTRAL_REDIS_HOST tiene que ser == que el container_name de redis-central en el .yml general
+                        CENTRAL_REDIS_HOST=prueba1-redis             CENTRAL_REDIS_HOST=text-santanderina-redis
 
-       
-    - networks:        (esto está abajo del todo del archivo, casi al final)
-         name: Tiene que ser == NETWORK_NAME del general
-            name: prueba1-net                            name: text-santanderina-net
+                
+                - networks:        (esto está abajo del todo del archivo, casi al final)
+                        name: Tiene que ser == NETWORK_NAME del general
+                        name: prueba1-net                            name: text-santanderina-net
 
 
 
