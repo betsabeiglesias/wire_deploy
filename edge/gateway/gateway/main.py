@@ -15,7 +15,7 @@ def main():
     # gateway_path = os.path.join(project_root, root_path)
 
     # PRODUCTION --- [1] Ruta real del archivo gateway.yaml generado por Django ---
-    gateway_path = os.getenv("GATEWAY_CONFIG", "/opt/suite/config/gateway.yaml")
+    gateway_path = os.getenv("GATEWAY_CONFIG", "/app/configs/gateway.yaml")
 
     if not os.path.isfile(gateway_path):
         print(f"[ERROR] No se encuentra gateway.yaml en {gateway_path}")
@@ -41,6 +41,7 @@ def main():
 
     # PRODUCTION --- [5] Crear GatewayManager leyendo TODOS los YAML desde disco ---
     gm = GatewayManager.from_yaml(gateway_path, publisher)
+    print(f"Publisher {gm.publisher}")
 
 
     # --- [6] Crear y arrancar GatewayManager ---
