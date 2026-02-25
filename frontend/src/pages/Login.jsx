@@ -33,8 +33,9 @@ const Login = () => {
       navigate('/');
       
     } catch (err) {
-      console.error("Error en login:", err);
-      setError(err.response?.data?.detail || "Credenciales inválidas o error de servidor.");
+      console.error("Error en login:", err);   
+      console.log("Detalle error: ", err.response?.data?.detail )
+      setError("Credenciales inválidas o error de servidor");  //no mostramos el error en concreto apra no dar pistar a posibles hackers
     } finally {
       setIsSubmitting(false);
     }

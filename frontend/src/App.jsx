@@ -14,11 +14,21 @@ function App() {
   const fetchCurrentUser = useAuthStore((s) => s.fetchCurrentUser);
   
   useEffect(() => {
-    // Al cargar la web por primera vez, verificamos si la cookie es válida
-    fetchCurrentUser();
-     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // 1. Verificamos si existe el rastro del usuario en el storage antes de pedir nada
+    const storedUser = localStorage.getItem('user');
+    
+    if (!storedUser) {
+      // Si no hay rastro, desactivamos el loading inmediatamente 
+      // para mostrar el login sin intentar llamar a la API (evita el 401)
+      useAuthStore.setState({ loading: false });
+      return;
+    }
 
+    // 2. Si hay rastro, entonces sí validamos si la cookie/sesión sigue activa
+    fetchCurrentUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  
   const needsRealtime = [
     "/scada",
     "/hmi",

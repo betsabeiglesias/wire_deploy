@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+// Ahora toma la URL del .env a través de Vite
+const API_URL = import.meta.env.VITE_API_URL;
+
 const api = axios.create({
-  baseURL: "http://localhost:8000",
+  baseURL: API_URL,
   withCredentials: true,
 });
 
@@ -27,7 +30,7 @@ api.interceptors.response.use(
     try {
       // 3. Intentar renovar la sesión (el refresh_token va en la cookie)
       await axios.post(
-        'http://localhost:8000/api/auth/token/refresh/', 
+        `${API_URL}/api/auth/token/refresh/`,   // Usamos la variable API_URL aquí también
         {}, 
         { withCredentials: true }
       );

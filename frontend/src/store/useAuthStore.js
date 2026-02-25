@@ -1,91 +1,55 @@
 import { create } from 'zustand';
 import api from '../services/api';
-
+ 
 export const useAuthStore = create((set, get) => ({
   user: JSON.parse(localStorage.getItem('user')) || null,
   isAuthenticated: !!localStorage.getItem('user'),
-  loading: false,              // ⬅️ empieza en false
+  loading: true, // Importante: empieza en true para validar la sesión al arrancar
   error: null,
-  hasBootstrapped: false,      // ⬅️ CLAVE
-
-  // 🔹 USADO POR Login.jsx (NO LO TOCAMOS)
+ 
   setAuth: (userData) => {
     localStorage.setItem('user', JSON.stringify(userData));
-    set({
-      user: userData,
-      isAuthenticated: true,
-      loading: false,
-      error: null,
-      hasBootstrapped: true,
-    });
+    set({ user: userData, isAuthenticated: true, loading: false, error: null });
   },
-
-  // 🔹 Bootstrap de sesión (cookies)
+ 
   fetchCurrentUser: async () => {
-    const { loading, hasBootstrapped, user } = get();
-
-    // ⛔️ evita loops
-    if (loading || hasBootstrapped) return;
+    // 1. COMPROBACIÓN PREVIA: Si no hay usuario en localStorage, 
+    // cancelamos la petición antes de enviarla para evitar el 401
+    console.log(localStorage)
+    if (!localStorage.getItem('user')) {
+      set({ user: null, isAuthenticated: false, loading: false });
+      return null;
+    }
 
     set({ loading: true });
-
     try {
+      // Intentamos obtener el usuario (la cookie viaja sola por withCredentials)
       const response = await api.get('/api/auth/me/');
       const userData = response.data;
-
-      // ⛔️ no notificar si es el mismo usuario
-      if (user && user.id === userData.id) {
-        set({ loading: false, hasBootstrapped: true });
-        return user;
-      }
-
+      
       localStorage.setItem('user', JSON.stringify(userData));
-      set({
-        user: userData,
-        isAuthenticated: true,
-        loading: false,
-        hasBootstrapped: true,
-      });
-
+      set({ user: userData, isAuthenticated: true, loading: false });
       return userData;
     } catch (err) {
-      // ⛔️ si ya estamos en null, no volver a setear
-      if (user === null) {
-        set({ loading: false, hasBootstrapped: true });
-        return null;
-      }
-
+      // Si falla (token caducado o error), limpiamos
       localStorage.removeItem('user');
-      set({
-        user: null,
-        isAuthenticated: false,
-        loading: false,
-        hasBootstrapped: true,
-      });
-
+      set({ user: null, isAuthenticated: false, loading: false });
       return null;
     }
   },
-
-  // 🔹 Logout explícito
+ 
   clearAuth: async () => {
     try {
       await api.post('/api/auth/logout/');
     } catch (err) {
-      console.warn("Logout en backend fallido o sesión ya expirada");
+      console.warn("Sesión ya cerrada o error en logout");
     } finally {
       localStorage.removeItem('user');
-      set({
-        user: null,
-        isAuthenticated: false,
-        loading: false,
-        hasBootstrapped: true,
-      });
+      set({ user: null, isAuthenticated: false, loading: false });
       window.location.href = '/login';
     }
   },
 }));
-
 
 
 

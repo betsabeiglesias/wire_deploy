@@ -1,4 +1,4 @@
-# core/auth_manager/urls.py
+
 from django.urls import path
 from .views import LoginView, logout_view, current_user, token_health_check, CustomTokenRefreshView 
 

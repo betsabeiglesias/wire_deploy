@@ -131,8 +131,10 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
             callback_api_version=mqtt.CallbackAPIVersion.VERSION1,
             client_id=client_id,
             clean_session=False
+            clean_session=False
         )
     
+    client.username_pw_set(mqtt_user, password=mqtt_pass)
     client.username_pw_set(mqtt_user, password=mqtt_pass)
 
     if mqtt_user:
@@ -194,6 +196,10 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
 
     client.reconnect_delay_set(min_delay=1, max_delay=30)
 
+    client.on_disconnect = on_disconnect
+
+    client.reconnect_delay_set(min_delay=1, max_delay=30)
+
     client.connect(host, port, keepalive=30)
     client.loop_start()
 
@@ -250,5 +256,6 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
             qos=qos_tag,
             retain=retain_tag
         )
+        info.wait_for_publish()
 
     return _mqtt_publish
