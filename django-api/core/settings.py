@@ -3,9 +3,11 @@ from pathlib import Path
 from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "tu-clave-secreta-de-desarrollo")
-DEBUG = True
-ALLOWED_HOSTS = ["*"] # Permitimos todo en desarrollo para evitar cortes
+
+# --- SEGURIDAD Y NÚCLEO
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "clave-secreta-por-defecto-no-usar-en-prod")
+DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
+ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -19,16 +21,17 @@ INSTALLED_APPS = [
     'corsheaders',
     'industrial_config_manager',
     'scada_manager',
+    'map_manager',
     'management',
-    'rawdata',
     'powerbi_manager',
     'core.favorites',
     'core.auth_manager',
+    'channels',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware', # Debe ser el primero tras security
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -56,7 +59,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'core.wsgi.application'
+ASGI_APPLICATION = "core.asgi.application"
 
+# --- BASE DE DATOS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -64,17 +69,18 @@ DATABASES = {
         'USER': os.getenv('POSTGRES_USER', 'django'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'django1234'),
         'HOST': os.getenv('POSTGRES_HOST', 'postgres'),
-        'PORT': 5432,
+        'PORT': int(os.getenv('POSTGRES_PORT', 5432)),
     }
 }
 
+# --- AUTENTICACIÓN
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'core.auth_manager.authenticate.CustomJWTAuthentication', # <--- USA ESTA PARA LEER COOKIES
+        'core.auth_manager.authenticate.CustomJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -88,24 +94,46 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
-    "AUTH_COOKIE": "access_token",
-    "AUTH_COOKIE_HTTP_ONLY": True,
-    "AUTH_COOKIE_SECURE": False, # False para HTTP (desarrollo)
+    # Dinámico desde .env
+    "AUTH_COOKIE": os.getenv("AUTH_COOKIE_NAME", "access_token"),
+    "AUTH_COOKIE_REFRESH": os.getenv("AUTH_COOKIE_REFRESH_NAME", "refresh_token"),
+    "AUTH_COOKIE_HTTP_ONLY": True, 
+    "AUTH_COOKIE_SECURE": not DEBUG, # True en producción (HTTPS)
     "AUTH_COOKIE_SAMESITE": "Lax",
 }
 
-# Configuración CORS Estricta para Cookies
+# --- CORS & CSRF (esto lo hemos cambiado para que sea 100% dinámico)
 CORS_ALLOW_CREDENTIALS = True
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173") # esto ahora viene procesado del .env
+
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    FRONTEND_URL,
 ]
-CSRF_TRUSTED_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
-# Evitar bloqueos de sesión en desarrollo
-SESSION_COOKIE_SAMESITE = 'Lax'
-CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_TRUSTED_ORIGINS = [
+    FRONTEND_URL, # antes estaba hardcodeado el puerto
+]
 
+# --- SEGURIDAD DE SESIÓN
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+
+# --- REDIS / CHANNELS
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(
+                os.getenv("REDIS_HOST", "redis-central"), 
+                int(os.getenv("REDIS_PORT", 6379))
+            )],
+        },
+    },
+}
+
+# --- ESTÁTICOS
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

@@ -1,108 +1,129 @@
+name: ${COMPOSE_PROJECT_NAME} # esto lo he cambiado (usa el nombre del .env)
+
 services:
-
-  mosquitto:
-    image: eclipse-mosquitto:2.0.18
-    container_name: wire-deploy-mosquitto
-    ports:
-      - "127.0.0.1:1884:1883"
-      - "127.0.0.1:9001:9001"
-    volumes:
-      - ./mosquitto/config:/mosquitto/config
-      - mosquitto_data:/mosquitto/data
-      - mosquitto_log:/mosquitto/log
-    networks:
-      - suite-central-net
-
-
-  # influxdb:
-  #   image: influxdb:2.7
-  #   container_name: wire-deploy-influxdb
-  #   ports:
-  #     - "8086:8086"
-  #   environment:
-  #     DOCKER_INFLUXDB_INIT_MODE: setup
-  #     DOCKER_INFLUXDB_INIT_USERNAME: admin
-  #     DOCKER_INFLUXDB_INIT_PASSWORD: admin1234
-  #     DOCKER_INFLUXDB_INIT_ORG: acme
-  #     DOCKER_INFLUXDB_INIT_BUCKET: scada
-  #   volumes:
-  #     - influxdb_data:/var/lib/influxdb2
-  #   networks:
-  #     - suite-central-net
-
-
+  # ---------- DATABASE ----------
   postgres:
     image: postgres:16
-    container_name: wire-deploy-postgres
+    container_name: ${COMPOSE_PROJECT_NAME}-postgres # esto lo he cambiado (dinámico)
     restart: always
     environment:
-      POSTGRES_USER: django
-      POSTGRES_PASSWORD: django1234
-      POSTGRES_DB: industry4_v2
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5433:5432"
+      - "${POSTGRES_PORT_HOST}:5432" # esto lo he cambiado (eliminado el valor por defecto 5433)
     volumes:
-      - postgres_data_v2:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data # esto lo he cambiado (nombre de volumen genérico)
     networks:
-      - suite-central-net
+      - project-net # esto lo he cambiado (nombre de red interna genérico)
 
+  # ---------- REDIS CENTRAL ----------
+  redis-central:
+    image: redis:7
+    container_name: ${COMPOSE_PROJECT_NAME}-redis # esto lo he cambiado (dinámico)
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data # esto lo he cambiado
+    networks:
+      - project-net # esto lo he cambiado
 
-  # ---------- BACKEND CORE ----------
+  redis-stream-consumer:
+    build:
+      context: ./django-api
+    container_name: ${COMPOSE_PROJECT_NAME}-redis-consumer # esto es nuevo (antes no tenía container_name)
+    command: python -m realtime.redis_stream_consumer
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=redis-central
+      - REDIS_PORT=6379
+      - DJANGO_SETTINGS_MODULE=core.settings
+    depends_on:
+      - redis-central
+    networks:
+      - project-net # esto lo he cambiado
+
+  # ---------- BACKEND CORE (HTTP) ----------
   django-api:
-    build: ./django-api
-    container_name: wire-deploy-django-api
+    build:
+      context: ./django-api
+    container_name: ${COMPOSE_PROJECT_NAME}-django-api # esto lo he cambiado (dinámico)
     volumes:
       - ./django-api:/app
       - ./opt/suite/config:/opt/suite/config
       - /var/run/docker.sock:/var/run/docker.sock
     env_file:
-      - ./.env
+      - .env
     environment:
-      DJANGO_SETTINGS_MODULE: core.settings
-      PYTHONUNBUFFERED: "1"
-      TZ: Europe/Madrid
-      POSTGRES_HOST: postgres
-      POSTGRES_DB: industry4_v2
-      POSTGRES_USER: django
-      POSTGRES_PASSWORD: django1234
-      DOCKER_HOST: unix:///var/run/docker.sock
-      INFLUX_URL: http://influxdb:8086
+      - DJANGO_SETTINGS_MODULE=core.settings
+      - PYTHONUNBUFFERED=1
+      - TZ=${TZ}
+      - POSTGRES_HOST=postgres
+      - REDIS_HOST=redis-central
     ports:
-      - "8000:8000"
+      - "${DJANGO_PORT}:8000"
     depends_on:
       - postgres
-      - mosquitto
+      - redis-central
     command: python manage.py runserver 0.0.0.0:8000
     networks:
-      - suite-central-net
+      - project-net # esto lo he cambiado
 
+  # ---------- BACKEND CORE (WEBSOCKET) ----------
+  django-ws:
+    build:
+      context: ./django-api
+    container_name: ${COMPOSE_PROJECT_NAME}-django-ws # esto lo he cambiado (dinámico)
+    command: daphne -b 0.0.0.0 -p 8002 core.asgi:application
+    ports:
+      - "${WS_PORT_HOST}:8002" # esto lo he cambiado (ahora usa la variable que creamos en el .env)
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=core.settings
+      - PYTHONUNBUFFERED=1
+      - TZ=${TZ}
+      - REDIS_HOST=redis-central
+      - REDIS_PORT=6379
+    depends_on:
+      - postgres
+      - redis-central
+    networks:
+      - project-net # esto lo he cambiado
 
   # ---------- FRONTEND ----------
   frontend:
     build: ./frontend
-    container_name: wire-deploy-frontend
+    container_name: ${COMPOSE_PROJECT_NAME}-frontend # esto lo he cambiado (dinámico)
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      VITE_API_URL: http://django-api:8000
+      VITE_API_URL: http://localhost:${DJANGO_PORT}
+      VITE_WS_URL: ws://localhost:${WS_PORT_HOST}
+      # URLs de servicios externos (para service_urls.jsx)
+      VITE_CHATBOT_URL: http://localhost:${CHATBOT_PORT}/chat
+      VITE_ML_SERVICE_URL: http://localhost:${ML_PORT}/predict
+      VITE_VR_SERVICE_URL: http://localhost:${VR_PORT}/
+      VITE_GRAFANA_URL: http://localhost:${GRAFANA_PORT}/login
+      VITE_INFLUX_URL_SIGNIN: http://localhost:${INFLUX_PORT}/signin
+
       CHOKIDAR_USEPOLLING: "true"
     ports:
-      - "5173:5173"
+      - "${FRONTEND_PORT}:5173"
     depends_on:
       - django-api
     networks:
-      - suite-central-net
+      - project-net # esto lo he cambiado
 
-
+# ---------- VOLUMES ----------
 volumes:
-  mosquitto_data:
-  mosquitto_log:
-  influxdb_data:
-  postgres_data_v2:
-
-
+  postgres_data:
+    name: ${COMPOSE_PROJECT_NAME}_postgres_data
+  redis_data:
+    name: ${COMPOSE_PROJECT_NAME}_redis_data
+# ---------- NETWORKS ----------
 networks:
-  suite-central-net:
+  project-net: # esto es el identificador interno del archivo
     driver: bridge
-    name: suite-central-net
+    name: ${NETWORK_NAME} # esto lo he cambiado (el nombre real de la red en Docker viene del .env)

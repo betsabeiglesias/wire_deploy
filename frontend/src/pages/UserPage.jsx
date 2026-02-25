@@ -1,14 +1,10 @@
-import { useEffect } from "react";
 import { useAuthStore } from "../store/useAuthStore";
 import HomeButton from "../components/HomeButton";
 
 export default function UserPage() {
-  const { user, fetchCurrentUser, loading, error } = useAuthStore();
+  const { user, loading, error } = useAuthStore();
 
-  useEffect(() => {
-    fetchCurrentUser();
-  }, [fetchCurrentUser]);
-
+  // 1. Mientras esté cargando, mostramos spinner
   if (loading) {
     return (
       <div className="flex justify-center items-center p-10">
@@ -17,6 +13,7 @@ export default function UserPage() {
     );
   }
 
+  // 2. Si hay error en el store
   if (error) {
     return (
       <div className="max-w-2xl mx-auto mt-10 p-6 text-red-600 bg-red-50 border border-red-200 rounded-lg">
@@ -26,10 +23,12 @@ export default function UserPage() {
     );
   }
 
+  // 3. Validación de datos completos
   if (!user || !user.date_joined) {
     return (
       <div className="max-w-2xl mx-auto mt-10 p-6 bg-yellow-50 text-yellow-700 rounded-lg">
         <p>No se han podido recuperar los detalles del perfil.</p>
+        <p className="text-xs mt-2 italic text-yellow-600">Verifica que la sesión no haya expirado.</p>
       </div>
     );
   }

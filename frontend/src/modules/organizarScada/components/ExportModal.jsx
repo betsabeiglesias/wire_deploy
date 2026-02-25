@@ -37,21 +37,23 @@ const ExportModal = ({
         let httpMethod;
         let apiUrl;
         
-        // Lógica de URL
+        // Lógica de URL   ESTO ha cambiado porque ahora no hardcodeamos la url
         if (isUpdating) {
             httpMethod = "put";
-            apiUrl = `http://localhost:8000/api/scada-manager/layout/${currentLayoutId}/`; 
+            apiUrl = `/api/scada-manager/layout/${currentLayoutId}/`; 
         } else {
             httpMethod = "post";
-            apiUrl = `http://localhost:8000/api/scada-manager/save-layout/`; 
+            apiUrl = `/api/scada-manager/save-layout/`; 
         }
 
         const requestBody = {
-            button_name: filename,
+            name: filename,
             elements: canvasElements,
         };
         
         try {
+            // Al usar la instancia 'api', Axios concatena automáticamente 
+            // la baseURL de nuestro api.js con la apiUrl relativa de aquí.
             const response = await api({ 
                 method: httpMethod,
                 url: apiUrl, 

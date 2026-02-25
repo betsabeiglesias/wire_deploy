@@ -4,8 +4,13 @@
 //   const [tasks, setTasks] = useState([]);
 //   const [loading, setLoading] = useState(true);
 
+//   // Definimos la URL base usando la variable de entorno.
+//   // Ya no usamos 'http://localhost:8000' a pelo.
+//   const API_URL = import.meta.env.VITE_API_URL;
+
 //   useEffect(() => {
-//     fetch('http://localhost:8000/api/management/tasks/')
+//     // Ahora usamos aqui la variable API_URL en vez de meter el puerto a pelo
+//     fetch(`${API_URL}/api/management/tasks/`)
 
 //       .then((res) => res.json())
 //       .then((data) => {
@@ -16,7 +21,7 @@
 //         console.error("Error fetching tasks:", err);
 //         setLoading(false);
 //       });
-//   }, []);
+//   }, [API_URL]);  // Añadimos API_URL como dependencia por buena práctica
 
 //   if (loading) return <p className="text-center mt-10">Cargando...</p>;
 
@@ -40,7 +45,7 @@
 //             <tr key={task.id} className="hover:bg-gray-50">
 //               <td className="p-3 border">{task.id}</td>
 //               <td className="p-3 border">{task.name}</td>
-//               <td className="p-3 border">{task.employees.join(", ")}</td>
+//               <td className="p-3 border">{task.employees?.join(", ") || "N/A"}</td>
 //               <td className="p-3 border">{task.fk_project}</td>
 //               <td className="p-3 border">{task.status}</td>
 //               <td className="p-3 border">{task.priority}</td>

@@ -1,9 +1,11 @@
 import axios from 'axios';
-import { useAuthStore } from '../store/useAuthStore';
+
+// Ahora toma la URL del .env a través de Vite
+const API_URL = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
-  baseURL: "http://localhost:8000",
-  withCredentials: true, // Obligatorio para enviar/recibir cookies
+  baseURL: API_URL,
+  withCredentials: true,
 });
 
 api.interceptors.response.use(
@@ -11,23 +13,31 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Si el error es 401 y NO viene de la ruta de login
-    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes('/api/token/')) {
-      originalRequest._retry = true;
-
-      try {
-        // En cookies, no enviamos nada en el body. El navegador envía la cookie 'refresh_token' sola.
-        await axios.post('http://localhost:8000/api/token/refresh/', {}, { withCredentials: true });
-        
-        // Si el refresh tiene éxito, reintentamos la petición original
-        return api(originalRequest);
-      } catch (refreshError) {
-        // Si el refresh falla (ej: cookie expirada), limpiamos todo y al login
-        useAuthStore.getState().clearAuth();
-        return Promise.reject(refreshError);
-      }
+    if (
+      error.response?.status !== 401 || 
+      originalRequest.url.includes('api/auth/token/') || 
+      originalRequest._retry
+    ) {
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
+
+    if (!document.cookie.includes("refresh_token")) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      // 3. Intentar renovar la sesión (el refresh_token va en la cookie)
+      await axios.post(
+        `${API_URL}/api/auth/token/refresh/`,   // Usamos la variable API_URL aquí también
+        {}, 
+        { withCredentials: true }
+      );
+      return api(originalRequest);
+    } catch (refreshError) {
+      return Promise.reject(refreshError);
+    }
   }
 );
 

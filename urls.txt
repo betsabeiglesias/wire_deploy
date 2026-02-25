@@ -54,7 +54,7 @@ docker compose logs -f opcua-gateway
 ------------------------------------------------------------------------------------------------------------
 
 
-PASOS GIT CREAR RAMA NUEVA: 
+PASOS GIT CREAR RAMA NUEVA:    
 
 git checkout -b feature/nueva-rama
 git add .
@@ -88,3 +88,45 @@ Abrir CMD o PowerShell en la raíz del proyecto y ejecutar:
 
 
 
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+DUPLICAR PROYECTO ::: CAMBIOS NECESARIOS:
+
+Ejemplo: de un proyecto llamado "prueba1" duplicamos y creamos un proyecto llamado "text-santanderina"
+
+Archivos generales: 
+
+    .env:
+            se actualizan al nombre del proyecto:
+
+            COMPOSE_PROJECT_NAME=prueba1                 COMPOSE_PROJECT_NAME=text-santanderina
+            NETWORK_NAME=prueba1-net                     NETWORK_NAME=text-santanderina-net
+
+
+Archivos en custommer:
+
+    customerA.env:         
+    NETWORK_NAME tiene que ser == que NETWORK_NAME en .env general
+            NETWORK_NAME=prueba1-net                     NETWORK_NAME=text-santanderina-net 
+
+
+    docker-compose.yml:
+    - CENTRAL_REDIS_HOST tiene que ser == que el container_name de redis-central en el .yml general
+            CENTRAL_REDIS_HOST=prueba1-redis             CENTRAL_REDIS_HOST=text-santanderina-redis
+
+       
+    - networks:        (esto está abajo del todo del archivo, casi al final)
+         name: Tiene que ser == NETWORK_NAME del general
+            name: prueba1-net                            name: text-santanderina-net
+
+
+
+
+Otros:
+    settings.py:
+            En FRONTEND_URL actualizar la url hardcodeada, que por algún motivo no pilla la variable. 
+            FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5185")    esto: "http://localhost:5185"
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------

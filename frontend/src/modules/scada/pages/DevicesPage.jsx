@@ -3,14 +3,14 @@
 import React, { useState, useEffect } from "react";   
 import { useNavigate } from "react-router-dom";
 import { getPLCs, deletePLC, togglePLC, regenerateGateway, restartGateway } from "../api/plcApi";
-import { useGatewayData } from "../../../hooks/useGatewayData";
+import { useRealtimeData } from "../../../hooks/useRealtimeData";
 import { isConfigDirty, markConfigClean, markConfigDirty } from "../../../utils/configUtils";
 import Swal from "sweetalert2";
 
 const DevicesPage = () => {
   const navigate = useNavigate();
 
-  const gateway = useGatewayData();
+  const gateway = useRealtimeData();
   const { connected, dataStale, allTags } = gateway;
 
   const [devices, setDevices] = useState([]);

@@ -3,10 +3,29 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-gauge-chart": "^0.5.1",
-    "sweetalert2": "^11.26.3"
+    "sweetalert2": "^11.26.3",
+    "ws": "^8.19.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.26",
     "@types/react-dom": "^18.3.7"
-  }
+  },
+  "name": "wire_deploy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/betsabeiglesias/wire_deploy.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/betsabeiglesias/wire_deploy/issues"
+  },
+  "homepage": "https://github.com/betsabeiglesias/wire_deploy#readme"
 }

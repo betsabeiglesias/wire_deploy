@@ -1,6 +1,6 @@
 // UnifiedSidebar.jsx
 import React, { useMemo, useState } from "react";
-import { useGatewayData } from "@/hooks/useGatewayData";
+import { useRealtimeData } from "@/hooks/useRealtimeData";
 import { templates } from "../utils/gauges";
 import { buttons_labels_items} from "../utils/items";
 
@@ -25,7 +25,7 @@ const UnifiedSidebar = ({
   const [isMainOpen, setIsMainOpen] = useState(true);
   const [activeSection, setActiveSection] = useState("views");
 
-  const { allTags } = useGatewayData();
+  const { allTags } = useRealtimeData();
   const [selectedSite, setSelectedSite] = useState("");
   const [selectedArea, setSelectedArea] = useState("");
   const [expandedLines, setExpandedLines] = useState({});
@@ -344,7 +344,7 @@ const UnifiedSidebar = ({
                 <div key={pub.id} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-slate-800">
-                      {pub.name || pub.button_name || pub.id}
+                      {pub.name || pub.name || pub.id}
                     </span>
                     <span className="text-[10px] text-slate-500">
                       {pub.updatedAt ? new Date(pub.updatedAt).toLocaleString() : ""}

@@ -1,26 +1,15 @@
+
 from django.http import HttpResponse
+from django.db import transaction
+from django.utils.crypto import get_random_string
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from django.utils.crypto import get_random_string
-from rest_framework import viewsets
-from django.db import transaction
-from django.db.models import Q
-# from .serializers import MyLayOutsTitleSerializer # Nota: ya se importa abajo, pero se mantiene si lo usas aquí
-from .models import Country, Location, Factory, Area, Manufacturer, Machine, MyLayOut, MyLayOutsTitle 
-from .serializers import (
-    CountrySerializer,
-    LocationSerializer,
-    FactorySerializer,
-    AreaSerializer,
-    ManufacturerSerializer,
-    MachineSerializer, 
-    MyLayOutSerializer, 
-    MyLayOutsTitleSerializer, 
-    # MyPowerBiSerializer # <-- AÑADIDO DE LA RAMA 'principal'
-)
 
-# ----- Vistas normales -----
+from .models import MyLayOut, MyLayOutsTitle 
+from .serializers import MyLayOutSerializer, MyLayOutsTitleSerializer
+
+# Vista genérica del proyecto (puedes moverla a una app 'core' si prefieres)
 def home(request):
     return HttpResponse("¡Bienvenido a Industry4 Suite!")
 
@@ -29,83 +18,26 @@ def home(request):
 def protected_api_view(request):
     return Response({"message": "¡Acceso autorizado!"})
 
-# ----- ViewSets para DRF -----
-class CountryViewSet(viewsets.ModelViewSet):
-    queryset = Country.objects.all()
-    serializer_class = CountrySerializer
-
-class LocationViewSet(viewsets.ModelViewSet):
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
-
-class FactoryViewSet(viewsets.ModelViewSet):
-    queryset = Factory.objects.all()
-    serializer_class = FactorySerializer
-
-class AreaViewSet(viewsets.ModelViewSet):
-    queryset = Area.objects.all()
-    serializer_class = AreaSerializer
-
-class ManufacturerViewSet(viewsets.ModelViewSet):
-    queryset = Manufacturer.objects.all()
-    serializer_class = ManufacturerSerializer
-
-class MachineViewSet(viewsets.ModelViewSet):
-    queryset = Machine.objects.all()
-    serializer_class = MachineSerializer
-
-# <-- Nuevo ViewSet para PowerBI de la rama 'principal'
-# class PowerBiViewSet(viewsets.ModelViewSet):
-#     serializer_class = MyPowerBiSerializer
-#     permission_classes = [IsAuthenticated]
-
-#     def get_queryset(self):
-#         # Solo los PowerBI del usuario
-#         return MyPowerBi.objects.filter(user=self.request.user)
-
-#     def perform_create(self, serializer):
-#         # Crear el PowerBI
-#         powerbi = serializer.save()
-#         # Asociar el usuario logueado
-#         powerbi.user.add(self.request.user)
-    
-#     # Nuevo: Permite la actualización de un objeto PowerBi
-#     def perform_update(self, serializer):
-#         # No necesitamos añadir el usuario aquí, solo guardar los cambios
-#         serializer.save()
-
-#     # Nuevo: Permite la eliminación de un objeto PowerBi
-#     def perform_destroy(self, instance):
-#         instance.delete()
-# # --> Fin del nuevo ViewSet
-
-
 @api_view(["POST"])
 @permission_classes([IsAuthenticated])
 def save_layout(request):
-    button_name = request.data.get("button_name")
+    name = request.data.get("name")
     elements = request.data.get("elements", [])
-    views_data = request.data.get("views_data")  # Nuevo: datos de multi-vista
+    views_data = request.data.get("views_data")
 
-    if not button_name:
-        return Response({"error": "button_name es obligatorio"}, status=400)
+    if not name:
+        return Response({"error": "name es obligatorio"}, status=400)
 
     with transaction.atomic():
-        # Crear el título con views_data si existe
         title_obj = MyLayOutsTitle.objects.create(
-            button_name=button_name,
-            views_data=views_data,  # Guardar views_data directamente
+            name=name,
+            views_data=views_data,
             user=request.user
         )
 
-        # Si no hay views_data, guardar elements tradicionales (backward compatibility)
         if not views_data and isinstance(elements, list):
             for el in elements:
-                # Usamos un ID único por si el frontend no lo pasa
-                instance_id = el.get("id")
-                if not instance_id:
-                    instance_id = get_random_string(12)
-
+                instance_id = el.get("id") or get_random_string(12)
                 serializer = MyLayOutSerializer(data={
                     'id': instance_id,
                     'x': el.get("x", 0),
@@ -113,92 +45,47 @@ def save_layout(request):
                     'data': el.get("data", {}),
                 })
                 serializer.is_valid(raise_exception=True)
-                serializer.save(user=request.user, button_name=title_obj)
+                # IMPORTANTE: El modelo MyLayOut no tiene campo 'user', 
+                # lo guarda a través de la relación con MyLayOutsTitle.
+                serializer.save(name=title_obj)
 
-    # Devolver el título con todos los layouts guardados
     response_serializer = MyLayOutsTitleSerializer(title_obj)
     return Response(response_serializer.data)
-
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def my_layouts(request):
-    """
-    Devuelve todos los layouts creados por el usuario logueado
-    """
-    titles = MyLayOutsTitle.objects.filter(user=request.user).distinct()
+    titles = MyLayOutsTitle.objects.filter(user=request.user)
     serializer = MyLayOutsTitleSerializer(titles, many=True)
     return Response(serializer.data)
 
-# Añadir PUT y DELETE para permitir la actualización y eliminación
 @api_view(["GET", "PUT", "DELETE"]) 
 @permission_classes([IsAuthenticated])
 def layout_detail(request, title_id):
-    # 1. Buscar el título y verificar permisos
     try:
-        title = MyLayOutsTitle.objects.get(id=title_id)
+        title = MyLayOutsTitle.objects.get(id=title_id, user=request.user)
     except MyLayOutsTitle.DoesNotExist:
-        return Response({"error": "No encontrado"}, status=404)
+        return Response({"error": "No encontrado o no autorizado"}, status=404)
 
-    # Comprobar si el usuario es dueño directo o tiene layouts asociados
-    if not (title.user == request.user or title.mylayout_set.filter(user=request.user).exists()):
-        return Response({"error": "No autorizado"}, status=403)
-
-
-    # --- GET (Devolver el detalle) ---
     if request.method == "GET":
-        if title.views_data:
-            return Response({
-                "id": title.id,
-                "button_name": title.button_name,
-                "views_data": title.views_data
-            })
-        else:
-            serializer = MyLayOutSerializer(title.mylayout_set.filter(user=request.user), many=True)
-            return Response({
-                "id": title.id,
-                "button_name": title.button_name,
-                "elements": serializer.data
-            })
+        serializer = MyLayOutsTitleSerializer(title)
+        return Response(serializer.data)
 
-    # --- PUT (Actualizar el detalle) ---
     elif request.method == "PUT":
-        button_name = request.data.get("button_name")
+        name = request.data.get("name")
+        views_data = request.data.get("views_data")
         elements = request.data.get("elements", [])
-        views_data = request.data.get("views_data")  # Nuevo: datos de multi-vista
-
-        if not button_name:
-            return Response({"error": "button_name es obligatorio"}, status=400)
 
         with transaction.atomic():
-            # A. Actualizar el nombre del Título y views_data
-            title.button_name = button_name
-            title.views_data = views_data  # Actualizar views_data
-            title.user = request.user
+            title.name = name
+            title.views_data = views_data
             title.save()
             
-            # B. Si no hay views_data, actualizar elements tradicionales (backward compatibility)
             if not views_data:
-                # Normaliza el payload para aceptar objetos anidados u otras formas
-                if isinstance(elements, dict):
-                    if isinstance(elements.get("elements"), list):
-                        elements = elements.get("elements")
-                    else:
-                        elements = list(elements.values())
-                
-                if not isinstance(elements, list):
-                    return Response({"error": "elements debe ser una lista"}, status=400)
-                
-                # Eliminar los layouts antiguos del usuario actual asociados a este título
-                title.mylayout_set.filter(user=request.user).delete()
-                
-                # C. Guardar los nuevos elementos
-                new_layouts = []
+                # Limpiar y recrear elementos si es el formato antiguo
+                title.mylayout_set.all().delete()
                 for el in elements:
-                    instance_id = el.get("id")
-                    if not instance_id:
-                        instance_id = get_random_string(12)
-
+                    instance_id = el.get("id") or get_random_string(12)
                     serializer = MyLayOutSerializer(data={
                         'id': instance_id,
                         'x': el.get("x", 0),
@@ -206,16 +93,10 @@ def layout_detail(request, title_id):
                         'data': el.get("data", {}),
                     })
                     serializer.is_valid(raise_exception=True)
-                    new_layouts.append(serializer.save(user=request.user, button_name=title))
+                    serializer.save(name=title)
 
-        # 4. Devolver la respuesta de éxito (devuelve el título actualizado)
-        response_serializer = MyLayOutsTitleSerializer(title)
-        return Response(response_serializer.data)
+        return Response(MyLayOutsTitleSerializer(title).data)
 
-    # --- DELETE (Borrar el detalle) ---
     elif request.method == "DELETE":
-        # Borra el título, que debería eliminar en cascada los MyLayOuts asociados.
         title.delete()
         return Response(status=204)
-    
-

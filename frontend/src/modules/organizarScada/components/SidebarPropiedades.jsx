@@ -1,6 +1,6 @@
 // SidebarPropiedades.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useGatewayData } from "@/hooks/useGatewayData";
+import { useRealtimeData } from "@/hooks/useRealtimeData";
 
 const SidebarPropiedades = ({
   isOpen = true,
@@ -23,7 +23,7 @@ const SidebarPropiedades = ({
   onExportNameChange,
 }) => {
   const [activeTab, setActiveTab] = useState("views");
-  const { allTags } = useGatewayData();
+  const { allTags } = useRealtimeData();
 
   // Cambia autom·ticamente la pestaÒa seg˙n haya elemento seleccionado
   useEffect(() => {
@@ -177,7 +177,7 @@ const SidebarPropiedades = ({
             >
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-slate-800">
-                  {pub.name || pub.button_name || pub.id}
+                  {pub.name || pub.name || pub.id}
                 </span>
                 <span className="text-[10px] text-slate-500">
                   {pub.updatedAt

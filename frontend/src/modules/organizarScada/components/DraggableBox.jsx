@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Rnd } from "react-rnd";
 import GaugeMeter from "@/modules/organizarScada/components/GaugeMeter";
 import SvgGauge from "@/modules/organizarScada/components/SvgGauge";
-import { useGatewayData } from "@/hooks/useGatewayData";
+import { useRealtimeData } from "@/hooks/useRealtimeData";
 import "@/styles/gateway.css";
 
 // ==================== FUNCIONES DE UTILIDAD ====================
@@ -322,7 +322,7 @@ export default function DraggableBox({
   const [width, setWidth] = useState(initialWidth);
   const [height, setHeight] = useState(initialHeight);
 
-  const { allTags } = useGatewayData();
+  const { allTags } = useRealtimeData();
   const [valueHistory, setValueHistory] = useState([]);
 
   // Sincronizar el estado interno con las props iniciales
