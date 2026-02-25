@@ -85,7 +85,7 @@ services:
       - LOCAL_REDIS_PORT=6379
 
       # 🔥 Redis CENTRAL (no local)
-      - CENTRAL_REDIS_HOST=redis-central
+      - CENTRAL_REDIS_HOST=wire-deploy-redis
       - CENTRAL_REDIS_PORT=6379
 
       # Identidad del cliente
