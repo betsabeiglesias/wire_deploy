@@ -24,6 +24,9 @@ class GatewayManager:
             try:
                 drv = make_driver(cfg, self.publisher)
                 self.drivers.append(drv)
+                self.log.info(
+                    f"Driver creado: {drv.driver_name} | equipment={getattr(drv, 'equipment_id', '?')}"
+                )
             except Exception:
                 self.log.exception("Error creando driver")
                 print(f"[ERR] Creando driver:\n{traceback.format_exc()}")
@@ -84,7 +87,7 @@ class GatewayManager:
         # --- Cargar gateway.yaml ---
         with open(yaml_path, "r") as f:
             root_cfg = yaml.safe_load(f) or {}
-
+        
         # --- Cargar YAMLs de equipos (items_file) ---
         equipments_cfgs = []
         for entry in root_cfg.get("equipments", []):
@@ -92,7 +95,15 @@ class GatewayManager:
             if not items_file:
                 continue
 
+            base_dir = yaml_path.parent
+
             items_file_path = Path(items_file)
+
+            # Si es ruta relativa → resolver respecto al gateway.yaml
+            if not items_file_path.is_absolute():
+                items_file_path = base_dir / items_file_path
+
+            items_file_path = items_file_path.resolve()
 
             if not items_file_path.exists():
                 raise FileNotFoundError(f"PLC YAML not found: {items_file_path}")

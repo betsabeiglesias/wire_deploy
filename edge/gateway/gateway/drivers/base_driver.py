@@ -18,6 +18,8 @@ class BaseDriver:
         publisher: Optional[Callable[[Dict[str, Any]], None]] = None,
         driver_name: Optional[str] = None,
     ) -> None:
+        
+
         # Configuración completa del driver (mapping validado)
         self.cfg: Dict[str, Any] = mapping_cfg
         self._started_at = time.monotonic()
@@ -50,6 +52,7 @@ class BaseDriver:
         self.log: logging.Logger = logging.getLogger(
             f"gateway.{self.driver_name}.{self.equipment_id}"
         )
+        self.log.info(f"Publisher asignado: {self.publisher}")
 
         # Cliente interno (snap7.Client, opcua.Client, etc.)
         self._client: Optional[Any] = None
@@ -170,6 +173,7 @@ class BaseDriver:
             Envía un ProcessValue de forma segura.
             Actualiza el heartbeat transversal.
         """
+        self.log.info(f"🔥 EMIT_TAG CALLED {pv.variable} value={pv.value}")
         try:
             if self.publisher:
                 self.publisher(pv)

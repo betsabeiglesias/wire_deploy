@@ -8,6 +8,7 @@ from snap7.util import get_bool, get_int, get_dint, get_real, get_word, get_dwor
 
 from contracts.validators.validate_tag import validate_mapping
 from gateway.drivers.base_driver import BaseDriver
+from domain.process_value import ProcessValue
 
 # -----------------------------
 # Parsing de direcciones S7
@@ -118,30 +119,36 @@ def cast_value(buf: bytes, kind: str, byte: int, bit: int | None, datatype: str,
 
 def build_tag(equipment_id, item, value, endpoint, quality="Good",
               error: str | None = None, datatype_out: str | None = None):
-    attrs = dict(item.get("attrs", {}) or {})  # copia defensiva
-    if error:
-        attrs["error"] = error
 
     from urllib.parse import urlparse
     parsed = urlparse(endpoint)
-    plc_ip = parsed.hostname  # 
+    plc_ip = parsed.hostname
 
-    return {
-        "schema": "v1.tag",
-        "equipment_id": equipment_id,
-        "variable": item["name"],
-        "value": value,
-        "datatype": datatype_out or item["datatype"],  # permite sobrescribir
-        "unit": item.get("unit"),
-        "timestamp": utcnow_iso(),
-        "quality": quality,
-        "source": {
+    attrs = dict(item.get("attrs", {}) or {})
+    if error:
+        attrs["error"] = error
+
+    ts = datetime.datetime.now(datetime.timezone.utc)
+
+    pv = ProcessValue(
+        equipment_id=equipment_id,
+        variable=item["name"],
+        value=value,
+        datatype=datatype_out or item["datatype"],
+        unit=item.get("unit"),
+        timestamp=ts,
+        quality=quality,
+        source={
             "protocol": "snap7",
-            "endpoint": plc_ip,       
+            "endpoint": endpoint,
+            "ip": plc_ip,
             "address": item["address"],
-        },
-        "attrs": attrs,
-    }
+            "attrs": attrs,
+        }
+    )
+
+    return pv
+
 
 def endpoint_uri(ip, rack, slot):
     return f"snap7://{ip}/{rack}/{slot}"
@@ -317,8 +324,9 @@ class S7Driver(BaseDriver):
             
             self.log.info("Reconexión exitosa")
         except Exception as ex:
-            self.log.error(f"Error en reconexión: {ex}", exc_info=True)
-            raise
+            # Limpiar mensaje Snap7 (bytes → str)
+            msg = ex.args[0].decode(errors="ignore") if ex.args and isinstance(ex.args[0], bytes) else str(ex)
+            self.log.warning("PLC S7 no disponible: %s", msg)
 
 
     def run_supervisor_step(self) -> None:
@@ -337,7 +345,8 @@ class S7Driver(BaseDriver):
                 self.reconnect()
                 
         except Exception as ex:
-            self.log.error(f"Error en supervisor: {ex}", exc_info=True)
+            msg = ex.args[0].decode(errors="ignore") if ex.args and isinstance(ex.args[0], bytes) else str(ex)
+            self.log.warning("Supervisor S7 error: %s", msg)
 
     # ---------------------------
     # Operación
