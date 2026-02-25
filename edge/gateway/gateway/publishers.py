@@ -130,8 +130,8 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
     client = mqtt.Client(
             callback_api_version=mqtt.CallbackAPIVersion.VERSION1,
             client_id=client_id,
-            clean_session=False
-            clean_session=False
+            clean_session=False,
+            
         )
     
     client.username_pw_set(mqtt_user, password=mqtt_pass)
