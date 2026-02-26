@@ -1,11 +1,11 @@
 services:
   gateway:
     build: ../../edge/gateway
-    container_name: gateway_customerA
+    container_name: gateway_${TENANT}
     env_file:
       - ./customerA.env
     environment:
-      - TZ=Europe/Madrid
+      - TZ=${TZ}
       - GATEWAY_CONFIG=/opt/suite/config/gateway.yaml
     volumes:
       - ./opt/suite/config:/opt/suite/config:ro
@@ -15,7 +15,7 @@ services:
 
   writer-mssql:
     build: ../../edge/writer_mssql
-    container_name: writer_customerA
+    container_name: writer_${TENANT}
     env_file:
       - ./customerA.env
     depends_on:
@@ -27,23 +27,22 @@ services:
 
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: sqlserver_customerA
+    container_name: sqlserver_${TENANT}
     env_file:
       - ./customerA.env
     ports:
-      - "1433:1433"   # solo en dev
+      - "${HOST_PORT_MSSQL}:1433"
     volumes:
       - sqlserver_data:/var/opt/mssql
     networks:
       - suite-central-net
 
-  # ---------- MOSQUITTO ----------
   mosquitto:
     image: eclipse-mosquitto:2.0.18
-    container_name:  mosquitto_customerA
+    container_name: mosquitto_${TENANT}
     ports:
-      - "127.0.0.1:1884:1883"
-      - "127.0.0.1:9001:9001"
+      - "127.0.0.1:${HOST_PORT_MOSQUITTO}:1883"
+      - "127.0.0.1:${HOST_PORT_MOSQUITTO_WS}:9001"
     volumes:
       - ./mosquitto:/mosquitto
       - mosquitto_data:/mosquitto/data
@@ -53,16 +52,15 @@ services:
 
   redis:
     image: redis:7
-    container_name: redis_customerA
+    container_name: redis_${TENANT}
     restart: unless-stopped
- 
     networks:
       - suite-central-net
 
   mqtt_bridge:
     build:
       context: ../../edge/core_backend
-    container_name: mqtt_bridge_customerA
+    container_name: mqtt_bridge_${TENANT}
     command: python -m mqtt_bridge.run
     env_file:
       - ./customerA.env
@@ -76,20 +74,16 @@ services:
   redis-bridge:
     build:
       context: ../../edge/core_backend
-    container_name: redis_bridge_customerA
+    container_name: redis_bridge_${TENANT}
     command: python -m realtime.redis_bridge
     env_file:
       - ./customerA.env
     environment:
-      - LOCAL_REDIS_HOST=redis_customerA
+      - LOCAL_REDIS_HOST=redis_${TENANT}
       - LOCAL_REDIS_PORT=6379
-
-      # 🔥 Redis CENTRAL (no local)
-      - CENTRAL_REDIS_HOST=wire-deploy-redis
-      - CENTRAL_REDIS_PORT=6379
-
-      # Identidad del cliente
-      - TENANT_ID=customerA
+      - CENTRAL_REDIS_HOST=${CENTRAL_REDIS_HOST}
+      - CENTRAL_REDIS_PORT=${CENTRAL_REDIS_PORT}
+      - TENANT_ID=${TENANT}
     depends_on:
       - redis
     restart: unless-stopped
@@ -99,7 +93,7 @@ services:
   core-backend:
     build:
       context: ../../edge/core_backend
-    container_name: core-backendA
+    container_name: core-backend_${TENANT}
     volumes:
       - ../../edge/core_backend:/app
       - ../opt/suite/config:/opt/suite/config
@@ -108,9 +102,9 @@ services:
     environment:
       - DJANGO_SETTINGS_MODULE=core.settings
       - PYTHONUNBUFFERED=1
-      - TZ=Europe/Madrid
+      - TZ=${TZ}
     ports:
-      - "8001:8000"   # 🔥 OJO: puerto distinto al central
+      - "${HOST_PORT_BACKEND}:8000"
     depends_on:
       - redis
     restart: unless-stopped
@@ -120,11 +114,12 @@ services:
 networks:
   suite-central-net:
     external: true
-    name: wire-net
-
+    name: ${NETWORK_NAME}
 
 volumes:
   sqlserver_data:
+    name: ${TENANT}_sqlserver_data
   mosquitto_data:
+    name: ${TENANT}_mosquitto_data
   mosquitto_log:
-
+    name: ${TENANT}_mosquitto_log
