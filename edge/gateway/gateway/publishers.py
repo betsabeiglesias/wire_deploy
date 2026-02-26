@@ -5,9 +5,10 @@ import os
 from typing import Callable, Dict, Any, Optional
 from datetime import datetime, timezone
 from urllib.parse import urlparse
-
+import time
 import paho.mqtt.client as mqtt
 from domain.process_value import ProcessValue
+from collections import deque
 
 import logging
 logger = logging.getLogger("gateway.mqtt")
@@ -87,6 +88,7 @@ def _status_topics(tenant: str, gateway_name: str) -> Dict[str, str]:
 
 
 def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
+    print(">>> MQTT PUBLISH LLAMADO <<<")
     gw = root_cfg.get("gateway") or {}
     tenant = gw.get("tenant")
     if not tenant:
@@ -128,9 +130,11 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
     client = mqtt.Client(
             callback_api_version=mqtt.CallbackAPIVersion.VERSION1,
             client_id=client_id,
-            clean_session=False
+            clean_session=False,
+            
         )
     
+    client.username_pw_set(mqtt_user, password=mqtt_pass)
     client.username_pw_set(mqtt_user, password=mqtt_pass)
 
     if mqtt_user:
@@ -149,11 +153,14 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
 
     connected = {"ok": False}
 
+    buffer = deque(maxlen=1000)  # Buffer circular de seguridad
+
     def on_connect(_cli, _ud, _flags, rc, _props=None):
         if rc == 0:
             connected["ok"] = True
             logger.info("MQTT conectado correctamente")
 
+            # Publicar birth
             birth = json.dumps(
                 {"online": True, "ts": _utc_iso()},
                 ensure_ascii=False
@@ -164,9 +171,21 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
                 qos=qos_status,
                 retain=retain_status
             )
+
+            # 🔥 Flush del buffer
+            flushed = 0
+            while buffer:
+                t, p = buffer.popleft()
+                _cli.publish(t, p, qos=qos_tag, retain=retain_tag)
+                flushed += 1
+
+            if flushed:
+                logger.info(f"Buffer MQTT vaciado: {flushed} mensajes reenviados")
+
         else:
             connected["ok"] = False
             logger.error(f"Error conectando a MQTT: rc={rc}")
+
 
     def on_disconnect(_cli, _ud, rc):
         connected["ok"] = False
@@ -177,19 +196,15 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
 
     client.reconnect_delay_set(min_delay=1, max_delay=30)
 
+    client.on_disconnect = on_disconnect
+
+    client.reconnect_delay_set(min_delay=1, max_delay=30)
+
     client.connect(host, port, keepalive=30)
     client.loop_start()
 
     # --- Publicador MQTT ---
     def _mqtt_publish(pv: ProcessValue) -> None:
-        """
-        Publica un ProcessValue en MQTT adaptándolo al contrato v1.tag
-        y a las restricciones de InfluxDB (value_* tipados).
-        """
-        # logger.info(f"MQTT CONNECT user={mqtt_user}")
-        if not connected["ok"]:
-            logger.warning("Publicando sin conexión confirmada al broker")
-
         payload = {
             "schema": "v1.tag",
             "timestamp": _iso_to_epoch_ms(pv.timestamp),
@@ -199,47 +214,43 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
             "unit": pv.unit,
             "quality": pv.quality,
             "value": pv.value,
-            "source": pv.source,        #esto es metadata
+            "source": pv.source,
         }
 
         dt = pv.datatype
         val = pv.value
 
-        # --- Adaptación obligatoria para InfluxDB ---
         if dt == "Boolean":
             payload["value_bool"] = bool(val)
-
         elif dt in ("Int16", "Int32", "UInt16", "UInt32"):
             payload["value_int"] = int(val)
-
         elif dt in ("Float", "Double"):
             payload["value_float"] = float(val)
-
         elif dt in ("String", "Char"):
             payload["value_str"] = str(val)
-
         elif dt == "DateTime":
             payload["value_time"] = pv.timestamp
-
         else:
             logger.warning(
-                "⚠️ Datatype no soportado: %s (equipment=%s variable=%s)",
+                "Datatype no soportado: %s (equipment=%s variable=%s)",
                 dt, pv.equipment_id, pv.variable
             )
             return
-        
+
         semantic_topic = _topic_for_tag(payload)
         topic = f"{tenant}/{semantic_topic}"
         payload_str = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
 
-        logger.debug("[MQTT] topic=%s payload=%s", topic, payload_str)
-        logger.info(
-                "[MQTT PUBLISH] topic=%s payload=%s",
-                topic,
-                payload_str
-            )
+        logger.info("[MQTT PUBLISH] topic=%s payload=%s", topic, payload_str)
 
-        info=client.publish(
+        # 🔐 Si no hay conexión → buffer
+        if not connected["ok"]:
+            logger.warning("Broker no conectado, mensaje almacenado en buffer")
+            buffer.append((topic, payload_str))
+            return
+
+        # 🚀 Publicación normal
+        client.publish(
             topic,
             payload_str,
             qos=qos_tag,
@@ -248,4 +259,3 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
         info.wait_for_publish()
 
     return _mqtt_publish
-

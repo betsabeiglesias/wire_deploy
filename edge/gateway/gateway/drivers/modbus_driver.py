@@ -11,7 +11,7 @@ from struct import pack, unpack
 
 from pymodbus.client import ModbusTcpClient
 from gateway.drivers.base_driver import BaseDriver
-
+from domain.process_value import ProcessValue
 
 def utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -224,26 +224,24 @@ class ModbusTCPDriver(BaseDriver):
                 normalized_datatype = "Boolean" if datatype == "Bool" else datatype
 
                 # Emitir CDC tag
-                tag = {
-                    "schema": "v1.tag",
-                    "equipment_id": self.equipment_id,
-                    "variable": variable,
-                    "datatype": normalized_datatype,
-                    "value": value,
-                    "unit": unit,
-                    "timestamp": utc_iso(),
-                    "quality": "Good",
-                    "source": {
-                        "protocol": "modbus", 
-                        "address": address, 
+                pv = ProcessValue(
+                    equipment_id=self.equipment_id,
+                    variable=variable,
+                    value=value,
+                    datatype=normalized_datatype,
+                    unit=unit,
+                    quality="Good",
+                    timestamp=utc_iso(),
+                    source={
+                        "protocol": "modbus",
+                        "address": address,
                         "fc": fc,
-                        "format": f"{byte_order}-{word_order}"  # Para debug
-                    },
-                    "attrs": {}
-                }
+                        "format": f"{byte_order}-{word_order}"
+                    }
+                )
                 
                 self.logger.debug(f"📤 Emitiendo: {variable}={value} ({normalized_datatype})")
-                self.emit_tag(tag)
+                self.emit_tag(pv)
                 
                 self.last_emit_ts = time.time()
                 success_count += 1

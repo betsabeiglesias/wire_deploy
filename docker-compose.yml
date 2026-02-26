@@ -1,36 +1,36 @@
-name: ${COMPOSE_PROJECT_NAME} # esto lo he cambiado (usa el nombre del .env)
+name: ${COMPOSE_PROJECT_NAME} #(usa el nombre del .env)
 
 services:
   # ---------- DATABASE ----------
   postgres:
     image: postgres:16
-    container_name: ${COMPOSE_PROJECT_NAME}-postgres # esto lo he cambiado (dinámico)
+    container_name: ${COMPOSE_PROJECT_NAME}-postgres #(dinámico)
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "${POSTGRES_PORT_HOST}:5432" # esto lo he cambiado (eliminado el valor por defecto 5433)
+      - "${POSTGRES_PORT_HOST}:5432" 
     volumes:
-      - postgres_data:/var/lib/postgresql/data # esto lo he cambiado (nombre de volumen genérico)
+      - postgres_data:/var/lib/postgresql/data 
     networks:
-      - project-net # esto lo he cambiado (nombre de red interna genérico)
+      - project-net # (nombre de red interna genérico)
 
   # ---------- REDIS CENTRAL ----------
   redis-central:
     image: redis:7
-    container_name: ${COMPOSE_PROJECT_NAME}-redis # esto lo he cambiado (dinámico)
+    container_name: ${COMPOSE_PROJECT_NAME}-redis #(dinámico)
     restart: unless-stopped
     volumes:
-      - redis_data:/data # esto lo he cambiado
+      - redis_data:/data 
     networks:
-      - project-net # esto lo he cambiado
+      - project-net # (nombre de red interna genérico)
 
   redis-stream-consumer:
     build:
       context: ./django-api
-    container_name: ${COMPOSE_PROJECT_NAME}-redis-consumer # esto es nuevo (antes no tenía container_name)
+    container_name: ${COMPOSE_PROJECT_NAME}-redis-consumer 
     command: python -m realtime.redis_stream_consumer
     env_file:
       - .env
@@ -41,13 +41,13 @@ services:
     depends_on:
       - redis-central
     networks:
-      - project-net # esto lo he cambiado
+      - project-net # (nombre de red interna genérico)
 
   # ---------- BACKEND CORE (HTTP) ----------
   django-api:
     build:
       context: ./django-api
-    container_name: ${COMPOSE_PROJECT_NAME}-django-api # esto lo he cambiado (dinámico)
+    container_name: ${COMPOSE_PROJECT_NAME}-django-api 
     volumes:
       - ./django-api:/app
       - ./opt/suite/config:/opt/suite/config
@@ -67,16 +67,16 @@ services:
       - redis-central
     command: python manage.py runserver 0.0.0.0:8000
     networks:
-      - project-net # esto lo he cambiado
+      - project-net # (nombre de red interna genérico)
 
   # ---------- BACKEND CORE (WEBSOCKET) ----------
   django-ws:
     build:
       context: ./django-api
-    container_name: ${COMPOSE_PROJECT_NAME}-django-ws # esto lo he cambiado (dinámico)
+    container_name: ${COMPOSE_PROJECT_NAME}-django-ws 
     command: daphne -b 0.0.0.0 -p 8002 core.asgi:application
     ports:
-      - "${WS_PORT_HOST}:8002" # esto lo he cambiado (ahora usa la variable que creamos en el .env)
+      - "${WS_PORT_HOST}:8002" # (ahora usa la variable que creamos en el .env)
     env_file:
       - .env
     environment:
@@ -89,18 +89,19 @@ services:
       - postgres
       - redis-central
     networks:
-      - project-net # esto lo he cambiado
+      - project-net # (nombre de red interna genérico)
 
   # ---------- FRONTEND ----------
   frontend:
     build: ./frontend
-    container_name: ${COMPOSE_PROJECT_NAME}-frontend # esto lo he cambiado (dinámico)
+    container_name: ${COMPOSE_PROJECT_NAME}-frontend 
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
       VITE_API_URL: http://localhost:${DJANGO_PORT}
       VITE_WS_URL: ws://localhost:${WS_PORT_HOST}
+
       # URLs de servicios externos (para service_urls.jsx)
       VITE_CHATBOT_URL: http://localhost:${CHATBOT_PORT}/chat
       VITE_ML_SERVICE_URL: http://localhost:${ML_PORT}/predict
@@ -114,7 +115,7 @@ services:
     depends_on:
       - django-api
     networks:
-      - project-net # esto lo he cambiado
+      - project-net # (nombre de red interna genérico)
 
 # ---------- VOLUMES ----------
 volumes:
@@ -126,4 +127,4 @@ volumes:
 networks:
   project-net: # esto es el identificador interno del archivo
     driver: bridge
-    name: ${NETWORK_NAME} # esto lo he cambiado (el nombre real de la red en Docker viene del .env)
+    name: ${NETWORK_NAME} #(el nombre real de la red en Docker viene del .env)

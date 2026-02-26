@@ -380,8 +380,8 @@ const OrganizarScada = () => {
               setCanvasElements(firstView.elements);
             }
 
-            if (parsed.button_name || parsed.name) {
-              setExportName(parsed.button_name || parsed.name);
+            if (parsed.name || parsed.name) {
+              setExportName(parsed.name || parsed.name);
             }
 
             setCurrentLayoutId(null);

@@ -12,7 +12,7 @@ class LocationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        fields = ['id', 'city', 'gps_x', 'gps_y', 'country', 'country_name', 'direction', 'postal_code', 'llevar_a_url']
+        fields = ['id', 'name', 'gps_x', 'gps_y', 'country', 'country_name', 'direction', 'postal_code', 'llevar_a_url']
 
 class FactorySerializer(serializers.ModelSerializer):
     location = LocationSerializer(read_only=True)

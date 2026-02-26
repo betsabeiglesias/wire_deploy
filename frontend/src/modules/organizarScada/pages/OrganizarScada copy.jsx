@@ -247,7 +247,7 @@ const OrganizarScada = () => {
           setCurrentViewId(firstView.id);
           setCanvasElements(firstView.elements || []);
           setExportName(
-            parsed.button_name || parsed.name || "Layout Importado"
+            parsed.name || parsed.name || "Layout Importado"
           );
 
           // Si tiene ID, podríamos conservarlo o resetearlo.

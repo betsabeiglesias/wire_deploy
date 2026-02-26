@@ -72,7 +72,7 @@ export const useOrganizarScada = () => {
         ? data.map((item) => ({
             id: item.id,
             layoutId: item.id,
-            name: item.button_name || item.name || `Vista ${item.id}`,
+            name: item.name || item.name || `Vista ${item.id}`,
             elements: Array.isArray(item.elements)
               ? normalizeCanvasElements(item.elements)
               : [],
@@ -104,7 +104,7 @@ export const useOrganizarScada = () => {
       const data = response.data;
       const elementsRaw = Array.isArray(data) ? data : data?.elements || [];
       return {
-        name: data?.button_name || data?.name,
+        name: data?.name || data?.name,
         elements: normalizeCanvasElements(elementsRaw),
         updatedAt: data?.updated_at || data?.updatedAt,
         viewsData: data?.views_data,
@@ -355,7 +355,7 @@ export const useOrganizarScada = () => {
 
   const confirmExport = useCallback(
     async ({ filename, viewsData, isUpdating }) => {
-      const payload = { button_name: filename, views_data: viewsData };
+      const payload = { name: filename, views_data: viewsData };
       const apiUrl = isUpdating
         ? `/api/scada-manager/layout/${currentLayoutId}/`
         : `/api/scada-manager/save-layout/`;

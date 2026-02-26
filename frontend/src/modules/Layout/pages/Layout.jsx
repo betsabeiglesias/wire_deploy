@@ -58,7 +58,7 @@ export default function Layout() {
 
               <div className="p-5 flex-grow">
                 <h2 className="text-xl font-bold text-gray-800 truncate">
-                  {layout.button_name}
+                  {layout.name}
                 </h2>
               </div>
 
@@ -82,7 +82,7 @@ export default function Layout() {
                 </button>
 
                 <button
-                  onClick={() => handleDelete(layout.id, layout.button_name)}
+                  onClick={() => handleDelete(layout.id, layout.name)}
                   className="
                     px-4 py-1.5 text-sm font-medium
                     text-red-600
