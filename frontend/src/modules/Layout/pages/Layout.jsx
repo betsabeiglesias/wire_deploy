@@ -21,7 +21,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 export default function Layout() {
   const navigate = useNavigate();
-  const { layouts: storeLayouts, fetchLayouts, deleteLayout, isLoading } = useLayoutStore();
+  const { layouts: storeLayouts, fetchLayouts, deleteLayout, updateLayoutOrder, isLoading } = useLayoutStore();
   const [layouts, setLayouts] = useState([]);
 
   useEffect(() => {
@@ -51,7 +51,7 @@ export default function Layout() {
     })
   );
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = async (event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -59,7 +59,18 @@ export default function Layout() {
     const newIndex = layouts.findIndex((l) => l.id === over.id);
 
     const newLayouts = arrayMove(layouts, oldIndex, newIndex);
+    
+    // Actualización optimista en el estado local
     setLayouts(newLayouts);
+
+    // Guardar en el Store y Backend
+    try {
+      await updateLayoutOrder(newLayouts);
+    } catch (error) {
+      // Si falla, revertimos al estado del store
+      setLayouts(storeLayouts);
+      alert("No se pudo guardar el nuevo orden");
+    }
   };
 
   return (
@@ -119,62 +130,42 @@ function SortableItem({ layout, onDelete, navigate }) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`
-        bg-white rounded-xl overflow-hidden flex flex-col border transition-shadow duration-300
-        ${isDragging 
-          ? "shadow-2xl ring-2 ring-green-500/20 scale-105 opacity-90 cursor-grabbing" 
-          : "shadow-md border-gray-200"
-        }
-      `}
+      className={`bg-white rounded-xl overflow-hidden flex flex-col border transition-shadow duration-300 ${
+        isDragging ? "shadow-2xl ring-2 ring-green-500/20 scale-105 opacity-90" : "shadow-md border-gray-200"
+      }`}
     >
-      {/* ZONA DE ARRASTRE: Parte Superior (Iframe) + Parte Central (Nombre) */}
+      {/* ZONA DE ARRASTRE */}
       <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-        
-        {/* Parte superior: Iframe con Overlay */}
         <div className="h-64 bg-white overflow-hidden relative border-b pointer-events-none">
           <iframe
             src={`/layout/${layout.id}`}
             title={`preview-${layout.id}`}
             className="absolute top-0 left-0 border-0 origin-top-left"
-            style={{
-              width: "166.66%",
-              height: "166.66%",
-              transform: "scale(0.6)",
-            }}
+            style={{ width: "166.66%", height: "166.66%", transform: "scale(0.6)" }}
           />
-          {/* Capa invisible para evitar que el iframe robe el foco del mouse */}
           <div className="absolute inset-0 bg-transparent" />
         </div>
 
-        {/* Parte central: Nombre */}
         <div className="p-5 flex-grow bg-white">
           <h2 className="text-xl font-bold text-gray-800 truncate">{layout.name}</h2>
           <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mt-1">
-            Click o arrastra para mover
+            Arrastra para reordenar
           </p>
         </div>
       </div>
 
-      {/* FRANJA INFERIOR: BOTONES (CLICKABLE) */}
+      {/* BOTONES */}
       <div className="flex items-center justify-start gap-3 p-4 border-t bg-gray-50">
         <FavoriteHeart type="mylayout" objectId={layout.id} />
-
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/layout/${layout.id}`);
-          }}
-          className="px-6 py-1.5 text-sm font-semibold text-green-700 border border-green-600 rounded-lg hover:bg-green-100 hover:border-green-700 transition-all active:scale-95"
+          onClick={(e) => { e.stopPropagation(); navigate(`/layout/${layout.id}`); }}
+          className="px-6 py-1.5 text-sm font-semibold text-green-700 border border-green-600 rounded-lg hover:bg-green-100 transition-all active:scale-95"
         >
           Ver pantalla completa
         </button>
-
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(layout.id, layout.name);
-          }}
-          className="px-4 py-1.5 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 hover:text-red-700 hover:border-red-600 transition-all ml-auto"
+          onClick={(e) => { e.stopPropagation(); onDelete(layout.id, layout.name); }}
+          className="px-4 py-1.5 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 hover:text-red-700 transition-all ml-auto"
         >
           Borrar
         </button>
