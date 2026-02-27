@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from django.utils.crypto import get_random_string
 from .models import  MyLayOutsTitle
 
 
@@ -12,3 +11,4 @@ class MyLayOutsTitleSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'views_data', 'order']
     
 
+ 

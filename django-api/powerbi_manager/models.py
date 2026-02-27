@@ -7,3 +7,12 @@ class MyPowerBi(models.Model):
     embed_url = models.CharField(max_length=700)
     description = models.CharField(max_length=200)
     user = models.ManyToManyField(settings.AUTH_USER_MODEL)
+
+    # --- NUEVO CAMPO ---
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order'] # Orden por defecto siempre
+
+    def __str__(self):
+        return self.name
