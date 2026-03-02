@@ -6,8 +6,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import MyLayOut, MyLayOutsTitle 
-from .serializers import MyLayOutSerializer, MyLayOutsTitleSerializer
+from .models import MyLayOutsTitle 
+from .serializers import MyLayOutsTitleSerializer
 
 # Vista genérica del proyecto (puedes moverla a una app 'core' si prefieres)
 def home(request):
@@ -22,7 +22,6 @@ def protected_api_view(request):
 @permission_classes([IsAuthenticated])
 def save_layout(request):
     name = request.data.get("name")
-    elements = request.data.get("elements", [])
     views_data = request.data.get("views_data")
 
     if not name:
@@ -34,20 +33,6 @@ def save_layout(request):
             views_data=views_data,
             user=request.user
         )
-
-        if not views_data and isinstance(elements, list):
-            for el in elements:
-                instance_id = el.get("id") or get_random_string(12)
-                serializer = MyLayOutSerializer(data={
-                    'id': instance_id,
-                    'x': el.get("x", 0),
-                    'y': el.get("y", 0),
-                    'data': el.get("data", {}),
-                })
-                serializer.is_valid(raise_exception=True)
-                # IMPORTANTE: El modelo MyLayOut no tiene campo 'user', 
-                # lo guarda a través de la relación con MyLayOutsTitle.
-                serializer.save(name=title_obj)
 
     response_serializer = MyLayOutsTitleSerializer(title_obj)
     return Response(response_serializer.data)
@@ -74,29 +59,28 @@ def layout_detail(request, title_id):
     elif request.method == "PUT":
         name = request.data.get("name")
         views_data = request.data.get("views_data")
-        elements = request.data.get("elements", [])
 
         with transaction.atomic():
             title.name = name
             title.views_data = views_data
             title.save()
             
-            if not views_data:
-                # Limpiar y recrear elementos si es el formato antiguo
-                title.mylayout_set.all().delete()
-                for el in elements:
-                    instance_id = el.get("id") or get_random_string(12)
-                    serializer = MyLayOutSerializer(data={
-                        'id': instance_id,
-                        'x': el.get("x", 0),
-                        'y': el.get("y", 0),
-                        'data': el.get("data", {}),
-                    })
-                    serializer.is_valid(raise_exception=True)
-                    serializer.save(name=title)
-
         return Response(MyLayOutsTitleSerializer(title).data)
 
     elif request.method == "DELETE":
         title.delete()
         return Response(status=204)
+
+@api_view(["PUT"])
+@permission_classes([IsAuthenticated])
+def reorder_layouts(request):
+    layouts_data = request.data.get("layouts", [])
+    
+    with transaction.atomic():
+        for item in layouts_data:
+            layout_id = item.get("id")
+            new_order = item.get("order")
+            # Solo actualizamos si el layout pertenece al usuario actual
+            MyLayOutsTitle.objects.filter(id=layout_id, user=request.user).update(order=new_order)
+            
+    return Response({"message": "Orden actualizado correctamente"}, status=200)
