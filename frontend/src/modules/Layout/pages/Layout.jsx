@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import HomeButton from "../../../components/HomeButton";
 import FavoriteHeart from "../../../components/FavoriteHeart";
@@ -23,6 +23,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const { layouts: storeLayouts, fetchLayouts, deleteLayout, updateLayoutOrder, isLoading } = useLayoutStore();
   const [layouts, setLayouts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchLayouts();
@@ -31,6 +32,13 @@ export default function Layout() {
   useEffect(() => {
     setLayouts(storeLayouts);
   }, [storeLayouts]);
+
+  // Filtrado de layouts por nombre basado en el término de búsqueda
+  const filteredLayouts = useMemo(() => {
+    return layouts.filter((l) =>
+      l.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [layouts, searchTerm]);
 
   const handleDelete = async (id, name) => {
     if (window.confirm(`¿Estás seguro de eliminar "${name}"?`)) {
@@ -80,15 +88,26 @@ export default function Layout() {
       </div>
 
       <main className="flex-1 p-6 max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mt-10 mb-16 text-gray-800">Mis SCADA</h1>
+        <h1 className="text-4xl font-bold mt-10 mb-8 text-gray-800">Mis SCADA</h1>
+
+        {/* Barra de búsqueda */}
+        <div className="mb-10 max-w-md">
+          <input
+            type="text"
+            placeholder="Buscar SCADA por nombre..."
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none shadow-sm transition-all"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
         {isLoading && <p className="text-gray-500">Cargando layouts...</p>}
 
-        {!isLoading && layouts.length > 0 && (
+        {!isLoading && filteredLayouts.length > 0 && (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={layouts.map((l) => l.id)} strategy={rectSortingStrategy}>
+            <SortableContext items={filteredLayouts.map((l) => l.id)} strategy={rectSortingStrategy}>
               <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {layouts.map((layout) => (
+                {filteredLayouts.map((layout) => (
                   <SortableItem
                     key={layout.id}
                     layout={layout}
@@ -99,6 +118,10 @@ export default function Layout() {
               </section>
             </SortableContext>
           </DndContext>
+        )}
+
+        {!isLoading && layouts.length > 0 && filteredLayouts.length === 0 && (
+          <p className="text-gray-400 italic">No se encontraron SCADAs con el nombre "{searchTerm}".</p>
         )}
 
         {!isLoading && layouts.length === 0 && (
