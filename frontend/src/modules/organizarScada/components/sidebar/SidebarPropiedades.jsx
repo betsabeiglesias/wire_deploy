@@ -118,6 +118,12 @@ const SidebarPropiedades = ({
       return {
         value,
         label: `${value}${unit}`,
+        equipment: t.equipment || t.plcName || "",
+        site: t.site || "",
+        area: t.area || "",
+        line: t.line || "",
+        cell: t.cell || "",
+        unitValue: t.unit || "",
       };
     });
   }, [filteredTags]);
@@ -335,22 +341,19 @@ const SidebarPropiedades = ({
             onChange={(e) => {
               const nextTag = e.target.value;
               setSelectedTag(nextTag);
-              const selectedTagMeta =
-                plcTags.find((t) => {
-                  const tagValue =
-                    t.plcVariable ||
-                    t.variable ||
-                    t.tag ||
-                    t.name ||
-                    t.attributeKey ||
-                    "";
-                  return tagValue === nextTag;
-                }) || null;
+              const selectedTagMeta = tagOptions.find(
+                (opt) => opt.value === nextTag,
+              );
               updateSettings({
                 deviceTag: nextTag,
                 variable: nextTag,
                 attributeKey: nextTag,
-                unit: selectedTagMeta?.unit || currentSettings.unit,
+                equipment: selectedTagMeta?.equipment || currentSettings.equipment,
+                site: selectedTagMeta?.site || currentSettings.site,
+                area: selectedTagMeta?.area || currentSettings.area,
+                line: selectedTagMeta?.line || currentSettings.line,
+                cell: selectedTagMeta?.cell || currentSettings.cell,
+                unit: selectedTagMeta?.unitValue || currentSettings.unit,
               });
             }}
           >

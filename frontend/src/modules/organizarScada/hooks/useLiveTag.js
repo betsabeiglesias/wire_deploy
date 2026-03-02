@@ -10,8 +10,12 @@ export default function useLiveTag(data) {
 
   const resolveLive = useCallback(() => {
     const settings = data?.settings || {};
-    const eq = settings.equipment || data?.equipment;
-    const variable = settings.variable || settings.attributeKey || data?.variable;
+    const eq = settings.equipment || settings.plcName || data?.equipment;
+    const variable =
+      settings.variable ||
+      settings.deviceTag ||
+      settings.attributeKey ||
+      data?.variable;
     const site = settings.site;
     const area = settings.area;
     const line = settings.line;
@@ -22,13 +26,18 @@ export default function useLiveTag(data) {
     const candidate =
       allTags.find(
         (t) =>
-          t.equipment === eq &&
+          (t.equipment === eq || t.equipment_id === eq) &&
           t.variable === variable &&
           (!site || t.site === site) &&
           (!area || t.area === area) &&
           (!line || t.line === line) &&
           (!cell || t.cell === cell)
-      ) || allTags.find((t) => t.equipment === eq && t.variable === variable);
+      ) ||
+      allTags.find(
+        (t) =>
+          (t.equipment === eq || t.equipment_id === eq) &&
+          t.variable === variable,
+      );
 
     return {
       value: candidate?.value,
