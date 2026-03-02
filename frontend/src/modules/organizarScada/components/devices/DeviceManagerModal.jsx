@@ -1,22 +1,116 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRealtime } from "@/realtime/RealtimeProvider";
+import { getPLC, getPLCs } from "@/modules/scada/api/plcApi";
 
 // Modal flotante para gestionar PLCs/tablas y tags de ejemplo (mock local).
 // Arrancamos vacío para que el usuario cree sus propias tablas/PLC
 const mockDevices = [];
+const DEVICES_STORAGE_KEY = "organizarScada.devices.tables";
+
+const loadDevicesFromStorage = () => {
+  try {
+    const raw = localStorage.getItem(DEVICES_STORAGE_KEY);
+    if (!raw) return mockDevices;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : mockDevices;
+  } catch (_err) {
+    return mockDevices;
+  }
+};
 
 const DeviceManagerModal = ({ open, onClose }) => {
-  const [devices, setDevices] = useState(mockDevices);
-  const [selectedId, setSelectedId] = useState(devices[0]?.id || null);
-  const { allTags } = useRealtime();
+  const [devices, setDevices] = useState(loadDevicesFromStorage);
+  const [selectedId, setSelectedId] = useState(null);
+  const realtime = useRealtime();
+  const allTags = realtime?.allTags || [];
+  const [apiTagOptions, setApiTagOptions] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadTagsFromApi = async () => {
+      try {
+        const plcs = await getPLCs();
+        if (cancelled) return;
+        const plcList = Array.isArray(plcs) ? plcs : [];
+
+        const detailResults = await Promise.allSettled(
+          plcList.map((plc) => getPLC(plc.id)),
+        );
+        if (cancelled) return;
+
+        const options = [];
+        detailResults.forEach((result, index) => {
+          const basePlc = plcList[index] || {};
+          const plc =
+            result.status === "fulfilled" && result.value
+              ? result.value
+              : basePlc;
+          const equipmentId =
+            plc?.equipment_id || basePlc?.equipment_id || plc?.name || "";
+          const tags = plc?.tags || plc?.variables || basePlc?.tags || [];
+          (Array.isArray(tags) ? tags : []).forEach((tag) => {
+            const variable =
+              tag?.variable || tag?.name || tag?.tag || tag?.attributeKey || "";
+            if (!variable) return;
+            const key = `${equipmentId}::${variable}`;
+            options.push({
+              key,
+              variable,
+              equipmentId,
+              unit: tag?.unit || "",
+              label: equipmentId ? `${equipmentId}/${variable}` : variable,
+            });
+          });
+        });
+        setApiTagOptions(options);
+      } catch (_err) {
+        if (!cancelled) setApiTagOptions([]);
+      }
+    };
+
+    loadTagsFromApi();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!devices.length) {
+      setSelectedId(null);
+      return;
+    }
+    if (!selectedId || !devices.some((d) => d.id === selectedId)) {
+      setSelectedId(devices[0].id);
+    }
+  }, [devices, selectedId]);
 
   // Opciones de PLC/variables provenientes del gateway (MQTT)
   const plcOptions = useMemo(() => {
-    return allTags.map((t) => ({
-      value: t.variable,
-      label: `${t.equipment_id || t.equipment || "equipo"}/${t.variable}`,
-    }));
-  }, [allTags]);
+    const unique = new Map();
+    const addOption = (option) => {
+      if (!option?.variable) return;
+      if (!unique.has(option.key)) unique.set(option.key, option);
+    };
+
+    allTags.forEach((t) => {
+      const variable = t?.variable;
+      if (!variable) return;
+      const equipmentId = t.equipment_id || t.equipment || "";
+      const key = `${equipmentId}::${variable}`;
+      addOption({
+        key,
+        variable,
+        equipmentId,
+        unit: t?.unit || "",
+        label: equipmentId ? `${equipmentId}/${variable}` : variable,
+      });
+    });
+    apiTagOptions.forEach(addOption);
+    return Array.from(unique.values()).sort((a, b) =>
+      a.label.localeCompare(b.label, "es", { sensitivity: "base" }),
+    );
+  }, [allTags, apiTagOptions]);
 
   const selected = useMemo(
     () => devices.find(d => d.id === selectedId) || { tags: [] },
@@ -74,12 +168,26 @@ const DeviceManagerModal = ({ open, onClose }) => {
                   type: "Float",
                   conn: "INTENANCE",
                   plcName: "PLC",
+                  equipment: "",
+                  unit: "",
+                  notes: "",
+                  plcVariable: "",
+                  bindingKey: "",
                 },
               ],
             }
           : d,
       ),
     );
+  };
+
+  const handleSaveDevices = () => {
+    try {
+      localStorage.setItem(DEVICES_STORAGE_KEY, JSON.stringify(devices));
+      window.alert("Guardado con exito.");
+    } catch (_err) {
+      window.alert("No se pudo guardar en localStorage.");
+    }
   };
 
   if (!open) return null;
@@ -93,6 +201,12 @@ const DeviceManagerModal = ({ open, onClose }) => {
               Dispositivos
             </h2>
             <div className="flex items-center gap-2">
+              <button
+                onClick={handleSaveDevices}
+                className="rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:border-emerald-400"
+              >
+                Guardar
+              </button>
               <button
                 onClick={addDevice}
                 className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
@@ -243,10 +357,24 @@ const DeviceManagerModal = ({ open, onClose }) => {
                         {tag.plcName}
                       </td>
                       <td className="px-3 py-2 text-slate-700">
+                        {(() => {
+                          const selectedKey =
+                            tag.bindingKey ||
+                            plcOptions.find(
+                              (opt) =>
+                                opt.variable === tag.plcVariable &&
+                                (!tag.equipment || opt.equipmentId === tag.equipment),
+                            )?.key ||
+                            "";
+                          return (
                         <select
                           className="w-full bg-transparent border border-slate-200 rounded px-1 text-[12px]"
-                          value={tag.plcVariable || ""}
-                          onChange={(e) =>
+                          value={selectedKey}
+                          disabled={!plcOptions.length}
+                          onChange={(e) => {
+                            const picked =
+                              plcOptions.find((opt) => opt.key === e.target.value) ||
+                              null;
                             setDevices((prev) =>
                               prev.map((d) =>
                                 d.id === selectedId
@@ -254,27 +382,57 @@ const DeviceManagerModal = ({ open, onClose }) => {
                                       ...d,
                                       tags: d.tags.map((t) =>
                                         t.id === tag.id
-                                          ? { ...t, plcVariable: e.target.value }
-                                          : t
+                                          ? {
+                                              ...t,
+                                              plcVariable: picked?.variable || "",
+                                              bindingKey: picked?.key || "",
+                                              equipment: picked?.equipmentId || "",
+                                              plcName: picked?.equipmentId || t.plcName,
+                                              unit: picked?.unit || "",
+                                            }
+                                          : t,
                                       ),
                                     }
-                                  : d
-                              )
-                            )
-                          }
+                                  : d,
+                              ),
+                            );
+                          }}
                         >
-                          <option value="">Selecciona variable</option>
+                          <option value="">
+                            {plcOptions.length
+                              ? "Selecciona variable"
+                              : "Sin variables disponibles"}
+                          </option>
                           {plcOptions.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
+                            <option key={opt.key} value={opt.key}>
                               {opt.label}
                             </option>
                           ))}
                         </select>
+                          );
+                        })()}
                       </td>
                       <td className="px-3 py-2 text-slate-500">
                         <input
                           className="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-sky-400 focus:outline-none rounded px-1"
                           placeholder="Notas"
+                          value={tag.notes || ""}
+                          onChange={e =>
+                            setDevices(prev =>
+                              prev.map(d =>
+                                d.id === selectedId
+                                  ? {
+                                      ...d,
+                                      tags: d.tags.map(t =>
+                                        t.id === tag.id
+                                          ? { ...t, notes: e.target.value }
+                                          : t,
+                                      ),
+                                    }
+                                  : d,
+                              ),
+                            )
+                          }
                         />
                       </td>
                     </tr>

@@ -1,7 +1,8 @@
 // SidebarPropiedades.jsx
 // Panel de propiedades con tabs horizontales ligeros (estilo barra clara).
 import React, { useEffect, useMemo, useState } from "react";
-import { getPLCs, getPLC } from "@/modules/scada/api/plcApi";
+
+const DEVICES_STORAGE_KEY = "organizarScada.devices.tables";
 
 const tabs = ["General", "Dispositivo", "Estilo"];
 
@@ -19,8 +20,17 @@ const SidebarPropiedades = ({
   const [selectedTag, setSelectedTag] = useState("");
   const [plcTables, setPlcTables] = useState([]);
   const [plcTags, setPlcTags] = useState([]);
-  const [loadingTables, setLoadingTables] = useState(false);
-  const [loadingTags, setLoadingTags] = useState(false);
+
+  const readDeviceTables = () => {
+    try {
+      const raw = localStorage.getItem(DEVICES_STORAGE_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_err) {
+      return [];
+    }
+  };
 
   const currentLabel =
     selectedElement?.label ??
@@ -87,7 +97,14 @@ const SidebarPropiedades = ({
   const filteredTags = useMemo(() => {
     const term = (searchTerm || "").toLowerCase().trim();
     return plcTags.filter((t) => {
-      const label = (t.name || t.variable || t.tag || t.attributeKey || "").toString();
+      const label = (
+        t.plcVariable ||
+        t.variable ||
+        t.tag ||
+        t.name ||
+        t.attributeKey ||
+        ""
+      ).toString();
       if (!term) return true;
       return label.toLowerCase().includes(term);
     });
@@ -95,7 +112,8 @@ const SidebarPropiedades = ({
 
   const tagOptions = useMemo(() => {
     return filteredTags.map((t) => {
-      const value = t.tag || t.variable || t.name || t.attributeKey || "";
+      const value =
+        t.plcVariable || t.variable || t.tag || t.name || t.attributeKey || "";
       const unit = t.unit ? ` (${t.unit})` : "";
       return {
         value,
@@ -104,54 +122,40 @@ const SidebarPropiedades = ({
     });
   }, [filteredTags]);
 
-  // Cargar listado de PLC/Tablas al montar
+  // Cargar tablas guardadas en localStorage
   useEffect(() => {
-    let alive = true;
-    setLoadingTables(true);
-    getPLCs()
-      .then((list) => {
-        if (!alive) return;
-        setPlcTables(Array.isArray(list) ? list : []);
-      })
-      .catch((err) => {
-        console.error("No se pudieron cargar los PLCs", err);
-        if (alive) setPlcTables([]);
-      })
-      .finally(() => {
-        if (alive) setLoadingTables(false);
-      });
+    const loadTables = () => setPlcTables(readDeviceTables());
+    loadTables();
+    window.addEventListener("storage", loadTables);
+    window.addEventListener("focus", loadTables);
     return () => {
-      alive = false;
+      window.removeEventListener("storage", loadTables);
+      window.removeEventListener("focus", loadTables);
     };
   }, []);
 
-  // Cargar tags cuando cambia la tabla seleccionada
+  // Inicializar selectores desde settings del elemento seleccionado
   useEffect(() => {
-    let alive = true;
+    const tableFromSettings = currentSettings.deviceTable || "";
+    const tagFromSettings =
+      currentSettings.deviceTag ||
+      currentSettings.variable ||
+      currentSettings.attributeKey ||
+      "";
+    setSelectedTable(tableFromSettings);
+    setSelectedTag(tagFromSettings);
+  }, [selectedElement, currentSettings.deviceTable, currentSettings.deviceTag, currentSettings.variable, currentSettings.attributeKey]);
+
+  // Cargar variables/tags según tabla seleccionada
+  useEffect(() => {
     if (!selectedTable) {
       setPlcTags([]);
-      return () => {
-        alive = false;
-      };
+      return;
     }
-    setLoadingTags(true);
-    getPLC(selectedTable)
-      .then((plc) => {
-        if (!alive) return;
-        const tags = plc?.tags || plc?.variables || [];
-        setPlcTags(Array.isArray(tags) ? tags : []);
-      })
-      .catch((err) => {
-        console.error("No se pudieron cargar tags del PLC", err);
-        if (alive) setPlcTags([]);
-      })
-      .finally(() => {
-        if (alive) setLoadingTags(false);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [selectedTable]);
+    const table = plcTables.find((item) => item.id === selectedTable);
+    const tags = table?.tags || [];
+    setPlcTags(Array.isArray(tags) ? tags : []);
+  }, [selectedTable, plcTables]);
 
   if (!isOpen) return null;
 
@@ -304,11 +308,16 @@ const SidebarPropiedades = ({
             onChange={(e) => {
               setSelectedTable(e.target.value);
               setSelectedTag("");
-              updateSettings({ deviceTable: e.target.value, deviceTag: "" });
+              updateSettings({
+                deviceTable: e.target.value,
+                deviceTag: "",
+                variable: "",
+                attributeKey: "",
+              });
             }}
           >
             <option value="" disabled>
-              {loadingTables ? "Cargando tablas..." : "Selecciona una tabla/PLC"}
+              Selecciona una tabla/PLC
             </option>
             {plcTables.map((plc) => (
               <option key={plc.id} value={plc.id}>
@@ -322,14 +331,31 @@ const SidebarPropiedades = ({
           <select
             className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
             value={selectedTag}
-            disabled={!selectedTable || loadingTags}
+            disabled={!selectedTable}
             onChange={(e) => {
-              setSelectedTag(e.target.value);
-              updateSettings({ deviceTag: e.target.value });
+              const nextTag = e.target.value;
+              setSelectedTag(nextTag);
+              const selectedTagMeta =
+                plcTags.find((t) => {
+                  const tagValue =
+                    t.plcVariable ||
+                    t.variable ||
+                    t.tag ||
+                    t.name ||
+                    t.attributeKey ||
+                    "";
+                  return tagValue === nextTag;
+                }) || null;
+              updateSettings({
+                deviceTag: nextTag,
+                variable: nextTag,
+                attributeKey: nextTag,
+                unit: selectedTagMeta?.unit || currentSettings.unit,
+              });
             }}
           >
             <option value="">
-              {loadingTags ? "Cargando tags..." : "Selecciona un tag"}
+              Selecciona un tag
             </option>
             {tagOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
