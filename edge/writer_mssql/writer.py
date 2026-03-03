@@ -24,8 +24,8 @@ MSSQL_CONN = (
 
 MQTT_HOST  = os.getenv("MQTT_HOST")
 MQTT_PORT  = int(os.getenv("MQTT_PORT", 1883))
-MQTT_USER  = os.getenv("WRITER_MQTT_USER")
-MQTT_PASS  = os.getenv("WRITER_MQTT_PASS")
+MQTT_USER  = os.getenv("MQTT_USER")
+MQTT_PASS  = os.getenv("MQTT_PASSWORD")
 MQTT_TOPIC = os.getenv("MQTT_TOPIC")
 CLIENT_ID  = os.getenv("WRITER_ID")
 
@@ -291,6 +291,12 @@ class WriterService:
 
         except pyodbc.Error as e:
             error_code = e.args[0] if e.args else None
+
+            if error_code in (2601, 2627):
+                log.debug("Duplicate telemetry skipped")
+                self.conn.rollback()
+                return
+
             log.error(f"SQL error [{error_code}]: {e}")
             self.conn.rollback()
             self._reconnect()
