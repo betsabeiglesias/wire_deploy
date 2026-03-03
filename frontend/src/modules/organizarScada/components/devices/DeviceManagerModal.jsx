@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useRealtime } from "@/realtime/RealtimeProvider";
 import { getPLC, getPLCs } from "@/modules/scada/api/plcApi";
+import { useRealtime } from "@/realtime/RealtimeProvider";
 
 // Modal flotante para gestionar PLCs/tablas y tags de ejemplo (mock local).
 // Arrancamos vacío para que el usuario cree sus propias tablas/PLC
@@ -21,55 +21,125 @@ const loadDevicesFromStorage = () => {
 const DeviceManagerModal = ({ open, onClose }) => {
   const [devices, setDevices] = useState(loadDevicesFromStorage);
   const [selectedId, setSelectedId] = useState(null);
+  const [apiDevices, setApiDevices] = useState([]);
   const realtime = useRealtime();
   const allTags = realtime?.allTags || [];
-  const [apiTagOptions, setApiTagOptions] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
 
-    const loadTagsFromApi = async () => {
+    const toArray = (payload) => {
+      if (Array.isArray(payload)) return payload;
+      if (Array.isArray(payload?.results)) return payload.results;
+      if (Array.isArray(payload?.data)) return payload.data;
+      if (Array.isArray(payload?.items)) return payload.items;
+      return [];
+    };
+
+    const pickPlcId = (plc) =>
+      plc?.id ?? plc?.pk ?? plc?.uuid ?? plc?.plc_id ?? null;
+
+    const extractRows = (plc, basePlc) => {
+      const a =
+        plc?.items ||
+        plc?.tags ||
+        plc?.variables ||
+        plc?.config?.items ||
+        plc?.config?.tags ||
+        plc?.config?.variables ||
+        [];
+      if (Array.isArray(a) && a.length) return a;
+      const b =
+        basePlc?.items ||
+        basePlc?.tags ||
+        basePlc?.variables ||
+        basePlc?.config?.items ||
+        basePlc?.config?.tags ||
+        basePlc?.config?.variables ||
+        [];
+      return Array.isArray(b) ? b : [];
+    };
+
+    const loadDevicesFromApi = async () => {
       try {
-        const plcs = await getPLCs();
+        const plcsRaw = await getPLCs();
         if (cancelled) return;
-        const plcList = Array.isArray(plcs) ? plcs : [];
+        const plcList = toArray(plcsRaw);
 
         const detailResults = await Promise.allSettled(
-          plcList.map((plc) => getPLC(plc.id)),
+          plcList.map((plc) => {
+            const plcId = pickPlcId(plc);
+            return plcId ? getPLC(plcId) : Promise.resolve(plc);
+          }),
         );
         if (cancelled) return;
 
-        const options = [];
+        const normalizedDevices = [];
         detailResults.forEach((result, index) => {
           const basePlc = plcList[index] || {};
           const plc =
             result.status === "fulfilled" && result.value
               ? result.value
               : basePlc;
+          const plcId = pickPlcId(plc) ?? pickPlcId(basePlc) ?? `plc-${index}`;
           const equipmentId =
             plc?.equipment_id || basePlc?.equipment_id || plc?.name || "";
-          const tags = plc?.tags || plc?.variables || basePlc?.tags || [];
-          (Array.isArray(tags) ? tags : []).forEach((tag) => {
-            const variable =
-              tag?.variable || tag?.name || tag?.tag || tag?.attributeKey || "";
-            if (!variable) return;
-            const key = `${equipmentId}::${variable}`;
-            options.push({
-              key,
-              variable,
-              equipmentId,
-              unit: tag?.unit || "",
-              label: equipmentId ? `${equipmentId}/${variable}` : variable,
-            });
+          const endpoint =
+            plc?.connection?.endpoint ||
+            plc?.config?.connection?.endpoint ||
+            basePlc?.connection?.endpoint ||
+            basePlc?.config?.connection?.endpoint ||
+            "";
+          const driver = plc?.driver || basePlc?.driver || "";
+          const sourceRows = extractRows(plc, basePlc);
+          const normalizedTags = sourceRows.map((tag, tagIdx) => ({
+            id: tag?.id || `${plcId}-${tagIdx}`,
+            name:
+              tag?.name ||
+              tag?.variable ||
+              tag?.tag ||
+              tag?.cdc?.tag ||
+              tag?.attributeKey ||
+              `var_${tagIdx + 1}`,
+            variable:
+              tag?.variable ||
+              tag?.name ||
+              tag?.tag ||
+              tag?.cdc?.tag ||
+              tag?.attributeKey ||
+              "",
+            address: endpoint,
+            nodeId:
+              tag?.node_id ||
+              tag?.nodeId ||
+              tag?.addressing?.node_id ||
+              "",
+            node_id:
+              tag?.node_id ||
+              tag?.nodeId ||
+              tag?.addressing?.node_id ||
+              "",
+            datatype: tag?.datatype || tag?.type || "Float",
+            unit: tag?.unit || tag?.cdc?.unit || "",
+          }));
+
+          normalizedDevices.push({
+            id: String(plcId),
+            name: plc?.name || basePlc?.name || equipmentId || `PLC ${index + 1}`,
+            equipmentId,
+            driver,
+            endpoint,
+            tags: normalizedTags,
           });
         });
-        setApiTagOptions(options);
+
+        if (!cancelled) setApiDevices(normalizedDevices);
       } catch (_err) {
-        if (!cancelled) setApiTagOptions([]);
+        if (!cancelled) setApiDevices([]);
       }
     };
 
-    loadTagsFromApi();
+    loadDevicesFromApi();
     return () => {
       cancelled = true;
     };
@@ -85,37 +155,97 @@ const DeviceManagerModal = ({ open, onClose }) => {
     }
   }, [devices, selectedId]);
 
-  // Opciones de PLC/variables provenientes del gateway (MQTT)
-  const plcOptions = useMemo(() => {
-    const unique = new Map();
-    const addOption = (option) => {
-      if (!option?.variable) return;
-      if (!unique.has(option.key)) unique.set(option.key, option);
-    };
-
-    allTags.forEach((t) => {
-      const variable = t?.variable;
-      if (!variable) return;
-      const equipmentId = t.equipment_id || t.equipment || "";
-      const key = `${equipmentId}::${variable}`;
-      addOption({
-        key,
-        variable,
-        equipmentId,
-        unit: t?.unit || "",
-        label: equipmentId ? `${equipmentId}/${variable}` : variable,
-      });
-    });
-    apiTagOptions.forEach(addOption);
-    return Array.from(unique.values()).sort((a, b) =>
-      a.label.localeCompare(b.label, "es", { sensitivity: "base" }),
-    );
-  }, [allTags, apiTagOptions]);
-
   const selected = useMemo(
     () => devices.find(d => d.id === selectedId) || { tags: [] },
     [devices, selectedId],
   );
+
+  const apiVariableOptions = useMemo(() => {
+    const options = [];
+    const seen = new Set();
+    apiDevices.forEach((dev) => {
+      (dev.tags || []).forEach((t) => {
+        if (!t?.name) return;
+        const key = `${dev.id}::${t.name}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        options.push({
+          key,
+          deviceId: dev.id,
+          variableName: t.name,
+          label: `${dev.equipmentId || dev.name}/${t.name}`,
+          datatype: t.datatype || "Float",
+          driver: dev.driver || "",
+          endpoint: dev.endpoint || "",
+          nodeId: t.nodeId || "",
+          equipmentId: dev.equipmentId || "",
+          unit: t.unit || "",
+        });
+      });
+    });
+    return options.sort((a, b) =>
+      a.label.localeCompare(b.label, "es", { sensitivity: "base" }),
+    );
+  }, [apiDevices]);
+
+  const realtimeVariableOptions = useMemo(() => {
+    const seen = new Set();
+    const options = [];
+    allTags.forEach((t) => {
+      const variable = t?.variable;
+      if (!variable) return;
+      const equipmentId = t?.equipment_id || t?.equipment || "";
+      const key = `rt::${equipmentId}::${variable}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+        options.push({
+          key,
+          source: "realtime",
+          deviceId: "",
+        variableName: variable,
+        label: `${equipmentId || "equipo"}/${variable}`,
+        datatype: "Float",
+        driver: t?.source?.driver || "",
+          endpoint: t?.source?.endpoint || "",
+          nodeId: t?.source?.node_id || "",
+          node_id: t?.source?.node_id || "",
+          equipmentId,
+          unit: t?.unit || "",
+        });
+    });
+    return options.sort((a, b) =>
+      a.label.localeCompare(b.label, "es", { sensitivity: "base" }),
+    );
+  }, [allTags]);
+
+  const selectorVariableOptions = useMemo(() => {
+    const merged = [];
+    const seenLabel = new Set();
+    [...apiVariableOptions, ...realtimeVariableOptions].forEach((opt) => {
+      if (seenLabel.has(opt.label)) return;
+      seenLabel.add(opt.label);
+      merged.push(opt);
+    });
+    return merged;
+  }, [apiVariableOptions, realtimeVariableOptions]);
+
+  const updateCurrentTag = (tagId, updater) => {
+    setDevices((prev) =>
+      prev.map((d) =>
+        d.id === selectedId
+          ? {
+              ...d,
+              tags: d.tags.map((t) => {
+                if (t.id !== tagId) return t;
+                return typeof updater === "function"
+                  ? updater(t)
+                  : { ...t, ...updater };
+              }),
+            }
+          : d,
+      ),
+    );
+  };
 
   const addDevice = () => {
     const nextIndex = devices.length + 1;
@@ -165,9 +295,15 @@ const DeviceManagerModal = ({ open, onClose }) => {
                 {
                   id: `tmp-${Date.now()}`,
                   name: "NuevoTag",
+                  sourceMode: "local",
                   type: "Float",
-                  conn: "INTENANCE",
-                  plcName: "PLC",
+                  variableName: "",
+                  deviceId: "",
+                  address: "",
+                  nodeId: "",
+                  initialValue: "",
+                  conn: "Local",
+                  plcName: "",
                   equipment: "",
                   unit: "",
                   notes: "",
@@ -291,156 +427,184 @@ const DeviceManagerModal = ({ open, onClose }) => {
               <table className="min-w-full text-[12px]">
                 <thead className="bg-slate-100 text-slate-600 uppercase tracking-[0.08em]">
                   <tr>
-                    <th className="px-3 py-2 text-left w-60">Name</th>
-                    <th className="px-3 py-2 text-left w-28">Data type</th>
-                    <th className="px-3 py-2 text-left w-32">Connection</th>
-                    <th className="px-3 py-2 text-left w-32">PLC name</th>
-                    <th className="px-3 py-2 text-left w-64">PLC</th>
-                    <th className="px-3 py-2 text-left">Notes</th>
+                    <th className="px-3 py-2 text-left w-48">Nombre</th>
+                    <th className="px-3 py-2 text-left w-36">Local/Conexion</th>
+                    <th className="px-3 py-2 text-left w-40">Nombre variable</th>
+                    <th className="px-3 py-2 text-left w-28">Tipo de variable</th>
+                    <th className="px-3 py-2 text-left w-44">Dispositivo</th>
+                    <th className="px-3 py-2 text-left w-44">Direccion</th>
+                    <th className="px-3 py-2 text-left w-44">Nodo</th>
+                    <th className="px-3 py-2 text-left w-40">Valor inicial</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {selected.tags?.map(tag => (
-                    <tr key={tag.id} className="hover:bg-slate-50">
-                      <td className="px-3 py-2 text-slate-800">
-                        <input
-                          className="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-sky-400 focus:outline-none rounded px-1"
-                          value={tag.name}
-                          onChange={e =>
-                            setDevices(prev =>
-                              prev.map(d =>
-                                d.id === selectedId
-                                  ? {
-                                      ...d,
-                                      tags: d.tags.map(t =>
-                                        t.id === tag.id
-                                          ? { ...t, name: e.target.value }
-                                          : t,
-                                      ),
-                                    }
-                                  : d,
-                              ),
-                            )
-                          }
-                        />
-                      </td>
-                      <td className="px-3 py-2 text-slate-700">
-                        <select
-                          className="w-full bg-transparent border border-slate-200 rounded px-1 text-[12px]"
-                          value={tag.type}
-                          onChange={e =>
-                            setDevices(prev =>
-                              prev.map(d =>
-                                d.id === selectedId
-                                  ? {
-                                      ...d,
-                                      tags: d.tags.map(t =>
-                                        t.id === tag.id
-                                          ? { ...t, type: e.target.value }
-                                          : t,
-                                      ),
-                                    }
-                                  : d,
-                              ),
-                            )
-                          }
-                        >
-                          {["Float", "UInt32", "Int", "Bool", "String"].map(
-                            opt => (
-                              <option key={opt}>{opt}</option>
-                            ),
+                  {selected.tags?.map((tag) => {
+                    const mode =
+                      tag.sourceMode ||
+                      (tag.deviceId || tag.plcVariable || tag.address || tag.nodeId
+                        ? "conexion"
+                        : "local");
+                    const isLocal = mode === "local";
+                    const selectedAttr =
+                      selectorVariableOptions.find(
+                        (opt) =>
+                          opt.key ===
+                          (tag.bindingKey ||
+                            (tag.deviceId && tag.variableName
+                              ? `${tag.deviceId}::${tag.variableName}`
+                              : "")),
+                      ) || null;
+
+                    return (
+                      <tr key={tag.id} className="hover:bg-slate-50">
+                        <td className="px-3 py-2 text-slate-800">
+                          <input
+                            className="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-sky-400 focus:outline-none rounded px-1"
+                            value={tag.name}
+                            onChange={(e) =>
+                              updateCurrentTag(tag.id, { name: e.target.value })
+                            }
+                          />
+                        </td>
+                        <td className="px-3 py-2 text-slate-700">
+                          <select
+                            className="w-full bg-transparent border border-slate-200 rounded px-1 text-[12px]"
+                            value={mode}
+                            onChange={(e) => {
+                              const nextMode = e.target.value;
+                              if (nextMode === "local") {
+                                updateCurrentTag(tag.id, {
+                                  sourceMode: "local",
+                                  conn: "Local",
+                                  variableName: "",
+                                  deviceId: "",
+                                  address: "",
+                                  nodeId: "",
+                                  plcVariable: "",
+                                  bindingKey: "",
+                                  equipment: "",
+                                  plcName: "",
+                                  unit: "",
+                                });
+                                return;
+                              }
+                              updateCurrentTag(tag.id, {
+                                sourceMode: "conexion",
+                                conn: "Conexion",
+                                initialValue: "",
+                              });
+                            }}
+                          >
+                            <option value="local">Local</option>
+                            <option value="conexion">Conexion</option>
+                          </select>
+                        </td>
+                        <td className="px-3 py-2 text-slate-700">
+                          {isLocal ? (
+                            <span className="text-slate-500">-</span>
+                          ) : (
+                            <span>{tag.variableName || "-"}</span>
                           )}
-                        </select>
-                      </td>
-                      <td className="px-3 py-2 text-slate-700">{tag.conn}</td>
-                      <td className="px-3 py-2 text-slate-700">
-                        {tag.plcName}
-                      </td>
-                      <td className="px-3 py-2 text-slate-700">
-                        {(() => {
-                          const selectedKey =
-                            tag.bindingKey ||
-                            plcOptions.find(
-                              (opt) =>
-                                opt.variable === tag.plcVariable &&
-                                (!tag.equipment || opt.equipmentId === tag.equipment),
-                            )?.key ||
-                            "";
-                          return (
-                        <select
-                          className="w-full bg-transparent border border-slate-200 rounded px-1 text-[12px]"
-                          value={selectedKey}
-                          disabled={!plcOptions.length}
-                          onChange={(e) => {
-                            const picked =
-                              plcOptions.find((opt) => opt.key === e.target.value) ||
-                              null;
-                            setDevices((prev) =>
-                              prev.map((d) =>
-                                d.id === selectedId
-                                  ? {
-                                      ...d,
-                                      tags: d.tags.map((t) =>
-                                        t.id === tag.id
-                                          ? {
-                                              ...t,
-                                              plcVariable: picked?.variable || "",
-                                              bindingKey: picked?.key || "",
-                                              equipment: picked?.equipmentId || "",
-                                              plcName: picked?.equipmentId || t.plcName,
-                                              unit: picked?.unit || "",
-                                            }
-                                          : t,
-                                      ),
-                                    }
-                                  : d,
-                              ),
-                            );
-                          }}
-                        >
-                          <option value="">
-                            {plcOptions.length
-                              ? "Selecciona variable"
-                              : "Sin variables disponibles"}
-                          </option>
-                          {plcOptions.map((opt) => (
-                            <option key={opt.key} value={opt.key}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                          );
-                        })()}
-                      </td>
-                      <td className="px-3 py-2 text-slate-500">
-                        <input
-                          className="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-sky-400 focus:outline-none rounded px-1"
-                          placeholder="Notas"
-                          value={tag.notes || ""}
-                          onChange={e =>
-                            setDevices(prev =>
-                              prev.map(d =>
-                                d.id === selectedId
-                                  ? {
-                                      ...d,
-                                      tags: d.tags.map(t =>
-                                        t.id === tag.id
-                                          ? { ...t, notes: e.target.value }
-                                          : t,
-                                      ),
-                                    }
-                                  : d,
-                              ),
-                            )
-                          }
-                        />
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-3 py-2 text-slate-700">
+                          {isLocal ? (
+                            <select
+                              className="w-full bg-transparent border border-slate-200 rounded px-1 text-[12px]"
+                              value={tag.type}
+                              onChange={(e) =>
+                                updateCurrentTag(tag.id, { type: e.target.value })
+                              }
+                            >
+                              {["Float", "UInt32", "Int", "Bool", "String"].map(
+                                (opt) => (
+                                  <option key={opt}>{opt}</option>
+                                ),
+                              )}
+                            </select>
+                          ) : (
+                            <span>{tag.type || "-"}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-slate-700">
+                          {isLocal ? (
+                            <span className="text-slate-500">-</span>
+                          ) : (
+                            <select
+                              className="w-full bg-transparent border border-slate-200 rounded px-1 text-[12px]"
+                              value={selectedAttr?.key || ""}
+                              onChange={(e) => {
+                                const picked =
+                                  selectorVariableOptions.find(
+                                    (opt) => opt.key === e.target.value,
+                                  ) || null;
+                                updateCurrentTag(tag.id, {
+                                  sourceMode: "conexion",
+                                  conn: "Conexion",
+                                  bindingKey: picked?.key || "",
+                                  variableName: picked?.variableName || "",
+                                  plcVariable: picked?.variableName || "",
+                                  deviceId: picked?.deviceId || "",
+                                  plcName: picked?.driver || "",
+                                  type: picked?.datatype || tag.type || "Float",
+                                  address: picked?.endpoint || "",
+                                  nodeId: picked?.nodeId || "",
+                                  node_id: picked?.node_id || picked?.nodeId || "",
+                                  equipment: picked?.equipmentId || "",
+                                  unit: picked?.unit || "",
+                                  initialValue: "",
+                                });
+                              }}
+                            >
+                              <option value="">
+                                {selectorVariableOptions.length
+                                  ? "Selecciona atributo"
+                                  : "Sin variables API"}
+                              </option>
+                              {selectorVariableOptions.map((opt) => (
+                                <option key={opt.key} value={opt.key}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-slate-700">
+                          {isLocal ? (
+                            <span className="text-slate-500">-</span>
+                          ) : (
+                            <span>{tag.address || "-"}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-slate-700">
+                          {isLocal ? (
+                            <span className="text-slate-500">-</span>
+                          ) : (
+                            <span>{tag.node_id || tag.nodeId || "-"}</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-2 text-slate-700">
+                          {isLocal ? (
+                            <input
+                              className="w-full bg-transparent border border-slate-200 rounded px-1"
+                              placeholder="Valor inicial"
+                              value={tag.initialValue ?? ""}
+                              onChange={(e) =>
+                                updateCurrentTag(tag.id, {
+                                  initialValue: e.target.value,
+                                })
+                              }
+                            />
+                          ) : (
+                            <span className="text-slate-500">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                   {!selected.tags?.length && (
                     <tr>
                       <td
-                        colSpan={6}
+                        colSpan={8}
                         className="px-3 py-4 text-center text-slate-500"
                       >
                         No hay tags. Usa “+ Añadir tag”.

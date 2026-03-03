@@ -170,7 +170,7 @@ export default function LayOutDetail() {
               {layoutName}
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              Dashboard en Tiempo Real
+              Dashboard vista previa de todas la vistas del proyecto
             </p>
           </div>
 

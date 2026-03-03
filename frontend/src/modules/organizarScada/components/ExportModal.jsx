@@ -32,7 +32,7 @@ const ExportModal = ({
         setIsLoading(true);
 
         const isUpdating = !!currentLayoutId;
-        const filename = exportName.trim() || (isUpdating ? `layout-${layOutName}` : "Nuevo Layout");
+        const filename = exportName.trim() || (isUpdating ? `layout-${layOutName}` : "Hmi");
 
         let httpMethod;
         let apiUrl;

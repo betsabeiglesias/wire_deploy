@@ -23,6 +23,8 @@ export default function DraggableBox({
   onDelete,
   isSelected = false,
   isReadOnly = false,
+  isLocked = false,
+  zIndex,
   scale = 1,
 }) {
   // Estado local para Rnd, importado de la rama develop
@@ -129,8 +131,9 @@ export default function DraggableBox({
           ? {
               border: "1px dashed #38bdf8",
               boxShadow: "0 0 0 1px rgba(56,189,248,0.25)",
+              zIndex,
             }
-          : {}
+          : { zIndex }
       }
       resizeHandleStyles={
         isSelected
@@ -146,6 +149,8 @@ export default function DraggableBox({
       onDragStop={handleDragStop}
       onResize={(e, dir, ref, delta, pos) => onResize?.(id, e, dir, ref, delta, pos)}
       onResizeStop={handleResizeStop}
+      disableDragging={isLocked}
+      enableResizing={!isLocked}
       bounds="parent"
       minWidth={
         data.type === "speedometer" || data.type === "temperature-gauge"
@@ -159,7 +164,10 @@ export default function DraggableBox({
       }
       dragHandleClassName={showFrame ? "box-header drag-handle" : "drag-handle"}
       resizeHandleClasses={{ bottomRight: "resize-handle-br" }}
-      onClick={() => onSelect?.()}
+      onClick={() => {
+        if (isLocked) return;
+        onSelect?.();
+      }}
     >
       {!isReadOnly && isSelected && (
         <button

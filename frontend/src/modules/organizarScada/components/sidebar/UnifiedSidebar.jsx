@@ -1,5 +1,6 @@
 // UnifiedSidebar.jsx
 import React, { useMemo, useState } from "react";
+import { Eye, EyeOff, GripVertical, Lock, Unlock } from "lucide-react";
 import { useRealtime } from "@/realtime/RealtimeProvider";
 import { elementos_scada } from "@/modules/organizarScada/templates/elementos_scada";
 import { buttons_labels_items } from "@/modules/organizarScada/utils/items";
@@ -15,6 +16,13 @@ const UnifiedSidebar = ({
   onRenameView,
   onDeleteView,
   addComponentToCanvas,
+  canvasElements = [],
+  selectedElementId = null,
+  onSelectElement,
+  onToggleElementVisibility,
+  onToggleElementLock,
+  onRenameElementLayer,
+  onReorderLayers,
   viewsLoading = false,
   viewsError = "",
   onRefreshViews,
@@ -31,6 +39,9 @@ const UnifiedSidebar = ({
   const [selectedEquipment, setSelectedEquipment] = useState(null);
   const [editingViewId, setEditingViewId] = useState(null);
   const [editingName, setEditingName] = useState("");
+  const [editingLayerId, setEditingLayerId] = useState(null);
+  const [editingLayerName, setEditingLayerName] = useState("");
+  const [draggingLayerId, setDraggingLayerId] = useState(null);
 
   const sidebarSections = [
     {
@@ -250,6 +261,71 @@ const UnifiedSidebar = ({
     return Number.isNaN(d.getTime()) ? "Sin fecha" : d.toLocaleString();
   };
 
+  const layers = useMemo(() => {
+    return [...canvasElements]
+      .map((el, idx) => {
+        const settings = el?.data?.settings || {};
+        const parsedZ = Number(settings.z_index);
+        const zIndex = Number.isFinite(parsedZ) ? parsedZ : idx + 1;
+        const isVisible = settings.is_visible !== false;
+        const isLocked = settings.is_locked === true;
+        const displayName =
+          settings.layer_alias ||
+          settings.attributeLabel ||
+          el?.data?.name ||
+          el?.data?.label ||
+          el?.data?.type ||
+          `Elemento ${idx + 1}`;
+        return {
+          id: el.id,
+          zIndex,
+          isVisible,
+          isLocked,
+          displayName,
+          fallbackName: el?.data?.type || "widget",
+          idx,
+        };
+      })
+      .sort((a, b) => b.zIndex - a.zIndex || b.idx - a.idx);
+  }, [canvasElements]);
+
+  const commitLayerRename = layerId => {
+    const next = String(editingLayerName || "").trim();
+    if (next) onRenameElementLayer?.(layerId, next);
+    setEditingLayerId(null);
+    setEditingLayerName("");
+  };
+
+  const cancelLayerRename = () => {
+    setEditingLayerId(null);
+    setEditingLayerName("");
+  };
+
+  const handleLayerDragStart = (e, layerId) => {
+    setDraggingLayerId(layerId);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(layerId));
+  };
+
+  const handleLayerDrop = targetLayerId => {
+    if (!draggingLayerId || draggingLayerId === targetLayerId) {
+      setDraggingLayerId(null);
+      return;
+    }
+    const orderedIds = layers.map((layer) => layer.id);
+    const sourceIndex = orderedIds.findIndex((id) => id === draggingLayerId);
+    const targetIndex = orderedIds.findIndex((id) => id === targetLayerId);
+    if (sourceIndex < 0 || targetIndex < 0) {
+      setDraggingLayerId(null);
+      return;
+    }
+    const nextOrder = [...orderedIds];
+    const [moved] = nextOrder.splice(sourceIndex, 1);
+    nextOrder.splice(targetIndex, 0, moved);
+    onReorderLayers?.(nextOrder);
+    setDraggingLayerId(null);
+  };
+
   const renderSectionContent = sectionId => {
     if (sectionId === "pantallas") {
       return (
@@ -392,6 +468,110 @@ const UnifiedSidebar = ({
                   </div>
                 );
               })}
+          </div>
+          <div className="border-t border-slate-200 pt-3">
+            <div className="mb-2 flex items-center justify-between">
+              <h4 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">
+                Capas
+              </h4>
+              <span className="text-[10px] text-slate-400">
+                {layers.length} elementos
+              </span>
+            </div>
+            <div className="max-h-64 space-y-1 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-1">
+              {layers.length === 0 && (
+                <div className="rounded bg-white px-2 py-2 text-[10px] text-slate-500">
+                  No hay elementos en el canvas.
+                </div>
+              )}
+              {layers.map((layer) => {
+                const isSelected = selectedElementId === layer.id;
+                const isEditing = editingLayerId === layer.id;
+                return (
+                  <div
+                    key={layer.id}
+                    draggable
+                    onDragStart={(e) => handleLayerDragStart(e, layer.id)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => handleLayerDrop(layer.id)}
+                    onClick={() => onSelectElement?.(layer.id)}
+                    className={[
+                      "group flex items-center gap-1 rounded border px-1.5 py-1 text-[11px] transition",
+                      isSelected
+                        ? "border-sky-400 bg-sky-50 text-sky-900"
+                        : "border-transparent bg-white text-slate-700 hover:border-slate-300",
+                      draggingLayerId === layer.id ? "opacity-60" : "",
+                    ].join(" ")}
+                    title={`${layer.fallbackName} • z:${layer.zIndex}`}
+                  >
+                    <button
+                      type="button"
+                      className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-500 hover:bg-slate-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleElementVisibility?.(layer.id);
+                      }}
+                      title={layer.isVisible ? "Ocultar capa" : "Mostrar capa"}
+                    >
+                      {layer.isVisible ? (
+                        <Eye size={12} />
+                      ) : (
+                        <EyeOff size={12} className="text-slate-400" />
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-500 hover:bg-slate-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleElementLock?.(layer.id);
+                      }}
+                      title={layer.isLocked ? "Desbloquear capa" : "Bloquear capa"}
+                    >
+                      {layer.isLocked ? (
+                        <Lock size={12} />
+                      ) : (
+                        <Unlock size={12} className="text-slate-400" />
+                      )}
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      {isEditing ? (
+                        <input
+                          autoFocus
+                          value={editingLayerName}
+                          onChange={(e) => setEditingLayerName(e.target.value)}
+                          onBlur={() => commitLayerRename(layer.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") commitLayerRename(layer.id);
+                            if (e.key === "Escape") cancelLayerRename();
+                          }}
+                          className="w-full rounded border border-sky-300 px-1 py-0.5 text-[11px] focus:border-sky-500 focus:outline-none"
+                        />
+                      ) : (
+                        <p
+                          className={[
+                            "truncate",
+                            !layer.isVisible ? "text-slate-400 line-through" : "",
+                            layer.isLocked ? "text-amber-700" : "",
+                          ].join(" ")}
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            setEditingLayerId(layer.id);
+                            setEditingLayerName(layer.displayName);
+                          }}
+                        >
+                          {layer.displayName}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-slate-400">z:{layer.zIndex}</span>
+                    <span className="text-slate-300 group-hover:text-slate-500">
+                      <GripVertical size={12} />
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       );

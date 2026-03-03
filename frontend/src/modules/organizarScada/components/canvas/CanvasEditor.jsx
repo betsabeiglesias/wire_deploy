@@ -127,6 +127,20 @@ const CanvasEditor = ({
     if (guideHRef.current) guideHRef.current.style.opacity = "0";
   };
 
+  const getLayerMeta = (el, idx) => {
+    const settings = el?.data?.settings || {};
+    const parsedZ = Number(settings.z_index);
+    return {
+      zIndex: Number.isFinite(parsedZ) ? parsedZ : idx + 1,
+      isVisible: settings.is_visible !== false,
+      isLocked: settings.is_locked === true,
+    };
+  };
+
+  const orderedElements = [...elements]
+    .map((el, idx) => ({ el, idx, meta: getLayerMeta(el, idx) }))
+    .sort((a, b) => a.meta.zIndex - b.meta.zIndex || a.idx - b.idx);
+
   useEffect(() => {
     // Definimos la función fuera del IF para que siempre exista en el scope del efecto
     const updateSize = () => {
@@ -282,7 +296,8 @@ const CanvasEditor = ({
             className="pointer-events-none absolute z-50 opacity-0 transition-opacity duration-100 left-0 right-0 h-0 border-t-2 border-dashed border-sky-400"
             style={{ filter: "drop-shadow(0 0 6px rgba(96,165,250,.25))" }}
           />
-          {elements.map(el => (
+          {orderedElements.map(({ el, meta }) =>
+            !meta.isVisible ? null : (
             <DraggableBox
               key={el.id}
               id={el.id}
@@ -291,10 +306,16 @@ const CanvasEditor = ({
               initialWidth={el.data?.width || 200}
               initialHeight={el.data?.height || 180}
               data={el.data}
+              zIndex={meta.zIndex}
+              isLocked={meta.isLocked}
               isSelected={selectedId === el.id}
               scale={zoom}
-              onSelect={() => onSelect?.(el.id)}
+              onSelect={() => {
+                if (meta.isLocked) return;
+                onSelect?.(el.id);
+              }}
               onDrag={id => {
+                if (meta.isLocked) return;
                 const node = stageRef.current?.querySelector(
                   `[data-node-id="${id}"]`,
                 );
@@ -303,10 +324,12 @@ const CanvasEditor = ({
                 renderGuides(align);
               }}
               onDragStop={(id, x, y) => {
+                if (meta.isLocked) return;
                 hideGuides();
                 onUpdate?.(id, { x, y });
               }}
               onResize={(id, _e, _dir, ref) => {
+                if (meta.isLocked) return;
                 const node =
                   ref ||
                   stageRef.current?.querySelector(`[data-node-id="${id}"]`);
@@ -315,6 +338,7 @@ const CanvasEditor = ({
                 renderGuides(align);
               }}
               onResizeStop={(id, w, h, x, y) => {
+                if (meta.isLocked) return;
                 hideGuides();
                 onUpdate?.(id, {
                   x,
@@ -324,7 +348,8 @@ const CanvasEditor = ({
               }}
               onDelete={onDelete}
             />
-          ))}
+            ),
+          )}
 
           {elements.length === 0 && (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-center text-xs text-slate-400">

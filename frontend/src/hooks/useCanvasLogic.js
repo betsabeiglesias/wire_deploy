@@ -6,7 +6,7 @@ const useCanvasLogic = (initialLayoutElements = [], layoutId = null, layOutName 
     const [canvasElements, setCanvasElements] = useState(initialLayoutElements);
     const [currentLayoutId, setCurrentLayoutId] = useState(layoutId);
     const [isEditMode, setIsEditMode] = useState(!!layoutId);
-    const [exportName, setExportName] = useState(layoutId ? layOutName : "Nuevo Layout");
+    const [exportName, setExportName] = useState(layoutId ? layOutName : "Nuevo");
 
     useEffect(() => {
         setCurrentLayoutId(layoutId);
@@ -111,7 +111,7 @@ const useCanvasLogic = (initialLayoutElements = [], layoutId = null, layOutName 
     const resetLayoutMetadata = useCallback(() => {
         setCurrentLayoutId(null);
         setIsEditMode(false);
-        setExportName("Nuevo Layout");
+        setExportName("Hmi");
     }, []);
 
     return {

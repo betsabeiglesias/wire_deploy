@@ -83,6 +83,72 @@ const OrganizarScada = () => {
 
   const selectedElement =
     canvasElements.find((el) => el.id === selectedId) || null;
+
+  const updateLayerSettings = (elementId, recipe) => {
+    setCanvasElements((prev) =>
+      prev.map((el) => {
+        if (el.id !== elementId) return el;
+        const prevSettings = el?.data?.settings || {};
+        const nextSettings =
+          typeof recipe === "function" ? recipe(prevSettings) : recipe;
+        return {
+          ...el,
+          data: {
+            ...(el.data || {}),
+            settings: {
+              ...prevSettings,
+              ...(nextSettings || {}),
+            },
+          },
+        };
+      }),
+    );
+  };
+
+  const handleSelectLayer = (id) => {
+    setSelectedId(id);
+    setIsPropsOpen(true);
+    setShowPropsPanel(true);
+  };
+
+  const handleToggleLayerVisibility = (id) => {
+    updateLayerSettings(id, (settings) => ({
+      is_visible: settings.is_visible === false,
+    }));
+  };
+
+  const handleToggleLayerLock = (id) => {
+    updateLayerSettings(id, (settings) => ({
+      is_locked: settings.is_locked !== true,
+    }));
+  };
+
+  const handleRenameLayer = (id, alias) => {
+    updateLayerSettings(id, { layer_alias: alias });
+  };
+
+  const handleReorderLayers = (orderedIdsTopToBottom = []) => {
+    if (!orderedIdsTopToBottom.length) return;
+    setCanvasElements((prev) => {
+      const total = orderedIdsTopToBottom.length;
+      const zMap = new Map(
+        orderedIdsTopToBottom.map((layerId, idx) => [layerId, total - idx]),
+      );
+      return prev.map((el, idx) => {
+        const zIndex = zMap.get(el.id) ?? idx + 1;
+        return {
+          ...el,
+          data: {
+            ...(el.data || {}),
+            settings: {
+              ...((el.data && el.data.settings) || {}),
+              z_index: zIndex,
+            },
+          },
+        };
+      });
+    });
+  };
   const hasCanvasElements =
     Array.isArray(canvasElements) && canvasElements.length > 0;
   const hasViewElements =
@@ -232,7 +298,7 @@ const OrganizarScada = () => {
         title: "Nombre del Proyecto",
         input: "text",
         inputLabel: "Ingresa el nombre para tu nuevo proyecto HMI",
-        inputValue: exportName !== "Nuevo Layout" ? exportName : "",
+        inputValue: exportName !== "Hmi" ? exportName : "",
         showCancelButton: true,
         confirmButtonText: "Publicar",
         cancelButtonText: "Cancelar",
@@ -493,6 +559,13 @@ const OrganizarScada = () => {
             }
             onDeleteView={handleDeleteView}
             addComponentToCanvas={addComponentToCanvas}
+            canvasElements={canvasElements}
+            selectedElementId={selectedId}
+            onSelectElement={handleSelectLayer}
+            onToggleElementVisibility={handleToggleLayerVisibility}
+            onToggleElementLock={handleToggleLayerLock}
+            onRenameElementLayer={handleRenameLayer}
+            onReorderLayers={handleReorderLayers}
             viewsLoading={isLoadingViews}
             viewsError={viewsError}
             onRefreshViews={fetchUserViews}
