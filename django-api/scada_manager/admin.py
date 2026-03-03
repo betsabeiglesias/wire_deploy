@@ -12,7 +12,6 @@
 
 
 from django.contrib import admin
-from scada_manager.models import MyLayOutsTitle, MyLayOut
+from scada_manager.models import MyLayOutsTitle
 
 admin.site.register(MyLayOutsTitle)
-admin.site.register(MyLayOut)
