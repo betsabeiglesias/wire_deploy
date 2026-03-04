@@ -21,6 +21,8 @@ const loadDevicesFromStorage = () => {
 const DeviceManagerModal = ({ open, onClose }) => {
   const [devices, setDevices] = useState(loadDevicesFromStorage);
   const [selectedId, setSelectedId] = useState(null);
+  const [selectedTagId, setSelectedTagId] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [apiDevices, setApiDevices] = useState([]);
   const realtime = useRealtime();
   const allTags = realtime?.allTags || [];
@@ -147,22 +149,21 @@ const DeviceManagerModal = ({ open, onClose }) => {
               "",
             address:
               tag?.address ||
-              [
-                endpoint,
-                tag?.node_id || tag?.nodeId || tag?.addressing?.node_id || "",
-              ]
-                .filter(Boolean)
-                .join(" "),
+              endpoint,
             endpoint,
             nodeId:
               tag?.node_id ||
               tag?.nodeId ||
+              tag?.nodeid ||
               tag?.addressing?.node_id ||
+              tag?.addressing?.nodeid ||
               "",
             node_id:
               tag?.node_id ||
               tag?.nodeId ||
+              tag?.nodeid ||
               tag?.addressing?.node_id ||
+              tag?.addressing?.nodeid ||
               "",
             datatype: tag?.datatype || tag?.type || "Float",
             unit: tag?.unit || tag?.cdc?.unit || "",
@@ -189,7 +190,6 @@ const DeviceManagerModal = ({ open, onClose }) => {
             tags: normalizedTags,
           });
         });
-
         if (!cancelled) setApiDevices(normalizedDevices);
       } catch (_err) {
         console.error("DeviceManagerModal: no se pudo cargar PLCs desde API", _err);
@@ -206,6 +206,7 @@ const DeviceManagerModal = ({ open, onClose }) => {
   useEffect(() => {
     if (!devices.length) {
       setSelectedId(null);
+      setSelectedTagId(null);
       return;
     }
     if (!selectedId || !devices.some((d) => d.id === selectedId)) {
@@ -217,6 +218,17 @@ const DeviceManagerModal = ({ open, onClose }) => {
     () => devices.find(d => d.id === selectedId) || { tags: [] },
     [devices, selectedId],
   );
+
+  useEffect(() => {
+    const tags = selected?.tags || [];
+    if (!tags.length) {
+      setSelectedTagId(null);
+      return;
+    }
+    if (!selectedTagId || !tags.some((t) => t.id === selectedTagId)) {
+      setSelectedTagId(tags[0].id);
+    }
+  }, [selectedId, selected?.tags, selectedTagId]);
 
   useEffect(() => {
     if (!apiDevices.length) return;
@@ -304,15 +316,21 @@ const DeviceManagerModal = ({ open, onClose }) => {
     return options.sort((a, b) =>
       a.label.localeCompare(b.label, "es", { sensitivity: "base" }),
     );
-  }, [apiDevices, devices, allTags]);
+  }, [apiDevices, allTags]);
 
   const variablesByEquipment = useMemo(() => {
     const byEquipment = {};
+    const toDisplayName = (value = "") => {
+      const raw = String(value || "").trim();
+      if (!raw) return "";
+      return raw.includes("/") ? raw.split("/").pop() : raw;
+    };
     const appendVar = (equipmentId, variable) => {
       if (!equipmentId || !variable?.variableName) return;
       if (!byEquipment[equipmentId]) byEquipment[equipmentId] = [];
       const exists = byEquipment[equipmentId].some(
         (v) =>
+          (variable?.key && v.key === variable.key) ||
           v.deviceId === variable.deviceId &&
           v.variableName === variable.variableName,
       );
@@ -323,76 +341,44 @@ const DeviceManagerModal = ({ open, onClose }) => {
       const equipmentId = dev?.equipmentId || dev?.name || "";
       if (!equipmentId) return;
       (dev.tags || []).forEach((tag) => {
-        const variableName = tag?.name || tag?.variableName || "";
+        const sourceName = tag?.name || tag?.variableName || "";
+        const variableName = toDisplayName(sourceName);
         if (!variableName) return;
         appendVar(equipmentId, {
-          key: `${dev.id}::${variableName}`,
+          key: `${dev.id}::${sourceName}`,
           deviceId: dev.id,
           equipmentId,
           variableName,
           datatype: tag?.datatype || "Float",
           endpoint: dev?.endpoint || "",
-          nodeId: tag?.node_id || tag?.nodeId || "",
-          node_id: tag?.node_id || tag?.nodeId || "",
-          cdcTag: tag?.cdcTag || tag?.plcVariable || tag?.variable || variableName,
+          nodeId: tag?.node_id || tag?.nodeId || tag?.nodeid || "",
+          node_id: tag?.node_id || tag?.nodeId || tag?.nodeid || "",
+          cdcTag: tag?.cdcTag || tag?.plcVariable || tag?.variable || sourceName,
           unit: tag?.unit || "",
           driver: dev?.driver || "",
-          address: [dev?.endpoint || "", tag?.node_id || tag?.nodeId || ""]
-            .filter(Boolean)
-            .join(" "),
-        });
-      });
-    });
-
-    devices.forEach((table) => {
-      (table?.tags || []).forEach((tag) => {
-        const equipmentId = tag?.equipment || table?.equipmentId || "";
-        const variableName =
-          tag?.variableName || tag?.name || tag?.variable || "";
-        if (!equipmentId || !variableName) return;
-        appendVar(equipmentId, {
-          key:
-            tag?.bindingKey ||
-            `${tag?.deviceId || table?.apiDeviceId || table?.id}::${variableName}`,
-          deviceId: tag?.deviceId || table?.apiDeviceId || "",
-          equipmentId,
-          variableName,
-          datatype: tag?.type || tag?.datatype || "Float",
-          endpoint: tag?.endpoint || table?.endpoint || "",
-          nodeId: tag?.node_id || tag?.nodeId || "",
-          node_id: tag?.node_id || tag?.nodeId || "",
-          cdcTag: tag?.plcVariable || tag?.cdcTag || variableName,
-          unit: tag?.unit || "",
-          driver: tag?.plcName || table?.driver || "",
-          address:
-            tag?.address ||
-            [tag?.endpoint || table?.endpoint || "", tag?.node_id || tag?.nodeId || ""]
-              .filter(Boolean)
-              .join(" "),
+          address: dev?.endpoint || "",
         });
       });
     });
 
     allTags.forEach((tag) => {
       const equipmentId = tag?.equipment_id || tag?.equipment || "";
-      const variableName = tag?.variable || "";
+      const variablePath = tag?.variable || "";
+      const variableName = toDisplayName(variablePath);
       if (!equipmentId || !variableName) return;
       appendVar(equipmentId, {
-        key: `rt::${equipmentId}::${variableName}`,
+        key: `rt::${equipmentId}::${variablePath}`,
         deviceId: `rt::${equipmentId}`,
         equipmentId,
         variableName,
         datatype: tag?.datatype || "Float",
         endpoint: tag?.source?.endpoint || "",
-        nodeId: tag?.source?.node_id || "",
-        node_id: tag?.source?.node_id || "",
-        cdcTag: variableName,
+        nodeId: tag?.source?.node_id || tag?.source?.nodeid || "",
+        node_id: tag?.source?.node_id || tag?.source?.nodeid || "",
+        cdcTag: variablePath,
         unit: tag?.unit || "",
         driver: tag?.source?.driver || "",
-        address:
-          [tag?.source?.endpoint || "", tag?.source?.node_id || ""]
-            .filter(Boolean)
-            .join(" "),
+        address: tag?.source?.endpoint || "",
       });
     });
 
@@ -423,6 +409,7 @@ const DeviceManagerModal = ({ open, onClose }) => {
           : d,
       ),
     );
+    setHasUnsavedChanges(true);
   };
 
   const addDevice = () => {
@@ -434,6 +421,7 @@ const DeviceManagerModal = ({ open, onClose }) => {
     };
     setDevices(prev => [...prev, newDevice]);
     setSelectedId(newDevice.id);
+    setHasUnsavedChanges(true);
   };
 
   const renameDevice = id => {
@@ -446,6 +434,7 @@ const DeviceManagerModal = ({ open, onClose }) => {
     setDevices(prev =>
       prev.map(d => (d.id === id ? { ...d, name: nextName } : d)),
     );
+    setHasUnsavedChanges(true);
   };
 
   const deleteDevice = id => {
@@ -459,6 +448,7 @@ const DeviceManagerModal = ({ open, onClose }) => {
       }
       return filtered;
     });
+    setHasUnsavedChanges(true);
   };
 
   const addEmptyTag = () => {
@@ -496,6 +486,30 @@ const DeviceManagerModal = ({ open, onClose }) => {
           : d,
       ),
     );
+    setHasUnsavedChanges(true);
+  };
+
+  const removeCurrentTag = (tagId) => {
+    if (!selectedId) return;
+    setDevices((prev) =>
+      prev.map((d) =>
+        d.id === selectedId
+          ? { ...d, tags: (d.tags || []).filter((t) => t.id !== tagId) }
+          : d,
+      ),
+    );
+    setSelectedTagId((prev) => (prev === tagId ? null : prev));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleCloseRequest = () => {
+    if (hasUnsavedChanges) {
+      const shouldClose = window.confirm(
+        "Tienes cambios sin guardar. ¿Quieres cerrar sin guardar?",
+      );
+      if (!shouldClose) return;
+    }
+    onClose?.();
   };
 
   const handleSaveDevices = () => {
@@ -519,15 +533,15 @@ const DeviceManagerModal = ({ open, onClose }) => {
             deviceTag: telemetryTopic,
             address:
               tag?.address ||
-              [tag?.endpoint || "", tag?.node_id || tag?.nodeId || ""]
-                .filter(Boolean)
-                .join(" "),
+              (tag?.endpoint || ""),
           };
         }),
       }));
       setDevices(normalized);
       localStorage.setItem(DEVICES_STORAGE_KEY, JSON.stringify(normalized));
       window.alert("Guardado con exito.");
+      setHasUnsavedChanges(false);
+      onClose?.();
     } catch (_err) {
       window.alert("No se pudo guardar en localStorage.");
     }
@@ -537,7 +551,7 @@ const DeviceManagerModal = ({ open, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[2100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center px-6">
-      <div className="w-[1200px] h-[620px] bg-slate-50 rounded-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+      <div className="w-[1500px] h-[760px] max-w-[96vw] max-h-[94vh] bg-slate-50 rounded-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
           <div className="flex items-center gap-3">
             <h2 className="text-sm font-semibold text-slate-800">
@@ -573,7 +587,7 @@ const DeviceManagerModal = ({ open, onClose }) => {
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleCloseRequest}
             className="text-slate-500 hover:text-slate-800 px-2 py-1 rounded hover:bg-slate-100"
             aria-label="Cerrar"
           >
@@ -583,7 +597,7 @@ const DeviceManagerModal = ({ open, onClose }) => {
 
         <div className="flex flex-1 overflow-hidden">
           {/* Panel izquierdo (árbol/lista) */}
-          <div className="w-72 border-r border-slate-200 bg-white overflow-y-auto">
+          <div className="w-50 border-r border-slate-200 bg-white overflow-y-auto">
             <div className="px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-slate-500 border-b border-slate-100">
               Tablas / PLC
             </div>
@@ -622,12 +636,21 @@ const DeviceManagerModal = ({ open, onClose }) => {
                   Tags configurados: {selected.tags?.length || 0}
                 </p>
               </div>
-              <button
-                onClick={addEmptyTag}
-                className="rounded border border-sky-300 bg-sky-50 px-3 py-1 text-[11px] font-semibold text-sky-700 hover:border-sky-400"
-              >
-                + Añadir tag
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={addEmptyTag}
+                  className="rounded border border-sky-300 bg-sky-50 px-3 py-1 text-[11px] font-semibold text-sky-700 hover:border-sky-400"
+                >
+                  + Añadir tag
+                </button>
+                <button
+                  onClick={() => removeCurrentTag(selectedTagId)}
+                  disabled={!selectedTagId}
+                  className="rounded border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-semibold text-rose-600 hover:border-rose-300 hover:bg-rose-100 disabled:opacity-50"
+                >
+                  Eliminar fila
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-auto">
@@ -674,12 +697,18 @@ const DeviceManagerModal = ({ open, onClose }) => {
                       null;
                     const displayAddress =
                       tag.address ||
-                      [tag.endpoint || "", tag.node_id || tag.nodeId || ""]
-                        .filter(Boolean)
-                        .join(" ");
+                      (tag.endpoint || "");
 
                     return (
-                      <tr key={tag.id} className="hover:bg-slate-50">
+                      <tr
+                        key={tag.id}
+                        onClick={() => setSelectedTagId(tag.id)}
+                        className={`cursor-pointer ${
+                          selectedTagId === tag.id
+                            ? "bg-sky-50"
+                            : "hover:bg-slate-50"
+                        }`}
+                      >
                         <td className="px-3 py-2 text-slate-800">
                           <input
                             className="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-sky-400 focus:outline-none rounded px-1"
@@ -752,7 +781,7 @@ const DeviceManagerModal = ({ open, onClose }) => {
                                   plcName: picked?.driver || tag.plcName || "",
                                   type: picked?.datatype || tag.type || "Float",
                                   endpoint: picked?.endpoint || "",
-                                  address: picked?.address || "",
+                                  address: picked?.endpoint || "",
                                   nodeId: picked?.nodeId || "",
                                   node_id: picked?.node_id || picked?.nodeId || "",
                                   unit: picked?.unit || "",
@@ -854,7 +883,7 @@ const DeviceManagerModal = ({ open, onClose }) => {
                           {isLocal ? (
                             <span className="text-slate-500">-</span>
                           ) : (
-                            <span>{tag.node_id || tag.nodeId || "-"}</span>
+                            <span>{tag.node_id || tag.nodeId || tag.nodeid || "-"}</span>
                           )}
                         </td>
                         <td className="px-3 py-2 text-slate-700">
