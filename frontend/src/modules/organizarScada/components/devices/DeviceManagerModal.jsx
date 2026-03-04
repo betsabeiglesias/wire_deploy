@@ -33,6 +33,13 @@ const DeviceManagerModal = ({ open, onClose }) => {
       if (Array.isArray(payload?.results)) return payload.results;
       if (Array.isArray(payload?.data)) return payload.data;
       if (Array.isArray(payload?.items)) return payload.items;
+      if (Array.isArray(payload?.plcs)) return payload.plcs;
+      if (payload && typeof payload === "object") {
+        const values = Object.values(payload);
+        if (values.length && values.every((v) => v && typeof v === "object")) {
+          return values;
+        }
+      }
       return [];
     };
 
@@ -83,16 +90,30 @@ const DeviceManagerModal = ({ open, onClose }) => {
               : basePlc;
           const plcId = pickPlcId(plc) ?? pickPlcId(basePlc) ?? `plc-${index}`;
           const equipmentId =
-            plc?.equipment_id || basePlc?.equipment_id || plc?.name || "";
+            plc?.equipment_id ||
+            basePlc?.equipment_id ||
+            basePlc?.name ||
+            plc?.name ||
+            "";
           const endpoint =
             plc?.connection?.endpoint ||
+            plc?.connection_data?.endpoint ||
             plc?.config?.connection?.endpoint ||
             basePlc?.connection?.endpoint ||
+            basePlc?.connection_data?.endpoint ||
             basePlc?.config?.connection?.endpoint ||
             "";
           const driver = plc?.driver || basePlc?.driver || "";
           const sourceRows = extractRows(plc, basePlc);
           const normalizedTags = sourceRows.map((tag, tagIdx) => ({
+            cdcTag:
+              tag?.cdc?.tag ||
+              tag?.plcVariable ||
+              tag?.variable ||
+              tag?.tag ||
+              tag?.attributeKey ||
+              tag?.name ||
+              "",
             id: tag?.id || `${plcId}-${tagIdx}`,
             name:
               tag?.name ||
@@ -108,7 +129,31 @@ const DeviceManagerModal = ({ open, onClose }) => {
               tag?.cdc?.tag ||
               tag?.attributeKey ||
               "",
-            address: endpoint,
+            variableName:
+              tag?.name ||
+              tag?.variableName ||
+              tag?.variable ||
+              tag?.tag ||
+              tag?.attributeKey ||
+              tag?.cdc?.tag ||
+              "",
+            plcVariable:
+              tag?.plcVariable ||
+              tag?.cdc?.tag ||
+              tag?.variable ||
+              tag?.tag ||
+              tag?.attributeKey ||
+              tag?.name ||
+              "",
+            address:
+              tag?.address ||
+              [
+                endpoint,
+                tag?.node_id || tag?.nodeId || tag?.addressing?.node_id || "",
+              ]
+                .filter(Boolean)
+                .join(" "),
+            endpoint,
             nodeId:
               tag?.node_id ||
               tag?.nodeId ||
@@ -121,6 +166,18 @@ const DeviceManagerModal = ({ open, onClose }) => {
               "",
             datatype: tag?.datatype || tag?.type || "Float",
             unit: tag?.unit || tag?.cdc?.unit || "",
+            deviceId: String(plcId),
+            equipment: equipmentId,
+            plcName: driver,
+            sourceMode:
+              tag?.sourceMode ||
+              (tag?.deviceId || tag?.plcVariable || tag?.address || tag?.nodeId
+                ? "conexion"
+                : "local"),
+            conn: tag?.conn || "Conexion",
+            bindingKey:
+              tag?.bindingKey ||
+              `${plcId}::${tag?.name || tag?.variable || tag?.tag || tag?.attributeKey || tag?.cdc?.tag || ""}`,
           }));
 
           normalizedDevices.push({
@@ -135,6 +192,7 @@ const DeviceManagerModal = ({ open, onClose }) => {
 
         if (!cancelled) setApiDevices(normalizedDevices);
       } catch (_err) {
+        console.error("DeviceManagerModal: no se pudo cargar PLCs desde API", _err);
         if (!cancelled) setApiDevices([]);
       }
     };
@@ -160,74 +218,194 @@ const DeviceManagerModal = ({ open, onClose }) => {
     [devices, selectedId],
   );
 
-  const apiVariableOptions = useMemo(() => {
-    const options = [];
-    const seen = new Set();
-    apiDevices.forEach((dev) => {
-      (dev.tags || []).forEach((t) => {
-        if (!t?.name) return;
-        const key = `${dev.id}::${t.name}`;
-        if (seen.has(key)) return;
-        seen.add(key);
-        options.push({
-          key,
-          deviceId: dev.id,
-          variableName: t.name,
-          label: `${dev.equipmentId || dev.name}/${t.name}`,
-          datatype: t.datatype || "Float",
-          driver: dev.driver || "",
-          endpoint: dev.endpoint || "",
-          nodeId: t.nodeId || "",
+  useEffect(() => {
+    if (!apiDevices.length) return;
+    setDevices((prev) => {
+      const prevByApiId = new Map(
+        prev
+          .map((table) => [table.apiDeviceId || null, table])
+          .filter(([apiId]) => Boolean(apiId)),
+      );
+
+      const fromApi = apiDevices.map((dev) => {
+        const existing = prevByApiId.get(dev.id);
+        if (existing) {
+          return {
+            ...existing,
+            name: existing.name || dev.name || dev.equipmentId || existing.id,
+            equipmentId: dev.equipmentId || existing.equipmentId || "",
+            endpoint: dev.endpoint || existing.endpoint || "",
+            driver: dev.driver || existing.driver || "",
+            tags:
+              Array.isArray(existing.tags) && existing.tags.length
+                ? existing.tags
+                : dev.tags || [],
+          };
+        }
+        return {
+          id: `api-${dev.id}`,
+          apiDeviceId: dev.id,
+          name: dev.name || dev.equipmentId || `PLC ${dev.id}`,
           equipmentId: dev.equipmentId || "",
-          unit: t.unit || "",
+          endpoint: dev.endpoint || "",
+          driver: dev.driver || "",
+          tags: dev.tags || [],
+        };
+      });
+
+      const manualTables = prev.filter((table) => !table.apiDeviceId);
+      return [...manualTables, ...fromApi];
+    });
+  }, [apiDevices]);
+
+  const apiDevicesById = useMemo(() => {
+    const byId = new Map();
+    apiDevices.forEach((dev) => {
+      byId.set(dev.id, dev);
+    });
+    return byId;
+  }, [apiDevices]);
+
+  const equipmentOptions = useMemo(() => {
+    const seenEquipment = new Set();
+    const options = [];
+
+    apiDevices.forEach((dev) => {
+      const equipmentId = dev?.equipmentId || dev?.name || "";
+      if (!equipmentId || seenEquipment.has(equipmentId)) return;
+      seenEquipment.add(equipmentId);
+      options.push({
+        value: equipmentId,
+        label: equipmentId,
+      });
+    });
+
+    devices.forEach((table) => {
+      const tableEq = table?.equipmentId || "";
+      if (tableEq && !seenEquipment.has(tableEq)) {
+        seenEquipment.add(tableEq);
+        options.push({ value: tableEq, label: tableEq });
+      }
+      (table?.tags || []).forEach((tag) => {
+        const tagEq = tag?.equipment || "";
+        if (!tagEq || seenEquipment.has(tagEq)) return;
+        seenEquipment.add(tagEq);
+        options.push({ value: tagEq, label: tagEq });
+      });
+    });
+
+    allTags.forEach((tag) => {
+      const equipmentId = tag?.equipment_id || tag?.equipment || "";
+      if (!equipmentId || seenEquipment.has(equipmentId)) return;
+      seenEquipment.add(equipmentId);
+      options.push({ value: equipmentId, label: equipmentId });
+    });
+
+    return options.sort((a, b) =>
+      a.label.localeCompare(b.label, "es", { sensitivity: "base" }),
+    );
+  }, [apiDevices, devices, allTags]);
+
+  const variablesByEquipment = useMemo(() => {
+    const byEquipment = {};
+    const appendVar = (equipmentId, variable) => {
+      if (!equipmentId || !variable?.variableName) return;
+      if (!byEquipment[equipmentId]) byEquipment[equipmentId] = [];
+      const exists = byEquipment[equipmentId].some(
+        (v) =>
+          v.deviceId === variable.deviceId &&
+          v.variableName === variable.variableName,
+      );
+      if (!exists) byEquipment[equipmentId].push(variable);
+    };
+
+    apiDevices.forEach((dev) => {
+      const equipmentId = dev?.equipmentId || dev?.name || "";
+      if (!equipmentId) return;
+      (dev.tags || []).forEach((tag) => {
+        const variableName = tag?.name || tag?.variableName || "";
+        if (!variableName) return;
+        appendVar(equipmentId, {
+          key: `${dev.id}::${variableName}`,
+          deviceId: dev.id,
+          equipmentId,
+          variableName,
+          datatype: tag?.datatype || "Float",
+          endpoint: dev?.endpoint || "",
+          nodeId: tag?.node_id || tag?.nodeId || "",
+          node_id: tag?.node_id || tag?.nodeId || "",
+          cdcTag: tag?.cdcTag || tag?.plcVariable || tag?.variable || variableName,
+          unit: tag?.unit || "",
+          driver: dev?.driver || "",
+          address: [dev?.endpoint || "", tag?.node_id || tag?.nodeId || ""]
+            .filter(Boolean)
+            .join(" "),
         });
       });
     });
-    return options.sort((a, b) =>
-      a.label.localeCompare(b.label, "es", { sensitivity: "base" }),
-    );
-  }, [apiDevices]);
 
-  const realtimeVariableOptions = useMemo(() => {
-    const seen = new Set();
-    const options = [];
-    allTags.forEach((t) => {
-      const variable = t?.variable;
-      if (!variable) return;
-      const equipmentId = t?.equipment_id || t?.equipment || "";
-      const key = `rt::${equipmentId}::${variable}`;
-      if (seen.has(key)) return;
-      seen.add(key);
-        options.push({
-          key,
-          source: "realtime",
-          deviceId: "",
-        variableName: variable,
-        label: `${equipmentId || "equipo"}/${variable}`,
-        datatype: "Float",
-        driver: t?.source?.driver || "",
-          endpoint: t?.source?.endpoint || "",
-          nodeId: t?.source?.node_id || "",
-          node_id: t?.source?.node_id || "",
+    devices.forEach((table) => {
+      (table?.tags || []).forEach((tag) => {
+        const equipmentId = tag?.equipment || table?.equipmentId || "";
+        const variableName =
+          tag?.variableName || tag?.name || tag?.variable || "";
+        if (!equipmentId || !variableName) return;
+        appendVar(equipmentId, {
+          key:
+            tag?.bindingKey ||
+            `${tag?.deviceId || table?.apiDeviceId || table?.id}::${variableName}`,
+          deviceId: tag?.deviceId || table?.apiDeviceId || "",
           equipmentId,
-          unit: t?.unit || "",
+          variableName,
+          datatype: tag?.type || tag?.datatype || "Float",
+          endpoint: tag?.endpoint || table?.endpoint || "",
+          nodeId: tag?.node_id || tag?.nodeId || "",
+          node_id: tag?.node_id || tag?.nodeId || "",
+          cdcTag: tag?.plcVariable || tag?.cdcTag || variableName,
+          unit: tag?.unit || "",
+          driver: tag?.plcName || table?.driver || "",
+          address:
+            tag?.address ||
+            [tag?.endpoint || table?.endpoint || "", tag?.node_id || tag?.nodeId || ""]
+              .filter(Boolean)
+              .join(" "),
         });
+      });
     });
-    return options.sort((a, b) =>
-      a.label.localeCompare(b.label, "es", { sensitivity: "base" }),
-    );
-  }, [allTags]);
 
-  const selectorVariableOptions = useMemo(() => {
-    const merged = [];
-    const seenLabel = new Set();
-    [...apiVariableOptions, ...realtimeVariableOptions].forEach((opt) => {
-      if (seenLabel.has(opt.label)) return;
-      seenLabel.add(opt.label);
-      merged.push(opt);
+    allTags.forEach((tag) => {
+      const equipmentId = tag?.equipment_id || tag?.equipment || "";
+      const variableName = tag?.variable || "";
+      if (!equipmentId || !variableName) return;
+      appendVar(equipmentId, {
+        key: `rt::${equipmentId}::${variableName}`,
+        deviceId: `rt::${equipmentId}`,
+        equipmentId,
+        variableName,
+        datatype: tag?.datatype || "Float",
+        endpoint: tag?.source?.endpoint || "",
+        nodeId: tag?.source?.node_id || "",
+        node_id: tag?.source?.node_id || "",
+        cdcTag: variableName,
+        unit: tag?.unit || "",
+        driver: tag?.source?.driver || "",
+        address:
+          [tag?.source?.endpoint || "", tag?.source?.node_id || ""]
+            .filter(Boolean)
+            .join(" "),
+      });
     });
-    return merged;
-  }, [apiVariableOptions, realtimeVariableOptions]);
+
+    Object.keys(byEquipment).forEach((equipmentId) => {
+      byEquipment[equipmentId].sort((a, b) =>
+        a.variableName.localeCompare(b.variableName, "es", {
+          sensitivity: "base",
+        }),
+      );
+    });
+
+    return byEquipment;
+  }, [apiDevices, devices, allTags]);
 
   const updateCurrentTag = (tagId, updater) => {
     setDevices((prev) =>
@@ -299,15 +477,18 @@ const DeviceManagerModal = ({ open, onClose }) => {
                   type: "Float",
                   variableName: "",
                   deviceId: "",
+                  equipment: "",
+                  endpoint: "",
                   address: "",
                   nodeId: "",
+                  node_id: "",
                   initialValue: "",
                   conn: "Local",
                   plcName: "",
-                  equipment: "",
                   unit: "",
                   notes: "",
                   plcVariable: "",
+                  cdcTag: "",
                   bindingKey: "",
                 },
               ],
@@ -319,7 +500,33 @@ const DeviceManagerModal = ({ open, onClose }) => {
 
   const handleSaveDevices = () => {
     try {
-      localStorage.setItem(DEVICES_STORAGE_KEY, JSON.stringify(devices));
+      const normalized = devices.map((table) => ({
+        ...table,
+        tags: (table.tags || []).map((tag) => {
+          const isConnection =
+            tag?.sourceMode === "conexion" ||
+            !!(tag?.deviceId || tag?.equipment || tag?.variableName);
+          if (!isConnection) return tag;
+          const telemetryTopic =
+            tag?.plcVariable || tag?.cdcTag || tag?.variableName || "";
+          return {
+            ...tag,
+            sourceMode: "conexion",
+            conn: "Conexion",
+            cdcTag: telemetryTopic,
+            plcVariable: telemetryTopic,
+            variable: telemetryTopic,
+            deviceTag: telemetryTopic,
+            address:
+              tag?.address ||
+              [tag?.endpoint || "", tag?.node_id || tag?.nodeId || ""]
+                .filter(Boolean)
+                .join(" "),
+          };
+        }),
+      }));
+      setDevices(normalized);
+      localStorage.setItem(DEVICES_STORAGE_KEY, JSON.stringify(normalized));
       window.alert("Guardado con exito.");
     } catch (_err) {
       window.alert("No se pudo guardar en localStorage.");
@@ -445,15 +652,31 @@ const DeviceManagerModal = ({ open, onClose }) => {
                         ? "conexion"
                         : "local");
                     const isLocal = mode === "local";
-                    const selectedAttr =
-                      selectorVariableOptions.find(
+                    const selectedEquipment =
+                      tag.equipment ||
+                      apiDevicesById.get(tag.deviceId)?.equipmentId ||
+                      (typeof tag.deviceId === "string" && tag.deviceId.startsWith("rt::")
+                        ? tag.deviceId.replace("rt::", "")
+                        : "") ||
+                      "";
+                    const equipmentVariables =
+                      variablesByEquipment[selectedEquipment] || [];
+                    const selectedVariable =
+                      equipmentVariables.find(
                         (opt) =>
                           opt.key ===
                           (tag.bindingKey ||
                             (tag.deviceId && tag.variableName
                               ? `${tag.deviceId}::${tag.variableName}`
                               : "")),
-                      ) || null;
+                      ) ||
+                      equipmentVariables.find((opt) => opt.variableName === tag.variableName) ||
+                      null;
+                    const displayAddress =
+                      tag.address ||
+                      [tag.endpoint || "", tag.node_id || tag.nodeId || ""]
+                        .filter(Boolean)
+                        .join(" ");
 
                     return (
                       <tr key={tag.id} className="hover:bg-slate-50">
@@ -478,9 +701,12 @@ const DeviceManagerModal = ({ open, onClose }) => {
                                   conn: "Local",
                                   variableName: "",
                                   deviceId: "",
+                                  endpoint: "",
                                   address: "",
                                   nodeId: "",
+                                  node_id: "",
                                   plcVariable: "",
+                                  cdcTag: "",
                                   bindingKey: "",
                                   equipment: "",
                                   plcName: "",
@@ -503,7 +729,50 @@ const DeviceManagerModal = ({ open, onClose }) => {
                           {isLocal ? (
                             <span className="text-slate-500">-</span>
                           ) : (
-                            <span>{tag.variableName || "-"}</span>
+                            <select
+                              className="w-full bg-transparent border border-slate-200 rounded px-1 text-[12px]"
+                              value={selectedVariable?.key || ""}
+                              disabled={!selectedEquipment}
+                              onChange={(e) => {
+                                const picked =
+                                  equipmentVariables.find(
+                                    (opt) => opt.key === e.target.value,
+                                  ) || null;
+                                updateCurrentTag(tag.id, {
+                                  sourceMode: "conexion",
+                                  conn: "Conexion",
+                                  bindingKey: picked?.key || "",
+                                  variableName: picked?.variableName || "",
+                                  plcVariable: picked?.cdcTag || "",
+                                  cdcTag: picked?.cdcTag || "",
+                                  variable: picked?.cdcTag || "",
+                                  deviceTag: picked?.cdcTag || "",
+                                  deviceId: picked?.deviceId || tag.deviceId || "",
+                                  equipment: picked?.equipmentId || selectedEquipment || "",
+                                  plcName: picked?.driver || tag.plcName || "",
+                                  type: picked?.datatype || tag.type || "Float",
+                                  endpoint: picked?.endpoint || "",
+                                  address: picked?.address || "",
+                                  nodeId: picked?.nodeId || "",
+                                  node_id: picked?.node_id || picked?.nodeId || "",
+                                  unit: picked?.unit || "",
+                                  initialValue: "",
+                                });
+                              }}
+                            >
+                              <option value="">
+                                {selectedEquipment
+                                  ? equipmentVariables.length
+                                    ? "Selecciona variable"
+                                    : "Sin items"
+                                  : "Selecciona dispositivo"}
+                              </option>
+                              {equipmentVariables.map((opt) => (
+                                <option key={opt.key} value={opt.key}>
+                                  {opt.variableName}
+                                </option>
+                              ))}
+                            </select>
                           )}
                         </td>
                         <td className="px-3 py-2 text-slate-700">
@@ -531,37 +800,43 @@ const DeviceManagerModal = ({ open, onClose }) => {
                           ) : (
                             <select
                               className="w-full bg-transparent border border-slate-200 rounded px-1 text-[12px]"
-                              value={selectedAttr?.key || ""}
+                              value={selectedEquipment}
                               onChange={(e) => {
-                                const picked =
-                                  selectorVariableOptions.find(
-                                    (opt) => opt.key === e.target.value,
+                                const nextEquipment = e.target.value;
+                                const fallbackDevice =
+                                  apiDevices.find(
+                                    (dev) =>
+                                      (dev.equipmentId || dev.name || "") ===
+                                      nextEquipment,
                                   ) || null;
                                 updateCurrentTag(tag.id, {
                                   sourceMode: "conexion",
                                   conn: "Conexion",
-                                  bindingKey: picked?.key || "",
-                                  variableName: picked?.variableName || "",
-                                  plcVariable: picked?.variableName || "",
-                                  deviceId: picked?.deviceId || "",
-                                  plcName: picked?.driver || "",
-                                  type: picked?.datatype || tag.type || "Float",
-                                  address: picked?.endpoint || "",
-                                  nodeId: picked?.nodeId || "",
-                                  node_id: picked?.node_id || picked?.nodeId || "",
-                                  equipment: picked?.equipmentId || "",
-                                  unit: picked?.unit || "",
+                                  equipment: nextEquipment,
+                                  deviceId: fallbackDevice?.id || "",
+                                  plcName: fallbackDevice?.driver || "",
+                                  endpoint: fallbackDevice?.endpoint || "",
+                                  address: fallbackDevice?.endpoint || "",
+                                  variableName: "",
+                                  plcVariable: "",
+                                  cdcTag: "",
+                                  variable: "",
+                                  deviceTag: "",
+                                  bindingKey: "",
+                                  nodeId: "",
+                                  node_id: "",
+                                  unit: "",
                                   initialValue: "",
                                 });
                               }}
                             >
                               <option value="">
-                                {selectorVariableOptions.length
-                                  ? "Selecciona atributo"
-                                  : "Sin variables API"}
+                                {equipmentOptions.length
+                                  ? "Selecciona dispositivo"
+                                  : "Sin equipos API"}
                               </option>
-                              {selectorVariableOptions.map((opt) => (
-                                <option key={opt.key} value={opt.key}>
+                              {equipmentOptions.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
                                   {opt.label}
                                 </option>
                               ))}
@@ -572,7 +847,7 @@ const DeviceManagerModal = ({ open, onClose }) => {
                           {isLocal ? (
                             <span className="text-slate-500">-</span>
                           ) : (
-                            <span>{tag.address || "-"}</span>
+                            <span>{displayAddress || "-"}</span>
                           )}
                         </td>
                         <td className="px-3 py-2 text-slate-700">

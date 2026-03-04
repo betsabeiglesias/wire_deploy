@@ -1,6 +1,12 @@
 // UnifiedSidebar.jsx
 import React, { useMemo, useState } from "react";
-import { Eye, EyeOff, GripVertical, Lock, Unlock } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  GripVertical,
+  Lock,
+  Unlock,
+} from "lucide-react";
 import { useRealtime } from "@/realtime/RealtimeProvider";
 import { elementos_scada } from "@/modules/organizarScada/templates/elementos_scada";
 import { buttons_labels_items } from "@/modules/organizarScada/utils/items";
