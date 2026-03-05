@@ -102,7 +102,7 @@ services:
     container_name: core-backendA
     volumes:
       - ../../edge/core_backend:/app
-      - ../opt/suite/config:/opt/suite/config
+      - ./opt/suite/config:/opt/suite/config
     env_file:
       - ./customerA.env
     environment:

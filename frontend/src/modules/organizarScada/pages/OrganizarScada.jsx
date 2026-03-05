@@ -543,8 +543,12 @@ const OrganizarScada = () => {
             onTemplateDashboard: () => {}, // pendiente: wirear plantillas
             onPublish: handlePublishClick,
             onNewDashboard: handleNewDashboardWrapper,
+            
           }}
         />
+        <button onClick={() => navigate("/organizar-scada/script")}>
+            Script
+        </button>
 
         <div className="flex flex-1 overflow-hidden relative">
           <UnifiedSidebar

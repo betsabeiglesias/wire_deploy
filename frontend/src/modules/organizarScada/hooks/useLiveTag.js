@@ -27,6 +27,7 @@ export default function useLiveTag(data) {
       allTags.find(
         (t) =>
           (t.equipment === eq || t.equipment_id === eq) &&
+          (t.equipment === eq || t.equipment_id === eq) &&
           t.variable === variable &&
           (!site || t.site === site) &&
           (!area || t.area === area) &&
