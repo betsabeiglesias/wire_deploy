@@ -1,8 +1,13 @@
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from . import views
 from .views import save_layout, my_layouts, layout_detail, reorder_layouts
 
 app_name = 'scada_manager'
+
+router = DefaultRouter()
+router.register(r"custom-tag-groups", views.CustomTagGroupViewSet, basename="custom-tag-group")
+router.register(r"custom-tags", views.CustomTagViewSet, basename="custom-tag")
 
 urlpatterns = [
     # Vista de inicio (si aplica a esta app)
@@ -13,4 +18,5 @@ urlpatterns = [
     path("my-layouts/", my_layouts, name="my_layouts"),
     path("layout/<int:title_id>/", layout_detail, name="layout_detail"),
     path("reorder-layouts/", reorder_layouts, name="reorder_layouts"),
+    path("", include(router.urls)),
 ]
