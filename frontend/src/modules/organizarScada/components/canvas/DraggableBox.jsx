@@ -75,6 +75,10 @@ export default function DraggableBox({
   if (!data) return null;
 
   const showFrame = data?.settings?.showFrame ?? false;
+  const lockAspectRatio =
+    data?.settings?.lockAspectRatio === true ||
+    (data?.type === "image-widget" &&
+      data?.settings?.lockAspectRatio !== false);
 
   const { live, valueHistory } = useLiveTag(data);
 
@@ -151,6 +155,7 @@ export default function DraggableBox({
       onResizeStop={handleResizeStop}
       disableDragging={isLocked}
       enableResizing={!isLocked}
+      lockAspectRatio={lockAspectRatio}
       bounds="parent"
       minWidth={
         data.type === "speedometer" || data.type === "temperature-gauge"

@@ -535,6 +535,35 @@ export const renderWidget = ({
         />
       );
     }
+    case "image-widget": {
+      const src =
+        settings.imageBase64 ||
+        settings.base64 ||
+        settings.src ||
+        data.src ||
+        "";
+      const opacity = Math.max(
+        0,
+        Math.min(100, Number(settings.opacity ?? 100)),
+      );
+      if (!src) {
+        return (
+          <div className="flex h-full w-full items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50 text-[11px] text-slate-500">
+            Imagen no disponible
+          </div>
+        );
+      }
+      return (
+        <div className="h-full w-full overflow-hidden rounded" style={{ opacity: opacity / 100 }}>
+          <img
+            src={src}
+            alt={settings.alt || data.label || "ImageWidget"}
+            className="h-full w-full object-contain select-none"
+            draggable={false}
+          />
+        </div>
+      );
+    }
     case "nav-button": {
       const label = data.label || "Boton";
       const variantClass =

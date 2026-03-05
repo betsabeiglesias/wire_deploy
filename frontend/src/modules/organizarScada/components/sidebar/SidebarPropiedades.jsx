@@ -46,6 +46,7 @@ const SidebarPropiedades = ({
     currentType === "hmi-scada-gauge" || currentType === "hmiScadaGauge";
   const isProgressBar = currentType === "hmi-progress-bar";
   const isTankLevel = currentType === "hmi-tank-level";
+  const isImageWidget = currentType === "image-widget";
   const isEnergyBar =
     currentType === "hmi-energy-bar" || currentType === "energy-bar";
   const isNavigationButton =
@@ -62,6 +63,22 @@ const SidebarPropiedades = ({
       data: {
         ...(selectedElement?.data || {}),
         settings: { ...(currentSettings || {}), ...patch },
+      },
+    });
+  const updateGeometry = (patch) =>
+    onChange?.({
+      ...patch,
+      data: {
+        ...(selectedElement?.data || {}),
+        width:
+          typeof patch?.width !== "undefined"
+            ? patch.width
+            : selectedElement?.data?.width,
+        height:
+          typeof patch?.height !== "undefined"
+            ? patch.height
+            : selectedElement?.data?.height,
+        settings: { ...(selectedElement?.data?.settings || {}) },
       },
     });
 
@@ -200,6 +217,66 @@ const SidebarPropiedades = ({
         />
       </div>
 
+      {isImageWidget && (
+        <div className="rounded border border-slate-200 bg-slate-50 p-3 space-y-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+            Posicion y tamano
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-[10px] text-slate-500">X</label>
+              <input
+                type="number"
+                className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
+                value={Number(selectedElement?.x ?? 0)}
+                onChange={(e) =>
+                  updateGeometry({ x: Number(e.target.value) || 0 })
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] text-slate-500">Y</label>
+              <input
+                type="number"
+                className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
+                value={Number(selectedElement?.y ?? 0)}
+                onChange={(e) =>
+                  updateGeometry({ y: Number(e.target.value) || 0 })
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] text-slate-500">Width</label>
+              <input
+                type="number"
+                min={20}
+                className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
+                value={Number(selectedElement?.data?.width ?? 220)}
+                onChange={(e) =>
+                  updateGeometry({
+                    width: Math.max(20, Number(e.target.value) || 20),
+                  })
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] text-slate-500">Height</label>
+              <input
+                type="number"
+                min={20}
+                className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
+                value={Number(selectedElement?.data?.height ?? 180)}
+                onChange={(e) =>
+                  updateGeometry({
+                    height: Math.max(20, Number(e.target.value) || 20),
+                  })
+                }
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {isNavigationButton && (
         <div>
           <label className="block text-[11px] text-slate-600">
@@ -236,60 +313,66 @@ const SidebarPropiedades = ({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-[11px] text-slate-600">Min</label>
-          <input
-            type="number"
-            className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
-            value={
-              typeof currentSettings.min === "number" ? currentSettings.min : ""
-            }
-            onChange={(e) =>
-              updateSettings({
-                min: e.target.value === "" ? undefined : Number(e.target.value),
-              })
-            }
-          />
-        </div>
-        <div>
-          <label className="block text-[11px] text-slate-600">Max</label>
-          <input
-            type="number"
-            className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
-            value={
-              typeof currentSettings.max === "number" ? currentSettings.max : ""
-            }
-            onChange={(e) =>
-              updateSettings({
-                max: e.target.value === "" ? undefined : Number(e.target.value),
-              })
-            }
-          />
-        </div>
-      </div>
+      {!isImageWidget && (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] text-slate-600">Min</label>
+              <input
+                type="number"
+                className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
+                value={
+                  typeof currentSettings.min === "number" ? currentSettings.min : ""
+                }
+                onChange={(e) =>
+                  updateSettings({
+                    min:
+                      e.target.value === "" ? undefined : Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] text-slate-600">Max</label>
+              <input
+                type="number"
+                className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
+                value={
+                  typeof currentSettings.max === "number" ? currentSettings.max : ""
+                }
+                onChange={(e) =>
+                  updateSettings({
+                    max:
+                      e.target.value === "" ? undefined : Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+          </div>
 
-      <div className="flex flex-col-2 ">
-        <label className="inline-flex items-center gap-2 text-[12px] text-slate-700 ">
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
-            checked={currentSettings.showLabel !== false}
-            onChange={(e) => updateSettings({ showLabel: e.target.checked })}
-          />
-          Ver nombre
-        </label>
+          <div className="flex flex-col-2 ">
+            <label className="inline-flex items-center gap-2 text-[12px] text-slate-700 ">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
+                checked={currentSettings.showLabel !== false}
+                onChange={(e) => updateSettings({ showLabel: e.target.checked })}
+              />
+              Ver nombre
+            </label>
 
-        <label className="inline-flex items-center gap-2 text-[12px] text-slate-700">
-          <input
-            type="checkbox"
-            className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
-            checked={currentSettings.showValue !== false}
-            onChange={(e) => updateSettings({ showValue: e.target.checked })}
-          />
-          Mostrar valor del SVG
-        </label>
-      </div>
+            <label className="inline-flex items-center gap-2 text-[12px] text-slate-700">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
+                checked={currentSettings.showValue !== false}
+                onChange={(e) => updateSettings({ showValue: e.target.checked })}
+              />
+              Mostrar valor del SVG
+            </label>
+          </div>
+        </>
+      )}
     </div>
   );
 
@@ -381,11 +464,47 @@ const SidebarPropiedades = ({
         !isScadaGauge &&
         !isProgressBar &&
         !isTankLevel &&
+        !isImageWidget &&
         !isEnergyBar && (
           <div className="text-[12px] text-slate-500">
             Este widget no tiene controles de estilo personalizados.
           </div>
         )}
+
+      {isImageWidget && (
+        <div className="rounded border border-slate-200 bg-white p-3 space-y-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+            Image Widget
+          </p>
+          <div>
+            <label className="block text-[11px] text-slate-600">
+              Opacidad ({Number(currentSettings.opacity ?? 100)}%)
+            </label>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              className="mt-2 w-full"
+              value={Number(currentSettings.opacity ?? 100)}
+              onChange={(e) =>
+                updateSettings({ opacity: Number(e.target.value) || 0 })
+              }
+            />
+          </div>
+          <label className="inline-flex items-center gap-2 text-[12px] text-slate-700">
+            <input
+              type="checkbox"
+              className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
+              checked={currentSettings.lockAspectRatio !== false}
+              onChange={(e) =>
+                updateSettings({ lockAspectRatio: e.target.checked })
+              }
+            />
+            Mantener relacion de aspecto
+          </label>
+        </div>
+      )}
 
       {isScadaGauge && (
         <div className="rounded border border-slate-200 bg-white p-3 space-y-3">

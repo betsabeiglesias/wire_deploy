@@ -1,5 +1,5 @@
 // UnifiedSidebar.jsx
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Eye,
   EyeOff,
@@ -13,6 +13,83 @@ import { buttons_labels_items } from "@/modules/organizarScada/utils/items";
 import { renderWidget } from "@/modules/organizarScada/components/widgets/registry.jsx";
 import SkeletonBlock from "@/components/ui/SkeletonBlock";
 import DeviceManagerModal from "@/modules/organizarScada/components/devices/DeviceManagerModal";
+
+const CUSTOM_ICONS_STORAGE_KEY = "organizarScada.customIcons.library";
+const MAX_IMAGE_DIMENSION = 1200;
+const MAX_IMAGE_BYTES = 500 * 1024;
+
+const readFileAsDataURL = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+const loadImageFromUrl = (src) =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+
+const estimateDataUrlSize = (dataUrl = "") => {
+  const payload = dataUrl.split(",")[1] || "";
+  return Math.ceil((payload.length * 3) / 4);
+};
+
+const optimizeRasterToBase64 = async (file) => {
+  const inputDataUrl = await readFileAsDataURL(file);
+  const image = await loadImageFromUrl(inputDataUrl);
+  const largestSide = Math.max(image.width, image.height);
+  const scale =
+    largestSide > MAX_IMAGE_DIMENSION ? MAX_IMAGE_DIMENSION / largestSide : 1;
+  const targetWidth = Math.max(1, Math.round(image.width * scale));
+  const targetHeight = Math.max(1, Math.round(image.height * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+  const isPng = file.type === "image/png";
+  const mimeType = isPng ? "image/png" : "image/jpeg";
+  let quality = 0.9;
+  let output = canvas.toDataURL(mimeType, quality);
+
+  // Ajuste progresivo si sigue pesado (aplica sobre todo JPG).
+  while (
+    !isPng &&
+    estimateDataUrlSize(output) > MAX_IMAGE_BYTES &&
+    quality > 0.45
+  ) {
+    quality -= 0.1;
+    output = canvas.toDataURL(mimeType, quality);
+  }
+
+  return {
+    base64: output,
+    width: targetWidth,
+    height: targetHeight,
+    originalWidth: image.width,
+    originalHeight: image.height,
+  };
+};
+
+const optimizeAndEncodeAsset = async (file) => {
+  if (file.type === "image/svg+xml") {
+    return {
+      base64: await readFileAsDataURL(file),
+      width: 240,
+      height: 180,
+      originalWidth: 240,
+      originalHeight: 180,
+    };
+  }
+  return optimizeRasterToBase64(file);
+};
 
 const UnifiedSidebar = ({
   views = [],
@@ -36,6 +113,9 @@ const UnifiedSidebar = ({
   const [isMainOpen, setIsMainOpen] = useState(true);
   const [activeSection, setActiveSection] = useState("pantallas");
   const [showDevices, setShowDevices] = useState(false);
+  const [customIcons, setCustomIcons] = useState([]);
+  const [isProcessingUpload, setIsProcessingUpload] = useState(false);
+  const uploadInputRef = useRef(null);
 
   const { allTags } = useRealtime();
   const [selectedSite, setSelectedSite] = useState("");
@@ -57,6 +137,7 @@ const UnifiedSidebar = ({
         { id: "devices", label: "Dispositivos" },
         { id: "elements", label: "Iconos hmi" },
         { id: "buttons", label: "Iconos basicos" },
+        { id: "custom-icons", label: "Iconos personalizados" },
       ],
     },
   ];
@@ -265,6 +346,84 @@ const UnifiedSidebar = ({
     if (!ts) return "Sin fecha";
     const d = new Date(ts);
     return Number.isNaN(d.getTime()) ? "Sin fecha" : d.toLocaleString();
+  };
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CUSTOM_ICONS_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return;
+      setCustomIcons(parsed);
+    } catch (_err) {
+      setCustomIcons([]);
+    }
+  }, []);
+
+  const persistCustomIcons = (next) => {
+    setCustomIcons(next);
+    try {
+      localStorage.setItem(CUSTOM_ICONS_STORAGE_KEY, JSON.stringify(next));
+    } catch (_err) {
+      // noop
+    }
+  };
+
+  const iconToTemplate = (icon) => ({
+    id: `tpl-custom-${icon.id}`,
+    data: {
+      type: "image-widget",
+      label: icon.name,
+      width: Math.min(Number(icon.width) || 220, 320),
+      height: Math.min(Number(icon.height) || 180, 260),
+      settings: {
+        imageBase64: icon.base64,
+        opacity: 100,
+        lockAspectRatio: true,
+        layer_alias: icon.name,
+      },
+    },
+  });
+
+  const handlePickCustomIcon = (icon) => {
+    addComponentToCanvas?.(iconToTemplate(icon).data);
+  };
+
+  const handleUploadCustomIcon = async (event) => {
+    const file = event?.target?.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/svg+xml"];
+    if (!allowedTypes.includes(file.type)) {
+      window.alert("Formato no soportado. Usa PNG, JPG o SVG.");
+      return;
+    }
+
+    setIsProcessingUpload(true);
+    try {
+      const processed = await optimizeAndEncodeAsset(file);
+      const item = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        name: (file.name || "icono").replace(/\.[^.]+$/, ""),
+        base64: processed.base64,
+        width: processed.width,
+        height: processed.height,
+        createdAt: new Date().toISOString(),
+      };
+      const next = [item, ...customIcons].slice(0, 80);
+      persistCustomIcons(next);
+    } catch (err) {
+      console.error("No se pudo procesar el icono personalizado", err);
+      window.alert("No se pudo procesar la imagen.");
+    } finally {
+      setIsProcessingUpload(false);
+    }
+  };
+
+  const handleDeleteCustomIcon = (iconId) => {
+    const next = customIcons.filter((icon) => icon.id !== iconId);
+    persistCustomIcons(next);
   };
 
   const layers = useMemo(() => {
@@ -681,6 +840,79 @@ const UnifiedSidebar = ({
               </div>
             ))}
           </div>
+        </div>
+      );
+    }
+    if (sectionId === "custom-icons") {
+      return (
+        <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              Libreria de imagenes
+            </p>
+            <button
+              type="button"
+              onClick={() => uploadInputRef.current?.click()}
+              disabled={isProcessingUpload}
+              className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50 disabled:opacity-50"
+            >
+              {isProcessingUpload ? "Procesando..." : "Subir icono"}
+            </button>
+            <input
+              ref={uploadInputRef}
+              type="file"
+              accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+              className="hidden"
+              onChange={handleUploadCustomIcon}
+            />
+          </div>
+
+          <p className="text-[10px] text-slate-500">
+            PNG, JPG o SVG. Se optimiza en cliente y se guarda como Base64.
+          </p>
+
+          {customIcons.length === 0 ? (
+            <div className="rounded border border-dashed border-slate-300 bg-slate-50 px-2 py-3 text-[11px] text-slate-500">
+              No hay iconos personalizados todavia.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto">
+              {customIcons.map((icon) => {
+                const tpl = iconToTemplate(icon);
+                return (
+                  <div
+                    key={icon.id}
+                    draggable
+                    onDragStart={(e) => handleTemplateDragStart(e, tpl)}
+                    onClick={() => handlePickCustomIcon(icon)}
+                    className="group relative cursor-grab rounded-md border border-slate-200 bg-white p-1.5 shadow-sm hover:border-sky-400 hover:bg-sky-50 active:cursor-grabbing"
+                    title={icon.name}
+                  >
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteCustomIcon(icon.id);
+                      }}
+                      className="absolute right-1 top-1 z-10 hidden h-5 w-5 items-center justify-center rounded bg-white/90 text-[11px] text-rose-600 shadow group-hover:inline-flex"
+                      title="Eliminar icono"
+                    >
+                      ×
+                    </button>
+                    <div className="flex h-20 items-center justify-center overflow-hidden rounded border border-slate-100 bg-slate-50">
+                      <img
+                        src={icon.base64}
+                        alt={icon.name}
+                        className="max-h-full max-w-full object-contain"
+                        loading="lazy"
+                      />
+                    </div>
+                    <p className="mt-1 truncate text-[10px] text-slate-600">{icon.name}</p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       );
     }
