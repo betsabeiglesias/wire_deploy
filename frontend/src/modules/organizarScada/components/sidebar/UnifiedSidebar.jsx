@@ -92,6 +92,8 @@ const optimizeAndEncodeAsset = async (file) => {
 };
 
 const UnifiedSidebar = ({
+  projectName = "",
+  onProjectNameChange,
   views = [],
   selectedViewId,
   onCreateView,
@@ -128,6 +130,8 @@ const UnifiedSidebar = ({
   const [editingLayerId, setEditingLayerId] = useState(null);
   const [editingLayerName, setEditingLayerName] = useState("");
   const [draggingLayerId, setDraggingLayerId] = useState(null);
+  const [isEditingProjectName, setIsEditingProjectName] = useState(false);
+  const [projectNameDraft, setProjectNameDraft] = useState(projectName || "");
 
   const sidebarSections = [
     {
@@ -144,6 +148,23 @@ const UnifiedSidebar = ({
 
   const handleSectionClick = id => {
     setActiveSection(prev => (prev === id ? null : id));
+  };
+
+  useEffect(() => {
+    if (!isEditingProjectName) {
+      setProjectNameDraft(projectName || "");
+    }
+  }, [projectName, isEditingProjectName]);
+
+  const commitProjectName = () => {
+    const next = projectNameDraft.trim();
+    onProjectNameChange?.(next || "Sin nombre");
+    setIsEditingProjectName(false);
+  };
+
+  const cancelProjectName = () => {
+    setProjectNameDraft(projectName || "");
+    setIsEditingProjectName(false);
   };
 
   const handleElementDragStart = (e, type) => {
@@ -981,6 +1002,34 @@ const UnifiedSidebar = ({
 
           {isMainOpen && (
             <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+              <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  Proyecto
+                </p>
+                {isEditingProjectName ? (
+                  <input
+                    autoFocus
+                    value={projectNameDraft}
+                    onChange={(e) => setProjectNameDraft(e.target.value)}
+                    onBlur={commitProjectName}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitProjectName();
+                      if (e.key === "Escape") cancelProjectName();
+                    }}
+                    className="mt-1 w-full rounded border border-sky-300 px-2 py-1 text-[12px] font-semibold text-slate-800 focus:border-sky-500 focus:outline-none"
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onDoubleClick={() => setIsEditingProjectName(true)}
+                    onClick={() => setIsEditingProjectName(true)}
+                    className="mt-1 block w-full truncate rounded px-1 py-0.5 text-left text-[12px] font-semibold text-slate-800 hover:bg-slate-100"
+                    title="Editar nombre del proyecto"
+                  >
+                    {projectName || "Sin nombre"}
+                  </button>
+                )}
+              </div>
               {sidebarSections.map(section => (
                 <div key={section.id}>
                   <ul className="space-y-1">

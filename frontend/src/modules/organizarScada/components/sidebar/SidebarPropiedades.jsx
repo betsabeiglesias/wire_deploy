@@ -130,11 +130,12 @@ const SidebarPropiedades = ({
   const tagOptions = useMemo(() => {
     return filteredTags.map((t) => {
       const value =
-        t.plcVariable || t.variable || t.tag || t.name || t.attributeKey || "";
+        t.plcVariable || t.variable || t.tag || t.attributeKey || t.name || "";
+      const displayName = t.name || t.label || value;
       const unit = t.unit ? ` (${t.unit})` : "";
       return {
         value,
-        label: `${value}${unit}`,
+        label: `${displayName}${unit}`,
         equipment: t.equipment || t.plcName || "",
         site: t.site || "",
         area: t.area || "",

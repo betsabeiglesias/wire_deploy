@@ -548,6 +548,8 @@ const OrganizarScada = () => {
 
         <div className="flex flex-1 overflow-hidden relative">
           <UnifiedSidebar
+            projectName={exportName}
+            onProjectNameChange={setExportName}
             views={views}
             selectedViewId={currentViewId}
             onCreateView={handleCreateView}
