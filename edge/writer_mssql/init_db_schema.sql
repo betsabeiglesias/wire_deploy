@@ -1,7 +1,10 @@
-CREATE DATABASE cheap;
+CREATE DATABASE textil;
 GO
 
-USE cheap;
+ALTER DATABASE textil SET RECOVERY SIMPLE;
+GO
+
+USE textil;
 GO
 
 -- ============================================================================
@@ -13,7 +16,7 @@ CREATE TABLE telemetry_history (
     equipment_id VARCHAR(100) NOT NULL,
     variable VARCHAR(100) NOT NULL,
 
-    -- Modelo tipado moderno
+    -- Modelo tipado
     value_float FLOAT NULL,
     value_int BIGINT NULL,
     value_string NVARCHAR(255) NULL,
@@ -24,15 +27,18 @@ CREATE TABLE telemetry_history (
     quality VARCHAR(20),
     batch_id VARCHAR(50),
 
-    created_at DATETIME2 DEFAULT SYSUTCDATETIME()
+    created_at DATETIME2 DEFAULT SYSUTCDATETIME(),
+
+    CONSTRAINT PK_telemetry_id 
+        PRIMARY KEY CLUSTERED (id)
 );
 
-CREATE INDEX idx_telemetry_timestamp ON telemetry_history([timestamp]);
-CREATE INDEX idx_telemetry_equipment ON telemetry_history(equipment_id);
-CREATE INDEX idx_telemetry_variable ON telemetry_history(variable);
+-- CREATE INDEX idx_telemetry_timestamp ON telemetry_history([timestamp]);
+-- CREATE INDEX idx_telemetry_equipment ON telemetry_history(equipment_id);
+-- CREATE INDEX idx_telemetry_variable ON telemetry_history(variable);
 
-CREATE UNIQUE INDEX idx_telemetry_unique 
-ON telemetry_history([timestamp], equipment_id, variable);
+-- CREATE UNIQUE INDEX idx_telemetry_unique 
+-- ON telemetry_history([timestamp], equipment_id, variable);
 
 SELECT '✅ Table telemetry_history created' AS Result;
 GO
@@ -83,10 +89,10 @@ CREATE TABLE mqtt_raw_messages (
 );
 
 CREATE INDEX idx_mqtt_raw_received ON mqtt_raw_messages(received_at);
-CREATE INDEX idx_mqtt_raw_client ON mqtt_raw_messages(client);
-CREATE INDEX idx_mqtt_raw_equipment ON mqtt_raw_messages(equipment_id);
-CREATE INDEX idx_mqtt_raw_parsed ON mqtt_raw_messages(parsed_at);
-CREATE INDEX idx_mqtt_raw_batch ON mqtt_raw_messages(batch_id);
+-- CREATE INDEX idx_mqtt_raw_client ON mqtt_raw_messages(client);
+-- CREATE INDEX idx_mqtt_raw_equipment ON mqtt_raw_messages(equipment_id);
+-- CREATE INDEX idx_mqtt_raw_parsed ON mqtt_raw_messages(parsed_at);
+-- CREATE INDEX idx_mqtt_raw_batch ON mqtt_raw_messages(batch_id);
 
 SELECT '✅ Table mqtt_raw_messages created' AS Result;
 GO
@@ -135,6 +141,7 @@ CREATE INDEX idx_etl_metrics_status ON etl_metrics(status);
 
 SELECT '✅ Table etl_metrics created' AS Result;
 GO
+
 
 -- ============================================================================
 -- VERIFICATION

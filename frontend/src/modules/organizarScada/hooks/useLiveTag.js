@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useGatewayData } from "@/hooks/useGatewayData";
+import { useRealtimeData } from "@/hooks/useRealtimeData";
 import { formatValueWithDecimals } from "@/modules/organizarScada/utils/formatters";
 import { parseNumericValue } from "@/modules/organizarScada/utils/numbers";
 
 export default function useLiveTag(data) {
-  const { allTags } = useGatewayData();
+  const { allTags } = useRealtimeData();
   const [valueHistory, setValueHistory] = useState([]);
 
   const resolveLive = useCallback(() => {
@@ -21,7 +21,7 @@ export default function useLiveTag(data) {
     const candidate =
       allTags.find(
         (t) =>
-          t.equipment === eq &&
+          (t.equipment === eq || t.equipment_id === eq) &&
           t.variable === variable &&
           (!site || t.site === site) &&
           (!area || t.area === area) &&

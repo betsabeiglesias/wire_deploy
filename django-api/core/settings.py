@@ -1,8 +1,11 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+PLC_CONFIG_DIR = os.environ.get('PLC_CONFIG_DIR', '/opt/suite/config/plc/')
 
 # --- SEGURIDAD Y NÚCLEO
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "clave-secreta-por-defecto-no-usar-en-prod")
