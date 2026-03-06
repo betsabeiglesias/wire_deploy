@@ -21,5 +21,5 @@ from auth_app.views import auth_debug_view
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("debug/auth/", auth_debug_view),
-    path("api/", include("config_app.urls")),
+    # path("api/", include("config_app.urls")),
 ]

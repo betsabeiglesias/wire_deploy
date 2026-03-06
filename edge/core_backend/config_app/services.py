@@ -3,6 +3,7 @@
 import yaml
 from pathlib import Path
 from django.conf import settings
+import os
 
 def export_gateway_config():
     gateway_path = Path("/opt/suite/config/gateway.yaml")

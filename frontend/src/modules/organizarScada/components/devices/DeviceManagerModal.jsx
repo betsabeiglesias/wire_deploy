@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { getPLC, getPLCs } from "@/modules/scada/api/plcApi";
-import { useRealtime } from "@/realtime/RealtimeProvider";
+
+
 
 // Modal flotante para gestionar PLCs/tablas y tags de ejemplo (mock local).
 // Arrancamos vacío para que el usuario cree sus propias tablas/PLC
@@ -24,184 +24,100 @@ const DeviceManagerModal = ({ open, onClose }) => {
   const [selectedTagId, setSelectedTagId] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [apiDevices, setApiDevices] = useState([]);
-  const realtime = useRealtime();
-  const allTags = realtime?.allTags || [];
+
 
   useEffect(() => {
-    let cancelled = false;
 
-    const toArray = (payload) => {
-      if (Array.isArray(payload)) return payload;
-      if (Array.isArray(payload?.results)) return payload.results;
-      if (Array.isArray(payload?.data)) return payload.data;
-      if (Array.isArray(payload?.items)) return payload.items;
-      if (Array.isArray(payload?.plcs)) return payload.plcs;
-      if (payload && typeof payload === "object") {
-        const values = Object.values(payload);
-        if (values.length && values.every((v) => v && typeof v === "object")) {
-          return values;
-        }
-      }
-      return [];
-    };
+  const loadDevicesFromApi = async () => {
 
-    const pickPlcId = (plc) =>
-      plc?.id ?? plc?.pk ?? plc?.uuid ?? plc?.plc_id ?? null;
+    try {
 
-    const extractRows = (plc, basePlc) => {
-      const a =
-        plc?.items ||
-        plc?.tags ||
-        plc?.variables ||
-        plc?.config?.items ||
-        plc?.config?.tags ||
-        plc?.config?.variables ||
-        [];
-      if (Array.isArray(a) && a.length) return a;
-      const b =
-        basePlc?.items ||
-        basePlc?.tags ||
-        basePlc?.variables ||
-        basePlc?.config?.items ||
-        basePlc?.config?.tags ||
-        basePlc?.config?.variables ||
-        [];
-      return Array.isArray(b) ? b : [];
-    };
+      const res = await fetch("/api/edge/config/export/");
+      const data = await res.json();
 
-    const loadDevicesFromApi = async () => {
-      try {
-        const plcsRaw = await getPLCs();
-        if (cancelled) return;
-        const plcList = toArray(plcsRaw);
+      const devices = data.equipments.map(eq => {
 
-        const detailResults = await Promise.allSettled(
-          plcList.map((plc) => {
-            const plcId = pickPlcId(plc);
-            return plcId ? getPLC(plcId) : Promise.resolve(plc);
-          }),
-        );
-        if (cancelled) return;
+        const equipmentId = eq.equipment_id;
+        const device = equipmentId?.split("/").pop();
 
-        const normalizedDevices = [];
-        detailResults.forEach((result, index) => {
-          const basePlc = plcList[index] || {};
-          const plc =
-            result.status === "fulfilled" && result.value
-              ? result.value
-              : basePlc;
-          const plcId = pickPlcId(plc) ?? pickPlcId(basePlc) ?? `plc-${index}`;
-          const equipmentId =
-            plc?.equipment_id ||
-            basePlc?.equipment_id ||
-            basePlc?.name ||
-            plc?.name ||
-            "";
-          const endpoint =
-            plc?.connection?.endpoint ||
-            plc?.connection_data?.endpoint ||
-            plc?.config?.connection?.endpoint ||
-            basePlc?.connection?.endpoint ||
-            basePlc?.connection_data?.endpoint ||
-            basePlc?.config?.connection?.endpoint ||
-            "";
-          const driver = plc?.driver || basePlc?.driver || "";
-          const sourceRows = extractRows(plc, basePlc);
-          const normalizedTags = sourceRows.map((tag, tagIdx) => ({
-            cdcTag:
-              tag?.cdc?.tag ||
-              tag?.plcVariable ||
-              tag?.variable ||
-              tag?.tag ||
-              tag?.attributeKey ||
-              tag?.name ||
-              "",
-            id: tag?.id || `${plcId}-${tagIdx}`,
-            name:
-              tag?.name ||
-              tag?.variable ||
-              tag?.tag ||
-              tag?.cdc?.tag ||
-              tag?.attributeKey ||
-              `var_${tagIdx + 1}`,
-            variable:
-              tag?.variable ||
-              tag?.name ||
-              tag?.tag ||
-              tag?.cdc?.tag ||
-              tag?.attributeKey ||
-              "",
-            variableName:
-              tag?.name ||
-              tag?.variableName ||
-              tag?.variable ||
-              tag?.tag ||
-              tag?.attributeKey ||
-              tag?.cdc?.tag ||
-              "",
-            plcVariable:
-              tag?.plcVariable ||
-              tag?.cdc?.tag ||
-              tag?.variable ||
-              tag?.tag ||
-              tag?.attributeKey ||
-              tag?.name ||
-              "",
-            address:
-              tag?.address ||
-              endpoint,
-            endpoint,
-            nodeId:
-              tag?.node_id ||
-              tag?.nodeId ||
-              tag?.nodeid ||
-              tag?.addressing?.node_id ||
-              tag?.addressing?.nodeid ||
-              "",
-            node_id:
-              tag?.node_id ||
-              tag?.nodeId ||
-              tag?.nodeid ||
-              tag?.addressing?.node_id ||
-              tag?.addressing?.nodeid ||
-              "",
-            datatype: tag?.datatype || tag?.type || "Float",
-            unit: tag?.unit || tag?.cdc?.unit || "",
-            deviceId: String(plcId),
+        return {
+
+          id: equipmentId,
+
+          name: eq.isa95?.work_unit || device || equipmentId,
+
+          equipmentId,
+
+          device, // 👈 añadido
+
+          endpoint: eq.connection?.endpoint || "",
+
+          driver: eq.driver || "",
+
+          tags: (eq.items || []).map((item, i) => ({
+
+            id: `${equipmentId}-${i}`,
+
+            name: item.name,
+
+            variable: item.cdc?.tag,
+
+            variableName: item.name,
+
+            plcVariable: item.cdc?.tag,
+
+            datatype: item.datatype,
+
+            unit: item.cdc?.unit,
+
+            nodeId: item.addressing?.node_id,
+
+            node_id: item.addressing?.node_id,
+
+            address: eq.connection?.endpoint,
+
+            endpoint: eq.connection?.endpoint,
+
+            deviceId: equipmentId,
+
             equipment: equipmentId,
-            plcName: driver,
-            sourceMode:
-              tag?.sourceMode ||
-              (tag?.deviceId || tag?.plcVariable || tag?.address || tag?.nodeId
-                ? "conexion"
-                : "local"),
-            conn: tag?.conn || "Conexion",
-            bindingKey:
-              tag?.bindingKey ||
-              `${plcId}::${tag?.name || tag?.variable || tag?.tag || tag?.attributeKey || tag?.cdc?.tag || ""}`,
-          }));
 
-          normalizedDevices.push({
-            id: String(plcId),
-            name: plc?.name || basePlc?.name || equipmentId || `PLC ${index + 1}`,
-            equipmentId,
-            driver,
-            endpoint,
-            tags: normalizedTags,
-          });
-        });
-        if (!cancelled) setApiDevices(normalizedDevices);
-      } catch (_err) {
-        console.error("DeviceManagerModal: no se pudo cargar PLCs desde API", _err);
-        if (!cancelled) setApiDevices([]);
-      }
-    };
+            device, // 👈 también disponible en cada tag
 
-    loadDevicesFromApi();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+            plcName: eq.driver,
+
+            sourceMode: "conexion",
+
+            conn: "Conexion",
+
+            bindingKey: `${equipmentId}::${item.name}`
+
+          }))
+
+        };
+
+      });
+
+      setApiDevices(devices);
+
+    } catch (err) {
+
+      console.error("Error loading devices", err);
+
+    }
+
+  };
+
+  loadDevicesFromApi();
+
+}, []);
+
+
+
+
+
+
+
 
   useEffect(() => {
     if (!devices.length) {
@@ -278,120 +194,8 @@ const DeviceManagerModal = ({ open, onClose }) => {
     return byId;
   }, [apiDevices]);
 
-  const equipmentOptions = useMemo(() => {
-    const seenEquipment = new Set();
-    const options = [];
 
-    apiDevices.forEach((dev) => {
-      const equipmentId = dev?.equipmentId || dev?.name || "";
-      if (!equipmentId || seenEquipment.has(equipmentId)) return;
-      seenEquipment.add(equipmentId);
-      options.push({
-        value: equipmentId,
-        label: equipmentId,
-      });
-    });
 
-    devices.forEach((table) => {
-      const tableEq = table?.equipmentId || "";
-      if (tableEq && !seenEquipment.has(tableEq)) {
-        seenEquipment.add(tableEq);
-        options.push({ value: tableEq, label: tableEq });
-      }
-      (table?.tags || []).forEach((tag) => {
-        const tagEq = tag?.equipment || "";
-        if (!tagEq || seenEquipment.has(tagEq)) return;
-        seenEquipment.add(tagEq);
-        options.push({ value: tagEq, label: tagEq });
-      });
-    });
-
-    allTags.forEach((tag) => {
-      const equipmentId = tag?.equipment_id || tag?.equipment || "";
-      if (!equipmentId || seenEquipment.has(equipmentId)) return;
-      seenEquipment.add(equipmentId);
-      options.push({ value: equipmentId, label: equipmentId });
-    });
-
-    return options.sort((a, b) =>
-      a.label.localeCompare(b.label, "es", { sensitivity: "base" }),
-    );
-  }, [apiDevices, allTags]);
-
-  const variablesByEquipment = useMemo(() => {
-    const byEquipment = {};
-    const toDisplayName = (value = "") => {
-      const raw = String(value || "").trim();
-      if (!raw) return "";
-      return raw.includes("/") ? raw.split("/").pop() : raw;
-    };
-    const appendVar = (equipmentId, variable) => {
-      if (!equipmentId || !variable?.variableName) return;
-      if (!byEquipment[equipmentId]) byEquipment[equipmentId] = [];
-      const exists = byEquipment[equipmentId].some(
-        (v) =>
-          (variable?.key && v.key === variable.key) ||
-          v.deviceId === variable.deviceId &&
-          v.variableName === variable.variableName,
-      );
-      if (!exists) byEquipment[equipmentId].push(variable);
-    };
-
-    apiDevices.forEach((dev) => {
-      const equipmentId = dev?.equipmentId || dev?.name || "";
-      if (!equipmentId) return;
-      (dev.tags || []).forEach((tag) => {
-        const sourceName = tag?.name || tag?.variableName || "";
-        const variableName = toDisplayName(sourceName);
-        if (!variableName) return;
-        appendVar(equipmentId, {
-          key: `${dev.id}::${sourceName}`,
-          deviceId: dev.id,
-          equipmentId,
-          variableName,
-          datatype: tag?.datatype || "Float",
-          endpoint: dev?.endpoint || "",
-          nodeId: tag?.node_id || tag?.nodeId || tag?.nodeid || "",
-          node_id: tag?.node_id || tag?.nodeId || tag?.nodeid || "",
-          cdcTag: tag?.cdcTag || tag?.plcVariable || tag?.variable || sourceName,
-          unit: tag?.unit || "",
-          driver: dev?.driver || "",
-          address: dev?.endpoint || "",
-        });
-      });
-    });
-
-    allTags.forEach((tag) => {
-      const equipmentId = tag?.equipment_id || tag?.equipment || "";
-      const variablePath = tag?.variable || "";
-      const variableName = toDisplayName(variablePath);
-      if (!equipmentId || !variableName) return;
-      appendVar(equipmentId, {
-        key: `rt::${equipmentId}::${variablePath}`,
-        deviceId: `rt::${equipmentId}`,
-        equipmentId,
-        variableName,
-        datatype: tag?.datatype || "Float",
-        endpoint: tag?.source?.endpoint || "",
-        nodeId: tag?.source?.node_id || tag?.source?.nodeid || "",
-        node_id: tag?.source?.node_id || tag?.source?.nodeid || "",
-        cdcTag: variablePath,
-        unit: tag?.unit || "",
-        driver: tag?.source?.driver || "",
-        address: tag?.source?.endpoint || "",
-      });
-    });
-
-    Object.keys(byEquipment).forEach((equipmentId) => {
-      byEquipment[equipmentId].sort((a, b) =>
-        a.variableName.localeCompare(b.variableName, "es", {
-          sensitivity: "base",
-        }),
-      );
-    });
-
-    return byEquipment;
-  }, [apiDevices, devices, allTags]);
 
   const updateCurrentTag = (tagId, updater) => {
     setDevices((prev) =>

@@ -1,6 +1,5 @@
 // UnifiedSidebar.jsx
-import React, { useMemo, useState } from "react";
-import { useRealtimeData } from "@/hooks/useRealtimeData";
+import React, { useMemo, useState, useEffect } from "react";
 import { templates } from "../utils/gauges";
 import { buttons_labels_items} from "../utils/items";
 
@@ -24,8 +23,22 @@ const UnifiedSidebar = ({
 }) => {
   const [isMainOpen, setIsMainOpen] = useState(true);
   const [activeSection, setActiveSection] = useState("views");
+  
+  const [allTags, setAllTags] = useState([]);
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const res = await fetch("/edge/config/tags");   // tu endpoint
+        const data = await res.json();
+        setAllTags(data);
+      } catch (err) {
+        console.error("Error cargando tags:", err);
+      }
+    };
 
-  const { allTags } = useRealtimeData();
+    fetchTags();
+    }, []);
+
   const [selectedSite, setSelectedSite] = useState("");
   const [selectedArea, setSelectedArea] = useState("");
   const [expandedLines, setExpandedLines] = useState({});

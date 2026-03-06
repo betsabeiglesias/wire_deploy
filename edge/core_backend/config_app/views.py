@@ -1,97 +1,60 @@
-from django.shortcuts import render
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+# from rest_framework.views import APIView
+# from rest_framework.response import Response
+# from django.core.cache import cache
+# from django.conf import settings
 
-from .services import export_gateway_config
-from django.core.cache import cache
-
-def get_gateway_config():
-    cfg = cache.get("gateway_config")
-
-    if not cfg:
-        cfg = export_gateway_config()
-        cache.set("gateway_config", cfg, 10)
-
-    return cfg
-
-class GatewayConfigExportView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        try:
-            cfg = get_gateway_config()
-            return Response(cfg)
-        except Exception as e:
-            return Response(
-                {"error": str(e)},
-                status=500
-            )
-        
+# from .services.export_config import export_gateway_config
+# from .permissions import EdgeApiKeyPermission
 
 
-#RETOMAR USAR UNA API KEY INTERNA, PORQUE ESTE ENDPOINT NO ES DE USUARIO, ES DE INFRAESTRUCTURA SCAD
-# class GatewayConfigExportView(APIView):
-    # def get(self, request):
-    #     key = request.headers.get("X-EDGE-KEY")
-    #     if key != "dev-secret":
-    #         return Response({"error": "unauthorized"}, status=403)
-    #     data = export_gateway_config()
-    #     return Response(data)
+# CACHE_KEY = "edge_gateway_config"
 
-# Y EN EL FRONT
-# axios.get("/api/config/export/", {
-#   headers: {
-#     "X-EDGE-KEY": "dev-secret"
-#   }
-# })
 
-class GatewayTagsView(APIView):
-    permission_classes = [AllowAny]
+# def get_gateway_config():
 
-    def get(self, request):
-        try:
-            cfg = get_gateway_config()
+#     cfg = cache.get(CACHE_KEY)
 
-            tags = []
+#     if not cfg:
+#         cfg = export_gateway_config()
+#         cache.set(CACHE_KEY, cfg, 30)
 
-            for eq in cfg.get("equipments", []):
-                isa = eq.get("isa95", {})
+#     return cfg
 
-                for item in eq.get("items", []):
-                    cdc = item.get("cdc", {})
-                    tag = cdc.get("tag")
 
-                    if not tag:
-                        continue
+# class EdgeConfigView(APIView):
 
-                    tags.append({
-                        "tag": tag,
-                        "unit": cdc.get("unit"),
-                        "datatype": item.get("datatype"),
+#     permission_classes = [EdgeApiKeyPermission]
 
-                        "site": isa.get("site"),
-                        "area": isa.get("area"),
-                        "line": isa.get("work_center"),
-                        "equipment": isa.get("work_unit"),
+#     def get(self, request):
+#         cfg = get_gateway_config()
+#         return Response(cfg)
 
-                        "equipment_id": eq.get("equipment_id"),
-                        "name": item.get("name"),
-                    })
 
-            return Response(tags)
+# class EdgeTagsView(APIView):
 
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
-        
+#     permission_classes = [EdgeApiKeyPermission]
 
-# RETOMAR
-# class GatewayReloadView(APIView):
-#     permission_classes = [AllowAny]
+#     def get(self, request):
 
-#     def post(self, request):
-#         try:
-#             reload_gateway()
-#             return Response({"status": "reloaded"})
-#         except Exception as e:
-#             return Response({"error": str(e)}, status=500)
+#         cfg = get_gateway_config()
+
+#         tags = []
+
+#         for eq in cfg.get("equipments", []):
+
+#             equipment_id = eq.get("equipment_id")
+
+#             # PLC = última parte del equipment_id
+#             plc = equipment_id.split("/")[-1] if equipment_id else None
+
+#             for item in eq.get("items", []):
+
+#                 tags.append({
+#                     "equipment_id": equipment_id,
+#                     "plc": plc,
+#                     "tag": item.get("name"),
+#                     "datatype": item.get("datatype"),
+#                     "unit": item.get("unit"),
+#                 })
+
+#         return Response(tags)

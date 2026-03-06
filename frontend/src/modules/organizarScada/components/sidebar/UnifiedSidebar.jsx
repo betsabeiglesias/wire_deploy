@@ -7,7 +7,7 @@ import {
   Lock,
   Unlock,
 } from "lucide-react";
-import { useRealtime } from "@/realtime/RealtimeProvider";
+
 import { elementos_scada } from "@/modules/organizarScada/templates/elementos_scada";
 import { buttons_labels_items } from "@/modules/organizarScada/utils/items";
 import { renderWidget } from "@/modules/organizarScada/components/widgets/registry.jsx";
@@ -119,12 +119,27 @@ const UnifiedSidebar = ({
   const [isProcessingUpload, setIsProcessingUpload] = useState(false);
   const uploadInputRef = useRef(null);
 
-  const { allTags } = useRealtime();
-  const [selectedSite, setSelectedSite] = useState("");
-  const [selectedArea, setSelectedArea] = useState("");
-  const [expandedLines, setExpandedLines] = useState({});
-  const [expandedCells, setExpandedCells] = useState({});
-  const [selectedEquipment, setSelectedEquipment] = useState(null);
+  const [allTags, setAllTags] = useState([]);
+  const loaded = useRef(false);
+  useEffect(() => {
+    if (loaded.current) return;
+    loaded.current = true;
+
+    const fetchTags = async () => {
+      try {
+        const res = await fetch("/edge/config/tags");
+        const data = await res.json();
+        setAllTags(data);
+      } catch (err) {
+        console.error("Error cargando tags:", err);
+      }
+    };
+
+    fetchTags();
+  }, []);
+
+
+
   const [editingViewId, setEditingViewId] = useState(null);
   const [editingName, setEditingName] = useState("");
   const [editingLayerId, setEditingLayerId] = useState(null);
@@ -241,94 +256,6 @@ const UnifiedSidebar = ({
     addComponentToCanvas?.(data);
   };
 
-  const handleLayoutDragStart = (e, layoutType) => {
-    e.dataTransfer.setData("application/x-element-type", layoutType);
-  };
-
-  const sites = useMemo(
-    () => [...new Set(allTags.map(t => t.site).filter(Boolean))],
-    [allTags],
-  );
-
-  const areas = useMemo(() => {
-    const subset = allTags.filter(
-      t => !selectedSite || t.site === selectedSite,
-    );
-    return [...new Set(subset.map(t => t.area).filter(Boolean))];
-  }, [allTags, selectedSite]);
-
-  const lines = useMemo(() => {
-    const subset = allTags.filter(
-      t =>
-        (!selectedSite || t.site === selectedSite) &&
-        (!selectedArea || t.area === selectedArea),
-    );
-    return [...new Set(subset.map(t => t.line).filter(Boolean))];
-  }, [allTags, selectedSite, selectedArea]);
-
-  const treeCellsByLine = useMemo(() => {
-    const map = {};
-    allTags
-      .filter(
-        t =>
-          (!selectedSite || t.site === selectedSite) &&
-          (!selectedArea || t.area === selectedArea),
-      )
-      .forEach(t => {
-        if (!t.line || !t.cell) return;
-        if (!map[t.line]) map[t.line] = new Set();
-        map[t.line].add(t.cell);
-      });
-    return Object.fromEntries(Object.entries(map).map(([k, v]) => [k, [...v]]));
-  }, [allTags, selectedSite, selectedArea]);
-
-  const equipmentsByCellKey = useMemo(() => {
-    const map = {};
-    allTags
-      .filter(
-        t =>
-          (!selectedSite || t.site === selectedSite) &&
-          (!selectedArea || t.area === selectedArea),
-      )
-      .forEach(t => {
-        if (!t.line || !t.cell || !t.equipment) return;
-        const key = `${t.line}///${t.cell}`;
-        if (!map[key]) map[key] = new Set();
-        map[key].add(t.equipment);
-      });
-    return Object.fromEntries(Object.entries(map).map(([k, v]) => [k, [...v]]));
-  }, [allTags, selectedSite, selectedArea]);
-
-  const variablesForEquipment = eq => {
-    const subset = allTags.filter(
-      t =>
-        (!selectedSite || t.site === selectedSite) &&
-        (!selectedArea || t.area === selectedArea) &&
-        t.equipment === eq,
-    );
-    return [...new Set(subset.map(t => t.variable).filter(Boolean))];
-  };
-
-  const attrsMetaForSelection = eq => {
-    const subset = allTags.filter(
-      t =>
-        (!selectedSite || t.site === selectedSite) &&
-        (!selectedArea || t.area === selectedArea) &&
-        t.equipment === eq,
-    );
-    const byVar = {};
-    subset.forEach(t => {
-      byVar[t.variable] = t;
-    });
-    return byVar;
-  };
-
-  const toggleLine = line =>
-    setExpandedLines(prev => ({ ...prev, [line]: !prev[line] }));
-  const toggleCell = (line, cell) => {
-    const key = `${line}///${cell}`;
-    setExpandedCells(prev => ({ ...prev, [key]: !prev[key] }));
-  };
 
   const handlePickTemplate = tpl => {
     const baseSettings = tpl.data?.settings || {};
@@ -363,11 +290,7 @@ const UnifiedSidebar = ({
     setEditingName("");
   };
 
-  const formatUpdatedAt = ts => {
-    if (!ts) return "Sin fecha";
-    const d = new Date(ts);
-    return Number.isNaN(d.getTime()) ? "Sin fecha" : d.toLocaleString();
-  };
+
 
   useEffect(() => {
     try {
@@ -763,19 +686,37 @@ const UnifiedSidebar = ({
       );
     }
     if (sectionId === "devices") {
+      const devices = [...new Set(allTags.map(t => t.device).filter(Boolean))].sort();
+
       return (
         <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-800">
-              Dispositivos
-            </h3>
+            <h3 className="text-sm font-semibold text-slate-800">Dispositivos</h3>
             <button
               onClick={() => setShowDevices(true)}
               className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
             >
-              Abrir gestor
+              Gestor
             </button>
           </div>
+          {devices.length === 0 ? (
+            <p className="text-[11px] text-slate-400">Sin dispositivos configurados.</p>
+          ) : (
+            <ul className="space-y-1 max-h-48 overflow-y-auto">
+              {devices.map(device => (
+                <li
+                  key={device}
+                  className="flex items-center gap-2 rounded border border-slate-100 bg-slate-50 px-2 py-1.5"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                  <span className="truncate text-slate-700">{device}</span>
+                  <span className="ml-auto text-[10px] text-slate-400">
+                    {allTags.filter(t => t.device === device).length} tags
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       );
     }

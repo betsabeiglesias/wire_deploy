@@ -12,12 +12,12 @@ def build_gateway_yaml():
     Crea el archivo si no existe.
     """
     plcs = PLC.objects.filter(enabled=True)
-    equipments = []
-    for plc in plcs:
-        if plc.config_path:
-            equipments.append({
-                "items_file": plc.config_path
-            })
+    plcs = PLC.objects.filter(enabled=True)
+
+    equipments = [
+        {"items_file": f"/opt/suite/config/plc/{plc.name}.yaml"}
+        for plc in plcs
+    ]
 
     # Plantilla base del gateway
     data = {

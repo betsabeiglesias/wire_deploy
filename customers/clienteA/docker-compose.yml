@@ -8,7 +8,7 @@ services:
       - TZ=Europe/Madrid
       - GATEWAY_CONFIG=/opt/suite/config/gateway.yaml
     volumes:
-      - ./opt/suite/config:/opt/suite/config:ro
+      - ./opt:/opt:ro
     restart: unless-stopped
     networks:
       - suite-central-net
@@ -102,7 +102,7 @@ services:
     container_name: core-backendA
     volumes:
       - ../../edge/core_backend:/app
-      - ./opt/suite/config:/opt/suite/config
+      - ./opt:/opt
     env_file:
       - ./customerA.env
     environment:
@@ -113,6 +113,18 @@ services:
       - "8001:8000"   # 🔥 OJO: puerto distinto al central
     depends_on:
       - redis
+    restart: unless-stopped
+    networks:
+      - suite-central-net
+
+
+  edge-config-sync:
+    build:
+      context: ../../edge/core_backend
+    container_name: edge_config_sync
+    command: python -m edge_config.run
+    env_file:
+      - ./customerA.env
     restart: unless-stopped
     networks:
       - suite-central-net

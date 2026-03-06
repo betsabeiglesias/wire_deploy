@@ -10,6 +10,8 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "clave-secreta-por-defecto-no-u
 DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 ALLOWED_HOSTS = ["*"]
 
+EDGE_API_KEY = "dev-secret"
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -28,6 +30,7 @@ INSTALLED_APPS = [
     'core.favorites',
     'core.auth_manager',
     'channels',
+    'edge_config',
 ]
 
 MIDDLEWARE = [

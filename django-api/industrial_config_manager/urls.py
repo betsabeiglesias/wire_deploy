@@ -1,6 +1,6 @@
-# django-api\industrial_config_manager\urls.py
+# industrial_config_manager/urls.py
 
-from django.urls import include, path
+from django.urls import path, include
 
 urlpatterns = [
     path("", include("industrial_config_manager.api.urls")),

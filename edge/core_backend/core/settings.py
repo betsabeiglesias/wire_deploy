@@ -32,7 +32,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
-
+EDGE_API_KEY = "dev-secret"
 # Application definition
 
 INSTALLED_APPS = [
