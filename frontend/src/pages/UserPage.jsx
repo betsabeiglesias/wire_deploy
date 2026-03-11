@@ -1,132 +1,266 @@
+import {
+  BadgeCheck,
+  Building2,
+  CalendarDays,
+  Mail,
+  Shield,
+  UserRound,
+} from "lucide-react";
+import Sidebar from "../modules/sidebar/Sidebar";
 import { useAuthStore } from "../store/useAuthStore";
-import HomeButton from "../components/HomeButton";
+
+const formatJoinDate = (value) =>
+  new Date(value).toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+const statusTone = (active) =>
+  active
+    ? {
+        dot: "bg-emerald-500",
+        text: "text-emerald-700",
+        chip: "bg-emerald-50 border-emerald-200 text-emerald-700",
+        label: "ACTIVA",
+      }
+    : {
+        dot: "bg-rose-500",
+        text: "text-rose-700",
+        chip: "bg-rose-50 border-rose-200 text-rose-700",
+        label: "INACTIVA",
+      };
 
 export default function UserPage() {
   const { user, loading, error } = useAuthStore();
 
-  // 1. Mientras esté cargando, mostramos spinner
   if (loading) {
     return (
-      <div className="flex justify-center items-center p-10">
-        <span className="text-gray-500 animate-pulse">Cargando datos del perfil...</span>
+      <div className="flex h-screen w-full overflow-hidden bg-[#f7f7f8]">
+        <Sidebar />
+        <main className="flex-1 bg-[#f7f7f8] p-4 md:p-6">
+          <div className="flex h-full items-center justify-center rounded-[30px] border border-[#ececee] bg-[#fbfbfc]">
+            <p className="text-sm text-[#8f919a] animate-pulse">
+              Cargando datos del perfil...
+            </p>
+          </div>
+        </main>
       </div>
     );
   }
 
-  // 2. Si hay error en el store
   if (error) {
     return (
-      <div className="max-w-2xl mx-auto mt-10 p-6 text-red-600 bg-red-50 border border-red-200 rounded-lg">
-        <p className="font-bold">Error al cargar el perfil:</p>
-        <p>{error}</p>
+      <div className="flex h-screen w-full overflow-hidden bg-[#f7f7f8]">
+        <Sidebar />
+        <main className="flex-1 bg-[#f7f7f8] p-4 md:p-6">
+          <div className="rounded-[30px] border border-rose-200 bg-white p-6 text-rose-700 shadow-[0_20px_40px_-30px_rgba(190,24,93,0.25)]">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em]">
+              Error
+            </p>
+            <p className="mt-3 text-2xl font-semibold">
+              No se pudo cargar el perfil
+            </p>
+            <p className="mt-2 text-sm leading-6">{error}</p>
+          </div>
+        </main>
       </div>
     );
   }
 
-  // 3. Validación de datos completos
   if (!user || !user.date_joined) {
     return (
-      <div className="max-w-2xl mx-auto mt-10 p-6 bg-yellow-50 text-yellow-700 rounded-lg">
-        <p>No se han podido recuperar los detalles del perfil.</p>
-        <p className="text-xs mt-2 italic text-yellow-600">Verifica que la sesión no haya expirado.</p>
+      <div className="flex h-screen w-full overflow-hidden bg-[#f7f7f8]">
+        <Sidebar />
+        <main className="flex-1 bg-[#f7f7f8] p-4 md:p-6">
+          <div className="rounded-[30px] border border-amber-200 bg-white p-6 text-amber-800 shadow-[0_20px_40px_-30px_rgba(217,119,6,0.22)]">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em]">
+              Perfil no disponible
+            </p>
+            <p className="mt-3 text-2xl font-semibold">
+              No se han podido recuperar los detalles del perfil
+            </p>
+            <p className="mt-2 text-sm leading-6">
+              Verifica que la sesion no haya expirado.
+            </p>
+          </div>
+        </main>
       </div>
     );
   }
 
+  const accountStatus = statusTone(user.is_active);
+
   return (
-    <>
-      <div className="absolute top-8 right-8 z-10">
-        <HomeButton />
-      </div>
-      <div className="max-w-2xl mx-auto p-6 bg-white shadow-md rounded-xl mt-10 border border-gray-100">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6 border-b pb-2">
-          Perfil de Usuario
-        </h1>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* SECCIÓN: DATOS PERSONALES */}
-          <div className="space-y-6">
-            <h2 className="text-sm font-black text-blue-600 uppercase tracking-widest border-l-4 border-blue-600 pl-2">
-              Datos Personales
-            </h2>
-            
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-400 uppercase font-bold">Nombre de usuario</span>
-              <span className="text-lg text-gray-900 font-medium">{user.username}</span>
-            </div>
+    <div className="flex h-screen w-full overflow-hidden bg-[#f7f7f8]">
+      <Sidebar />
 
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-400 uppercase font-bold">Email</span>
-              <span className="text-lg text-gray-900 font-medium">{user.email || "No proporcionado"}</span>
-            </div>
-
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-400 uppercase font-bold">Fecha de registro</span>
-              <span className="text-lg text-gray-900 font-medium">
-                {new Date(user.date_joined).toLocaleDateString('es-ES', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
-              </span>
-            </div>
-          </div>
-
-          {/* SECCIÓN: DATOS DE EMPRESA (CLIENTE) */}
-          <div className="space-y-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
-            <h2 className="text-sm font-black text-green-600 uppercase tracking-widest border-l-4 border-green-600 pl-2">
-              Afiliación Industrial
-            </h2>
-
-            {user.client ? (
-              <>
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-400 uppercase font-bold">Empresa / Cliente</span>
-                  <span className="text-lg text-gray-900 font-bold">{user.client.name}</span>
-                  <span className="text-xs text-gray-500 font-mono">ID: {user.client.id}</span>
-                </div>
-
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-400 uppercase font-bold">Tu Rol</span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="bg-green-100 text-green-800 px-3 py-1 rounded text-sm font-bold border border-green-200">
-                      {user.client.role_display}
-                    </span>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-gray-500 italic">No tienes un cliente asignado.</p>
-            )}
-
-            <div className="flex flex-col">
-              <span className="text-xs text-gray-400 uppercase font-bold">Estado de cuenta</span>
-              <div className="flex items-center mt-1">
-                <span className={`h-2.5 w-2.5 rounded-full mr-2 ${user.is_active ? "bg-green-500" : "bg-red-500"}`}></span>
-                <span className={`text-sm font-bold ${user.is_active ? "text-green-700" : "text-red-700"}`}>
-                  {user.is_active ? "ACTIVA" : "INACTIVA"}
-                </span>
+      <main className="flex-1 overflow-y-auto bg-[#f7f7f8]">
+        <div className="min-h-full px-4 py-4 md:px-6 md:py-6">
+          <div className="overflow-hidden rounded-[30px] border border-[#ececee] bg-[#fbfbfc] shadow-[0_24px_70px_-42px_rgba(31,41,55,0.12)]">
+            <section className="relative border-b border-[#ececee] px-6 pb-10 pt-8 md:px-10 md:pb-12">
+              <div className="absolute inset-x-0 top-0 h-[220px]">
+                <div className="absolute left-1/2 top-[12%] h-[260px] w-[560px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(196,181,253,0.2),transparent_65%)]" />
+                <div className="absolute inset-0 opacity-70 [background-image:radial-gradient(#d9cdf7_1px,transparent_1px)] [background-size:8px_8px]" />
               </div>
-            </div>
+
+              <div className="relative z-10 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
+                <div className="max-w-3xl">
+                  <h1 className="mt-7 text-5xl font-semibold leading-[0.96] tracking-[-0.05em] text-[#4a4a4e] md:text-6xl">
+                    Perfil del
+                    <br />
+                    <span className="text-[#79c8f1]">Usuario.</span>
+                  </h1>
+                </div>
+              </div>
+            </section>
+
+            <section className="px-6 py-8 md:px-5 md:py-5">
+              <div className="grid gap-6 xl:grid-cols-[1fr_0.92fr]">
+                <article className="rounded-[28px] border border-[#f0f0f2] bg-white p-6 shadow-[0_20px_40px_-30px_rgba(31,41,55,0.12)]">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#ededf1] bg-[#fbfbfc] text-[#5b606d]">
+                      <UserRound className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-[#8f919a]">Datos personales</p>
+                      <h2 className="text-2xl font-semibold tracking-[-0.03em] text-[#3b3d45]">
+                        Informacion de acceso
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-[#f1f2f4] bg-[#fafafb] p-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-[#9aa0ac]">
+                        Nombre de usuario
+                      </p>
+                      <p className="mt-3 text-lg font-semibold text-[#33363f]">
+                        {user.username}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-[#f1f2f4] bg-[#fafafb] p-4">
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-[#8b8f99]" />
+                        <p className="text-xs uppercase tracking-[0.18em] text-[#9aa0ac]">
+                          Email
+                        </p>
+                      </div>
+                      <p className="mt-3 text-lg font-semibold text-[#33363f] break-all">
+                        {user.email || "No proporcionado"}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-[#f1f2f4] bg-[#fafafb] p-4 sm:col-span-2">
+                      <div className="flex items-center gap-2">
+                        <CalendarDays className="h-4 w-4 text-[#8b8f99]" />
+                        <p className="text-xs uppercase tracking-[0.18em] text-[#9aa0ac]">
+                          Fecha de registro
+                        </p>
+                      </div>
+                      <p className="mt-3 text-lg font-semibold text-[#33363f]">
+                        {formatJoinDate(user.date_joined)}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+
+                <article className="rounded-[28px] border border-[#f0f0f2] bg-white p-6 shadow-[0_20px_40px_-30px_rgba(31,41,55,0.12)]">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#ededf1] bg-[#fbfbfc] text-[#5b606d]">
+                      <Building2 className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-[#8f919a]">
+                        Afiliacion industrial
+                      </p>
+                      <h2 className="text-2xl font-semibold tracking-[-0.03em] text-[#3b3d45]">
+                        Cliente y permisos
+                      </h2>
+                    </div>
+                  </div>
+
+                  {user.client ? (
+                    <div className="mt-6 space-y-4">
+                      <div className="rounded-2xl border border-[#f1f2f4] bg-[#fafafb] p-4">
+                        <p className="text-xs uppercase tracking-[0.18em] text-[#9aa0ac]">
+                          Empresa / Cliente
+                        </p>
+                        <p className="mt-3 text-xl font-semibold text-[#33363f]">
+                          {user.client.name}
+                        </p>
+                        <p className="mt-1 text-sm text-[#8b8f99]">
+                          ID: {user.client.id}
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-[#f1f2f4] bg-[#fafafb] p-4">
+                        <p className="text-xs uppercase tracking-[0.18em] text-[#9aa0ac]">
+                          Rol industrial
+                        </p>
+                        <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#dff1ea] bg-[#effaf6] px-4 py-2 text-sm font-semibold text-[#1f7a62]">
+                          <BadgeCheck className="h-4 w-4" />
+                          {user.client.role_display}
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-[#f1f2f4] bg-[#fafafb] p-4">
+                        <p className="text-xs uppercase tracking-[0.18em] text-[#9aa0ac]">
+                          Estado de cuenta
+                        </p>
+                        <div
+                          className={`mt-3 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${accountStatus.chip}`}
+                        >
+                          <span
+                            className={`h-2.5 w-2.5 rounded-full ${accountStatus.dot}`}
+                          />
+                          {accountStatus.label}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-6 rounded-2xl border border-[#f3e8b3] bg-[#fffbea] p-4 text-sm leading-6 text-[#8a6b1f]">
+                      No tienes un cliente asignado.
+                    </div>
+                  )}
+                </article>
+              </div>
+
+              {(user.is_staff || user.is_superuser) && (
+                <section className="mt-6 rounded-[28px] border border-[#f0f0f2] bg-white p-6 shadow-[0_20px_40px_-30px_rgba(31,41,55,0.12)]">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#ededf1] bg-[#fbfbfc] text-[#5b606d]">
+                      <Shield className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-[#8f919a]">
+                        Privilegios tecnicos
+                      </p>
+                      <h2 className="text-2xl font-semibold tracking-[-0.03em] text-[#3b3d45]">
+                        Roles del sistema
+                      </h2>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex flex-wrap gap-3">
+                    {user.is_staff && (
+                      <span className="rounded-full border border-[#dce9ff] bg-[#f3f8ff] px-4 py-2 text-sm font-semibold text-[#3563b8]">
+                        Staff IT
+                      </span>
+                    )}
+                    {user.is_superuser && (
+                      <span className="rounded-full border border-[#ece0ff] bg-[#f8f3ff] px-4 py-2 text-sm font-semibold text-[#7b4cc7]">
+                        Admin Sistema
+                      </span>
+                    )}
+                  </div>
+                </section>
+              )}
+            </section>
           </div>
         </div>
-
-        {/* Roles Técnicos (Staff/Admin) */}
-        {(user.is_staff || user.is_superuser) && (
-          <div className="flex gap-2 mt-8 pt-4 border-t border-gray-100">
-            {user.is_staff && (
-              <span className="bg-blue-600 text-white text-[10px] px-2 py-1 rounded font-black uppercase">
-                Staff IT
-              </span>
-            )}
-            {user.is_superuser && (
-              <span className="bg-purple-600 text-white text-[10px] px-2 py-1 rounded font-black uppercase">
-                Admin Sistema
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-    </>
+      </main>
+    </div>
   );
 }

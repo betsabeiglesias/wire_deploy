@@ -1,23 +1,50 @@
+import { LogOut } from "lucide-react";
+
 export default function SidebarProfile({ name, role, onLogout, open }) {
   return (
-    <li className="mt-auto flex items-center px-4 py-4 border-t border-[#e0e0e0] bg-[#e5e7eb]">
-      
-      {/* Texto perfil */}
-      <div
-        className={`
-          flex flex-col transition-all duration-300
-          ${open ? "opacity-100 w-auto" : "opacity-0 w-0 overflow-hidden"}
-        `}
-      >
-        <span className="font-semibold text-[#1d1b31]">{name}</span>
-        <span className="text-sm opacity-70 text-[#1d1b31]">{role}</span>
-      </div>
+    <div className="mt-6 border-t border-[#ececee] pt-5">
+      <div className="rounded-[22px] border border-[#efeff1] bg-white p-3 shadow-[0_12px_18px_-16px_rgba(31,41,55,0.1)]">
+        <div className={`flex items-center ${open ? "gap-3" : "justify-center"}`}>
+          <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[#f2f4f8] font-semibold text-[#4e525b]">
+            {name.slice(0, 1).toUpperCase()}
+          </div>
 
-      {/* Icono logout */}
-      <i
-        className="bx bx-log-out text-2xl cursor-pointer text-[#1d1b31] hover:text-[#11101d] ml-auto"
-        onClick={onLogout}
-      />
-    </li>
+          <div
+            className={`min-w-0 transition-all duration-300 ${
+              open
+                ? "w-auto translate-x-0 opacity-100"
+                : "w-0 -translate-x-2 overflow-hidden opacity-0"
+            }`}
+          >
+            <p className="truncate text-sm font-semibold text-[#3b3e46]">
+              {name}
+            </p>
+            <p className="text-xs text-[#9a9da7]">{role}</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onLogout}
+          className={`mt-3 inline-flex items-center rounded-xl border border-[#ececee] bg-[#fafafb] text-[#555962] transition hover:bg-white ${
+            open
+              ? "w-full justify-between px-4 py-3"
+              : "w-full justify-center px-3 py-3"
+          }`}
+          aria-label="Cerrar sesion"
+        >
+          <span
+            className={`text-sm font-medium transition-all duration-300 ${
+              open
+                ? "w-auto translate-x-0 opacity-100"
+                : "w-0 -translate-x-2 overflow-hidden opacity-0"
+            }`}
+          >
+            Logout
+          </span>
+          <LogOut className="h-4 w-4 flex-shrink-0" />
+        </button>
+      </div>
+    </div>
   );
 }
