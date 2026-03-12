@@ -44,15 +44,13 @@ export default function Sidebar() {
           {open ? (
             <div className="flex items-center gap-3">
               <div>
-                <p className="text-lg center font-semibold tracking-[-0.03em] text-[#353841]">
+                <p className="text-lg font-semibold tracking-[-0.03em] text-[#353841]">
                   RDT WIRE
                 </p>
               </div>
             </div>
           ) : (
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-[#ececee] bg-white text-[#525661] shadow-[0_12px_20px_-16px_rgba(31,41,55,0.12)]">
-              <Orbit className="h-5 w-5" />
-            </div>
+            <div className=""></div>
           )}
 
           <button

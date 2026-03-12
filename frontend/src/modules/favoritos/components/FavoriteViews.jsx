@@ -4,21 +4,22 @@ import { usePowerBiStore } from "@/store/usePowerBiStore";
 import { useLayoutStore } from "@/store/useLayoutStore";
 import { useNavigate } from "react-router-dom";
 import FavoriteHeart from "@/components/FavoriteHeart";
+
+// DND Kit
 import {
   DndContext,
-  closestCenter,
   PointerSensor,
+  closestCenter,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
   SortableContext,
-  useSortable,
+  arrayMove,
   rectSortingStrategy,
+  useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Search } from "lucide-react";
 
 export function FavoriteViews({ title, type }) {
   const navigate = useNavigate();
@@ -78,33 +79,21 @@ export function FavoriteViews({ title, type }) {
   };
 
   if (favLoading || pbiLoading || layoutLoading) {
-    return (
-      <div className="rounded-[28px] border border-[#ececee] bg-white p-6 shadow-[0_20px_40px_-30px_rgba(31,41,55,0.12)]">
-        <p className="text-sm text-[#8f919a]">Cargando {title}...</p>
-      </div>
-    );
+    return <p className="p-8 max-w-7xl mx-auto">Cargando {title}...</p>;
   }
 
   return (
-    <section className="mb-8 rounded-[28px] border border-[#ececee] bg-white p-6 shadow-[0_20px_40px_-30px_rgba(31,41,55,0.12)] last:mb-0">
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-sm text-[#8f919a]">Favorite views</p>
-          <h2 className="text-3xl font-semibold tracking-[-0.04em] text-[#3b3d45]">
-            {title}
-          </h2>
-        </div>
+    <div className="p-8 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+        <h2 className="text-2xl font-semibold">{title}</h2>
 
-        <div className="relative w-full max-w-sm">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9aa0ac]" />
-          <input
-            type="text"
-            placeholder={`Buscar en ${title}...`}
-            className="w-full rounded-2xl border border-[#e5e6ea] bg-[#fafafb] py-3 pl-11 pr-4 text-sm text-[#444955] outline-none transition focus:border-[#cfd6e3] focus:bg-white"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+        <input
+          type="text"
+          placeholder={`Buscar en ${title}...`}
+          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none shadow-sm text-sm w-full max-w-xs transition-all"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
       {filteredData.length > 0 ? (
@@ -117,7 +106,7 @@ export function FavoriteViews({ title, type }) {
             items={filteredData.map((i) => i.favTableId)}
             strategy={rectSortingStrategy}
           >
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredData.map((item) => (
                 <SortableFavoriteCard
                   key={item.favTableId}
@@ -130,31 +119,25 @@ export function FavoriteViews({ title, type }) {
           </SortableContext>
         </DndContext>
       ) : (
-        <div className="rounded-2xl border border-dashed border-[#e4e6eb] bg-[#fafafb] px-5 py-10 text-center">
+        <div className="py-10">
           {allDisplayData.length > 0 ? (
-            <p className="text-sm italic text-[#8f919a]">
+            <p className="text-gray-400 italic">
               No se encontraron resultados para "{searchTerm}" en {title}.
             </p>
           ) : (
-            <p className="text-sm italic text-[#8f919a]">
+            <p className="text-gray-500 italic">
               No tienes {title.toLowerCase()} en favoritos.
             </p>
           )}
         </div>
       )}
-    </section>
+    </div>
   );
 }
 
 function SortableFavoriteCard({ item, type, navigate }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: item.favTableId });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: item.favTableId });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -165,29 +148,26 @@ function SortableFavoriteCard({ item, type, navigate }) {
   };
 
   return (
-    <article
+    <div
       ref={setNodeRef}
       style={style}
-      className={`overflow-hidden rounded-[24px] border border-[#ececee] bg-[#fbfbfc] shadow-[0_18px_34px_-26px_rgba(31,41,55,0.14)] transition-all ${
+      className={`overflow-hidden rounded-[28px] border border-[#e8eaef] bg-[linear-gradient(180deg,#ffffff_0%,#fbfbfd_100%)] shadow-[0_22px_40px_-28px_rgba(31,41,55,0.18)] flex flex-col transition-all ${
         isDragging
-          ? "scale-[1.02] opacity-70 shadow-[0_24px_40px_-24px_rgba(31,41,55,0.2)]"
+          ? "opacity-60 scale-[1.02] shadow-[0_28px_52px_-26px_rgba(31,41,55,0.24)] ring-2 ring-[#79c8f1]/20"
           : ""
       }`}
     >
       <div
         {...attributes}
         {...listeners}
-        className="flex items-center justify-between border-b border-[#eef1f5] bg-white px-4 py-3 cursor-grab active:cursor-grabbing"
+        className="cursor-grab border-b border-[#eef1f5] bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-3 active:cursor-grabbing"
       >
-        <div className="flex items-center gap-2 text-[#8f919a]">
-          <GripVertical className="h-4 w-4" />
-          <span className="text-xs font-medium uppercase tracking-[0.16em]">
-            Reordenar
-          </span>
-        </div>
+        <h3 className="truncate text-center text-lg font-semibold tracking-[-0.03em] text-[#2f3440]">
+          {item.name}
+        </h3>
       </div>
 
-      <div className="relative h-56 overflow-hidden border-b border-[#eef1f5] bg-white">
+      <div className="relative h-44 overflow-hidden border-b border-[#eef1f5] bg-[#f3f6fb]">
         {type === "mypowerbi" ? (
           item.embed_url ? (
             <iframe
@@ -195,10 +175,10 @@ function SortableFavoriteCard({ item, type, navigate }) {
               title={item.name}
               frameBorder="0"
               allowFullScreen
-              className="h-full w-full pointer-events-none"
+              className="w-full h-full"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-[#8f919a]">
+            <div className="flex items-center justify-center h-full text-gray-500">
               URL no disponible
             </div>
           )
@@ -208,7 +188,7 @@ function SortableFavoriteCard({ item, type, navigate }) {
             title={item.name}
             frameBorder="0"
             scrolling="yes"
-            className="absolute left-0 top-0 origin-top-left border-0 pointer-events-none"
+            className="absolute top-0 left-0 border-0 origin-top-left"
             style={{
               width: "166.66%",
               height: "166.66%",
@@ -216,15 +196,17 @@ function SortableFavoriteCard({ item, type, navigate }) {
             }}
           />
         )}
-        <div className="absolute inset-0 bg-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(248,250,255,0.08)_0%,rgba(248,250,255,0)_40%,rgba(255,255,255,0.78)_100%)]" />
+
+        <div className="pointer-events-none absolute left-4 top-4 rounded-full border border-white/80 bg-white/90 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-[#6d7482] shadow-[0_12px_24px_-18px_rgba(31,41,55,0.2)]">
+          Vista previa
+        </div>
       </div>
 
-      <div className="p-5">
-        <h3 className="truncate text-2xl font-semibold tracking-[-0.03em] text-[#33363f]">
-          {item.name}
-        </h3>
-        <div className="mt-5 flex items-center justify-between border-t border-[#eef1f5] pt-4">
+      <div className="flex flex-1 flex-col p-4">
+        <div className="flex items-center justify-between border-t border-[#eef1f5] pt-4">
           <FavoriteHeart type={type} objectId={item.id} />
+
           <button
             onClick={() =>
               navigate(
@@ -237,12 +219,12 @@ function SortableFavoriteCard({ item, type, navigate }) {
                 },
               )
             }
-            className="rounded-xl border border-[#e5e6ea] bg-[#fafafb] px-4 py-2 text-sm font-medium text-[#33363f] transition hover:bg-white"
+            className="rounded-2xl bg-[#343841] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#272b33]"
           >
-            Ver
+            Abrir vista
           </button>
         </div>
       </div>
-    </article>
+    </div>
   );
 }

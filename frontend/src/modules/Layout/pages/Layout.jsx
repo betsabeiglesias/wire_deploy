@@ -157,24 +157,28 @@ function SortableItem({ layout, onDelete, navigate }) {
         isDragging ? "shadow-2xl ring-2 ring-green-500/20 scale-105 opacity-90" : "shadow-md border-gray-200"
       }`}
     >
-      {/* ZONA DE ARRASTRE */}
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-        <div className="h-64 bg-white overflow-hidden relative border-b pointer-events-none">
-          <iframe
-            src={`/layout/${layout.id}`}
-            title={`preview-${layout.id}`}
-            className="absolute top-0 left-0 border-0 origin-top-left"
-            style={{ width: "166.66%", height: "166.66%", transform: "scale(0.6)" }}
-          />
-          <div className="absolute inset-0 bg-transparent" />
-        </div>
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab border-b bg-white p-5 active:cursor-grabbing"
+      >
+        <h2 className="text-xl font-bold text-gray-800 truncate">{layout.name}</h2>
+        <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
+          Arrastra para reordenar
+        </p>
+      </div>
 
-        <div className="p-5 flex-grow bg-white">
-          <h2 className="text-xl font-bold text-gray-800 truncate">{layout.name}</h2>
-          <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mt-1">
-            Arrastra para reordenar
-          </p>
-        </div>
+      <div className="h-64 overflow-hidden relative bg-white">
+        <iframe
+          src={`/layout/${layout.id}`}
+          title={`preview-${layout.id}`}
+          className="absolute top-0 left-0 border-0 origin-top-left"
+          style={{ width: "166.66%", height: "166.66%", transform: "scale(0.6)" }}
+        />
+        <div className="pointer-events-none absolute inset-0 bg-transparent" />
+      </div>
+
+      <div className="p-5 flex-grow bg-white">
       </div>
 
       {/* BOTONES */}
