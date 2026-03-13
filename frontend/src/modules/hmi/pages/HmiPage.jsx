@@ -11,9 +11,12 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../sidebar/Sidebar";
+import { useThemeStore } from "../../../store/useThemeStore";
 
 const HmiPage = () => {
   const navigate = useNavigate();
+  const theme = useThemeStore((state) => state.theme);
+  const isDark = theme === "dark";
 
   const modules = [
     {
@@ -64,32 +67,27 @@ const HmiPage = () => {
   ];
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#f7f7f8]">
+    <div className={`flex h-screen w-full overflow-hidden ${isDark ? "bg-[#0b1631]" : "bg-[#f7f7f8]"}`}>
       <Sidebar />
 
-      <main className="flex-1 overflow-y-auto bg-[#f7f7f8]">
+      <main className={`flex-1 overflow-y-auto ${isDark ? "bg-[#0b1631]" : "bg-[#f7f7f8]"}`}>
         <div className="min-h-full px-4 py-4 md:px-6 md:py-6">
-          <div className="overflow-hidden rounded-[30px] border border-[#ececee] bg-[#fbfbfc] shadow-[0_24px_70px_-42px_rgba(31,41,55,0.12)]">
-            <section className="border-b border-[#ececee] px-6 py-6 md:px-8 md:py-8">
+          <div className={`overflow-hidden rounded-[30px] ${isDark ? "border border-white/10 bg-[linear-gradient(160deg,#09152f_0%,#0d1d40_42%,#132857_100%)] shadow-[0_24px_70px_-42px_rgba(0,0,0,0.35)]" : "border border-[#ececee] bg-[#fbfbfc] shadow-[0_24px_70px_-42px_rgba(31,41,55,0.12)]"}`}>
+            <section className={`px-6 py-6 md:px-8 md:py-8 ${isDark ? "border-b border-white/10" : "border-b border-[#ececee]"}`}>
               <div className="grid gap-6">
-                <article className="relative overflow-hidden rounded-[34px] border border-[#ececee] bg-[#ffffff] px-6 py-7 shadow-[0_24px_50px_-34px_rgba(31,41,55,0.15)] md:px-8 md:py-8">
-                  <div className="absolute inset-0 opacity-70 [background-image:radial-gradient(#d9cdf7_1px,transparent_1px)] [background-size:8px_8px]" />
-                  <div className="absolute left-[12%] top-[18%] h-[240px] w-[240px] rounded-full bg-[radial-gradient(circle,rgba(121,200,241,0.18),transparent_70%)]" />
-                  <div className="absolute right-[-30px] top-[-20px] h-[220px] w-[220px] rounded-full bg-[radial-gradient(circle,rgba(196,181,253,0.16),transparent_72%)]" />
-
-                  <div className="relative z-10">
-                    <h1 className="mt-6 max-w-3xl text-4xl font-semibold leading-[0.95] tracking-[-0.05em] text-[#464851] md:text-6xl">
-                      Organiza la operacion
-                      <br />
-                      <span className="text-[#79c8f1]">
-                        desde una sola vista.
-                      </span>
-                    </h1>
-
-                    <p className="mt-5 max-w-2xl text-sm leading-7 text-[#888d97] md:text-base">
-                      Un panel mas limpio para disenar interfaces, conectar la
-                      capa de datos y abrir proyectos HMI sin perder contexto.
-                    </p>
+                <article className={`relative overflow-hidden rounded-[34px] px-6 py-7 md:px-8 md:py-8 ${isDark ? "border border-white/10 bg-[linear-gradient(180deg,rgba(246,249,255,0.96)_0%,rgba(235,241,250,0.92)_100%)] shadow-[0_24px_50px_-34px_rgba(0,0,0,0.35)]" : "border border-[#ececee] bg-[#ffffff] shadow-[0_24px_50px_-34px_rgba(31,41,55,0.15)]"}`}>
+                  <div className={`absolute inset-0 ${isDark ? "opacity-35 [background-image:radial-gradient(#7ec8ff_1px,transparent_1px)] [background-size:8px_8px]" : "opacity-70 [background-image:radial-gradient(#d9cdf7_1px,transparent_1px)] [background-size:8px_8px]"}`} />
+                  <div className={`absolute right-[-30px] top-[-20px] h-[220px] w-[220px] rounded-full ${isDark ? "bg-[radial-gradient(circle,rgba(114,176,255,0.16),transparent_72%)]" : "bg-[radial-gradient(circle,rgba(196,181,253,0.16),transparent_72%)]"}`} />
+                  <div className="relative z-10 flex justify-start">
+                    <div className="max-w-3xl text-left">
+                      <h1 className={`max-w-2xl text-4xl font-semibold leading-[1] tracking-[-0.05em] md:text-6xl ${isDark ? "text-[#12284a]" : "text-[#464851]"}`}>
+                        Organiza la operacion
+                        <br />
+                        <span className={isDark ? "text-[#1d3f72]" : "text-[#79c8f1]"}>
+                          desde una sola vista.
+                        </span>
+                      </h1>
+                    </div>
                   </div>
                 </article>
               </div>
@@ -103,7 +101,7 @@ const HmiPage = () => {
                   return (
                     <article
                       key={item.title}
-                      className="relative overflow-hidden rounded-[34px] border border-[#ececee] bg-white p-6 shadow-[0_20px_40px_-30px_rgba(31,41,55,0.12)]"
+                      className={`relative overflow-hidden rounded-[34px] p-6 ${isDark ? "border border-white/10 bg-[linear-gradient(180deg,rgba(246,249,255,0.96)_0%,rgba(235,241,250,0.92)_100%)] shadow-[0_20px_40px_-30px_rgba(0,0,0,0.35)]" : "border border-[#ececee] bg-white shadow-[0_20px_40px_-30px_rgba(31,41,55,0.12)]"}`}
                     >
                       <div
                         className={`absolute inset-x-0 top-0 h-28 bg-gradient-to-br ${item.accent} opacity-90`}

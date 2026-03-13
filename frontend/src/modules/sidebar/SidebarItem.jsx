@@ -1,6 +1,8 @@
 import { NavLink } from "react-router-dom";
 
-export default function SidebarItem({ icon: Icon, label, to, open }) {
+export default function SidebarItem({ icon: Icon, label, to, open, theme }) {
+  const isDark = theme === "dark";
+
   return (
     <li>
       <NavLink
@@ -8,14 +10,24 @@ export default function SidebarItem({ icon: Icon, label, to, open }) {
         className={({ isActive }) =>
           `group flex items-center rounded-2xl px-3 py-3 transition-all duration-300 ${
             isActive
-              ? "bg-white text-[#3b3f47] shadow-[0_12px_20px_-16px_rgba(31,41,55,0.12)]"
-              : "text-[#8b8f99] hover:bg-white hover:text-[#4c5058]"
+              ? isDark
+                ? "bg-[linear-gradient(180deg,rgba(246,249,255,0.96)_0%,rgba(235,241,250,0.92)_100%)] text-[#12284a] shadow-[0_16px_26px_-18px_rgba(0,0,0,0.35)]"
+                : "bg-white text-[#3b3f47] shadow-[0_12px_20px_-16px_rgba(31,41,55,0.12)]"
+              : isDark
+                ? "text-[#9fb4d8] hover:bg-white/8 hover:text-white"
+                : "text-[#8b8f99] hover:bg-white hover:text-[#4c5058]"
           } ${open ? "justify-start gap-3" : "justify-center"}`
         }
       >
         <span
           className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ${
-            open ? "bg-[#fafafb]" : "bg-white"
+            isDark
+              ? open
+                ? "bg-white/8"
+                : "bg-white/10"
+              : open
+                ? "bg-[#fafafb]"
+                : "bg-white"
           }`}
         >
           <Icon className="h-5 w-5" />
