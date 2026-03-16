@@ -5,18 +5,20 @@
 // - Sección "Dispositivos" abre DeviceManagerModal (tags desde API REST).
 // - El resto de secciones sin cambios respecto al original.
 //
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Eye, EyeOff, GripVertical, Lock, Unlock } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, ChevronRight, Eye, EyeOff, GripVertical, Lock, Unlock } from "lucide-react";
 import { elementos_scada } from "@/modules/organizarScada/templates/elementos_scada";
 import { buttons_labels_items } from "@/modules/organizarScada/utils/items";
 import { renderWidget } from "@/modules/organizarScada/components/widgets/registry.jsx";
 import SkeletonBlock from "@/components/ui/SkeletonBlock";
 import ProjectVariableModal from "../devices/ProjectVariableModal";
+import api from "../../../../services/api";
 
 // ─── Image helpers ─────────────────────────────────────────────────────────────
 const CUSTOM_ICONS_STORAGE_KEY = "organizarScada.customIcons.library";
 const MAX_IMAGE_DIMENSION = 1200;
 const MAX_IMAGE_BYTES = 500 * 1024;
+const cls = (...parts) => parts.filter(Boolean).join(" ");
 
 const readFileAsDataURL = (file) =>
   new Promise((resolve, reject) => {
@@ -101,6 +103,37 @@ const UnifiedSidebar = ({
   const [activeSection,        setActiveSection]        = useState("pantallas");
   const [showDevices,          setShowDevices]          = useState(false);
   const [isSavingProject,      setIsSavingProject]      = useState(false);
+  // ── Variables tree ────────────────────────────────────────────────────────
+  const [variables,            setVariables]            = useState([]);
+  const [varsLoading,          setVarsLoading]          = useState(false);
+  const [expandedTables,       setExpandedTables]       = useState({});  // { tableName: bool }
+
+  const fetchVariables = useCallback(async () => {
+    if (!layoutId) return;
+    setVarsLoading(true);
+    try {
+      const res = await api.get(`/api/scada-manager/layouts/${layoutId}/tables/`);
+      setVariables(res.data || []);  // ahora es array de tablas con variables anidadas
+    } catch {
+      setVariables([]);
+    } finally {
+      setVarsLoading(false);
+    }
+  }, [layoutId]);
+
+  useEffect(() => {
+    if (layoutId) fetchVariables();
+    else setVariables([]);
+  }, [layoutId, fetchVariables]);
+
+  // variables is now array of VariableTable objects with nested .variables[]
+  const totalVarsCount = useMemo(() =>
+    variables.reduce((acc, t) => acc + (t.variables?.length || 0), 0),
+    [variables]
+  );
+
+  const toggleTable = (key) =>
+    setExpandedTables(prev => ({ ...prev, [key]: !prev[key] }));
   const [customIcons,          setCustomIcons]          = useState([]);
   const [isProcessingUpload,   setIsProcessingUpload]   = useState(false);
   const [editingViewId,        setEditingViewId]        = useState(null);
@@ -125,8 +158,11 @@ const UnifiedSidebar = ({
     },
   ];
 
-  const handleSectionClick = (id) =>
+  const handleSectionClick = (id) => {
     setActiveSection((prev) => (prev === id ? null : id));
+    // Refrescar variables al abrir la sección de dispositivos
+    if (id === "devices" && layoutId) fetchVariables();
+  };
 
   // ── Project name ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -487,7 +523,7 @@ const UnifiedSidebar = ({
 
     // ── Dispositivos ────────────────────────────────────────────────────────────
     if (sectionId === "devices") {
-      // Sin proyecto guardado: mostrar formulario de nombre + guardar
+      // Sin proyecto guardado: formulario de nombre
       if (!layoutId) {
         return (
           <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-3">
@@ -507,11 +543,9 @@ const UnifiedSidebar = ({
                 type="button"
                 disabled={!projectNameDraft.trim() || isSavingProject}
                 onClick={async () => {
-                  // 1. Confirmar nombre
                   const name = projectNameDraft.trim();
                   if (!name) return;
                   onProjectNameChange?.(name);
-                  // 2. Guardar proyecto (vacío) en el backend
                   setIsSavingProject(true);
                   try {
                     await onSaveProject?.(name);
@@ -528,21 +562,87 @@ const UnifiedSidebar = ({
         );
       }
 
-      // Con proyecto guardado: mostrar botón gestor normal
+      // Con proyecto guardado: árbol tabla → variables + botón gestor
       return (
         <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-800">Variables</h3>
-            <button
-              onClick={() => setShowDevices(true)}
-              className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
-            >
-              Abrir gestor
+            <h3 className="text-sm font-semibold text-slate-800">
+              Variables
+              {totalVarsCount > 0 && (
+                <span className="ml-1.5 text-[10px] font-normal text-slate-400">({totalVarsCount})</span>
+              )}
+            </h3>
+            <button onClick={() => setShowDevices(true)}
+              className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50">
+              Gestionar
             </button>
           </div>
-          <p className="text-[10px] text-slate-400">
-            Define las variables del proyecto: conexiones a tags PLC y variables locales para scripts.
-          </p>
+
+          {varsLoading ? (
+            <div className="space-y-1 pt-1">
+              {[1,2,3].map(i => <SkeletonBlock key={i} width="w-full" height="h-4" />)}
+            </div>
+          ) : variables.length === 0 ? (
+            <p className="text-[10px] text-slate-400">
+              Sin tablas. Usa "Gestionar" para crear tablas y añadir variables.
+            </p>
+          ) : (
+            <div className="space-y-0.5 max-h-72 overflow-y-auto">
+              {variables.map(table => {
+                const isOpen = expandedTables[table.id] ?? true;
+                const tableVars = table.variables || [];
+                return (
+                  <div key={table.id}>
+                    {/* Tabla — rama */}
+                    <button type="button" onClick={() => toggleTable(table.id)}
+                      className="flex w-full items-center gap-1 rounded px-1 py-1 hover:bg-slate-100 text-left">
+                      {isOpen
+                        ? <ChevronDown size={11} className="shrink-0 text-slate-400" />
+                        : <ChevronRight size={11} className="shrink-0 text-slate-400" />}
+                      <span className="flex-1 text-[11px] font-semibold text-slate-700 truncate">
+                        {table.name}
+                      </span>
+                      <span className="shrink-0 text-[10px] text-slate-400">{tableVars.length}</span>
+                    </button>
+
+                    {/* Variables — hojas */}
+                    {isOpen && (
+                      <div className="ml-3 border-l border-slate-200 pl-2 space-y-0.5 pb-1">
+                        {tableVars.length === 0 ? (
+                          <p className="text-[10px] text-slate-400 py-0.5">Sin variables.</p>
+                        ) : (
+                          tableVars.map(v => (
+                            <div key={v.id}
+                              className="flex items-center justify-between gap-1 rounded px-1 py-0.5 hover:bg-slate-50"
+                              title={v.source === "connection"
+                                ? `${v.equipment} › ${v.variable}`
+                                : `Local · ${v.datatype}${v.initial_value != null ? ` = ${v.initial_value}` : ""}`}>
+                              <span className="truncate text-[11px] text-slate-700">{v.name}</span>
+                              <div className="flex shrink-0 items-center gap-1">
+                                {v.source === "connection" && v.equipment && (
+                                  <span className="text-[9px] text-slate-400 truncate max-w-[60px]">
+                                    {v.equipment}
+                                  </span>
+                                )}
+                                <span className={cls(
+                                  "rounded px-1 text-[9px]",
+                                  v.source === "local"
+                                    ? "bg-purple-100 text-purple-600"
+                                    : "bg-slate-100 text-slate-500"
+                                )}>
+                                  {v.datatype || "—"}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       );
     }
@@ -782,7 +882,10 @@ const UnifiedSidebar = ({
       {showDevices && (
         <ProjectVariableModal
           open={showDevices}
-          onClose={() => setShowDevices(false)}
+          onClose={() => {
+            setShowDevices(false);
+            fetchVariables();   // refresca el árbol del sidebar
+          }}
           layoutId={layoutId}
         />
       )}

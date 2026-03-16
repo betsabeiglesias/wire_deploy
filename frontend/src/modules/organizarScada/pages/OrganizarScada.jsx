@@ -9,6 +9,8 @@ import NavbarPLCs from "../components/sidebar/NavbarPLCs";
 import NavbarEditor from "../components/canvas/NavbarEditor";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
+import LoadProjectModal from "../components/modals/LoadProjectModal";
+
 import PublishModal from "../components/modals/PublishModal";
 import { buildViewsData } from "../utils/viewsSerializer";
 import useOrganizarScada from "../hooks/useOrganizarScada";
@@ -71,12 +73,41 @@ const OrganizarScada = () => {
     return savedId;
   }, [confirmExport, exportName, setExportName]);
 
+const handleLoadFromDB = useCallback((data, layoutId, name) => {
+  // data es el objeto completo del layout desde la API
+  const viewsRaw = data?.views_data?.views || [];
+  const mappedViews = viewsRaw.map(v => ({
+    ...v,
+    id:       v.id       || `view-${Date.now()}-${Math.random()}`,
+    layoutId: layoutId,
+    elements: normalizeCanvasElements(v.elements || []),
+  }));
+
+  if (mappedViews.length === 0) {
+    // Proyecto guardado sin vistas aún — crear una vacía
+    const empty = { id: `view-${Date.now()}`, name: "Vista 1", elements: [], layoutId };
+    setViews([empty]);
+    setCurrentViewId(empty.id);
+    setCanvasElements([]);
+  } else {
+    setViews(mappedViews);
+    setCurrentViewId(mappedViews[0].id);
+    setCanvasElements(mappedViews[0].elements);
+  }
+
+  setCurrentLayoutId(layoutId);
+  setExportName(name || data?.name || "Sin nombre");
+  setIsEditMode(true);
+}, [normalizeCanvasElements, setViews, setCurrentViewId, setCanvasElements,
+    setCurrentLayoutId, setExportName, setIsEditMode]);
+
 
   const [zoom, setZoom] = useState(1);
   const editorViewportRef = useRef(null);
   const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   const bootstrappedRef = useRef(false);
   const [showPropsPanel, setShowPropsPanel] = useState(true);
+  const [showLoadModal, setShowLoadModal] = useState(false);
 
   // Inicialización: siempre empezar en blanco
   useEffect(() => {
@@ -535,31 +566,33 @@ const OrganizarScada = () => {
             {viewsError}
           </div>
         )}
-        <NavbarPLCs
-          toolbar={{
-            showActions: true,
-            onClear: () => {
-              setCanvasElements([]);
-            },
-            onExport: () => {
-              try {
-                exportToFile(buildViewsData(views, currentViewId), exportName);
-              } catch (err) {
-                Swal.fire(
-                  "Error",
-                  err.message || "No se pudo exportar.",
-                  "error",
-                );
-              }
-            },
-            onImport: handleImportCanvas,
-            onTemplateMini: () => {}, // pendiente: wirear plantillas
-            onTemplateDashboard: () => {}, // pendiente: wirear plantillas
-            onPublish: handlePublishClick,
-            onNewDashboard: handleNewDashboardWrapper,
-            
-          }}
-        />
+      <NavbarPLCs
+        toolbar={{
+          showActions: true,
+          onClear: () => { setCanvasElements([]); },
+          onExport: () => {
+            try {
+              exportToFile(buildViewsData(views, currentViewId), exportName);
+            } catch (err) {
+              Swal.fire("Error", err.message || "No se pudo exportar.", "error");
+            }
+          },
+          onImport: handleImportCanvas,
+          onTemplateMini: () => {},
+          onTemplateDashboard: () => {},
+          onPublish: handlePublishClick,
+          onNewDashboard: handleNewDashboardWrapper,
+          onLoadFromDB: () => setShowLoadModal(true),
+        }}
+      />
+
+        {showLoadModal && (
+          <LoadProjectModal
+            open={showLoadModal}
+            onClose={() => setShowLoadModal(false)}
+            onLoad={handleLoadFromDB}
+          />
+        )}
         <button onClick={() => navigate("/organizar-scada/script")}>
             Script
         </button>

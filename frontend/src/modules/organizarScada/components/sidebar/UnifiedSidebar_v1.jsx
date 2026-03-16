@@ -5,13 +5,14 @@
 // - Sección "Dispositivos" abre DeviceManagerModal (tags desde API REST).
 // - El resto de secciones sin cambios respecto al original.
 //
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Eye, EyeOff, GripVertical, Lock, Unlock } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, ChevronRight, Eye, EyeOff, GripVertical, Lock, Unlock } from "lucide-react";
 import { elementos_scada } from "@/modules/organizarScada/templates/elementos_scada";
 import { buttons_labels_items } from "@/modules/organizarScada/utils/items";
 import { renderWidget } from "@/modules/organizarScada/components/widgets/registry.jsx";
 import SkeletonBlock from "@/components/ui/SkeletonBlock";
 import ProjectVariableModal from "../devices/ProjectVariableModal";
+import api from "../../../../services/api";
 
 // ─── Image helpers ─────────────────────────────────────────────────────────────
 const CUSTOM_ICONS_STORAGE_KEY = "organizarScada.customIcons.library";
@@ -75,9 +76,10 @@ const optimizeAndEncodeAsset = async (file) => {
 // ──────────────────────────────────────────────────────────────────────────────
 
 const UnifiedSidebar = ({
-  projectId = null,
+  layoutId = null,
   projectName = "",
   onProjectNameChange,
+  onSaveProject,        // () => Promise<void> — guarda el proyecto sin validar canvas
   views = [],
   selectedViewId,
   onCreateView,
@@ -99,6 +101,40 @@ const UnifiedSidebar = ({
   const [isMainOpen,           setIsMainOpen]           = useState(true);
   const [activeSection,        setActiveSection]        = useState("pantallas");
   const [showDevices,          setShowDevices]          = useState(false);
+  const [isSavingProject,      setIsSavingProject]      = useState(false);
+  // ── Variables tree ────────────────────────────────────────────────────────
+  const [variables,            setVariables]            = useState([]);
+  const [varsLoading,          setVarsLoading]          = useState(false);
+  const [expandedTables,       setExpandedTables]       = useState({});  // { tableName: bool }
+
+  const fetchVariables = useCallback(async () => {
+    if (!layoutId) return;
+    setVarsLoading(true);
+    try {
+      const res = await api.get(`/api/scada-manager/layouts/${layoutId}/variables/`);
+      setVariables(res.data || []);
+    } catch {
+      setVariables([]);
+    } finally {
+      setVarsLoading(false);
+    }
+  }, [layoutId]);
+
+  useEffect(() => {
+    if (layoutId) fetchVariables();
+    else setVariables([]);
+  }, [layoutId, fetchVariables]);
+
+  // Group variables by source for tree display
+  // tree: { "Conexión": [...vars], "Local": [...vars] }
+  const variableTree = useMemo(() => {
+    const conn  = variables.filter(v => v.source === "connection");
+    const local = variables.filter(v => v.source === "local");
+    return { conn, local };
+  }, [variables]);
+
+  const toggleTable = (key) =>
+    setExpandedTables(prev => ({ ...prev, [key]: !prev[key] }));
   const [customIcons,          setCustomIcons]          = useState([]);
   const [isProcessingUpload,   setIsProcessingUpload]   = useState(false);
   const [editingViewId,        setEditingViewId]        = useState(null);
@@ -123,8 +159,11 @@ const UnifiedSidebar = ({
     },
   ];
 
-  const handleSectionClick = (id) =>
+  const handleSectionClick = (id) => {
     setActiveSection((prev) => (prev === id ? null : id));
+    // Refrescar variables al abrir la sección de dispositivos
+    if (id === "devices" && layoutId) fetchVariables();
+  };
 
   // ── Project name ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -485,24 +524,143 @@ const UnifiedSidebar = ({
 
     // ── Dispositivos ────────────────────────────────────────────────────────────
     if (sectionId === "devices") {
+      // Sin proyecto guardado: formulario de nombre
+      if (!layoutId) {
+        return (
+          <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-3">
+            <h3 className="text-sm font-semibold text-slate-800">Variables</h3>
+            <p className="text-[10px] text-slate-500">
+              Para gestionar variables el proyecto necesita un nombre y estar guardado.
+            </p>
+            <div className="space-y-2">
+              <input
+                className="w-full rounded border border-slate-300 px-2 py-1.5 text-[12px] focus:border-sky-400 focus:outline-none"
+                placeholder="Nombre del proyecto…"
+                value={projectNameDraft}
+                onChange={(e) => setProjectNameDraft(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") commitProjectName(); }}
+              />
+              <button
+                type="button"
+                disabled={!projectNameDraft.trim() || isSavingProject}
+                onClick={async () => {
+                  const name = projectNameDraft.trim();
+                  if (!name) return;
+                  onProjectNameChange?.(name);
+                  setIsSavingProject(true);
+                  try {
+                    await onSaveProject?.(name);
+                  } finally {
+                    setIsSavingProject(false);
+                  }
+                }}
+                className="w-full rounded border border-sky-400 bg-sky-50 px-2 py-1.5 text-[12px] font-medium text-sky-700 hover:bg-sky-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {isSavingProject ? "Guardando…" : "Guardar y continuar"}
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      // Con proyecto guardado: árbol + botón gestor
+      const { conn, local } = variableTree;
+      const totalVars = variables.length;
+
+      const TreeSection = ({ label, items, treeKey, emptyText }) => {
+        const isOpen = expandedTables[treeKey] ?? true;
+        return (
+          <div>
+            <button
+              type="button"
+              onClick={() => toggleTable(treeKey)}
+              className="flex w-full items-center gap-1 rounded px-1 py-1 hover:bg-slate-100 text-left"
+            >
+              {isOpen
+                ? <ChevronDown size={11} className="shrink-0 text-slate-400" />
+                : <ChevronRight size={11} className="shrink-0 text-slate-400" />}
+              <span className="flex-1 text-[11px] font-semibold text-slate-700 truncate">
+                {label}
+              </span>
+              <span className="shrink-0 text-[10px] text-slate-400">{items.length}</span>
+            </button>
+
+            {isOpen && (
+              <div className="ml-3 border-l border-slate-200 pl-2 space-y-0.5 pb-1">
+                {items.length === 0 ? (
+                  <p className="text-[10px] text-slate-400 py-1">{emptyText}</p>
+                ) : (
+                  items.map(v => (
+                    <div key={v.id}
+                      className="flex items-center justify-between gap-1 rounded px-1 py-0.5 hover:bg-slate-50"
+                      title={v.source === "connection"
+                        ? `${v.equipment} › ${v.variable}`
+                        : `Local · ${v.datatype}${v.initial_value != null ? ` = ${v.initial_value}` : ""}`}
+                    >
+                      <span className="truncate text-[11px] text-slate-700">{v.name}</span>
+                      <div className="flex shrink-0 items-center gap-1">
+                        {v.source === "connection" && v.equipment && (
+                          <span className="text-[9px] text-slate-400 truncate max-w-[60px]">
+                            {v.equipment}
+                          </span>
+                        )}
+                        <span className="rounded bg-slate-100 px-1 text-[9px] text-slate-500">
+                          {v.datatype || "—"}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        );
+      };
+
       return (
         <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-2">
+          {/* Header */}
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-800">Variables</h3>
+            <h3 className="text-sm font-semibold text-slate-800">
+              Variables
+              {totalVars > 0 && (
+                <span className="ml-1.5 text-[10px] font-normal text-slate-400">
+                  ({totalVars})
+                </span>
+              )}
+            </h3>
             <button
               onClick={() => setShowDevices(true)}
               className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
             >
-              Abrir gestor
+              Gestionar
             </button>
           </div>
-          <p className="text-[10px] text-slate-400">
-            Define las variables del proyecto: conexiones a tags PLC y variables locales para scripts.
-          </p>
-          {!projectId && (
-            <p className="text-[10px] text-amber-600">
-              ⚠ Guarda el proyecto primero para gestionar variables.
+
+          {/* Árbol */}
+          {varsLoading ? (
+            <div className="space-y-1 pt-1">
+              {[1, 2, 3].map(i => <SkeletonBlock key={i} width="w-full" height="h-4" />)}
+            </div>
+          ) : totalVars === 0 ? (
+            <p className="text-[10px] text-slate-400">
+              Sin variables. Usa "Gestionar" para añadirlas.
             </p>
+          ) : (
+            <div className="space-y-0.5 max-h-72 overflow-y-auto">
+              <TreeSection
+                label="Conexión"
+                items={conn}
+                treeKey="conn"
+                emptyText="Sin variables de conexión."
+              />
+              <TreeSection
+                label="Local"
+                items={local}
+                treeKey="local"
+                emptyText="Sin variables locales."
+              />
+            </div>
           )}
         </div>
       );
@@ -743,8 +901,11 @@ const UnifiedSidebar = ({
       {showDevices && (
         <ProjectVariableModal
           open={showDevices}
-          onClose={() => setShowDevices(false)}
-          projectId={projectId}
+          onClose={() => {
+            setShowDevices(false);
+            fetchVariables();   // refresca el árbol del sidebar
+          }}
+          layoutId={layoutId}
         />
       )}
     </>

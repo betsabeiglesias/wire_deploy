@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import  MyLayOutsTitle, ProjectVariable
+from .models import  MyLayOutsTitle, ProjectVariable, VariableTable
 
 
 class MyLayOutsTitleSerializer(serializers.ModelSerializer):
@@ -11,13 +11,14 @@ class MyLayOutsTitleSerializer(serializers.ModelSerializer):
     
 
 
+ 
 class ProjectVariableSerializer(serializers.ModelSerializer):
     variable_id = serializers.UUIDField(read_only=True)
  
     class Meta:
         model  = ProjectVariable
         fields = [
-            "id", "variable_id", "layout",
+            "id", "variable_id", "table",
             "name", "source",
             "equipment", "variable", "datatype", "unit", "address", "node_id",
             "initial_value", "description",
@@ -39,5 +40,21 @@ class ProjectVariableSerializer(serializers.ModelSerializer):
             data.setdefault("node_id",   "")
         return data
  
-
  
+class VariableTableSerializer(serializers.ModelSerializer):
+    variables = ProjectVariableSerializer(many=True, read_only=True)
+ 
+    class Meta:
+        model  = VariableTable
+        fields = ["id", "layout", "name", "order", "variables", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at"]
+ 
+ 
+class VariableTableLightSerializer(serializers.ModelSerializer):
+    """Sin variables anidadas — para listados rápidos."""
+    variable_count = serializers.IntegerField(source="variables.count", read_only=True)
+ 
+    class Meta:
+        model  = VariableTable
+        fields = ["id", "layout", "name", "order", "variable_count", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at"]

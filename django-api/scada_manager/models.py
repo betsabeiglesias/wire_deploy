@@ -18,6 +18,30 @@ class MyLayOutsTitle(models.Model):
         return self.name
 
 
+class VariableTable(models.Model):
+    """
+    Agrupación de variables dentro de un proyecto (layout).
+    Un layout puede tener múltiples tablas. Cada tabla tiene un nombre.
+    """
+    layout = models.ForeignKey(
+        "MyLayOutsTitle",
+        on_delete=models.CASCADE,
+        related_name="variable_tables",
+    )
+    name       = models.CharField(max_length=128)
+    order      = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+ 
+    class Meta:
+        app_label    = "scada_manager"
+        ordering     = ["order", "name"]
+        unique_together = [("layout", "name")]
+ 
+    def __str__(self):
+        return f"[layout={self.layout_id}] {self.name}"
+ 
+ 
 class ProjectVariable(models.Model):
  
     SOURCE_CONNECTION = "connection"
@@ -26,7 +50,6 @@ class ProjectVariable(models.Model):
         (SOURCE_CONNECTION, "Conexión PLC"),
         (SOURCE_LOCAL,      "Local"),
     ]
- 
     DATATYPE_CHOICES = [
         ("Float",  "Float"),
         ("Bool",   "Bool"),
@@ -35,23 +58,22 @@ class ProjectVariable(models.Model):
         ("Double", "Double"),
     ]
  
-    # UUID estable — los widgets lo guardan en settings.variableId
-    # Nunca cambia aunque se renombre el alias o el equipo.
     variable_id = models.UUIDField(
         default=uuid.uuid4, unique=True, editable=False, db_index=True,
     )
  
-    # FK al proyecto (MyLayOutsTitle)
-    layout = models.ForeignKey(
-        "MyLayOutsTitle",
+    # FK a la tabla que agrupa esta variable
+    table = models.ForeignKey(
+        VariableTable,
         on_delete=models.CASCADE,
         related_name="variables",
+        null=True,
     )
  
-    name   = models.CharField(max_length=128)   # alias del usuario
+    name   = models.CharField(max_length=128)
     source = models.CharField(max_length=16, choices=SOURCE_CHOICES, default=SOURCE_CONNECTION)
  
-    # ── Campos connection (auto-rellenados desde el tagIndex de la API) ─────────
+    # connection fields
     equipment = models.CharField(max_length=256, blank=True, default="")
     variable  = models.CharField(max_length=256, blank=True, default="")
     datatype  = models.CharField(max_length=16,  blank=True, default="Float", choices=DATATYPE_CHOICES)
@@ -59,7 +81,7 @@ class ProjectVariable(models.Model):
     address   = models.CharField(max_length=256, blank=True, default="")
     node_id   = models.CharField(max_length=256, blank=True, default="")
  
-    # ── Campos local ────────────────────────────────────────────────────────────
+    # local fields
     initial_value = models.CharField(max_length=256, blank=True, null=True, default=None)
     description   = models.CharField(max_length=512, blank=True, default="")
  
@@ -67,19 +89,9 @@ class ProjectVariable(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
  
     class Meta:
-        ordering = ["name"]
-        unique_together = [("layout", "name")]   # un proyecto no puede tener dos variables con el mismo alias
+        app_label   = "scada_manager"
+        ordering    = ["name"]
+        unique_together = [("table", "name")]
  
     def __str__(self):
-        return f"[layout={self.layout_id}] {self.name} ({self.source})"
-
-
-    
-
-
-
-
-
-
-
-
+        return f"[table={self.table_id}] {self.name} ({self.source})"

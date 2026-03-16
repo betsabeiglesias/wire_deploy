@@ -1,16 +1,18 @@
 // src/modules/organizarScada/components/devices/ProjectVariableModal.jsx
 //
-// Gestor de variables del proyecto.
-// Dos tabs separados con columnas específicas:
+// Gestor de variables con tablas intermedias.
+// Estructura: Layout → VariableTable → ProjectVariable
 //
-//  ── CONEXIÓN ──────────────────────────────────────────────────────────────
-//  Variables vinculadas a tags reales del PLC (tagIndex de la API).
-//  Columnas: Alias | Equipo | Variable | Tipo | Unidad | Dirección | Nodo
+// Panel izquierdo: lista de tablas del layout
+//   - Botón "+ Nueva" → crea tabla
+//   - Click en tabla → selecciona, muestra sus variables a la derecha
+//   - Doble click en nombre → renombrar inline
 //
-//  ── LOCAL ─────────────────────────────────────────────────────────────────
-//  Variables internas creadas por el usuario para usar en scripts.
-//  Sin origen PLC. El "Valor inicial" es el punto de partida para el script engine.
-//  Columnas: Alias | Tipo | Valor inicial | Descripción
+// Panel derecho: variables de la tabla seleccionada
+//   - Tabs Conexión / Local
+//   - Selector de variable plano (sin filtro por equipo previo)
+//   - Filas editables inline con borrador (draft)
+//   - Nuevas filas en azul hasta confirmar con ✓
 //
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useScadaConfig } from "../../../../context/ScadaConfigProvider";
@@ -18,109 +20,158 @@ import api from "../../../../services/api";
 
 const DATATYPES = ["Float", "Bool", "Int", "String", "Double"];
 
-// ── API helpers ───────────────────────────────────────────────────────────────
-// Las variables están anidadas bajo el layout: /api/layouts/<layoutId>/variables/
-const fetchVariables  = (layoutId) =>
-  api.get(`/api/scada-manager/layouts/${layoutId}/variables/`).then((r) => r.data);
-const createVariable  = (layoutId, payload) =>
-  api.post(`/api/scada-manager/layouts/${layoutId}/variables/`, payload).then((r) => r.data);
-const updateVariable  = (layoutId, id, payload) =>
-  api.patch(`/api/scada-manager/layouts/${layoutId}/variables/${id}/`, payload).then((r) => r.data);
-const deleteVariable  = (layoutId, id) =>
-  api.delete(`/api/scada-manager/layouts/${layoutId}/variables/${id}/`);
+// ── API ───────────────────────────────────────────────────────────────────────
+const apiFetchTables = (lid)          => api.get(`/api/scada-manager/layouts/${lid}/tables/`).then(r => r.data);
+const apiCreateTable = (lid, p)       => api.post(`/api/scada-manager/layouts/${lid}/tables/`, p).then(r => r.data);
+const apiPatchTable  = (lid, tid, p)  => api.patch(`/api/scada-manager/layouts/${lid}/tables/${tid}/`, p).then(r => r.data);
+const apiDeleteTable = (lid, tid)     => api.delete(`/api/scada-manager/layouts/${lid}/tables/${tid}/`);
+
+const apiFetchVars  = (lid, tid)          => api.get(`/api/scada-manager/layouts/${lid}/tables/${tid}/variables/`).then(r => r.data);
+const apiCreateVar  = (lid, tid, p)       => api.post(`/api/scada-manager/layouts/${lid}/tables/${tid}/variables/`, p).then(r => r.data);
+const apiPatchVar   = (lid, tid, vid, p)  => api.patch(`/api/scada-manager/layouts/${lid}/tables/${tid}/variables/${vid}/`, p).then(r => r.data);
+const apiDeleteVar  = (lid, tid, vid)     => api.delete(`/api/scada-manager/layouts/${lid}/tables/${tid}/variables/${vid}/`);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const cls = (...parts) => parts.filter(Boolean).join(" ");
-
-const INPUT  = "w-full rounded border border-slate-200 px-2 py-1 text-[11px] focus:border-sky-400 focus:outline-none bg-white";
+const cls       = (...p) => p.filter(Boolean).join(" ");
+const INPUT     = "w-full rounded border border-slate-200 px-2 py-1 text-[11px] focus:border-sky-400 focus:outline-none bg-white";
 const INPUT_NEW = "w-full rounded border border-sky-300 px-2 py-1 text-[11px] focus:border-sky-500 focus:outline-none bg-white";
-const SELECT = INPUT;
-const SELECT_NEW = INPUT_NEW;
-const READONLY = "text-[11px] text-slate-500 truncate";
+const READONLY  = "text-[11px] text-slate-500 truncate";
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const ProjectVariableModal = ({ open, onClose, layoutId }) => {
+export default function ProjectVariableModal({ open, onClose, layoutId }) {
   const { config, loading: tagsLoading } = useScadaConfig();
 
-  const [activeTab,  setActiveTab]  = useState("connection"); // "connection" | "local"
-  const [variables,  setVariables]  = useState([]);
-  const [loading,    setLoading]    = useState(false);
-  const [saving,     setSaving]     = useState(null);
-  const [error,      setError]      = useState(null);
-  const [drafts,     setDrafts]     = useState({});   // { [id]: partialPatch }
-  const [newRows,    setNewRows]    = useState([]);   // pending creation
+  const [tables,          setTables]          = useState([]);
+  const [selectedTable,   setSelectedTable]   = useState(null);
+  const [variables,       setVariables]       = useState([]);
+  const [activeTab,       setActiveTab]       = useState("connection");
 
-  // ── Tag catalog ──────────────────────────────────────────────────────────────
+  const [loadingTables,   setLoadingTables]   = useState(false);
+  const [loadingVars,     setLoadingVars]     = useState(false);
+  const [saving,          setSaving]          = useState(null);
+  const [error,           setError]           = useState(null);
+
+  const [drafts,          setDrafts]          = useState({});
+  const [newRows,         setNewRows]         = useState([]);
+  const [renamingTableId, setRenamingTableId] = useState(null);
+  const [renameValue,     setRenameValue]     = useState("");
+
+  // ── Tag catalog ──────────────────────────────────────────────────────────
   const tagIndex = config?.tagIndex || {};
 
-  const variablesByEquipment = useMemo(() => {
-    const map = {};
-    Object.values(tagIndex).forEach((tag) => {
-      const eq = tag.equipment;
-      if (!eq) return;
-      if (!map[eq]) map[eq] = [];
-      map[eq].push({
-        key:          `${eq}::${tag.variable}`,
-        variableName: tag.variable  || "",
-        datatype:     tag.datatype  || "",
-        unit:         tag.unit      || "",
-        address:      typeof tag.address === "string"
-                        ? tag.address
-                        : tag.address?.value || "",
-        nodeId:       tag.nodeId    || tag.node_id || "",
-      });
-    });
-    return map;
-  }, [tagIndex]);
-
-  const equipmentOptions = useMemo(
-    () => Object.keys(variablesByEquipment).sort(),
-    [variablesByEquipment]
+  const allTagOptions = useMemo(() =>
+    Object.values(tagIndex)
+      .map(tag => ({
+        key:          `${tag.equipment}::${tag.variable}`,
+        equipment:    tag.equipment  || "",
+        variableName: tag.variable   || "",
+        datatype:     tag.datatype   || "",
+        unit:         tag.unit       || "",
+        address:      typeof tag.address === "string" ? tag.address : tag.address?.value || "",
+        nodeId:       tag.nodeId     || tag.node_id || "",
+      }))
+      .sort((a, b) => a.variableName.localeCompare(b.variableName)),
+    [tagIndex]
   );
 
-  // ── Split by source ───────────────────────────────────────────────────────────
-  const connectionVars = variables.filter((v) => v.source === "connection");
-  const localVars      = variables.filter((v) => v.source === "local");
-
-  // ── Load ──────────────────────────────────────────────────────────────────────
-  const loadVariables = useCallback(async () => {
+  // ── Load tables ──────────────────────────────────────────────────────────
+  const loadTables = useCallback(async () => {
     if (!layoutId) return;
-    setLoading(true);
-    setError(null);
+    setLoadingTables(true);
     try {
-      setVariables(await fetchVariables(layoutId));
+      const data = await apiFetchTables(layoutId);
+      setTables(data);
+      if (data.length > 0 && !selectedTable) setSelectedTable(data[0]);
     } catch {
-      setError("No se pudieron cargar las variables del proyecto.");
+      setError("No se pudieron cargar las tablas.");
     } finally {
-      setLoading(false);
+      setLoadingTables(false);
     }
   }, [layoutId]);
 
   useEffect(() => {
     if (open && layoutId) {
-      loadVariables();
+      loadTables();
       setDrafts({});
       setNewRows([]);
+      setError(null);
     }
-  }, [open, layoutId, loadVariables]);
+  }, [open, layoutId]);
 
-  // ── Draft helpers ─────────────────────────────────────────────────────────────
-  const getDraft  = (id, base)  => (id in drafts ? { ...base, ...drafts[id] } : base);
-  const patchDraft = (id, patch) =>
-    setDrafts((prev) => ({ ...prev, [id]: { ...(prev[id] ?? {}), ...patch } }));
-  const discardDraft = (id) =>
-    setDrafts((prev) => { const n = { ...prev }; delete n[id]; return n; });
+  // ── Load variables when table changes ───────────────────────────────────
+  useEffect(() => {
+    if (!selectedTable || !layoutId) { setVariables([]); return; }
+    setLoadingVars(true);
+    setDrafts({});
+    setNewRows([]);
+    apiFetchVars(layoutId, selectedTable.id)
+      .then(data => setVariables(data))
+      .catch(() => setError("No se pudieron cargar las variables."))
+      .finally(() => setLoadingVars(false));
+  }, [selectedTable?.id, layoutId]);
 
-  // ── Save / delete existing ────────────────────────────────────────────────────
-  const handleSaveRow = async (variable) => {
+  const connVars  = variables.filter(v => v.source === "connection");
+  const localVars = variables.filter(v => v.source === "local");
+
+  // ── Table operations ─────────────────────────────────────────────────────
+  const handleCreateTable = async () => {
+    const name = prompt("Nombre de la nueva tabla:");
+    if (!name?.trim()) return;
+    setSaving("new-table");
+    try {
+      const created = await apiCreateTable(layoutId, { name: name.trim() });
+      setTables(prev => [...prev, created]);
+      setSelectedTable(created);
+    } catch {
+      setError("Error al crear la tabla.");
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleDeleteTable = async (table) => {
+    if (!confirm(`¿Eliminar la tabla "${table.name}" y todas sus variables?`)) return;
+    setSaving(`del-${table.id}`);
+    try {
+      await apiDeleteTable(layoutId, table.id);
+      const remaining = tables.filter(t => t.id !== table.id);
+      setTables(remaining);
+      if (selectedTable?.id === table.id) setSelectedTable(remaining[0] || null);
+    } catch {
+      setError("Error al eliminar la tabla.");
+    } finally {
+      setSaving(null);
+    }
+  };
+
+  const handleRenameTable = async (table) => {
+    const name = renameValue.trim();
+    if (!name || name === table.name) { setRenamingTableId(null); return; }
+    try {
+      const updated = await apiPatchTable(layoutId, table.id, { name });
+      setTables(prev => prev.map(t => t.id === updated.id ? updated : t));
+      if (selectedTable?.id === table.id) setSelectedTable(updated);
+    } catch {
+      setError("Error al renombrar la tabla.");
+    } finally {
+      setRenamingTableId(null);
+    }
+  };
+
+  // ── Draft helpers ────────────────────────────────────────────────────────
+  const getDraft    = (id, base) => (id in drafts ? { ...base, ...drafts[id] } : base);
+  const patchDraft  = (id, p)    => setDrafts(prev => ({ ...prev, [id]: { ...(prev[id] ?? {}), ...p } }));
+  const discardDraft = (id)      => setDrafts(prev => { const n = { ...prev }; delete n[id]; return n; });
+
+  // ── Save / delete existing variable ─────────────────────────────────────
+  const handleSaveVar = async (variable) => {
     const draft = drafts[variable.id];
     if (!draft) return;
     setSaving(variable.id);
-    setError(null);
     try {
-      const updated = await updateVariable(layoutId, variable.id, draft);
-      setVariables((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
+      const updated = await apiPatchVar(layoutId, selectedTable.id, variable.id, draft);
+      setVariables(prev => prev.map(v => v.id === updated.id ? updated : v));
       discardDraft(variable.id);
     } catch {
       setError("Error al guardar los cambios.");
@@ -129,12 +180,12 @@ const ProjectVariableModal = ({ open, onClose, layoutId }) => {
     }
   };
 
-  const handleDeleteRow = async (id) => {
+  const handleDeleteVar = async (id) => {
     if (!confirm("¿Eliminar esta variable?")) return;
     setSaving(id);
     try {
-      await deleteVariable(layoutId, id);
-      setVariables((prev) => prev.filter((v) => v.id !== id));
+      await apiDeleteVar(layoutId, selectedTable.id, id);
+      setVariables(prev => prev.filter(v => v.id !== id));
       discardDraft(id);
     } catch {
       setError("Error al eliminar la variable.");
@@ -143,56 +194,36 @@ const ProjectVariableModal = ({ open, onClose, layoutId }) => {
     }
   };
 
-  // ── New row helpers ───────────────────────────────────────────────────────────
-  const addNewRow = (source) => {
-    const tmpId = `new-${Date.now()}`;
-    setNewRows((prev) => [
-      ...prev,
-      {
-        tmpId,
-        source,
-        name:          "",
-        equipment:     "",
-        variable:      "",
-        datatype:      "Float",
-        unit:          "",
-        address:       "",
-        nodeId:        "",
-        initial_value: "",
-        description:   "",
-      },
-    ]);
-  };
+  // ── New row helpers ──────────────────────────────────────────────────────
+  const addNewRow   = (source) => setNewRows(prev => [...prev, {
+    tmpId: `new-${Date.now()}`, source,
+    name: "", equipment: "", variable: "", datatype: "Float",
+    unit: "", address: "", nodeId: "", initial_value: "", description: "",
+  }]);
+  const patchNewRow  = (tmpId, p) => setNewRows(prev => prev.map(r => r.tmpId !== tmpId ? r : { ...r, ...p }));
+  const removeNewRow = (tmpId)    => setNewRows(prev => prev.filter(r => r.tmpId !== tmpId));
 
-  const patchNewRow  = (tmpId, patch) =>
-    setNewRows((prev) => prev.map((r) => r.tmpId !== tmpId ? r : { ...r, ...patch }));
-  const removeNewRow = (tmpId) =>
-    setNewRows((prev) => prev.filter((r) => r.tmpId !== tmpId));
-
-  const handleCreateRow = async (row) => {
-    if (!row.name.trim()) {
-      setError("El alias no puede estar vacío.");
-      return;
-    }
+  const handleCreateVar = async (row) => {
+    if (!row.name.trim()) { setError("El alias no puede estar vacío."); return; }
     if (row.source === "connection" && (!row.equipment || !row.variable)) {
-      setError("Las variables de conexión requieren equipo y variable.");
-      return;
+      setError("Selecciona una variable del sistema."); return;
     }
     setSaving(row.tmpId);
     setError(null);
     try {
-      const created = await createVariable(layoutId, {
+      const created = await apiCreateVar(layoutId, selectedTable.id, {
         name:          row.name.trim(),
         source:        row.source,
-        equipment:     row.source === "connection" ? row.equipment     : "",
-        variable:      row.source === "connection" ? row.variable      : "",
-        datatype:      row.datatype  || "Float",
-        unit:          row.unit      || "",
-        address:       row.address   || "",
-        node_id:       row.nodeId    || "",
+        equipment:     row.source === "connection" ? row.equipment    : "",
+        variable:      row.source === "connection" ? row.variable     : "",
+        datatype:      row.datatype || "Float",
+        unit:          row.unit     || "",
+        address:       row.address  || "",
+        node_id:       row.nodeId   || "",
         initial_value: row.source === "local" ? row.initial_value : null,
+        description:   row.description || "",
       });
-      setVariables((prev) => [...prev, created]);
+      setVariables(prev => [...prev, created]);
       removeNewRow(row.tmpId);
     } catch {
       setError("Error al crear la variable.");
@@ -201,62 +232,48 @@ const ProjectVariableModal = ({ open, onClose, layoutId }) => {
     }
   };
 
-  // ── Row action buttons ────────────────────────────────────────────────────────
+  // ── Cell components ──────────────────────────────────────────────────────
   const ActionCell = ({ id, isDirty, onSave, onDelete }) => (
     <td className="px-2 py-1.5 text-center">
       <div className="flex items-center justify-center gap-1">
         {isDirty && (
-          <button
-            type="button"
-            disabled={saving === id}
-            onClick={onSave}
-            className="rounded bg-emerald-500 px-2 py-0.5 text-[10px] text-white hover:bg-emerald-600 disabled:opacity-50"
-            title="Guardar"
-          >
+          <button type="button" disabled={saving === id} onClick={onSave}
+            className="rounded bg-emerald-500 px-2 py-0.5 text-[10px] text-white hover:bg-emerald-600 disabled:opacity-50">
             {saving === id ? "…" : "✓"}
           </button>
         )}
-        <button
-          type="button"
-          disabled={saving === id}
-          onClick={onDelete}
-          className="text-rose-400 hover:text-rose-600 disabled:opacity-40 text-sm px-1"
-          title="Eliminar"
-        >
-          ×
-        </button>
+        <button type="button" disabled={saving === id} onClick={onDelete}
+          className="text-rose-400 hover:text-rose-600 disabled:opacity-40 text-sm px-1">×</button>
       </div>
     </td>
   );
 
-  const NewRowActionCell = ({ tmpId, onConfirm, onCancel }) => (
+  const NewActionCell = ({ tmpId, onConfirm, onCancel }) => (
     <td className="px-2 py-1.5 text-center">
       <div className="flex items-center justify-center gap-1">
-        <button
-          type="button"
-          disabled={saving === tmpId}
-          onClick={onConfirm}
-          className="rounded bg-sky-500 px-2 py-0.5 text-[10px] text-white hover:bg-sky-600 disabled:opacity-50"
-          title="Confirmar"
-        >
+        <button type="button" disabled={saving === tmpId} onClick={onConfirm}
+          className="rounded bg-sky-500 px-2 py-0.5 text-[10px] text-white hover:bg-sky-600 disabled:opacity-50">
           {saving === tmpId ? "…" : "✓"}
         </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-rose-400 hover:text-rose-600 text-sm px-1"
-          title="Cancelar"
-        >
-          ×
-        </button>
+        <button type="button" onClick={onCancel}
+          className="text-rose-400 hover:text-rose-600 text-sm px-1">×</button>
       </div>
     </td>
   );
 
-  // ── TABLE: Conexión ───────────────────────────────────────────────────────────
-  // Columnas: Alias | Equipo | Variable | Tipo | Unidad | Dirección | Nodo | ⋯
+  // ── Connection table ─────────────────────────────────────────────────────
   const renderConnectionTable = () => {
-    const pending = newRows.filter((r) => r.source === "connection");
+    const pending = newRows.filter(r => r.source === "connection");
+    const VarSelect = ({ value, onChange, cls: extraCls }) => (
+      <select className={cls(INPUT, extraCls)} value={value} disabled={tagsLoading} onChange={onChange}>
+        <option value="::">— selecciona variable —</option>
+        {allTagOptions.map(t => (
+          <option key={t.key} value={t.key}>
+            {t.variableName} ({t.equipment})
+          </option>
+        ))}
+      </select>
+    );
 
     return (
       <div className="flex-1 overflow-auto">
@@ -264,186 +281,87 @@ const ProjectVariableModal = ({ open, onClose, layoutId }) => {
           <thead className="bg-slate-100 sticky top-0 z-10">
             <tr>
               <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-36">Alias</th>
-              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-44">Equipo</th>
-              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-44">Variable</th>
-              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-20">Tipo</th>
+              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200">Variable del sistema</th>
+              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-24">Tipo</th>
               <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-20">Unidad</th>
-              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-44">Dirección</th>
-              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-44">Nodo</th>
               <th className="px-3 py-2 border-b border-slate-200 w-16"></th>
             </tr>
           </thead>
           <tbody>
-            {/* Existing rows */}
-            {connectionVars.map((variable) => {
+            {connVars.map(variable => {
               const d       = getDraft(variable.id, variable);
               const isDirty = variable.id in drafts;
-              const eqVars  = variablesByEquipment[d.equipment] || [];
-              const varMeta = eqVars.find((v) => v.variableName === d.variable);
-
+              const tagMeta = allTagOptions.find(t => t.equipment === d.equipment && t.variableName === d.variable);
+              const selVal  = d.equipment && d.variable ? `${d.equipment}::${d.variable}` : "::";
               return (
                 <tr key={variable.id}
                   className={cls("border-t border-slate-100", isDirty ? "bg-amber-50" : "hover:bg-slate-50")}>
-
-                  {/* Alias */}
                   <td className="px-3 py-1.5">
                     <input className={INPUT} value={d.name}
-                      onChange={(e) => patchDraft(variable.id, { name: e.target.value })} />
+                      onChange={e => patchDraft(variable.id, { name: e.target.value })} />
                   </td>
-
-                  {/* Equipo */}
                   <td className="px-3 py-1.5">
-                    <select className={SELECT} value={d.equipment}
-                      disabled={tagsLoading}
-                      onChange={(e) => patchDraft(variable.id, {
-                        equipment: e.target.value,
-                        variable: "", datatype: "Float", unit: "", address: "", node_id: "",
-                      })}>
-                      <option value="">— equipo —</option>
-                      {equipmentOptions.map((eq) => (
-                        <option key={eq} value={eq}>{eq}</option>
-                      ))}
-                    </select>
+                    <VarSelect value={selVal} onChange={e => {
+                      const tag = allTagOptions.find(t => t.key === e.target.value);
+                      if (!tag) return;
+                      patchDraft(variable.id, {
+                        equipment: tag.equipment, variable: tag.variableName,
+                        datatype: tag.datatype, unit: tag.unit,
+                        address: tag.address, node_id: tag.nodeId,
+                      });
+                    }} />
                   </td>
-
-                  {/* Variable */}
                   <td className="px-3 py-1.5">
-                    <select className={SELECT} value={d.variable}
-                      disabled={!d.equipment}
-                      onChange={(e) => {
-                        const v = eqVars.find((x) => x.variableName === e.target.value);
-                        patchDraft(variable.id, {
-                          variable: e.target.value,
-                          datatype: v?.datatype || "Float",
-                          unit:     v?.unit     || "",
-                          address:  v?.address  || "",
-                          node_id:  v?.nodeId   || "",
-                        });
-                      }}>
-                      <option value="">— variable —</option>
-                      {eqVars.map((v) => (
-                        <option key={v.key} value={v.variableName}>{v.variableName}</option>
-                      ))}
-                    </select>
+                    <span className={READONLY}>{tagMeta?.datatype || d.datatype || "—"}</span>
                   </td>
-
-                  {/* Tipo — read-only, viene de API */}
                   <td className="px-3 py-1.5">
-                    <span className={READONLY}>{varMeta?.datatype || d.datatype || "—"}</span>
+                    <span className={READONLY}>{tagMeta?.unit || d.unit || "—"}</span>
                   </td>
-
-                  {/* Unidad — read-only */}
-                  <td className="px-3 py-1.5">
-                    <span className={READONLY}>{varMeta?.unit || d.unit || "—"}</span>
-                  </td>
-
-                  {/* Dirección — read-only */}
-                  <td className="px-3 py-1.5" title={varMeta?.address || d.address || ""}>
-                    <span className={cls(READONLY, "block max-w-[160px] truncate")}>
-                      {varMeta?.address || d.address || "—"}
-                    </span>
-                  </td>
-
-                  {/* Nodo — read-only */}
-                  <td className="px-3 py-1.5" title={varMeta?.nodeId || d.node_id || ""}>
-                    <span className={cls(READONLY, "block max-w-[160px] truncate")}>
-                      {varMeta?.nodeId || d.node_id || "—"}
-                    </span>
-                  </td>
-
                   <ActionCell id={variable.id} isDirty={isDirty}
-                    onSave={() => handleSaveRow(variable)}
-                    onDelete={() => handleDeleteRow(variable.id)} />
+                    onSave={() => handleSaveVar(variable)}
+                    onDelete={() => handleDeleteVar(variable.id)} />
                 </tr>
               );
             })}
 
-            {/* New rows pending */}
-            {pending.map((row) => {
-              const eqVars = variablesByEquipment[row.equipment] || [];
-              const vMeta  = eqVars.find((v) => v.variableName === row.variable);
+            {pending.map(row => {
+              const tagMeta = allTagOptions.find(t => t.key === `${row.equipment}::${row.variable}`);
               return (
                 <tr key={row.tmpId} className="border-t border-slate-100 bg-sky-50">
-
-                  {/* Alias */}
                   <td className="px-3 py-1.5">
                     <input className={INPUT_NEW} placeholder="Alias *" value={row.name}
-                      onChange={(e) => patchNewRow(row.tmpId, { name: e.target.value })} />
+                      onChange={e => patchNewRow(row.tmpId, { name: e.target.value })} />
                   </td>
-
-                  {/* Equipo */}
                   <td className="px-3 py-1.5">
-                    <select className={SELECT_NEW} value={row.equipment}
-                      disabled={tagsLoading}
-                      onChange={(e) => patchNewRow(row.tmpId, {
-                        equipment: e.target.value,
-                        variable: "", datatype: "Float", unit: "", address: "", nodeId: "",
-                      })}>
-                      <option value="">— equipo * —</option>
-                      {equipmentOptions.map((eq) => (
-                        <option key={eq} value={eq}>{eq}</option>
-                      ))}
-                    </select>
-                  </td>
-
-                  {/* Variable */}
-                  <td className="px-3 py-1.5">
-                    <select className={SELECT_NEW} value={row.variable}
-                      disabled={!row.equipment}
-                      onChange={(e) => {
-                        const v = eqVars.find((x) => x.variableName === e.target.value);
+                    <VarSelect cls={INPUT_NEW}
+                      value={row.equipment && row.variable ? `${row.equipment}::${row.variable}` : "::"}
+                      onChange={e => {
+                        const tag = allTagOptions.find(t => t.key === e.target.value);
+                        if (!tag) return;
                         patchNewRow(row.tmpId, {
-                          variable: e.target.value,
-                          datatype: v?.datatype || "Float",
-                          unit:     v?.unit     || "",
-                          address:  v?.address  || "",
-                          nodeId:   v?.nodeId   || "",
+                          equipment: tag.equipment, variable: tag.variableName,
+                          datatype: tag.datatype, unit: tag.unit,
+                          address: tag.address, nodeId: tag.nodeId,
                         });
-                      }}>
-                      <option value="">— variable * —</option>
-                      {eqVars.map((v) => (
-                        <option key={v.key} value={v.variableName}>{v.variableName}</option>
-                      ))}
-                    </select>
+                      }} />
                   </td>
-
-                  {/* Tipo */}
                   <td className="px-3 py-1.5">
-                    <span className={READONLY}>{vMeta?.datatype || row.datatype || "—"}</span>
+                    <span className={READONLY}>{tagMeta?.datatype || row.datatype || "—"}</span>
                   </td>
-
-                  {/* Unidad */}
                   <td className="px-3 py-1.5">
-                    <span className={READONLY}>{vMeta?.unit || row.unit || "—"}</span>
+                    <span className={READONLY}>{tagMeta?.unit || row.unit || "—"}</span>
                   </td>
-
-                  {/* Dirección */}
-                  <td className="px-3 py-1.5">
-                    <span className={cls(READONLY, "block max-w-[160px] truncate")}>
-                      {vMeta?.address || row.address || "—"}
-                    </span>
-                  </td>
-
-                  {/* Nodo */}
-                  <td className="px-3 py-1.5">
-                    <span className={cls(READONLY, "block max-w-[160px] truncate")}>
-                      {vMeta?.nodeId || row.nodeId || "—"}
-                    </span>
-                  </td>
-
-                  <NewRowActionCell tmpId={row.tmpId}
-                    onConfirm={() => handleCreateRow(row)}
+                  <NewActionCell tmpId={row.tmpId}
+                    onConfirm={() => handleCreateVar(row)}
                     onCancel={() => removeNewRow(row.tmpId)} />
                 </tr>
               );
             })}
 
-            {connectionVars.length === 0 && pending.length === 0 && (
-              <tr>
-                <td colSpan={8} className="py-10 text-center text-[12px] text-slate-400">
-                  Sin variables de conexión. Usa "+ Añadir" para vincular un tag del PLC.
-                </td>
-              </tr>
+            {connVars.length === 0 && pending.length === 0 && (
+              <tr><td colSpan={5} className="py-8 text-center text-[12px] text-slate-400">
+                Sin variables de conexión. Usa "+ Añadir conexión".
+              </td></tr>
             )}
           </tbody>
         </table>
@@ -451,119 +369,89 @@ const ProjectVariableModal = ({ open, onClose, layoutId }) => {
     );
   };
 
-  // ── TABLE: Local ──────────────────────────────────────────────────────────────
-  // Columnas: Alias | Tipo | Valor inicial | Descripción | ⋯
+  // ── Local table ──────────────────────────────────────────────────────────
   const renderLocalTable = () => {
-    const pending = newRows.filter((r) => r.source === "local");
-
+    const pending = newRows.filter(r => r.source === "local");
     return (
       <div className="flex-1 overflow-auto">
         <table className="w-full text-[11px] border-collapse">
           <thead className="bg-slate-100 sticky top-0 z-10">
             <tr>
-              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-48">Alias</th>
-              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-32">Tipo</th>
-              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-40"
-                title="Valor con el que arranca el script engine">
-                Valor inicial
-              </th>
-              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200">
-                Descripción
-              </th>
+              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-44">Alias</th>
+              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-28">Tipo</th>
+              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200 w-36">Valor inicial</th>
+              <th className="px-3 py-2 text-left font-semibold text-slate-600 border-b border-slate-200">Descripción</th>
               <th className="px-3 py-2 border-b border-slate-200 w-16"></th>
             </tr>
           </thead>
           <tbody>
-            {/* Existing */}
-            {localVars.map((variable) => {
+            {localVars.map(variable => {
               const d       = getDraft(variable.id, variable);
               const isDirty = variable.id in drafts;
-
               return (
                 <tr key={variable.id}
                   className={cls("border-t border-slate-100", isDirty ? "bg-amber-50" : "hover:bg-slate-50")}>
-
-                  {/* Alias */}
                   <td className="px-3 py-1.5">
                     <input className={INPUT} value={d.name}
-                      onChange={(e) => patchDraft(variable.id, { name: e.target.value })} />
+                      onChange={e => patchDraft(variable.id, { name: e.target.value })} />
                   </td>
-
-                  {/* Tipo — editable para locales */}
                   <td className="px-3 py-1.5">
-                    <select className={SELECT} value={d.datatype || "Float"}
-                      onChange={(e) => patchDraft(variable.id, { datatype: e.target.value })}>
-                      {DATATYPES.map((dt) => <option key={dt} value={dt}>{dt}</option>)}
+                    <select className={INPUT} value={d.datatype || "Float"}
+                      onChange={e => patchDraft(variable.id, { datatype: e.target.value })}>
+                      {DATATYPES.map(dt => <option key={dt} value={dt}>{dt}</option>)}
                     </select>
                   </td>
-
-                  {/* Valor inicial */}
                   <td className="px-3 py-1.5">
                     <input className={INPUT}
                       placeholder={d.datatype === "Bool" ? "true / false" : "0"}
                       value={d.initial_value ?? ""}
-                      onChange={(e) => patchDraft(variable.id, { initial_value: e.target.value })} />
+                      onChange={e => patchDraft(variable.id, { initial_value: e.target.value })} />
                   </td>
-
-                  {/* Descripción */}
                   <td className="px-3 py-1.5">
-                    <input className={INPUT} placeholder="Para qué sirve esta variable…"
+                    <input className={INPUT} placeholder="Para qué sirve…"
                       value={d.description ?? ""}
-                      onChange={(e) => patchDraft(variable.id, { description: e.target.value })} />
+                      onChange={e => patchDraft(variable.id, { description: e.target.value })} />
                   </td>
-
                   <ActionCell id={variable.id} isDirty={isDirty}
-                    onSave={() => handleSaveRow(variable)}
-                    onDelete={() => handleDeleteRow(variable.id)} />
+                    onSave={() => handleSaveVar(variable)}
+                    onDelete={() => handleDeleteVar(variable.id)} />
                 </tr>
               );
             })}
 
-            {/* New */}
-            {pending.map((row) => (
+            {pending.map(row => (
               <tr key={row.tmpId} className="border-t border-slate-100 bg-sky-50">
-
-                {/* Alias */}
                 <td className="px-3 py-1.5">
                   <input className={INPUT_NEW} placeholder="Alias *" value={row.name}
-                    onChange={(e) => patchNewRow(row.tmpId, { name: e.target.value })} />
+                    onChange={e => patchNewRow(row.tmpId, { name: e.target.value })} />
                 </td>
-
-                {/* Tipo */}
                 <td className="px-3 py-1.5">
-                  <select className={SELECT_NEW} value={row.datatype}
-                    onChange={(e) => patchNewRow(row.tmpId, { datatype: e.target.value })}>
-                    {DATATYPES.map((dt) => <option key={dt} value={dt}>{dt}</option>)}
+                  <select className={INPUT_NEW} value={row.datatype}
+                    onChange={e => patchNewRow(row.tmpId, { datatype: e.target.value })}>
+                    {DATATYPES.map(dt => <option key={dt} value={dt}>{dt}</option>)}
                   </select>
                 </td>
-
-                {/* Valor inicial */}
                 <td className="px-3 py-1.5">
                   <input className={INPUT_NEW}
                     placeholder={row.datatype === "Bool" ? "true / false" : "0"}
                     value={row.initial_value}
-                    onChange={(e) => patchNewRow(row.tmpId, { initial_value: e.target.value })} />
+                    onChange={e => patchNewRow(row.tmpId, { initial_value: e.target.value })} />
                 </td>
-
-                {/* Descripción */}
                 <td className="px-3 py-1.5">
-                  <input className={INPUT_NEW} placeholder="Para qué sirve esta variable…"
+                  <input className={INPUT_NEW} placeholder="Para qué sirve…"
                     value={row.description}
-                    onChange={(e) => patchNewRow(row.tmpId, { description: e.target.value })} />
+                    onChange={e => patchNewRow(row.tmpId, { description: e.target.value })} />
                 </td>
-
-                <NewRowActionCell tmpId={row.tmpId}
-                  onConfirm={() => handleCreateRow(row)}
+                <NewActionCell tmpId={row.tmpId}
+                  onConfirm={() => handleCreateVar(row)}
                   onCancel={() => removeNewRow(row.tmpId)} />
               </tr>
             ))}
 
             {localVars.length === 0 && pending.length === 0 && (
-              <tr>
-                <td colSpan={5} className="py-10 text-center text-[12px] text-slate-400">
-                  Sin variables locales. Usa "+ Añadir" para crear puntos de control para scripts.
-                </td>
-              </tr>
+              <tr><td colSpan={5} className="py-8 text-center text-[12px] text-slate-400">
+                Sin variables locales. Usa "+ Añadir local".
+              </td></tr>
             )}
           </tbody>
         </table>
@@ -571,53 +459,38 @@ const ProjectVariableModal = ({ open, onClose, layoutId }) => {
     );
   };
 
-  // ── Shell ─────────────────────────────────────────────────────────────────────
+  // ── Shell ────────────────────────────────────────────────────────────────
   if (!open) return null;
 
-  const tabBase = "px-4 py-2 text-[12px] font-medium border-b-2 transition-colors";
-  const tabActive = "border-sky-500 text-sky-700 bg-white";
+  const tabBase     = "px-4 py-2 text-[12px] font-medium border-b-2 transition-colors";
+  const tabActive   = "border-sky-500 text-sky-700 bg-white";
   const tabInactive = "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300";
-
-  const countConn  = connectionVars.length;
-  const countLocal = localVars.length;
 
   return (
     <div className="fixed inset-0 z-[2100] bg-black/40 flex items-center justify-center">
       <div className="w-[1200px] max-w-[96vw] h-[680px] bg-white rounded-lg shadow-xl flex flex-col overflow-hidden">
 
-        {/* ── HEADER ── */}
+        {/* HEADER */}
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 bg-slate-50 shrink-0">
-          <div className="flex items-center gap-3">
-            <h2 className="text-sm font-semibold text-slate-800">Variables del Proyecto</h2>
-            {(loading || tagsLoading) && (
-              <span className="text-[11px] text-slate-400">Cargando…</span>
-            )}
-            {!layoutId && (
-              <span className="text-[11px] text-amber-600 font-medium">
-                ⚠ Guarda el proyecto primero.
-              </span>
-            )}
-          </div>
+          <h2 className="text-sm font-semibold text-slate-800">Variables del Proyecto</h2>
           <div className="flex gap-2 items-center">
-            <button
-              onClick={() => { setActiveTab("connection"); addNewRow("connection"); }}
-              disabled={!layoutId}
-              className="px-3 py-1 text-xs border border-slate-300 rounded hover:border-sky-400 hover:bg-sky-50 disabled:opacity-40"
-            >
-              + Añadir conexión
-            </button>
-            <button
-              onClick={() => { setActiveTab("local"); addNewRow("local"); }}
-              disabled={!layoutId}
-              className="px-3 py-1 text-xs border border-slate-300 rounded hover:border-sky-400 hover:bg-sky-50 disabled:opacity-40"
-            >
-              + Añadir local
-            </button>
+            {selectedTable && (
+              <>
+                <button onClick={() => { setActiveTab("connection"); addNewRow("connection"); }}
+                  className="px-3 py-1 text-xs border border-slate-300 rounded hover:border-sky-400 hover:bg-sky-50">
+                  + Añadir conexión
+                </button>
+                <button onClick={() => { setActiveTab("local"); addNewRow("local"); }}
+                  className="px-3 py-1 text-xs border border-slate-300 rounded hover:border-sky-400 hover:bg-sky-50">
+                  + Añadir local
+                </button>
+              </>
+            )}
             <button onClick={onClose} className="px-2 text-slate-500 hover:text-slate-800 text-lg leading-none">✕</button>
           </div>
         </div>
 
-        {/* ── ERROR BANNER ── */}
+        {/* ERROR */}
         {error && (
           <div className="flex items-center justify-between bg-rose-50 border-b border-rose-200 px-4 py-2 text-[11px] text-rose-700 shrink-0">
             <span>{error}</span>
@@ -625,59 +498,113 @@ const ProjectVariableModal = ({ open, onClose, layoutId }) => {
           </div>
         )}
 
-        {/* ── TABS ── */}
-        <div className="flex border-b border-slate-200 bg-slate-50 shrink-0">
-          <button
-            className={cls(tabBase, activeTab === "connection" ? tabActive : tabInactive)}
-            onClick={() => setActiveTab("connection")}
-          >
-            Conexión
-            <span className={cls(
-              "ml-2 rounded-full px-1.5 py-0.5 text-[10px]",
-              activeTab === "connection" ? "bg-sky-100 text-sky-700" : "bg-slate-200 text-slate-500"
-            )}>
-              {countConn}
-            </span>
-          </button>
-          <button
-            className={cls(tabBase, activeTab === "local" ? tabActive : tabInactive)}
-            onClick={() => setActiveTab("local")}
-          >
-            Local
-            <span className={cls(
-              "ml-2 rounded-full px-1.5 py-0.5 text-[10px]",
-              activeTab === "local" ? "bg-sky-100 text-sky-700" : "bg-slate-200 text-slate-500"
-            )}>
-              {countLocal}
-            </span>
-          </button>
+        <div className="flex flex-1 overflow-hidden">
 
-          {/* Descripción del tab activo */}
-          <div className="ml-auto flex items-center pr-4 text-[10px] text-slate-400">
-            {activeTab === "connection"
-              ? "Variables vinculadas a tags del PLC. Tipo y dirección se auto-rellenan."
-              : "Variables internas sin origen PLC. Úsalas como puntos de control en scripts."}
+          {/* PANEL IZQUIERDO — tablas */}
+          <div className="w-52 border-r border-slate-200 flex flex-col overflow-hidden shrink-0">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 bg-slate-50">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Tablas</p>
+              <button onClick={handleCreateTable}
+                className="text-[11px] text-sky-600 hover:text-sky-800 font-medium">
+                + Nueva
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {loadingTables && (
+                <div className="px-3 py-3 text-[11px] text-slate-400">Cargando…</div>
+              )}
+              {!loadingTables && tables.length === 0 && (
+                <div className="px-3 py-4 text-[11px] text-slate-400">
+                  Sin tablas. Crea una con "+ Nueva".
+                </div>
+              )}
+              {tables.map(table => (
+                <div key={table.id}
+                  onClick={() => setSelectedTable(table)}
+                  className={cls(
+                    "group flex items-center justify-between px-3 py-2 cursor-pointer text-[12px] border-b border-slate-100",
+                    selectedTable?.id === table.id
+                      ? "bg-sky-50 text-sky-800 font-semibold"
+                      : "hover:bg-slate-50 text-slate-700"
+                  )}>
+                  {renamingTableId === table.id ? (
+                    <input autoFocus
+                      className="flex-1 rounded border border-sky-300 px-1 py-0.5 text-[12px] focus:outline-none"
+                      value={renameValue}
+                      onChange={e => setRenameValue(e.target.value)}
+                      onBlur={() => handleRenameTable(table)}
+                      onKeyDown={e => {
+                        if (e.key === "Enter")  handleRenameTable(table);
+                        if (e.key === "Escape") setRenamingTableId(null);
+                      }}
+                      onClick={e => e.stopPropagation()}
+                    />
+                  ) : (
+                    <span className="flex-1 truncate"
+                      onDoubleClick={e => {
+                        e.stopPropagation();
+                        setRenamingTableId(table.id);
+                        setRenameValue(table.name);
+                      }}>
+                      {table.name}
+                    </span>
+                  )}
+                  <span className="shrink-0 text-[10px] text-slate-400 ml-1">
+                    {table.variable_count ?? table.variables?.length ?? 0}
+                  </span>
+                  <button type="button"
+                    onClick={e => { e.stopPropagation(); handleDeleteTable(table); }}
+                    className="ml-1 hidden group-hover:inline text-rose-400 hover:text-rose-600 text-xs">
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* PANEL DERECHO — variables */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {!selectedTable ? (
+              <div className="flex-1 flex items-center justify-center text-[12px] text-slate-400">
+                Selecciona o crea una tabla.
+              </div>
+            ) : (
+              <>
+                <div className="flex border-b border-slate-200 bg-slate-50 shrink-0">
+                  <button className={cls(tabBase, activeTab === "connection" ? tabActive : tabInactive)}
+                    onClick={() => setActiveTab("connection")}>
+                    Conexión
+                    <span className={cls("ml-2 rounded-full px-1.5 py-0.5 text-[10px]",
+                      activeTab === "connection" ? "bg-sky-100 text-sky-700" : "bg-slate-200 text-slate-500")}>
+                      {connVars.length}
+                    </span>
+                  </button>
+                  <button className={cls(tabBase, activeTab === "local" ? tabActive : tabInactive)}
+                    onClick={() => setActiveTab("local")}>
+                    Local
+                    <span className={cls("ml-2 rounded-full px-1.5 py-0.5 text-[10px]",
+                      activeTab === "local" ? "bg-sky-100 text-sky-700" : "bg-slate-200 text-slate-500")}>
+                      {localVars.length}
+                    </span>
+                  </button>
+                  <div className="ml-auto flex items-center pr-4 text-[10px] text-slate-400">
+                    Tabla: <span className="ml-1 font-medium text-slate-600">{selectedTable.name}</span>
+                    <span className="ml-2 text-slate-300">· doble clic para renombrar</span>
+                  </div>
+                </div>
+
+                {loadingVars ? (
+                  <div className="flex-1 flex items-center justify-center text-[12px] text-slate-400">
+                    Cargando variables…
+                  </div>
+                ) : (
+                  activeTab === "connection" ? renderConnectionTable() : renderLocalTable()
+                )}
+              </>
+            )}
           </div>
         </div>
-
-        {/* ── BODY ── */}
-        {!layoutId ? (
-          <div className="flex-1 flex items-center justify-center text-[12px] text-slate-400">
-            Sin proyecto activo. Guarda el proyecto primero.
-          </div>
-        ) : loading ? (
-          <div className="flex-1 flex items-center justify-center text-[12px] text-slate-400">
-            Cargando variables…
-          </div>
-        ) : (
-          activeTab === "connection"
-            ? renderConnectionTable()
-            : renderLocalTable()
-        )}
-
       </div>
     </div>
   );
-};
-
-export default ProjectVariableModal;
+}

@@ -6,8 +6,13 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import MyLayOutsTitle, ProjectVariable
-from .serializers import MyLayOutsTitleSerializer, ProjectVariableSerializer
+from .models import MyLayOutsTitle, ProjectVariable, VariableTable
+from .serializers import MyLayOutsTitleSerializer
+from .serializers import (
+    VariableTableSerializer,
+    VariableTableLightSerializer,
+    ProjectVariableSerializer,
+)
 
 # Vista genérica del proyecto (puedes moverla a una app 'core' si prefieres)
 def home(request):
@@ -87,29 +92,104 @@ def reorder_layouts(request):
 
 
 
+ 
+# ── Helpers ───────────────────────────────────────────────────────────────────
+ 
+def get_layout_or_404(request, layout_id):
+    """Devuelve el layout si pertenece al usuario, o None."""
+    try:
+        return MyLayOutsTitle.objects.get(id=layout_id, user=request.user)
+    except MyLayOutsTitle.DoesNotExist:
+        return None
+ 
+ 
+# ── VariableTable CRUD ────────────────────────────────────────────────────────
+ 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
-def project_variables(request, title_id):
+def variable_tables(request, layout_id):
     """
-    GET  /api/layouts/<title_id>/variables/  → lista variables del proyecto
-    POST /api/layouts/<title_id>/variables/  → crear variable
+    GET  /api/scada-manager/layouts/<layout_id>/tables/
+         → lista de tablas con sus variables anidadas
+    POST /api/scada-manager/layouts/<layout_id>/tables/
+         → crear tabla  { "name": "Mi tabla" }
     """
-    # Verificar que el layout pertenece al usuario
-    try:
-        layout = MyLayOutsTitle.objects.get(id=title_id, user=request.user)
-    except MyLayOutsTitle.DoesNotExist:
+    layout = get_layout_or_404(request, layout_id)
+    if not layout:
         return Response({"error": "No encontrado o no autorizado"}, status=404)
  
     if request.method == "GET":
-        qs = ProjectVariable.objects.filter(layout=layout)
-        # Filtro opcional por source: ?source=connection | ?source=local
+        tables = VariableTable.objects.filter(layout=layout).prefetch_related("variables")
+        return Response(VariableTableSerializer(tables, many=True).data)
+ 
+    elif request.method == "POST":
+        data = {**request.data, "layout": layout.id}
+        serializer = VariableTableSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        return Response(serializer.errors, status=400)
+ 
+ 
+@api_view(["GET", "PATCH", "DELETE"])
+@permission_classes([IsAuthenticated])
+def variable_table_detail(request, layout_id, table_id):
+    """
+    GET    /api/scada-manager/layouts/<layout_id>/tables/<table_id>/
+    PATCH  → renombrar tabla  { "name": "Nuevo nombre" }
+    DELETE → eliminar tabla y todas sus variables
+    """
+    layout = get_layout_or_404(request, layout_id)
+    if not layout:
+        return Response({"error": "No encontrado o no autorizado"}, status=404)
+ 
+    try:
+        table = VariableTable.objects.get(id=table_id, layout=layout)
+    except VariableTable.DoesNotExist:
+        return Response({"error": "Tabla no encontrada"}, status=404)
+ 
+    if request.method == "GET":
+        return Response(VariableTableSerializer(table).data)
+ 
+    elif request.method == "PATCH":
+        serializer = VariableTableSerializer(table, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+ 
+    elif request.method == "DELETE":
+        table.delete()
+        return Response(status=204)
+ 
+ 
+# ── ProjectVariable CRUD (anidado bajo tabla) ─────────────────────────────────
+ 
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def table_variables(request, layout_id, table_id):
+    """
+    GET  /api/scada-manager/layouts/<layout_id>/tables/<table_id>/variables/
+    POST /api/scada-manager/layouts/<layout_id>/tables/<table_id>/variables/
+    """
+    layout = get_layout_or_404(request, layout_id)
+    if not layout:
+        return Response({"error": "No encontrado o no autorizado"}, status=404)
+ 
+    try:
+        table = VariableTable.objects.get(id=table_id, layout=layout)
+    except VariableTable.DoesNotExist:
+        return Response({"error": "Tabla no encontrada"}, status=404)
+ 
+    if request.method == "GET":
+        qs = ProjectVariable.objects.filter(table=table)
         source = request.query_params.get("source")
         if source:
             qs = qs.filter(source=source)
         return Response(ProjectVariableSerializer(qs, many=True).data)
  
     elif request.method == "POST":
-        data = {**request.data, "layout": layout.id}
+        data = {**request.data, "table": table.id}
         serializer = ProjectVariableSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -119,21 +199,21 @@ def project_variables(request, title_id):
  
 @api_view(["GET", "PATCH", "DELETE"])
 @permission_classes([IsAuthenticated])
-def project_variable_detail(request, title_id, var_id):
+def table_variable_detail(request, layout_id, table_id, var_id):
     """
-    GET    /api/layouts/<title_id>/variables/<var_id>/
-    PATCH  /api/layouts/<title_id>/variables/<var_id>/
-    DELETE /api/layouts/<title_id>/variables/<var_id>/
+    GET    /api/scada-manager/layouts/<layout_id>/tables/<table_id>/variables/<var_id>/
+    PATCH  → editar variable
+    DELETE → eliminar variable
     """
-    try:
-        MyLayOutsTitle.objects.get(id=title_id, user=request.user)
-    except MyLayOutsTitle.DoesNotExist:
+    layout = get_layout_or_404(request, layout_id)
+    if not layout:
         return Response({"error": "No encontrado o no autorizado"}, status=404)
  
     try:
-        variable = ProjectVariable.objects.get(id=var_id, layout_id=title_id)
-    except ProjectVariable.DoesNotExist:
-        return Response({"error": "Variable no encontrada"}, status=404)
+        table = VariableTable.objects.get(id=table_id, layout=layout)
+        variable = ProjectVariable.objects.get(id=var_id, table=table)
+    except (VariableTable.DoesNotExist, ProjectVariable.DoesNotExist):
+        return Response({"error": "No encontrado"}, status=404)
  
     if request.method == "GET":
         return Response(ProjectVariableSerializer(variable).data)
@@ -150,23 +230,24 @@ def project_variable_detail(request, title_id, var_id):
         return Response(status=204)
  
  
+# ── Resolución de UUID para el runtime WebSocket ──────────────────────────────
+ 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def resolve_variable_id(request):
     """
-    Resuelve un variable_id (UUID) → ProjectVariable completa.
+    GET /api/scada-manager/variables/resolve/?variable_id=<uuid>
+    Resuelve un variable_id UUID a su ProjectVariable completa.
     Usado por el WebSocket consumer para saber a qué tag real suscribirse.
- 
-    GET /api/variables/resolve/?variable_id=<uuid>
     """
     uid = request.query_params.get("variable_id")
     if not uid:
         return Response({"error": "Parámetro variable_id requerido"}, status=400)
     try:
-        variable = ProjectVariable.objects.select_related("layout").get(variable_id=uid)
+        variable = ProjectVariable.objects.select_related("table__layout").get(variable_id=uid)
     except ProjectVariable.DoesNotExist:
         return Response({"error": "Variable no encontrada"}, status=404)
-    # Solo devolver si el layout pertenece al usuario
-    if variable.layout.user != request.user:
+    if variable.table.layout.user != request.user:
         return Response({"error": "No autorizado"}, status=403)
     return Response(ProjectVariableSerializer(variable).data)
+ 
