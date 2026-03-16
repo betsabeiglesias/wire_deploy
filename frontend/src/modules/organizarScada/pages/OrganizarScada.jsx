@@ -683,6 +683,7 @@ const handleLoadFromDB = useCallback((data, layoutId, name) => {
           >
             <SidebarPropiedades
               isOpen={isPropsPanelOpen}
+              layoutId={currentLayoutId}              
               exportName={exportName}
               onExportNameChange={setExportName}
               selectedElement={selectedElement}
