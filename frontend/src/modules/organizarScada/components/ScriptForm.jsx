@@ -1,7 +1,7 @@
 // modules/organizarScada/components/ScriptForm.jsx
 
 import { useState } from "react";
-import { TagSelector } from "./TagSelector";
+import { TagSelector } from "./sidebar/TagSelector";
 
 const OPERATORS = [
   { value: "eq", label: "Igual a" },

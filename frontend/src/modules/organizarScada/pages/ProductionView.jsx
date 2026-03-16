@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 
 import { useParams, useNavigate } from "react-router-dom";
 
-import { useRealtime } from "@/realtime/RealtimeProvider";
+import { useRealtime } from "@/context/RealtimeProvider";
 import api from "../../../services/api";
 import "@/styles/gateway.css";
 import "../../../styles/Scada.css";

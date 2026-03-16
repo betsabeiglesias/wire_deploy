@@ -3,7 +3,8 @@ import AppRoutes from './routes/AppRoutes';
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useLocation } from "react-router-dom";
-import { RealtimeProvider } from '@/realtime/RealtimeProvider';
+import { RealtimeProvider } from '@/context/RealtimeProvider';
+import { ScadaConfigProvider } from './context/ScadaConfigProvider';
 import { shallow } from 'zustand/shallow';
 
 function App() {
@@ -60,6 +61,7 @@ function App() {
 
   return (
     <>
+    <ScadaConfigProvider>
       {needsRealtime ? (
         <RealtimeProvider tenant={tenant}>
           <AppRoutes />
@@ -67,6 +69,7 @@ function App() {
       ) : (
         <AppRoutes />
       )}
+      </ScadaConfigProvider>
     </>
   );
 }

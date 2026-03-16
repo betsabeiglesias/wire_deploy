@@ -1,6 +1,6 @@
 // Contenedor orquestador del editor SCADA con vistas múltiples y publicación.
 // Se apoya en el hook useOrganizarScada para mantener la lógica y en componentes modulares.
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import UnifiedSidebar from "../components/sidebar/UnifiedSidebar";
 import CanvasEditor from "../components/canvas/CanvasEditor";
@@ -57,6 +57,20 @@ const OrganizarScada = () => {
     exportToFile,
     handleNewDashboard,
   } = useOrganizarScada();
+
+  const handleSaveProjectOnly = useCallback(async (name) => {
+    const finalName = name?.trim() || exportName?.trim() || "Nuevo HMI";
+    if (name) setExportName(finalName);
+    const savedId = await confirmExport({
+      filename:   finalName,
+      viewsData:  { views: [] },
+      isUpdating: false,
+    });
+    setCurrentLayoutId(savedId);
+    setIsEditMode(true);
+    return savedId;
+  }, [confirmExport, exportName, setExportName]);
+
 
   const [zoom, setZoom] = useState(1);
   const editorViewportRef = useRef(null);
@@ -554,6 +568,8 @@ const OrganizarScada = () => {
           <UnifiedSidebar
             projectName={exportName}
             onProjectNameChange={setExportName}
+            layoutId={currentLayoutId}
+            onSaveProject={handleSaveProjectOnly}
             views={views}
             selectedViewId={currentViewId}
             onCreateView={handleCreateView}

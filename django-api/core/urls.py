@@ -32,6 +32,7 @@ urlpatterns = [
     path("api/favorites/", include("core.favorites.urls")),
 
     path("api/edge/", include("edge_config.urls")),
+
 ]
 
 if settings.DEBUG:

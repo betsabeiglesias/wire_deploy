@@ -11,7 +11,8 @@ import { elementos_scada } from "@/modules/organizarScada/templates/elementos_sc
 import { buttons_labels_items } from "@/modules/organizarScada/utils/items";
 import { renderWidget } from "@/modules/organizarScada/components/widgets/registry.jsx";
 import SkeletonBlock from "@/components/ui/SkeletonBlock";
-import ProjectVariableModal from "../devices/ProjectVariableModal";
+import DeviceManagerModal from "../devices/DeviceManagerModal"
+import ProjectVariableModal from "../devices/ProjectVariableModal"
 
 // ─── Image helpers ─────────────────────────────────────────────────────────────
 const CUSTOM_ICONS_STORAGE_KEY = "organizarScada.customIcons.library";
@@ -75,10 +76,9 @@ const optimizeAndEncodeAsset = async (file) => {
 // ──────────────────────────────────────────────────────────────────────────────
 
 const UnifiedSidebar = ({
-  layoutId = null,
   projectName = "",
   onProjectNameChange,
-  onSaveProject,        // () => Promise<void> — guarda el proyecto sin validar canvas
+  projectId = null,
   views = [],
   selectedViewId,
   onCreateView,
@@ -100,7 +100,7 @@ const UnifiedSidebar = ({
   const [isMainOpen,           setIsMainOpen]           = useState(true);
   const [activeSection,        setActiveSection]        = useState("pantallas");
   const [showDevices,          setShowDevices]          = useState(false);
-  const [isSavingProject,      setIsSavingProject]      = useState(false);
+  const [showVariables,        setShowVariables]        = useState(false);
   const [customIcons,          setCustomIcons]          = useState([]);
   const [isProcessingUpload,   setIsProcessingUpload]   = useState(false);
   const [editingViewId,        setEditingViewId]        = useState(null);
@@ -118,6 +118,7 @@ const UnifiedSidebar = ({
       items: [
         { id: "pantallas",    label: "Pantallas"             },
         { id: "devices",      label: "Dispositivos"          },
+        { id: "variables",    label: "Variables"             },
         { id: "elements",     label: "Iconos hmi"            },
         { id: "buttons",      label: "Iconos basicos"        },
         { id: "custom-icons", label: "Iconos personalizados" },
@@ -487,52 +488,10 @@ const UnifiedSidebar = ({
 
     // ── Dispositivos ────────────────────────────────────────────────────────────
     if (sectionId === "devices") {
-      // Sin proyecto guardado: mostrar formulario de nombre + guardar
-      if (!layoutId) {
-        return (
-          <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-3">
-            <h3 className="text-sm font-semibold text-slate-800">Variables</h3>
-            <p className="text-[10px] text-slate-500">
-              Para gestionar variables el proyecto necesita un nombre y estar guardado.
-            </p>
-            <div className="space-y-2">
-              <input
-                className="w-full rounded border border-slate-300 px-2 py-1.5 text-[12px] focus:border-sky-400 focus:outline-none"
-                placeholder="Nombre del proyecto…"
-                value={projectNameDraft}
-                onChange={(e) => setProjectNameDraft(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") commitProjectName(); }}
-              />
-              <button
-                type="button"
-                disabled={!projectNameDraft.trim() || isSavingProject}
-                onClick={async () => {
-                  // 1. Confirmar nombre
-                  const name = projectNameDraft.trim();
-                  if (!name) return;
-                  onProjectNameChange?.(name);
-                  // 2. Guardar proyecto (vacío) en el backend
-                  setIsSavingProject(true);
-                  try {
-                    await onSaveProject?.(name);
-                  } finally {
-                    setIsSavingProject(false);
-                  }
-                }}
-                className="w-full rounded border border-sky-400 bg-sky-50 px-2 py-1.5 text-[12px] font-medium text-sky-700 hover:bg-sky-100 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {isSavingProject ? "Guardando…" : "Guardar y continuar"}
-              </button>
-            </div>
-          </div>
-        );
-      }
-
-      // Con proyecto guardado: mostrar botón gestor normal
       return (
         <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-800">Variables</h3>
+            <h3 className="text-sm font-semibold text-slate-800">Dispositivos</h3>
             <button
               onClick={() => setShowDevices(true)}
               className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
@@ -541,8 +500,33 @@ const UnifiedSidebar = ({
             </button>
           </div>
           <p className="text-[10px] text-slate-400">
-            Define las variables del proyecto: conexiones a tags PLC y variables locales para scripts.
+            Organiza los tags del sistema en tablas para usarlos en tus dashboards.
           </p>
+        </div>
+      );
+    }
+
+    // ── Variables ────────────────────────────────────────────────────────────────
+    if (sectionId === "variables") {
+      return (
+        <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-slate-800">Variables</h3>
+            <button
+              onClick={() => setShowVariables(true)}
+              className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
+            >
+              Abrir gestor
+            </button>
+          </div>
+          <p className="text-[10px] text-slate-400">
+            Define las variables del proyecto (conexión PLC o locales) para usar en los widgets.
+          </p>
+          {!projectId && (
+            <p className="text-[10px] text-amber-600">
+              Publica el proyecto para activar el gestor de variables.
+            </p>
+          )}
         </div>
       );
     }
@@ -780,10 +764,17 @@ const UnifiedSidebar = ({
       </div>
 
       {showDevices && (
-        <ProjectVariableModal
+        <DeviceManagerModal
           open={showDevices}
           onClose={() => setShowDevices(false)}
-          layoutId={layoutId}
+        />
+      )}
+
+      {showVariables && (
+        <ProjectVariableModal
+          open={showVariables}
+          onClose={() => setShowVariables(false)}
+          projectId={projectId}
         />
       )}
     </>

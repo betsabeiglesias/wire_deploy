@@ -1,9 +1,9 @@
-// src/modules/organizarScada/components/sidebar/SidebarPropiedades.jsx
+// src/modules/organizarScada/components/SidebarPropiedades.jsx
 // Panel de propiedades con tabs horizontales ligeros.
 // Tab "Dispositivo" usa TagSelector + useScadaConfig() en vez de localStorage.
 import React, { useState } from "react";
-import { useScadaConfig } from "../../../../context/ScadaConfigProvider";
-import { TagSelector } from "./TagSelector";
+import { useScadaConfig } from "../../../context/ScadaConfigProvider";
+import { TagSelector } from "./TagSelector_del";
 
 const tabs = ["General", "Dispositivo", "Estilo"];
 

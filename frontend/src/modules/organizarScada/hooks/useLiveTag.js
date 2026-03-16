@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRealtime } from "@/realtime/RealtimeProvider";
+import { useRealtime } from "@/context/RealtimeProvider";
 import { formatValueWithDecimals } from "@/modules/organizarScada/utils/formatters";
 import { parseNumericValue } from "@/modules/organizarScada/utils/numbers";
 

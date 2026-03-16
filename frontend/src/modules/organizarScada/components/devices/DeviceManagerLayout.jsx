@@ -1,32 +1,32 @@
-import DeviceTree from "./DeviceTree";
-import DeviceTable from "./DeviceTable";
+// import DeviceTree from "./DeviceTree";
+// import DeviceTable from "./DeviceTable";
 
-const DeviceManagerLayout = ({
-  devices,
-  selectedDevice,
-  onSelectDevice,
-  tags,
-  onUpdateTag,
-  onAddTag
-}) => {
+// const DeviceManagerLayout = ({
+//   devices,
+//   selectedDevice,
+//   onSelectDevice,
+//   tags,
+//   onUpdateTag,
+//   onAddTag
+// }) => {
 
-  return (
-    <div className="flex h-[600px]">
+//   return (
+//     <div className="flex h-[600px]">
 
-      <DeviceTree
-        devices={devices}
-        selected={selectedDevice}
-        onSelect={onSelectDevice}
-      />
+//       <DeviceTree
+//         devices={devices}
+//         selected={selectedDevice}
+//         onSelect={onSelectDevice}
+//       />
 
-      <DeviceTable
-        tags={tags}
-        onUpdateTag={onUpdateTag}
-        onAddTag={onAddTag}
-      />
+//       <DeviceTable
+//         tags={tags}
+//         onUpdateTag={onUpdateTag}
+//         onAddTag={onAddTag}
+//       />
 
-    </div>
-  );
-};
+//     </div>
+//   );
+// };
 
-export default DeviceManagerLayout;
+// export default DeviceManagerLayout;

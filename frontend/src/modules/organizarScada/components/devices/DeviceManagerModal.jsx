@@ -1,727 +1,360 @@
+// src/modules/organizarScada/components/sidebar/DeviceManagerModal.jsx
+//
+// Gestor de tablas/grupos de tags del proyecto.
+// - Tags disponibles vienen de useScadaConfig (API REST), no del WebSocket.
+// - Los grupos y su contenido se persisten en localStorage como preferencia
+//   de organización del diseñador. No son fuente de datos en tiempo real.
+//
 import React, { useEffect, useMemo, useState } from "react";
+import { useScadaConfig } from "../../../../context/ScadaConfigProvider";
 
-
-
-// Modal flotante para gestionar PLCs/tablas y tags de ejemplo (mock local).
-// Arrancamos vacío para que el usuario cree sus propias tablas/PLC
-const mockDevices = [];
 const DEVICES_STORAGE_KEY = "organizarScada.devices.tables";
 
 const loadDevicesFromStorage = () => {
   try {
     const raw = localStorage.getItem(DEVICES_STORAGE_KEY);
-    if (!raw) return mockDevices;
+    if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : mockDevices;
-  } catch (_err) {
-    return mockDevices;
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
   }
 };
 
 const DeviceManagerModal = ({ open, onClose }) => {
-  const [devices, setDevices] = useState(loadDevicesFromStorage);
-  const [selectedId, setSelectedId] = useState(null);
-  const [selectedTagId, setSelectedTagId] = useState(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [apiDevices, setApiDevices] = useState([]);
+  const { config, loading } = useScadaConfig();
 
+  const [devices,          setDevices]          = useState(loadDevicesFromStorage);
+  const [selectedId,       setSelectedId]       = useState(null);
+  const [hasUnsavedChanges,setHasUnsavedChanges]= useState(false);
 
-  useEffect(() => {
+  // ── Tags de la API ──────────────────────────────────────────────────────────
+  // config.tagIndex: { "equipment.variable": { equipment, variable, datatype, unit, ... } }
+  const tagIndex = config?.tagIndex || {};
 
-  const loadDevicesFromApi = async () => {
-
-    try {
-
-      const res = await fetch("/api/edge/config/export/");
-      const data = await res.json();
-
-      const devices = data.equipments.map(eq => {
-
-        const equipmentId = eq.equipment_id;
-        const device = equipmentId?.split("/").pop();
-
-        return {
-
-          id: equipmentId,
-
-          name: eq.isa95?.work_unit || device || equipmentId,
-
-          equipmentId,
-
-          device, // 👈 añadido
-
-          endpoint: eq.connection?.endpoint || "",
-
-          driver: eq.driver || "",
-
-          tags: (eq.items || []).map((item, i) => ({
-
-            id: `${equipmentId}-${i}`,
-
-            name: item.name,
-
-            variable: item.cdc?.tag,
-
-            variableName: item.name,
-
-            plcVariable: item.cdc?.tag,
-
-            datatype: item.datatype,
-
-            unit: item.cdc?.unit,
-
-            nodeId: item.addressing?.node_id,
-
-            node_id: item.addressing?.node_id,
-
-            address: eq.connection?.endpoint,
-
-            endpoint: eq.connection?.endpoint,
-
-            deviceId: equipmentId,
-
-            equipment: equipmentId,
-
-            device, // 👈 también disponible en cada tag
-
-            plcName: eq.driver,
-
-            sourceMode: "conexion",
-
-            conn: "Conexion",
-
-            bindingKey: `${equipmentId}::${item.name}`
-
-          }))
-
-        };
-
+  const variablesByEquipment = useMemo(() => {
+    const map = {};
+    Object.values(tagIndex).forEach(tag => {
+      const eq = tag.equipment;
+      if (!eq) return;
+      if (!map[eq]) map[eq] = [];
+      map[eq].push({
+        key:          `${eq}::${tag.variable}`,
+        variableName: tag.variable,
+        datatype:     tag.datatype  || "",
+        unit:         tag.unit      || "",
       });
+    });
+    return map;
+  }, [tagIndex]);
 
-      setApiDevices(devices);
+  const equipmentOptions = useMemo(() =>
+    Object.keys(variablesByEquipment)
+      .sort()
+      .map(eq => ({ value: eq, label: eq })),
+    [variablesByEquipment]
+  );
 
-    } catch (err) {
-
-      console.error("Error loading devices", err);
-
-    }
-
-  };
-
-  loadDevicesFromApi();
-
-}, []);
-
-
-
-
-
-
-
-
+  // ── Selección de tabla ──────────────────────────────────────────────────────
   useEffect(() => {
-    if (!devices.length) {
-      setSelectedId(null);
-      setSelectedTagId(null);
-      return;
-    }
-    if (!selectedId || !devices.some((d) => d.id === selectedId)) {
+    if (!devices.length) { setSelectedId(null); return; }
+    if (!selectedId || !devices.some(d => d.id === selectedId)) {
       setSelectedId(devices[0].id);
     }
   }, [devices, selectedId]);
 
   const selected = useMemo(
     () => devices.find(d => d.id === selectedId) || { tags: [] },
-    [devices, selectedId],
+    [devices, selectedId]
   );
 
-  useEffect(() => {
-    const tags = selected?.tags || [];
-    if (!tags.length) {
-      setSelectedTagId(null);
-      return;
-    }
-    if (!selectedTagId || !tags.some((t) => t.id === selectedTagId)) {
-      setSelectedTagId(tags[0].id);
-    }
-  }, [selectedId, selected?.tags, selectedTagId]);
-
-  useEffect(() => {
-    if (!apiDevices.length) return;
-    setDevices((prev) => {
-      const prevByApiId = new Map(
-        prev
-          .map((table) => [table.apiDeviceId || null, table])
-          .filter(([apiId]) => Boolean(apiId)),
-      );
-
-      const fromApi = apiDevices.map((dev) => {
-        const existing = prevByApiId.get(dev.id);
-        if (existing) {
-          return {
-            ...existing,
-            name: existing.name || dev.name || dev.equipmentId || existing.id,
-            equipmentId: dev.equipmentId || existing.equipmentId || "",
-            endpoint: dev.endpoint || existing.endpoint || "",
-            driver: dev.driver || existing.driver || "",
-            tags:
-              Array.isArray(existing.tags) && existing.tags.length
-                ? existing.tags
-                : dev.tags || [],
-          };
-        }
-        return {
-          id: `api-${dev.id}`,
-          apiDeviceId: dev.id,
-          name: dev.name || dev.equipmentId || `PLC ${dev.id}`,
-          equipmentId: dev.equipmentId || "",
-          endpoint: dev.endpoint || "",
-          driver: dev.driver || "",
-          tags: dev.tags || [],
-        };
-      });
-
-      const manualTables = prev.filter((table) => !table.apiDeviceId);
-      return [...manualTables, ...fromApi];
-    });
-  }, [apiDevices]);
-
-  const apiDevicesById = useMemo(() => {
-    const byId = new Map();
-    apiDevices.forEach((dev) => {
-      byId.set(dev.id, dev);
-    });
-    return byId;
-  }, [apiDevices]);
-
-
-
-
+  // ── Mutaciones ──────────────────────────────────────────────────────────────
   const updateCurrentTag = (tagId, updater) => {
-    setDevices((prev) =>
-      prev.map((d) =>
-        d.id === selectedId
-          ? {
-              ...d,
-              tags: d.tags.map((t) => {
-                if (t.id !== tagId) return t;
-                return typeof updater === "function"
-                  ? updater(t)
-                  : { ...t, ...updater };
-              }),
-            }
-          : d,
-      ),
+    setDevices(prev =>
+      prev.map(d =>
+        d.id !== selectedId ? d : {
+          ...d,
+          tags: d.tags.map(t =>
+            t.id !== tagId ? t :
+            typeof updater === "function" ? updater(t) : { ...t, ...updater }
+          ),
+        }
+      )
     );
     setHasUnsavedChanges(true);
   };
 
   const addDevice = () => {
-    const nextIndex = devices.length + 1;
-    const newDevice = {
-      id: `dev-${Date.now()}`,
-      name: `Tabla ${nextIndex}`,
-      tags: [],
-    };
+    const newDevice = { id: `dev-${Date.now()}`, name: "Nueva tabla", tags: [] };
     setDevices(prev => [...prev, newDevice]);
     setSelectedId(newDevice.id);
     setHasUnsavedChanges(true);
   };
 
-  const renameDevice = id => {
-    const current = devices.find(d => d.id === id);
-    const nextName = window.prompt(
-      "Nuevo nombre de tabla/PLC",
-      current?.name || "",
-    );
-    if (!nextName) return;
-    setDevices(prev =>
-      prev.map(d => (d.id === id ? { ...d, name: nextName } : d)),
-    );
+  const deleteDevice = (id) => {
+    if (!confirm("¿Eliminar esta tabla?")) return;
+    setDevices(prev => prev.filter(d => d.id !== id));
     setHasUnsavedChanges(true);
   };
 
-  const deleteDevice = id => {
-    if (!window.confirm("¿Eliminar esta tabla/PLC y sus tags?")) return;
-    setDevices(prev => {
-      const filtered = prev.filter(d => d.id !== id);
-      // Reasignar selección
-      if (id === selectedId) {
-        const next = filtered[0]?.id || null;
-        setSelectedId(next);
-      }
-      return filtered;
-    });
+  const renameDevice = (id, name) => {
+    setDevices(prev => prev.map(d => d.id === id ? { ...d, name } : d));
     setHasUnsavedChanges(true);
   };
 
   const addEmptyTag = () => {
     if (!selectedId) return;
+    const tag = {
+      id:           `tmp-${Date.now()}`,
+      name:         "NuevoTag",
+      equipment:    "",
+      variableName: "",
+      datatype:     "Float",
+      unit:         "",
+    };
+    setDevices(prev =>
+      prev.map(d => d.id === selectedId ? { ...d, tags: [...d.tags, tag] } : d)
+    );
+    setHasUnsavedChanges(true);
+  };
+
+  const removeTag = (tagId) => {
     setDevices(prev =>
       prev.map(d =>
-        d.id === selectedId
-          ? {
-              ...d,
-              tags: [
-                ...d.tags,
-                {
-                  id: `tmp-${Date.now()}`,
-                  name: "NuevoTag",
-                  sourceMode: "local",
-                  type: "Float",
-                  variableName: "",
-                  deviceId: "",
-                  equipment: "",
-                  endpoint: "",
-                  address: "",
-                  nodeId: "",
-                  node_id: "",
-                  initialValue: "",
-                  conn: "Local",
-                  plcName: "",
-                  unit: "",
-                  notes: "",
-                  plcVariable: "",
-                  cdcTag: "",
-                  bindingKey: "",
-                },
-              ],
-            }
-          : d,
-      ),
+        d.id !== selectedId ? d : { ...d, tags: d.tags.filter(t => t.id !== tagId) }
+      )
     );
     setHasUnsavedChanges(true);
   };
 
-  const removeCurrentTag = (tagId) => {
-    if (!selectedId) return;
-    setDevices((prev) =>
-      prev.map((d) =>
-        d.id === selectedId
-          ? { ...d, tags: (d.tags || []).filter((t) => t.id !== tagId) }
-          : d,
-      ),
-    );
-    setSelectedTagId((prev) => (prev === tagId ? null : prev));
-    setHasUnsavedChanges(true);
-  };
-
-  const handleCloseRequest = () => {
-    if (hasUnsavedChanges) {
-      const shouldClose = window.confirm(
-        "Tienes cambios sin guardar. ¿Quieres cerrar sin guardar?",
-      );
-      if (!shouldClose) return;
-    }
+  // ── Guardar ─────────────────────────────────────────────────────────────────
+  const handleSave = () => {
+    localStorage.setItem(DEVICES_STORAGE_KEY, JSON.stringify(devices));
+    setHasUnsavedChanges(false);
     onClose?.();
   };
 
-  const handleSaveDevices = () => {
-    try {
-      const normalized = devices.map((table) => ({
-        ...table,
-        tags: (table.tags || []).map((tag) => {
-          const isConnection =
-            tag?.sourceMode === "conexion" ||
-            !!(tag?.deviceId || tag?.equipment || tag?.variableName);
-          if (!isConnection) return tag;
-          const telemetryTopic =
-            tag?.plcVariable || tag?.cdcTag || tag?.variableName || "";
-          return {
-            ...tag,
-            sourceMode: "conexion",
-            conn: "Conexion",
-            cdcTag: telemetryTopic,
-            plcVariable: telemetryTopic,
-            variable: telemetryTopic,
-            deviceTag: telemetryTopic,
-            address:
-              tag?.address ||
-              (tag?.endpoint || ""),
-          };
-        }),
-      }));
-      setDevices(normalized);
-      localStorage.setItem(DEVICES_STORAGE_KEY, JSON.stringify(normalized));
-      window.alert("Guardado con exito.");
-      setHasUnsavedChanges(false);
-      onClose?.();
-    } catch (_err) {
-      window.alert("No se pudo guardar en localStorage.");
-    }
+  const handleClose = () => {
+    if (hasUnsavedChanges && !confirm("Hay cambios sin guardar. ¿Salir sin guardar?")) return;
+    onClose?.();
   };
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[2100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center px-6">
-      <div className="w-[1500px] h-[760px] max-w-[96vw] max-h-[94vh] bg-slate-50 rounded-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
+    <div className="fixed inset-0 z-[2100] bg-black/40 flex items-center justify-center">
+      <div className="w-[1200px] h-[700px] bg-white rounded-lg shadow-xl flex flex-col overflow-hidden">
+
+        {/* HEADER */}
+        <div className="flex justify-between items-center px-4 py-2.5 border-b border-slate-200 bg-slate-50">
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-semibold text-slate-800">
-              Dispositivos
-            </h2>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleSaveDevices}
-                className="rounded border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:border-emerald-400"
-              >
-                Guardar
-              </button>
-              <button
-                onClick={addDevice}
-                className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
-              >
-                + Nueva tabla/PLC
-              </button>
-              <button
-                onClick={() => renameDevice(selectedId)}
-                disabled={!selectedId}
-                className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50 disabled:opacity-50"
-              >
-                Renombrar
-              </button>
-              <button
-                onClick={() => deleteDevice(selectedId)}
-                disabled={!selectedId}
-                className="rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-600 hover:border-rose-300 hover:bg-rose-100 disabled:opacity-50"
-              >
-                Eliminar
-              </button>
-            </div>
+            <h2 className="text-sm font-semibold text-slate-800">Dispositivos</h2>
+            {loading && (
+              <span className="text-[11px] text-slate-400">Cargando tags de la API…</span>
+            )}
+            {hasUnsavedChanges && (
+              <span className="text-[11px] text-amber-600 font-medium">● Sin guardar</span>
+            )}
           </div>
-          <button
-            onClick={handleCloseRequest}
-            className="text-slate-500 hover:text-slate-800 px-2 py-1 rounded hover:bg-slate-100"
-            aria-label="Cerrar"
-          >
-            ✕
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSave}
+              className="px-3 py-1 text-xs bg-emerald-500 text-white rounded hover:bg-emerald-600"
+            >
+              Guardar
+            </button>
+            <button
+              onClick={addDevice}
+              className="px-3 py-1 text-xs border border-slate-300 rounded hover:bg-slate-50"
+            >
+              + Tabla
+            </button>
+            <button onClick={handleClose} className="px-2 text-slate-500 hover:text-slate-800">
+              ✕
+            </button>
+          </div>
         </div>
 
+        {/* BODY */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Panel izquierdo (árbol/lista) */}
-          <div className="w-50 border-r border-slate-200 bg-white overflow-y-auto">
-            <div className="px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-slate-500 border-b border-slate-100">
-              Tablas / PLC
+
+          {/* LISTA TABLAS */}
+          <div className="w-60 border-r border-slate-200 flex flex-col overflow-hidden">
+            <div className="px-2 py-2 border-b border-slate-100">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                Tablas
+              </p>
             </div>
-            <ul className="divide-y divide-slate-100 text-sm">
+            <div className="flex-1 overflow-y-auto">
+              {devices.length === 0 && (
+                <div className="px-3 py-4 text-[11px] text-slate-400">
+                  Sin tablas. Usa "+ Tabla".
+                </div>
+              )}
               {devices.map(dev => (
-                <li
+                <div
                   key={dev.id}
-                  className={`px-3 py-2 cursor-pointer flex items-center gap-2 ${
-                    dev.id === selectedId
-                      ? "bg-sky-50 text-sky-800"
-                      : "hover:bg-slate-50"
-                  }`}
                   onClick={() => setSelectedId(dev.id)}
+                  className={[
+                    "group flex items-center justify-between px-3 py-2 cursor-pointer text-[12px]",
+                    dev.id === selectedId
+                      ? "bg-sky-100 text-sky-800 font-semibold"
+                      : "hover:bg-slate-50 text-slate-700",
+                  ].join(" ")}
                 >
-                  <span className="text-slate-500">📄</span>
-                  <div className="flex-1">
-                    <div className="font-semibold text-xs">{dev.name}</div>
-                    <div className="text-[11px] text-slate-500">
-                      {dev.tags.length} tags
-                    </div>
-                  </div>
-                </li>
+                  <span className="flex-1 truncate">{dev.name}</span>
+                  <span className="text-[10px] text-slate-400 shrink-0 ml-1">
+                    {dev.tags?.length || 0}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={e => { e.stopPropagation(); deleteDevice(dev.id); }}
+                    className="ml-1 hidden group-hover:inline text-rose-400 hover:text-rose-600 text-xs"
+                    title="Eliminar tabla"
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
-            </ul>
-            {/* se eliminan acciones duplicadas de pie; ahora están en el header */}
+            </div>
           </div>
 
-          {/* Panel derecho (tabla de tags) */}
-          <div className="flex-1 bg-white flex flex-col">
-            <div className="px-4 py-2 border-b border-slate-200 flex items-center justify-between">
-              <div>
-                <p className="text-sm font-semibold text-slate-800">
-                  {selected.name || "Selecciona un PLC"}
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  Tags configurados: {selected.tags?.length || 0}
-                </p>
+          {/* TABLA TAGS */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {!selectedId ? (
+              <div className="flex-1 flex items-center justify-center text-[12px] text-slate-400">
+                Selecciona o crea una tabla.
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={addEmptyTag}
-                  className="rounded border border-sky-300 bg-sky-50 px-3 py-1 text-[11px] font-semibold text-sky-700 hover:border-sky-400"
-                >
-                  + Añadir tag
-                </button>
-                <button
-                  onClick={() => removeCurrentTag(selectedTagId)}
-                  disabled={!selectedTagId}
-                  className="rounded border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-semibold text-rose-600 hover:border-rose-300 hover:bg-rose-100 disabled:opacity-50"
-                >
-                  Eliminar fila
-                </button>
-              </div>
-            </div>
+            ) : (
+              <>
+                {/* Nombre tabla + botón añadir */}
+                <div className="flex items-center gap-3 px-4 py-2 border-b border-slate-200 bg-slate-50">
+                  <input
+                    className="flex-1 rounded border border-slate-300 px-2 py-1 text-[12px] font-semibold focus:border-sky-400 focus:outline-none"
+                    value={selected.name || ""}
+                    onChange={e => renameDevice(selectedId, e.target.value)}
+                    placeholder="Nombre de la tabla"
+                  />
+                  <button
+                    onClick={addEmptyTag}
+                    className="shrink-0 text-xs border border-slate-300 px-3 py-1 rounded hover:border-sky-400 hover:bg-sky-50"
+                  >
+                    + Añadir tag
+                  </button>
+                </div>
 
-            <div className="flex-1 overflow-auto">
-              <table className="min-w-full text-[12px]">
-                <thead className="bg-slate-100 text-slate-600 uppercase tracking-[0.08em]">
-                  <tr>
-                    <th className="px-3 py-2 text-left w-48">Nombre</th>
-                    <th className="px-3 py-2 text-left w-36">Local/Conexion</th>
-                    <th className="px-3 py-2 text-left w-40">Nombre variable</th>
-                    <th className="px-3 py-2 text-left w-28">Tipo de variable</th>
-                    <th className="px-3 py-2 text-left w-44">Dispositivo</th>
-                    <th className="px-3 py-2 text-left w-44">Direccion</th>
-                    <th className="px-3 py-2 text-left w-44">Nodo</th>
-                    <th className="px-3 py-2 text-left w-40">Valor inicial</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {selected.tags?.map((tag) => {
-                    const mode =
-                      tag.sourceMode ||
-                      (tag.deviceId || tag.plcVariable || tag.address || tag.nodeId
-                        ? "conexion"
-                        : "local");
-                    const isLocal = mode === "local";
-                    const selectedEquipment =
-                      tag.equipment ||
-                      apiDevicesById.get(tag.deviceId)?.equipmentId ||
-                      (typeof tag.deviceId === "string" && tag.deviceId.startsWith("rt::")
-                        ? tag.deviceId.replace("rt::", "")
-                        : "") ||
-                      "";
-                    const equipmentVariables =
-                      variablesByEquipment[selectedEquipment] || [];
-                    const selectedVariable =
-                      equipmentVariables.find(
-                        (opt) =>
-                          opt.key ===
-                          (tag.bindingKey ||
-                            (tag.deviceId && tag.variableName
-                              ? `${tag.deviceId}::${tag.variableName}`
-                              : "")),
-                      ) ||
-                      equipmentVariables.find((opt) => opt.variableName === tag.variableName) ||
-                      null;
-                    const displayAddress =
-                      tag.address ||
-                      (tag.endpoint || "");
+                <div className="flex-1 overflow-auto">
+                  {selected.tags?.length === 0 ? (
+                    <div className="flex items-center justify-center h-full text-[12px] text-slate-400">
+                      Sin tags. Usa "+ Añadir tag".
+                    </div>
+                  ) : (
+                    <table className="w-full text-xs">
+                      <thead className="bg-slate-100 sticky top-0">
+                        <tr>
+                          <th className="p-2 text-left font-semibold text-slate-600 w-40">Alias</th>
+                          <th className="p-2 text-left font-semibold text-slate-600">Equipo</th>
+                          <th className="p-2 text-left font-semibold text-slate-600">Variable</th>
+                          <th className="p-2 text-left font-semibold text-slate-600 w-20">Tipo</th>
+                          <th className="p-2 text-left font-semibold text-slate-600 w-14">Unidad</th>
+                          <th className="p-2 w-8"></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selected.tags.map(tag => {
+                          const equipmentVariables = variablesByEquipment[tag.equipment] || [];
+                          const varMeta = equipmentVariables.find(v => v.variableName === tag.variableName);
+                          return (
+                            <tr key={tag.id} className="border-t border-slate-100 hover:bg-slate-50">
+                              {/* Alias */}
+                              <td className="p-2">
+                                <input
+                                  className="w-full rounded border border-slate-200 px-2 py-1 text-[11px] focus:border-sky-400 focus:outline-none"
+                                  value={tag.name}
+                                  onChange={e => updateCurrentTag(tag.id, { name: e.target.value })}
+                                />
+                              </td>
 
-                    return (
-                      <tr
-                        key={tag.id}
-                        onClick={() => setSelectedTagId(tag.id)}
-                        className={`cursor-pointer ${
-                          selectedTagId === tag.id
-                            ? "bg-sky-50"
-                            : "hover:bg-slate-50"
-                        }`}
-                      >
-                        <td className="px-3 py-2 text-slate-800">
-                          <input
-                            className="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-sky-400 focus:outline-none rounded px-1"
-                            value={tag.name}
-                            onChange={(e) =>
-                              updateCurrentTag(tag.id, { name: e.target.value })
-                            }
-                          />
-                        </td>
-                        <td className="px-3 py-2 text-slate-700">
-                          <select
-                            className="w-full bg-transparent border border-slate-200 rounded px-1 text-[12px]"
-                            value={mode}
-                            onChange={(e) => {
-                              const nextMode = e.target.value;
-                              if (nextMode === "local") {
-                                updateCurrentTag(tag.id, {
-                                  sourceMode: "local",
-                                  conn: "Local",
-                                  variableName: "",
-                                  deviceId: "",
-                                  endpoint: "",
-                                  address: "",
-                                  nodeId: "",
-                                  node_id: "",
-                                  plcVariable: "",
-                                  cdcTag: "",
-                                  bindingKey: "",
-                                  equipment: "",
-                                  plcName: "",
-                                  unit: "",
-                                });
-                                return;
-                              }
-                              updateCurrentTag(tag.id, {
-                                sourceMode: "conexion",
-                                conn: "Conexion",
-                                initialValue: "",
-                              });
-                            }}
-                          >
-                            <option value="local">Local</option>
-                            <option value="conexion">Conexion</option>
-                          </select>
-                        </td>
-                        <td className="px-3 py-2 text-slate-700">
-                          {isLocal ? (
-                            <span className="text-slate-500">-</span>
-                          ) : (
-                            <select
-                              className="w-full bg-transparent border border-slate-200 rounded px-1 text-[12px]"
-                              value={selectedVariable?.key || ""}
-                              disabled={!selectedEquipment}
-                              onChange={(e) => {
-                                const picked =
-                                  equipmentVariables.find(
-                                    (opt) => opt.key === e.target.value,
-                                  ) || null;
-                                updateCurrentTag(tag.id, {
-                                  sourceMode: "conexion",
-                                  conn: "Conexion",
-                                  bindingKey: picked?.key || "",
-                                  variableName: picked?.variableName || "",
-                                  plcVariable: picked?.cdcTag || "",
-                                  cdcTag: picked?.cdcTag || "",
-                                  variable: picked?.cdcTag || "",
-                                  deviceTag: picked?.cdcTag || "",
-                                  deviceId: picked?.deviceId || tag.deviceId || "",
-                                  equipment: picked?.equipmentId || selectedEquipment || "",
-                                  plcName: picked?.driver || tag.plcName || "",
-                                  type: picked?.datatype || tag.type || "Float",
-                                  endpoint: picked?.endpoint || "",
-                                  address: picked?.endpoint || "",
-                                  nodeId: picked?.nodeId || "",
-                                  node_id: picked?.node_id || picked?.nodeId || "",
-                                  unit: picked?.unit || "",
-                                  initialValue: "",
-                                });
-                              }}
-                            >
-                              <option value="">
-                                {selectedEquipment
-                                  ? equipmentVariables.length
-                                    ? "Selecciona variable"
-                                    : "Sin items"
-                                  : "Selecciona dispositivo"}
-                              </option>
-                              {equipmentVariables.map((opt) => (
-                                <option key={opt.key} value={opt.key}>
-                                  {opt.variableName}
-                                </option>
-                              ))}
-                            </select>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-slate-700">
-                          {isLocal ? (
-                            <select
-                              className="w-full bg-transparent border border-slate-200 rounded px-1 text-[12px]"
-                              value={tag.type}
-                              onChange={(e) =>
-                                updateCurrentTag(tag.id, { type: e.target.value })
-                              }
-                            >
-                              {["Float", "UInt32", "Int", "Bool", "String"].map(
-                                (opt) => (
-                                  <option key={opt}>{opt}</option>
-                                ),
-                              )}
-                            </select>
-                          ) : (
-                            <span>{tag.type || "-"}</span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-slate-700">
-                          {isLocal ? (
-                            <span className="text-slate-500">-</span>
-                          ) : (
-                            <select
-                              className="w-full bg-transparent border border-slate-200 rounded px-1 text-[12px]"
-                              value={selectedEquipment}
-                              onChange={(e) => {
-                                const nextEquipment = e.target.value;
-                                const fallbackDevice =
-                                  apiDevices.find(
-                                    (dev) =>
-                                      (dev.equipmentId || dev.name || "") ===
-                                      nextEquipment,
-                                  ) || null;
-                                updateCurrentTag(tag.id, {
-                                  sourceMode: "conexion",
-                                  conn: "Conexion",
-                                  equipment: nextEquipment,
-                                  deviceId: fallbackDevice?.id || "",
-                                  plcName: fallbackDevice?.driver || "",
-                                  endpoint: fallbackDevice?.endpoint || "",
-                                  address: fallbackDevice?.endpoint || "",
-                                  variableName: "",
-                                  plcVariable: "",
-                                  cdcTag: "",
-                                  variable: "",
-                                  deviceTag: "",
-                                  bindingKey: "",
-                                  nodeId: "",
-                                  node_id: "",
-                                  unit: "",
-                                  initialValue: "",
-                                });
-                              }}
-                            >
-                              <option value="">
-                                {equipmentOptions.length
-                                  ? "Selecciona dispositivo"
-                                  : "Sin equipos API"}
-                              </option>
-                              {equipmentOptions.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                  {opt.label}
-                                </option>
-                              ))}
-                            </select>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-slate-700">
-                          {isLocal ? (
-                            <span className="text-slate-500">-</span>
-                          ) : (
-                            <span>{displayAddress || "-"}</span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-slate-700">
-                          {isLocal ? (
-                            <span className="text-slate-500">-</span>
-                          ) : (
-                            <span>{tag.node_id || tag.nodeId || tag.nodeid || "-"}</span>
-                          )}
-                        </td>
-                        <td className="px-3 py-2 text-slate-700">
-                          {isLocal ? (
-                            <input
-                              className="w-full bg-transparent border border-slate-200 rounded px-1"
-                              placeholder="Valor inicial"
-                              value={tag.initialValue ?? ""}
-                              onChange={(e) =>
-                                updateCurrentTag(tag.id, {
-                                  initialValue: e.target.value,
-                                })
-                              }
-                            />
-                          ) : (
-                            <span className="text-slate-500">-</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                  {!selected.tags?.length && (
-                    <tr>
-                      <td
-                        colSpan={8}
-                        className="px-3 py-4 text-center text-slate-500"
-                      >
-                        No hay tags. Usa “+ Añadir tag”.
-                      </td>
-                    </tr>
+                              {/* Equipo */}
+                              <td className="p-2">
+                                <select
+                                  className="w-full rounded border border-slate-200 px-1 py-1 text-[11px] focus:border-sky-400 focus:outline-none"
+                                  value={tag.equipment}
+                                  onChange={e =>
+                                    updateCurrentTag(tag.id, {
+                                      equipment:    e.target.value,
+                                      variableName: "",
+                                      datatype:     "Float",
+                                      unit:         "",
+                                    })
+                                  }
+                                >
+                                  <option value="">Selecciona equipo</option>
+                                  {loading
+                                    ? <option disabled>Cargando…</option>
+                                    : equipmentOptions.map(opt => (
+                                        <option key={opt.value} value={opt.value}>
+                                          {opt.label}
+                                        </option>
+                                      ))
+                                  }
+                                </select>
+                              </td>
+
+                              {/* Variable */}
+                              <td className="p-2">
+                                <select
+                                  className="w-full rounded border border-slate-200 px-1 py-1 text-[11px] focus:border-sky-400 focus:outline-none"
+                                  value={tag.variableName}
+                                  disabled={!tag.equipment}
+                                  onChange={e => {
+                                    const v = equipmentVariables.find(x => x.variableName === e.target.value);
+                                    updateCurrentTag(tag.id, {
+                                      variableName: e.target.value,
+                                      datatype:     v?.datatype || "Float",
+                                      unit:         v?.unit     || "",
+                                    });
+                                  }}
+                                >
+                                  <option value="">Variable</option>
+                                  {equipmentVariables.map(v => (
+                                    <option key={v.key} value={v.variableName}>
+                                      {v.variableName}{v.unit ? ` [${v.unit}]` : ""}
+                                    </option>
+                                  ))}
+                                </select>
+                              </td>
+
+                              {/* Tipo — auto-rellenado */}
+                              <td className="p-2 text-slate-500">
+                                {varMeta?.datatype || tag.datatype || "—"}
+                              </td>
+
+                              {/* Unidad — auto-rellenada */}
+                              <td className="p-2 text-slate-500">
+                                {varMeta?.unit || tag.unit || "—"}
+                              </td>
+
+                              {/* Borrar */}
+                              <td className="p-2">
+                                <button
+                                  type="button"
+                                  onClick={() => removeTag(tag.id)}
+                                  className="text-rose-400 hover:text-rose-600"
+                                  title="Eliminar tag"
+                                >
+                                  ×
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   )}
-                </tbody>
-              </table>
-            </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
