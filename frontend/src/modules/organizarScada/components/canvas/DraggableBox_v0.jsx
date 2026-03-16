@@ -1,0 +1,199 @@
+import React, { useEffect, useState } from "react";
+import { Rnd } from "react-rnd";
+import useLiveTag from "@/modules/organizarScada/hooks/useLiveTag";
+import { renderWidget } from "@/modules/organizarScada/components/widgets/registry.jsx";
+import { isChartDemoType } from "@/modules/organizarScada/utils/chartDemos";
+import "@/styles/gateway.css";
+
+// ==================== DRAGGABLE BOX COMPONENT ====================
+
+export default function DraggableBox({
+  initialX,
+  initialY,
+  initialWidth,
+  initialHeight,
+  data,
+  id,
+  theme = "theme-clean",
+  onSelect,
+  onDrag,
+  onDragStop,
+  onResize,
+  onResizeStop,
+  onDelete,
+  isSelected = false,
+  isReadOnly = false,
+  isLocked = false,
+  zIndex,
+  scale = 1,
+}) {
+  // Estado local para Rnd, importado de la rama develop
+  const [x, setX] = useState(initialX);
+  const [y, setY] = useState(initialY);
+  const [width, setWidth] = useState(initialWidth);
+  const [height, setHeight] = useState(initialHeight);
+  const [demoNow, setDemoNow] = useState(Date.now());
+
+  // Sincronizar el estado interno con las props iniciales
+  useEffect(() => {
+    setX(initialX);
+    setY(initialY);
+    setWidth(initialWidth);
+    setHeight(initialHeight);
+  }, [initialX, initialY, initialWidth, initialHeight]);
+
+  const demoEnabled =
+    data?.settings?.demoEnabled !== false && isChartDemoType(data?.type);
+
+  useEffect(() => {
+    if (!demoEnabled) return;
+    const timer = setInterval(() => setDemoNow(Date.now()), 1200);
+    return () => clearInterval(timer);
+  }, [demoEnabled]);
+
+  const handleDragStop = (_e, d) => {
+    setX(d.x);
+    setY(d.y);
+    onDragStop(id, d.x, d.y);
+  };
+
+  const handleResizeStop = (_e, _dir, ref, _delta, pos) => {
+    const newW = parseInt(ref.style.width, 10);
+    const newH = parseInt(ref.style.height, 10);
+    setWidth(newW);
+    setHeight(newH);
+    setX(pos.x);
+    setY(pos.y);
+    onResizeStop(id, newW, newH, pos.x, pos.y);
+  };
+
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    onDelete(id);
+  };
+
+  if (!data) return null;
+
+  const showFrame = data?.settings?.showFrame ?? false;
+  const lockAspectRatio =
+    data?.settings?.lockAspectRatio === true ||
+    (data?.type === "image-widget" &&
+      data?.settings?.lockAspectRatio !== false);
+
+  const { live, valueHistory } = useLiveTag(data);
+
+  const renderContent = () =>
+    renderWidget({
+      data,
+      live,
+      width,
+      height,
+      theme,
+      valueHistory,
+      demoNow,
+    });
+
+  // Contenido del widget (unificado desde la rama develop)
+  const WidgetContent = (
+    <div className="drag-handle relative flex flex-col h-full w-full">
+      {/* Contenido principal del componente */}
+      <div className="flex-grow p-2 overflow-hidden flex items-center justify-center">
+        {renderContent()}
+      </div>
+    </div>
+  );
+
+  // Renderizado en modo solo lectura (fijo, sin Rnd)
+  if (isReadOnly) {
+    return (
+      <div
+        className={`${showFrame ? "bg-white rounded-lg shadow-lg border border-gray-200" : "bg-transparent"} absolute`}
+        style={{
+          width: `${width}px`,
+          height: `${height}px`,
+          // Usamos el estado local x, y para la posición
+          transform: `translate(${x}px, ${y}px)`,
+          pointerEvents: "none",
+        }}
+      >
+        {WidgetContent}
+      </div>
+    );
+  }
+
+  // Renderizado en modo editable (con Rnd)
+  return (
+    <Rnd
+      className={`${showFrame ? "bg-white rounded-lg shadow-lg border border-gray-200" : "bg-transparent"} node cursor-pointer`}
+      data-node-id={id}
+      // Usamos el estado local para size y position
+      size={{ width: width, height: height }}
+      position={{ x: x, y: y }}
+      scale={scale}
+      style={
+        isSelected
+          ? {
+              border: "1px dashed #38bdf8",
+              boxShadow: "0 0 0 1px rgba(56,189,248,0.25)",
+              zIndex,
+            }
+          : { zIndex }
+      }
+      resizeHandleStyles={
+        isSelected
+          ? {
+              topLeft: handleStyle,
+              topRight: handleStyle,
+              bottomLeft: handleStyle,
+              bottomRight: handleStyle,
+            }
+          : undefined
+      }
+      onDrag={(e, d) => onDrag?.(id, e, d)}
+      onDragStop={handleDragStop}
+      onResize={(e, dir, ref, delta, pos) => onResize?.(id, e, dir, ref, delta, pos)}
+      onResizeStop={handleResizeStop}
+      disableDragging={isLocked}
+      enableResizing={!isLocked}
+      lockAspectRatio={lockAspectRatio}
+      bounds="parent"
+      minWidth={
+        data.type === "speedometer" || data.type === "temperature-gauge"
+          ? 120
+          : 50
+      }
+      minHeight={
+        data.type === "speedometer" || data.type === "temperature-gauge"
+          ? 150
+          : 50
+      }
+      dragHandleClassName={showFrame ? "box-header drag-handle" : "drag-handle"}
+      resizeHandleClasses={{ bottomRight: "resize-handle-br" }}
+      onClick={() => {
+        if (isLocked) return;
+        onSelect?.();
+      }}
+    >
+      {!isReadOnly && isSelected && (
+        <button
+          onClick={handleDelete}
+          className="absolute -right-3 -top-3 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-white text-gray-500 shadow hover:bg-red-100 hover:text-red-600 text-lg font-bold"
+          aria-label="Eliminar componente"
+          title="Eliminar"
+        >
+          &times;
+        </button>
+      )}
+      {WidgetContent}
+    </Rnd>
+  );
+}
+
+const handleStyle = {
+  width: "12px",
+  height: "12px",
+  background: "#38bdf8",
+  borderRadius: "9999px",
+  border: "2px solid white",
+  boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+};

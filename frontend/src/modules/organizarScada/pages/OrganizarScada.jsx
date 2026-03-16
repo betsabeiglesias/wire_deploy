@@ -10,11 +10,14 @@ import NavbarEditor from "../components/canvas/NavbarEditor";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
 import LoadProjectModal from "../components/modals/LoadProjectModal";
+import { RealtimeProvider } from "@/context/RealtimeProvider";
 
 import PublishModal from "../components/modals/PublishModal";
 import { buildViewsData } from "../utils/viewsSerializer";
 import useOrganizarScada from "../hooks/useOrganizarScada";
 import Swal from "sweetalert2";
+
+
 
 const OrganizarScada = () => {
   const navigate = useNavigate();
@@ -59,6 +62,8 @@ const OrganizarScada = () => {
     exportToFile,
     handleNewDashboard,
   } = useOrganizarScada();
+
+  const [isLiveMode, setIsLiveMode] = useState(false);
 
   const handleSaveProjectOnly = useCallback(async (name) => {
     const finalName = name?.trim() || exportName?.trim() || "Nuevo HMI";
@@ -639,6 +644,8 @@ const handleLoadFromDB = useCallback((data, layoutId, name) => {
                   onDeleteSelected={handleDeleteSelected}
                   showProps={showPropsPanel}
                   onToggleProps={() => setShowPropsPanel((p) => !p)}
+                  isLiveMode={isLiveMode}
+                  onToggleLive={() => setIsLiveMode(prev => !prev)}
                 />
               </div>
               <main className="relative bg-slate-200/50 overflow-hidden flex-col justify-center items-center p-4 transition-all duration-300 flex-1 rounded-xl border border-slate-200">
@@ -646,26 +653,26 @@ const handleLoadFromDB = useCallback((data, layoutId, name) => {
                   ref={editorViewportRef}
                   className="relative w-full h-full flex items-stretch"
                 >
-                  <CanvasEditor
-                    elements={canvasElements}
-                    selectedId={selectedId}
-                    onSelect={(id) => {
-                      setSelectedId(id);
-                      setIsPropsOpen(true);
-                    }}
-                    onUpdate={(id, changes) =>
-                      handleUpdateComponent(id, changes)
-                    }
-                    onDelete={handleDeleteComponent}
-                    onDrop={(event, canvasEl) =>
-                      handleDropFromSidebar(event, canvasEl, zoom, stageSize)
-                    }
-                    canvasWidth={canvasWidth}
-                    canvasHeight={canvasHeight}
-                    zoom={zoom}
-                    onStageSize={setStageSize}
-                    isEditMode
-                  />
+                 {(() => {
+        const canvas = (
+          <CanvasEditor
+            elements={canvasElements}
+            selectedId={selectedId}
+            onSelect={(id) => { setSelectedId(id); setIsPropsOpen(true); }}
+            onUpdate={(id, changes) => handleUpdateComponent(id, changes)}
+            onDelete={handleDeleteComponent}
+            onDrop={(event, canvasEl) => handleDropFromSidebar(event, canvasEl, zoom, stageSize)}
+            canvasWidth={canvasWidth}
+            canvasHeight={canvasHeight}
+            zoom={zoom}
+            onStageSize={setStageSize}
+            isLiveMode={isLiveMode}
+          />
+        );
+        return isLiveMode
+          ? <RealtimeProvider tenant="default">{canvas}</RealtimeProvider>
+          : canvas;
+      })()}
                 </div>
               </main>
             </div>
