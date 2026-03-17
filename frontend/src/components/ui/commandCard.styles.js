@@ -7,7 +7,7 @@ export const cardStyles = cva(
   {
     variants: {
       variant: {
-        operation: "border-[#051145] bg-[linear-gradient(145deg,#f7fbfd_0%,#edf5f8_55%,#fdfefe_100%)] dark:border-[#28435e] dark:bg-[linear-gradient(145deg,#10202f_0%,#153149_55%,#183f5d_100%)]",
+        operation: "border-[#0d1d40] bg-[linear-gradient(145deg,#f7fbfd_0%,#edf5f8_55%,#fdfefe_100%)] dark:border-white/10 dark:bg-[linear-gradient(180deg,#09152f_0%,#0d1d40_42%,#132857_100%)]",
         analytics: "border-[#8f6a18] bg-[linear-gradient(145deg,#fffdf5_0%,#f8f2dd_55%,#fdfcf8_100%)] dark:border-[#4a4c3d] dark:bg-[linear-gradient(145deg,#25281d_0%,#343824_55%,#44492d_100%)]",
         support:   "border-[#051145] bg-[linear-gradient(145deg,#f8f9fc_0%,#eef1f8_55%,#fcfcfe_100%)] dark:border-[#4b465f] dark:bg-[linear-gradient(145deg,#1c1f2b_0%,#2b3042_55%,#3a425a_100%)]",
       }
@@ -22,7 +22,7 @@ export const iconStyles = cva(
   {
     variants: {
       variant: {
-        operation: "bg-[#194b68] text-white dark:bg-[#7cd7ff] dark:text-[#0d2337]",
+        operation: "bg-[#0d1d40] text-white dark:bg-[#7ec8ff] dark:text-[#09152f]",
         analytics: "bg-[#8f6a18] text-white dark:bg-[#e9c46a] dark:text-[#33270b]",
         support:   "bg-[#49566f] text-white dark:bg-[#c0c8da] dark:text-[#252c3b]",
       }
@@ -36,7 +36,7 @@ export const accentStyles = cva(
   {
     variants: {
       variant: {
-        operation: "text-[#255f82] dark:text-[#89dfff]",
+        operation: "text-[#255f82] dark:text-[#8fd0ff]",
         analytics: "text-[#8f6a18] dark:text-[#f1cf80]",
         support:   "text-[#49566f] dark:text-[#d5dbea]",
       }

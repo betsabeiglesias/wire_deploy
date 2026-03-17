@@ -17,7 +17,6 @@ import Sidebar from "../modules/sidebar/Sidebar";
 import { SERVICE_URLS } from "../routes/service_urls";
 import MapView from "@/modules/maps/components/MapView";
 import { useThemeStore } from "../store/useThemeStore";
-import CommandCard from "../components/ui/CommandCard";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -36,7 +35,13 @@ const Home = () => {
       onClick: goToHmi,
       icon: MonitorCog,
       badge: "Operacion",
-      variant: "operation",
+      tone: isDark
+        ? "border-[#28435e] bg-[linear-gradient(145deg,#10202f_0%,#153149_55%,#183f5d_100%)]"
+        : "border-[#d6e2ea] bg-[linear-gradient(145deg,#f7fbfd_0%,#edf5f8_55%,#fdfefe_100%)]",
+      iconTone: isDark
+        ? "bg-[#7cd7ff] text-[#0d2337]"
+        : "bg-[#194b68] text-white",
+      accent: isDark ? "text-[#89dfff]" : "text-[#255f82]",
     },
     {
       title: "Analitica Power BI",
@@ -45,7 +50,13 @@ const Home = () => {
       onClick: goToPowerBi,
       icon: ChartColumnBig,
       badge: "Analitica",
-      variant: "analytics",
+      tone: isDark
+        ? "border-[#4a4c3d] bg-[linear-gradient(145deg,#25281d_0%,#343824_55%,#44492d_100%)]"
+        : "border-[#e8e2c5] bg-[linear-gradient(145deg,#fffdf5_0%,#f8f2dd_55%,#fdfcf8_100%)]",
+      iconTone: isDark
+        ? "bg-[#e9c46a] text-[#33270b]"
+        : "bg-[#8f6a18] text-white",
+      accent: isDark ? "text-[#f1cf80]" : "text-[#8f6a18]",
     },
     {
       title: "Asistente digital",
@@ -54,7 +65,13 @@ const Home = () => {
       onClick: goToChatBot,
       icon: Bot,
       badge: "Soporte",
-      variant: "support",
+      tone: isDark
+        ? "border-[#4b465f] bg-[linear-gradient(145deg,#1c1f2b_0%,#2b3042_55%,#3a425a_100%)]"
+        : "border-[#dde0eb] bg-[linear-gradient(145deg,#f8f9fc_0%,#eef1f8_55%,#fcfcfe_100%)]",
+      iconTone: isDark
+        ? "bg-[#c0c8da] text-[#252c3b]"
+        : "bg-[#49566f] text-white",
+      accent: isDark ? "text-[#d5dbea]" : "text-[#49566f]",
     },
   ];
 
@@ -103,49 +120,47 @@ const Home = () => {
   return (
     <div
       className={`flex h-screen w-full overflow-hidden ${
-        isDark ? "bg-[#0b1631]" : "bg-[#eef2f4]"
+        isDark ? "bg-[#0a1119]" : "bg-[#eef2f4]"
       }`}
     >
       <Sidebar />
 
       <main
         className={`flex-1 overflow-y-auto ${
-          isDark ? "bg-[#0b1631]" : "bg-[#eef2f4]"
+          isDark ? "bg-[#0a1119]" : "bg-[#eef2f4]"
         }`}
       >
         <div className="min-h-full px-4 py-4 md:px-6 md:py-6">
           <div
             className={`overflow-hidden rounded-[30px] ${
               isDark
-                ? "border border-white/10 bg-[linear-gradient(180deg,#09152f_0%,#0d1d40_45%,#132857_100%)] shadow-[0_32px_90px_-52px_rgba(0,0,0,0.52)]"
+                ? "border border-[#1b2a3a] bg-[linear-gradient(180deg,#0b141d_0%,#101b27_45%,#121f2d_100%)] shadow-[0_32px_90px_-52px_rgba(0,0,0,0.62)]"
                 : "border border-[#d9e0e5] bg-[linear-gradient(180deg,#f7f9fa_0%,#f2f5f6_100%)] shadow-[0_28px_70px_-46px_rgba(31,41,55,0.16)]"
             }`}
           >
             <section
               className={`relative overflow-hidden px-6 py-7 md:px-8 md:py-8 ${
-                isDark
-                  ? "border-b border-[#1b2a3a]"
-                  : "border-b border-[#dde4e8]"
+                isDark ? "border-b border-[#1b2a3a]" : "border-b border-[#dde4e8]"
               }`}
             >
               <div
                 className={`absolute inset-0 ${
                   isDark
-                    ? "opacity-[0.12] [background-image:linear-gradient(rgba(126,200,255,0.5)_1px,transparent_1px),linear-gradient(90deg,rgba(126,200,255,0.5)_1px,transparent_1px)] [background-size:64px_64px]"
+                    ? "opacity-[0.12] [background-image:linear-gradient(rgba(124,215,255,0.5)_1px,transparent_1px),linear-gradient(90deg,rgba(124,215,255,0.5)_1px,transparent_1px)] [background-size:64px_64px]"
                     : "opacity-[0.08] [background-image:linear-gradient(rgba(52,85,112,0.42)_1px,transparent_1px),linear-gradient(90deg,rgba(52,85,112,0.42)_1px,transparent_1px)] [background-size:64px_64px]"
                 }`}
               />
               <div
                 className={`absolute left-[-6%] top-[-10%] h-[280px] w-[280px] rounded-full ${
                   isDark
-                    ? "bg-[radial-gradient(circle,rgba(114,176,255,0.18),transparent_70%)]"
+                    ? "bg-[radial-gradient(circle,rgba(71,128,171,0.18),transparent_70%)]"
                     : "bg-[radial-gradient(circle,rgba(121,200,241,0.14),transparent_70%)]"
                 }`}
               />
               <div
                 className={`absolute right-[-4%] top-[18%] h-[220px] w-[220px] rounded-full ${
                   isDark
-                    ? "bg-[radial-gradient(circle,rgba(126,200,255,0.12),transparent_72%)]"
+                    ? "bg-[radial-gradient(circle,rgba(233,196,106,0.1),transparent_72%)]"
                     : "bg-[radial-gradient(circle,rgba(233,196,106,0.12),transparent_72%)]"
                 }`}
               />
@@ -155,8 +170,8 @@ const Home = () => {
                   <div
                     className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] ${
                       isDark
-                        ? "border border-[#2f5e9c] bg-[#12325f] text-[#8fd0ff]"
-                        : "border border-[#051145] bg-white text-[#5f7487]"
+                        ? "border border-[#28435e] bg-[#0f1f2c] text-[#89dfff]"
+                        : "border border-[#d6e2ea] bg-white text-[#5f7487]"
                     }`}
                   >
                     <Activity className="h-3.5 w-3.5" />
@@ -170,9 +185,7 @@ const Home = () => {
                   >
                     Plataforma unificada
                     <br />
-                    <span
-                      className={isDark ? "text-[#8fd0ff]" : "text-[#6292ff]"}
-                    >
+                    <span className={isDark ? "text-[#89dfff]" : "text-[#255f82]"}>
                       para control, analitica y campo.
                     </span>
                   </h1>
@@ -195,21 +208,21 @@ const Home = () => {
                           key={item.label}
                           className={`rounded-[24px] px-4 py-4 ${
                             isDark
-                              ? "border border-[#24456f] bg-[rgba(255,255,255,0.04)]"
-                              : "border border-[#051145] bg-white"
+                              ? "border border-[#223547] bg-[rgba(255,255,255,0.03)]"
+                              : "border border-[#dce3e8] bg-white"
                           }`}
                         >
                           <div className="flex items-center justify-between">
                             <p
                               className={`text-[11px] uppercase tracking-[0.16em] ${
-                                isDark ? "text-[#8ea6cf]" : "text-[#7d8792]"
+                                isDark ? "text-[#7f95ab]" : "text-[#7d8792]"
                               }`}
                             >
                               {item.label}
                             </p>
                             <Icon
                               className={`h-4.5 w-4.5 ${
-                                isDark ? "text-[#7ec8ff]" : "text-[#355570]"
+                                isDark ? "text-[#89dfff]" : "text-[#355570]"
                               }`}
                             />
                           </div>
@@ -222,7 +235,7 @@ const Home = () => {
                           </p>
                           <p
                             className={`mt-2 text-sm ${
-                              isDark ? "text-[#9fb4d8]" : "text-[#6b7681]"
+                              isDark ? "text-[#91a3b7]" : "text-[#6b7681]"
                             }`}
                           >
                             {item.detail}
@@ -236,15 +249,15 @@ const Home = () => {
                 <aside
                   className={`rounded-[28px] p-6 ${
                     isDark
-                      ? "border border-[#2f5e9c] bg-[linear-gradient(145deg,#10213d_0%,#15325f_55%,#1b467f_100%)]"
-                      : "border border-[#051145] bg-[linear-gradient(145deg,#ffffff_0%,#f5f9fb_100%)]"
+                      ? "border border-[#28435e] bg-[linear-gradient(145deg,#0f1d29_0%,#132737_55%,#173245_100%)]"
+                      : "border border-[#d6e2ea] bg-[linear-gradient(145deg,#ffffff_0%,#f5f9fb_100%)]"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
                       <p
                         className={`text-[11px] uppercase tracking-[0.18em] ${
-                          isDark ? "text-[#8ea6cf]" : "text-[#7d8792]"
+                          isDark ? "text-[#7f95ab]" : "text-[#7d8792]"
                         }`}
                       >
                         Sala de control
@@ -261,7 +274,7 @@ const Home = () => {
                     <div
                       className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
                         isDark
-                          ? "border border-[#2f5e9c] bg-[#10284d] text-[#8fd0ff]"
+                          ? "border border-[#335574] bg-[#102333] text-[#89dfff]"
                           : "border border-[#d6e2ea] bg-[#f5f9fb] text-[#255f82]"
                       }`}
                     >
@@ -275,13 +288,13 @@ const Home = () => {
                         key={item.title}
                         className={`rounded-[22px] px-4 py-4 ${
                           isDark
-                            ? "border border-[#24456f] bg-[rgba(255,255,255,0.04)]"
-                            : "border border-[#051145] bg-white"
+                            ? "border border-[#223547] bg-[rgba(255,255,255,0.03)]"
+                            : "border border-[#dde4e8] bg-white"
                         }`}
                       >
                         <p
                           className={`text-xs uppercase tracking-[0.18em] ${
-                            isDark ? "text-[#8ea6cf]" : "text-[#7d8792]"
+                            isDark ? "text-[#7f95ab]" : "text-[#7d8792]"
                           }`}
                         >
                           {item.title}
@@ -300,13 +313,13 @@ const Home = () => {
                   <div
                     className={`mt-5 rounded-[24px] p-5 ${
                       isDark
-                        ? "border border-[#2f5e9c] bg-[linear-gradient(145deg,#14325b_0%,#1b447c_100%)]"
-                        : "border border-[#8f6a18] bg-[linear-gradient(145deg,#fffdf4_0%,#f9f2da_100%)]"
+                        ? "border border-[#4a4c3d] bg-[linear-gradient(145deg,#27281e_0%,#343724_100%)]"
+                        : "border border-[#e8e2c5] bg-[linear-gradient(145deg,#fffdf4_0%,#f9f2da_100%)]"
                     }`}
                   >
                     <p
                       className={`text-xs uppercase tracking-[0.18em] ${
-                        isDark ? "text-[#8fd0ff]" : "text-[#8f6a18]"
+                        isDark ? "text-[#f1cf80]" : "text-[#8f6a18]"
                       }`}
                     >
                       Prioridad del turno
@@ -325,41 +338,94 @@ const Home = () => {
 
             <section className="px-6 py-6 md:px-8 md:py-8">
               <div className="grid gap-5 xl:grid-cols-3">
-                {commandCards.map((card) => (
-                  <CommandCard
-                    key={card.title}
-                    title={card.title}
-                    description={card.description}
-                    badge={card.badge}
-                    icon={card.icon}
-                    variant={card.variant}
-                    onClick={card.onClick}
-                  />
-                ))}
+                {commandCards.map((card) => {
+                  const Icon = card.icon;
+
+                  return (
+                    <button
+                      key={card.title}
+                      type="button"
+                      onClick={card.onClick}
+                      className={`group overflow-hidden rounded-[28px] border p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_24px_54px_-32px_rgba(0,0,0,0.24)] ${card.tone}`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
+                              isDark
+                                ? "border border-white/10 bg-white/6 text-white"
+                                : "border border-white bg-white/80 text-[#63707e]"
+                            }`}
+                          >
+                            {card.badge}
+                          </span>
+
+                          <h2
+                            className={`mt-5 text-3xl font-semibold tracking-[-0.05em] ${
+                              isDark ? "text-white" : "text-[#2f3942]"
+                            }`}
+                          >
+                            {card.title}
+                          </h2>
+                        </div>
+
+                        <div
+                          className={`flex h-14 w-14 items-center justify-center rounded-2xl ${card.iconTone}`}
+                        >
+                          <Icon className="h-6 w-6" />
+                        </div>
+                      </div>
+
+                      <p
+                        className={`mt-5 text-sm leading-7 ${
+                          isDark ? "text-[#c7d1db]" : "text-[#697682]"
+                        }`}
+                      >
+                        {card.description}
+                      </p>
+
+                      <div className="mt-8 flex items-center justify-between">
+                        <span
+                          className={`text-sm font-semibold ${card.accent}`}
+                        >
+                          Acceso directo
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-2 text-sm font-semibold ${
+                            isDark ? "text-white" : "text-[#2f3942]"
+                          }`}
+                        >
+                          Abrir
+                          <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </section>
 
             <section
-              className={`px-6 pb-6 md:px-8 md:pb-8 ${isDark ? "" : ""}`}
+              className={`px-6 pb-6 md:px-8 md:pb-8 ${
+                isDark ? "" : ""
+              }`}
             >
               <div
                 className={`overflow-hidden rounded-[30px] ${
                   isDark
-                    ? "border border-[#24456f] bg-[linear-gradient(180deg,#10213d_0%,#173252_100%)]"
-                    : "border border-[#051145] bg-white"
+                    ? "border border-[#223547] bg-[linear-gradient(180deg,#0f1d29_0%,#142635_100%)]"
+                    : "border border-[#dce3e8] bg-white"
                 }`}
               >
                 <div
                   className={`flex items-center justify-between px-5 py-4 ${
-                    isDark
-                      ? "border-b border-[#24456f]"
-                      : "border-b border-[#e5eaee]"
+                    isDark ? "border-b border-[#223547]" : "border-b border-[#e5eaee]"
                   }`}
                 >
                   <div>
                     <p
                       className={`text-[11px] uppercase tracking-[0.18em] ${
-                        isDark ? "text-[#8ea6cf]" : "text-[#7d8792]"
+                        isDark ? "text-[#7f95ab]" : "text-[#7d8792]"
                       }`}
                     >
                       Geolocalizacion industrial
@@ -376,8 +442,8 @@ const Home = () => {
                   <div
                     className={`hidden items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium md:inline-flex ${
                       isDark
-                        ? "border border-[#2f5e9c] bg-[#12325f] text-[#8fd0ff]"
-                        : "border border-[#051145] bg-[#f7fbfd] text-[#255f82]"
+                        ? "border border-[#28435e] bg-[#0f1f2c] text-[#89dfff]"
+                        : "border border-[#d6e2ea] bg-[#f7fbfd] text-[#255f82]"
                     }`}
                   >
                     <MapPinned className="h-3.5 w-3.5" />
