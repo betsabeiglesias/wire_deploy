@@ -75,6 +75,7 @@ class ProjectVariable(models.Model):
  
     # connection fields
     equipment = models.CharField(max_length=256, blank=True, default="")
+    equipment_id = models.CharField(max_length=512, blank=True, default="")
     variable  = models.CharField(max_length=256, blank=True, default="")
     datatype  = models.CharField(max_length=16,  blank=True, default="Float", choices=DATATYPE_CHOICES)
     unit      = models.CharField(max_length=32,  blank=True, default="")

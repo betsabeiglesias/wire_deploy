@@ -29,18 +29,16 @@ export function buildTagTree(tags) {
   return tree;
 }
 
-
 export function buildTagIndex(tags) {
-
   const index = {};
-
   tags.forEach(tag => {
+    const equipmentId = tag.equipment_id ||
+      [tag.site, tag.area, tag.line, tag.cell, tag.equipment]
+        .filter(Boolean)
+        .join("/");
 
-    const key = `${tag.equipment}.${tag.variable}`;
-
-    index[key] = tag;
-
+    const key = `${equipmentId}:${tag.variable}`;
+    index[key] = { ...tag, equipment_id: equipmentId };
   });
-
   return index;
 }

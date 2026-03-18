@@ -97,3 +97,45 @@ class PLCViewSet(ModelViewSet):
             tag = serializer.save()
 
             return Response(TagSerializer(tag).data, status=201)
+        
+    @action(detail=True, methods=["get", "patch", "delete"], url_path="tags/(?P<tag_pk>[^/.]+)")
+    def tag_detail(self, request, pk=None, tag_pk=None):
+        """
+        GET    /api/config/plc/{id}/tags/{tag_pk}/
+        PATCH  /api/config/plc/{id}/tags/{tag_pk}/
+        DELETE /api/config/plc/{id}/tags/{tag_pk}/
+        """
+        plc = self.get_object()
+        tag = get_object_or_404(Tag, pk=tag_pk, plc=plc)
+
+        if request.method == "GET":
+            return Response(TagSerializer(tag).data)
+
+        elif request.method == "PATCH":
+            serializer = TagSerializer(tag, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+
+        elif request.method == "DELETE":
+            tag.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail=True, methods=["patch"], url_path="tags/(?P<tag_pk>[^/.]+)/toggle")
+    def tag_toggle(self, request, pk=None, tag_pk=None):
+        """
+        PATCH /api/config/plc/{id}/tags/{tag_pk}/toggle/
+        """
+        plc = self.get_object()
+        tag = get_object_or_404(Tag, pk=tag_pk, plc=plc)
+
+        enabled = request.data.get("enabled")
+        if enabled is None:
+            return Response(
+                {"error": "Field 'enabled' is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        tag.enabled = enabled
+        tag.save()
+        return Response(TagSerializer(tag).data)

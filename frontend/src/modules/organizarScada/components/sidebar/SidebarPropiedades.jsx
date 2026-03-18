@@ -2,6 +2,7 @@
 // Panel de propiedades con tabs horizontales ligeros.
 // Tab "Dispositivo" usa ProjectVariables de la API (tablas del proyecto).
 import React, { useEffect, useState } from "react";
+import { TagSelector } from "./TagSelector";
 
 const tabs = ["General", "Dispositivo", "Estilo"];
 
@@ -14,8 +15,10 @@ const SidebarPropiedades = ({
   onExportNameChange,
   layoutId = null,
 }) => {
-  const [activeTab, setActiveTab] = useState("General");
+  console.log("🎯 SidebarPropiedades selectedElement:", selectedElement?.id, selectedElement?.data?.type);
 
+  const [activeTab, setActiveTab] = useState("General");
+  const [varSearch, setVarSearch] = useState("");
   const currentLabel =
     selectedElement?.label ??
     selectedElement?.data?.label ??
@@ -38,9 +41,11 @@ const SidebarPropiedades = ({
     selectedElement?.data?.settings?.targetViewId ??
     "";
 
-  const updateSettings = (patch) =>
+  const updateSettings = (patch) =>{
+    console.log("💾 updateSettings patch:", patch);
+    console.log("💾 selectedElement?.id:", selectedElement?.id);
     onChange?.({ data: { ...(selectedElement?.data || {}), settings: { ...(currentSettings || {}), ...patch } } });
-
+  };
   const updateGeometry = (patch) =>
     onChange?.({ ...patch, data: { ...(selectedElement?.data || {}), width: patch?.width !== undefined ? patch.width : selectedElement?.data?.width, height: patch?.height !== undefined ? patch.height : selectedElement?.data?.height, settings: { ...(selectedElement?.data?.settings || {}) } } });
 
@@ -65,7 +70,10 @@ const SidebarPropiedades = ({
     setLoadingTables(true);
     fetch(`/api/scada-manager/layouts/${layoutId}/tables/`, { credentials: "include" })
       .then(r => r.ok ? r.json() : [])
-      .then(data => setProjectTables(Array.isArray(data) ? data : []))
+      .then(data => {
+          console.log("📦 tables sample:", JSON.stringify(data[0], null, 2));
+          setProjectTables(Array.isArray(data) ? data : []);
+        })
       .catch(() => setProjectTables([]))
       .finally(() => setLoadingTables(false));
   }, [layoutId]);
@@ -145,8 +153,33 @@ const SidebarPropiedades = ({
   const renderDispositivo = () => {
     const linkedVarId = currentSettings.variableId || "";
     const linkedVar   = tableVariables.find(v => v.variable_id === linkedVarId);
+
+    // Filtrar variables según búsqueda
+    const filteredVariables = tableVariables.filter(v => {
+      if (!varSearch.trim()) return true;
+      const q = varSearch.toLowerCase();
+      return (
+        v.name?.toLowerCase().includes(q) ||
+        v.equipment?.toLowerCase().includes(q) ||
+        v.variable?.toLowerCase().includes(q)
+      );
+    });
+
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
+
+        {/* Buscador libre */}
+        <div>
+          <label className="block text-[11px] text-slate-600 mb-1">Buscar variable</label>
+          <input
+            className="w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
+            placeholder="Escribe para filtrar..."
+            value={varSearch}
+            onChange={(e) => setVarSearch(e.target.value)}
+          />
+        </div>
+
+        {/* Selector de tabla */}
         <div>
           <label className="block text-[11px] text-slate-600 mb-1">Tabla</label>
           {!layoutId ? (
@@ -154,59 +187,72 @@ const SidebarPropiedades = ({
           ) : loadingTables ? (
             <p className="text-[11px] text-slate-400">Cargando tablas…</p>
           ) : projectTables.length === 0 ? (
-            <p className="text-[11px] text-amber-600">⚠ Sin tablas. Ve a "Dispositivos" en el sidebar para crearlas.</p>
+            <p className="text-[11px] text-amber-600">⚠ Sin tablas. Ve a "Dispositivos" para crearlas.</p>
           ) : (
-            <select className="w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
+            <select
+              className="w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
               value={selectedTableId}
-              onChange={(e) => { setSelectedTableId(e.target.value); updateSettings({deviceTable:e.target.value,variableId:"",variable:"",attributeKey:""}); }}>
+              onChange={(e) => {
+                setSelectedTableId(e.target.value);
+                setVarSearch("");
+                updateSettings({ deviceTable: e.target.value, variableId: "" });
+              }}>
               <option value="">— selecciona tabla —</option>
               {projectTables.map(t => <option key={t.id} value={String(t.id)}>{t.name}</option>)}
             </select>
           )}
         </div>
+
+        {/* Selector de variable filtrado */}
         {selectedTableId && (
           <div>
             <label className="block text-[11px] text-slate-600 mb-1">Variable</label>
-            {tableVariables.length === 0 ? (
-              <p className="text-[11px] text-slate-400">Esta tabla no tiene variables. Añádelas desde el gestor.</p>
+            {filteredVariables.length === 0 ? (
+              <p className="text-[11px] text-slate-400">
+                {varSearch ? "Sin coincidencias." : "Sin variables en esta tabla."}
+              </p>
             ) : (
-              <select className="w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
+              <select
+                className="w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
                 value={linkedVarId}
                 onChange={(e) => {
                   const varId = e.target.value;
                   const meta  = tableVariables.find(v => v.variable_id === varId);
-                  updateSettings({ variableId: varId, variable: meta?.variable||meta?.name||"", equipment: meta?.equipment||"", attributeKey: meta?.name||"", unit: meta?.unit||"", variableSource: meta?.source||"", deviceTable: selectedTableId });
+                  updateSettings({
+                    variableId:   varId,
+                    variable:     meta?.variable  || meta?.name || "",
+                    equipment:    meta?.equipment || "",
+                    unit:         meta?.unit      || "",
+                    datatype:     meta?.datatype  || "",
+                    deviceTable:  selectedTableId,
+                  });
                 }}>
                 <option value="">— selecciona variable —</option>
-                {tableVariables.map(v => (
+                {filteredVariables.map(v => (
                   <option key={v.variable_id} value={v.variable_id}>
-                    {v.name}{v.source==="connection" ? ` · ${v.equipment}` : " (local)"}
+                    {v.name}{v.source === "connection" ? ` · ${v.equipment}` : " (local)"}
                   </option>
                 ))}
               </select>
             )}
           </div>
         )}
+
+        {/* Info del binding actual */}
         {linkedVar && (
           <div className="rounded border border-slate-100 bg-slate-50 px-3 py-2 space-y-1">
             <p className="text-[10px] uppercase tracking-wide text-slate-400">Vinculado</p>
             <p className="text-[11px] font-semibold text-slate-800">{linkedVar.name}</p>
             {linkedVar.source === "connection" ? (
-              <>
-                <p className="text-[10px] text-slate-600">{linkedVar.equipment}</p>
-                <div className="flex flex-wrap gap-3 text-[10px] text-slate-400">
-                  {linkedVar.unit && <span>Unidad: {linkedVar.unit}</span>}
-                  {linkedVar.site && <span>Site: {linkedVar.site}</span>}
-                  {linkedVar.area && <span>Área: {linkedVar.area}</span>}
-                </div>
-              </>
+              <p className="text-[10px] text-slate-600">{linkedVar.equipment} › {linkedVar.variable}</p>
             ) : (
-              <p className="text-[10px] text-slate-600">Local · {linkedVar.datatype}{linkedVar.initial_value!=null?` = ${linkedVar.initial_value}`:""}</p>
+              <p className="text-[10px] text-slate-600">
+                Local · {linkedVar.datatype}
+                {linkedVar.initial_value != null ? ` = ${linkedVar.initial_value}` : ""}
+              </p>
             )}
+            {linkedVar.unit && <p className="text-[10px] text-slate-400">Unidad: {linkedVar.unit}</p>}
           </div>
-        )}
-        {!linkedVar && layoutId && (
-          <p className="text-[10px] text-slate-400">Selecciona una tabla y una variable para vincular este widget.</p>
         )}
       </div>
     );

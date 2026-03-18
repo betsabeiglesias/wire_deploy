@@ -33,7 +33,7 @@ function App() {
   const needsRealtime = [
     "/scada",
     "/hmi",
-    "/organizar-scada",
+    // "/organizar-scada",
     "/scada/production",
   ].some((path) => location.pathname.startsWith(path));
 

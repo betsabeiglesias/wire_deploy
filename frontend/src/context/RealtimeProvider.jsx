@@ -5,10 +5,9 @@ import { useRealtimeData } from "@/hooks/useRealtimeData";
 const RealtimeContext = createContext(null);
 
 export function RealtimeProvider({ tenant, children }) {
-  const realtime = useRealtimeData(tenant);
-
+const { connected, allTags, tagsMap, dataStale } = useRealtimeData(tenant);
   return (
-    <RealtimeContext.Provider value={realtime}>
+    <RealtimeContext.Provider value={{ connected, allTags, tagsMap, dataStale }}>
       {children}
     </RealtimeContext.Provider>
   );

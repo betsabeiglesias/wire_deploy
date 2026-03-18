@@ -12,14 +12,12 @@ from .hash_store import read_last_hash, save_hash
 INTERVAL = int(os.getenv("CONFIG_SYNC_INTERVAL", "30"))
 
 def restart_gateway():
+    container = os.getenv("GATEWAY_CONTAINER_NAME", "gateway_customerA")
     try:
-        subprocess.run(
-            ["docker", "restart", "gateway_customerA"],
-            check=True
-        )
-        print("gateway restarted")
+        subprocess.run(["docker", "restart", container], check=True)
+        print(f"gateway {container} restarted")
     except Exception as e:
-        print("gateway restart failed:", e)
+        print(f"gateway restart failed: {e}")
 
 
 def main():

@@ -61,20 +61,25 @@ export default function ProjectVariableModal({ open, onClose, layoutId }) {
   const tagIndex = config?.tagIndex || {};
 
   const allTagOptions = useMemo(() =>
-    Object.values(tagIndex)
-      .map(tag => ({
+    Object.values(tagIndex).map(tag => {
+      const equipmentId = tag.equipment_id?.includes("/")
+        ? tag.equipment_id
+        : [tag.site, tag.area, tag.line, tag.cell, tag.equipment_id]
+            .filter(Boolean).join("/");
+
+      return {
         key:          `${tag.equipment}::${tag.variable}`,
         equipment:    tag.equipment  || "",
+        equipmentId,
         variableName: tag.variable   || "",
         datatype:     tag.datatype   || "",
         unit:         tag.unit       || "",
         address:      typeof tag.address === "string" ? tag.address : tag.address?.value || "",
         nodeId:       tag.nodeId     || tag.node_id || "",
-      }))
-      .sort((a, b) => a.variableName.localeCompare(b.variableName)),
+      };
+    }).sort((a, b) => a.variableName.localeCompare(b.variableName)),
     [tagIndex]
   );
-
   // ── Load tables ──────────────────────────────────────────────────────────
   const loadTables = useCallback(async () => {
     if (!layoutId) return;
@@ -215,6 +220,7 @@ export default function ProjectVariableModal({ open, onClose, layoutId }) {
         name:          row.name.trim(),
         source:        row.source,
         equipment:     row.source === "connection" ? row.equipment    : "",
+        equipment_id:  row.source === "connection" ? row.equipmentId : "", 
         variable:      row.source === "connection" ? row.variable     : "",
         datatype:      row.datatype || "Float",
         unit:          row.unit     || "",
@@ -305,7 +311,7 @@ export default function ProjectVariableModal({ open, onClose, layoutId }) {
                       const tag = allTagOptions.find(t => t.key === e.target.value);
                       if (!tag) return;
                       patchDraft(variable.id, {
-                        equipment: tag.equipment, variable: tag.variableName,
+                        equipment: tag.equipment, equipment_id: tag.equipmentId, variable: tag.variableName,
                         datatype: tag.datatype, unit: tag.unit,
                         address: tag.address, node_id: tag.nodeId,
                       });
@@ -339,7 +345,7 @@ export default function ProjectVariableModal({ open, onClose, layoutId }) {
                         const tag = allTagOptions.find(t => t.key === e.target.value);
                         if (!tag) return;
                         patchNewRow(row.tmpId, {
-                          equipment: tag.equipment, variable: tag.variableName,
+                          equipment: tag.equipment, equipmentId: tag.equipmentId, variable: tag.variableName,
                           datatype: tag.datatype, unit: tag.unit,
                           address: tag.address, nodeId: tag.nodeId,
                         });

@@ -1,79 +1,58 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+// src/modules/organizarScada/hooks/useLiveTag.js
+import { useEffect, useMemo, useState } from "react";
 import { useRealtime } from "@/context/RealtimeProvider";
 import { formatValueWithDecimals } from "@/modules/organizarScada/utils/formatters";
 import { parseNumericValue } from "@/modules/organizarScada/utils/numbers";
 
-export default function useLiveTag(data) {
+export default function useLiveTag(tag) {
+  // tag puede ser:
+  // { source: "connection", tagId: "site1/.../equipo:variable" }
+  // { source: "local", initialValue: 42 }
+  // null → sin binding
+
   const realtime = useRealtime();
-  const allTags = realtime?.allTags || [];
+  const tagsMap  = realtime?.tagsMap || new Map();
   const [valueHistory, setValueHistory] = useState([]);
 
-  const resolveLive = useCallback(() => {
-    const settings = data?.settings || {};
-    const eq = settings.equipment || settings.plcName || data?.equipment;
-    const variable =
-      settings.variable ||
-      settings.deviceTag ||
-      settings.attributeKey ||
-      data?.variable;
-    const site = settings.site;
-    const area = settings.area;
-    const line = settings.line;
-    const cell = settings.cell;
+  const live = useMemo(() => {
+    if (!tag) return { value: undefined };
 
-    if (!eq || !variable) return { value: undefined, unit: settings.unit };
+    if (tag.source === "local") {
+      return {
+        value:    tag.initialValue,
+        unit:     tag.unit || "",
+        source:   "local",
+        isStatic: true,
+      };
+    }
 
-    const candidate =
-      allTags.find(
-        (t) =>
-          (t.equipment === eq || t.equipment_id === eq) &&
-          (t.equipment === eq || t.equipment_id === eq) &&
-          t.variable === variable &&
-          (!site || t.site === site) &&
-          (!area || t.area === area) &&
-          (!line || t.line === line) &&
-          (!cell || t.cell === cell)
-      ) ||
-      allTags.find(
-        (t) =>
-          (t.equipment === eq || t.equipment_id === eq) &&
-          t.variable === variable,
-      );
-
-    return {
-      value: candidate?.value,
-      unit: candidate?.unit || settings.unit,
-      site: candidate?.site || site,
-      area: candidate?.area || area,
-      line: candidate?.line || line,
-      cell: candidate?.cell || cell,
-      equipment: candidate?.equipment || eq,
-      variable: candidate?.variable || variable,
-      timestamp: candidate?.timestamp,
-    };
-  }, [allTags, data]);
+    if (tag.source === "connection") {
+      if (tag.tagId) return tagsMap.get(tag.tagId) ?? { value: undefined };
+      
+      // Fallback para variables sin equipment_id: buscar por equipment + variable
+      for (const [, entry] of tagsMap.entries()) {
+        if (entry.equipment === tag.equipment && entry.variable === tag.variable) {
+          return entry;
+        }
+      }
+      return { value: undefined };
+    }
+  }, [tagsMap, tag]);
 
   useEffect(() => {
-    const resolved = resolveLive();
-    if (typeof resolved.value === "undefined") return;
-    const timestamp = resolved.timestamp || new Date().toISOString();
+    if (typeof live.value === "undefined") return;
+    const timestamp = live.timestamp || new Date().toISOString();
     setValueHistory((prev) => {
       const last = prev.at(-1);
-      if (last && last.timestamp === timestamp && last.value === resolved.value) {
-        return prev;
-      }
-      const entry = {
-        ...resolved,
+      if (last?.timestamp === timestamp && last?.value === live.value) return prev;
+      return [...prev, {
+        ...live,
         timestamp,
-        displayValue: formatValueWithDecimals(resolved.value),
-        numericValue: parseNumericValue(resolved.value),
-      };
-      const next = [...prev, entry];
-      return next.slice(-20);
+        displayValue: formatValueWithDecimals(live.value),
+        numericValue: parseNumericValue(live.value),
+      }].slice(-20);
     });
-  }, [resolveLive]);
-
-  const live = useMemo(() => resolveLive(), [resolveLive]);
+  }, [live]);
 
   return { live, valueHistory };
 }

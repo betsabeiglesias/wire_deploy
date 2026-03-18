@@ -1,6 +1,8 @@
 // src/modules/organizarScada/components/canvas/CanvasEditor.jsx
 import React, { useRef } from "react";
 import DraggableBox from "./DraggableBox";
+import { useProjectTags } from "@/modules/organizarScada/hooks/useProjectTags";
+import { useRealtime } from "@/context/RealtimeProvider";
 
 const CanvasEditor = ({
   elements = [],
@@ -13,9 +15,13 @@ const CanvasEditor = ({
   canvasHeight = "710px",
   zoom = 1,
   onStageSize,
-  isLiveMode = false,   // ← NUEVO: activa el modo tiempo real en todos los widgets
+  isLiveMode = false,
+  layoutId = null,
 }) => {
   const canvasRef = useRef(null);
+  const realtime  = useRealtime();
+  const tagsMap   = realtime?.tagsMap || new Map();
+  const { tags: projectTags } = useProjectTags(isLiveMode ? layoutId : null, tagsMap);
 
   const handleDrop = (e) => {
     e.preventDefault();
@@ -47,8 +53,7 @@ const CanvasEditor = ({
         >
           {elements.map((el) => {
             const isVisible = el?.data?.settings?.is_visible !== false;
-            if (!isVisible && !isLiveMode) return null; // oculto en editor
-            if (!isVisible && isLiveMode) return null;  // oculto también en live
+            if (!isVisible) return null;
 
             return (
               <DraggableBox
@@ -67,6 +72,7 @@ const CanvasEditor = ({
                   onUpdate?.(id, { x, y, data: { ...el.data, width: w, height: h } })
                 }
                 onDelete={onDelete}
+                projectTags={projectTags}
               />
             );
           })}

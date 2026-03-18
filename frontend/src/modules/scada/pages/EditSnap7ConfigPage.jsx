@@ -3,17 +3,16 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getPLC, updatePLC } from "../api/plcApi";
-import { markConfigDirty } from "../../../utils/configUtils";
 import Swal from "sweetalert2";
 import WizardNavigation from "../components/WizardNavigationButton";
 
 const EditSnap7ConfigPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  
+
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
-  
+
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -38,7 +37,7 @@ const EditSnap7ConfigPage = () => {
     async function loadPLC() {
       try {
         const plc = await getPLC(id);
-        
+
         setForm({
           name: plc.name || "",
           description: plc.description || "",
@@ -58,7 +57,6 @@ const EditSnap7ConfigPage = () => {
           driver: plc.driver,
           work_unit: plc.work_unit,
         });
-
       } catch (err) {
         console.error("Error loading PLC:", err);
         Swal.fire({
@@ -114,14 +112,12 @@ const EditSnap7ConfigPage = () => {
 
     try {
       await updatePLC(id, payload);
-      
-      markConfigDirty();
-      
+
       Swal.fire({
         icon: "success",
         title: "PLC actualizado",
-        text: "Los cambios se han guardado correctamente",
-        timer: 1500,
+        text: "Los cambios se aplicarán automáticamente en unos segundos.",
+        timer: 2000,
         showConfirmButton: false,
       });
 

@@ -22,19 +22,30 @@ export function TagSelector({ value, onChange }) {
   const { tagIndex = {} } = config || {};
 
   const allOptions = useMemo(() => {
-    return Object.values(tagIndex).map((tag) => ({
-      tagId:       `${tag.equipment}.${tag.variable}`,
-      label:       `${tag.equipment} › ${tag.variable}`,
-      searchText:  `${tag.equipment} ${tag.variable} ${tag.unit || ""}`.toLowerCase(),
-      equipment:   tag.equipment,
-      variable:    tag.variable,
-      datatype:    tag.datatype,
-      unit:        tag.unit || "",
-      site:        tag.site || "",
-      area:        tag.area || "",
-      line:        tag.line || "",
-      cell:        tag.cell || "",
-    }));
+    return Object.values(tagIndex)
+      .filter((tag) => tag.variable)
+      .map((tag) => {
+        const fullEquipmentId = tag.equipment_id?.includes("/")
+          ? tag.equipment_id
+          : [tag.site, tag.area, tag.line, tag.cell, tag.equipment_id]
+              .filter(Boolean)
+              .join("/");
+
+        return {
+          tagId:      `${fullEquipmentId}:${tag.variable}`,
+          label:      `${tag.equipment} › ${tag.variable}`,
+          searchText: `${tag.equipment} ${tag.variable} ${tag.unit || ""}`.toLowerCase(),
+          equipment:      tag.equipment,
+          variable:       tag.variable,
+          datatype:       tag.datatype,
+          unit:           tag.unit || "",
+          site:           tag.site || "",
+          area:           tag.area || "",
+          line:           tag.line || "",
+          cell:           tag.cell || "",
+          equipment_id:   fullEquipmentId,
+        };
+      });
   }, [tagIndex]);
 
   const filtered = useMemo(() => {

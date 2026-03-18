@@ -20,7 +20,7 @@ class ProjectVariableSerializer(serializers.ModelSerializer):
         fields = [
             "id", "variable_id", "table",
             "name", "source",
-            "equipment", "variable", "datatype", "unit", "address", "node_id",
+            "equipment", "equipment_id", "variable", "datatype", "unit", "address", "node_id",
             "initial_value", "description",
             "created_at", "updated_at",
         ]
@@ -35,6 +35,7 @@ class ProjectVariableSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({"variable": "Requerido para variables de conexión."})
         if source == "local":
             data.setdefault("equipment", "")
+            data.setdefault("equipment_id", "") 
             data.setdefault("variable",  "")
             data.setdefault("address",   "")
             data.setdefault("node_id",   "")
