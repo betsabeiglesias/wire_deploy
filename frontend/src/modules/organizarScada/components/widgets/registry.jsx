@@ -23,6 +23,12 @@ import KwShieldGauge from "@/modules/organizarScada/components/widgets/mini/KwSh
 import PressTrendGauge from "@/modules/organizarScada/components/widgets/mini/PressTrendGauge";
 import MiniTable from "@/modules/organizarScada/components/widgets/mini/MiniTable";
 import MiniTrendChart from "@/modules/organizarScada/components/widgets/mini/MiniTrendChart";
+import ChartBasic from "@/modules/organizarScada/components/widgets/iconsScada/ChartBasic";
+import ChartHighLow from "@/modules/organizarScada/components/widgets/iconsScada/ChartHighLow";
+import ChartStockArea from "@/modules/organizarScada/components/widgets/iconsScada/ChartStockArea";
+import ChartSocialGroup from "@/modules/organizarScada/components/widgets/iconsScada/ChartSocialGroup";
+import ChartRealtime from "@/modules/organizarScada/components/widgets/iconsScada/ChartRealtime";
+import ChartPageStats from "@/modules/organizarScada/components/widgets/iconsScada/ChartPageStats";
 import {
   buildEnergyBarChartDemo,
   buildTemperatureLineChartDemo,
@@ -529,6 +535,35 @@ export const renderWidget = ({
         />
       );
     }
+    case "image-widget": {
+      const src =
+        settings.imageBase64 ||
+        settings.base64 ||
+        settings.src ||
+        data.src ||
+        "";
+      const opacity = Math.max(
+        0,
+        Math.min(100, Number(settings.opacity ?? 100)),
+      );
+      if (!src) {
+        return (
+          <div className="flex h-full w-full items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50 text-[11px] text-slate-500">
+            Imagen no disponible
+          </div>
+        );
+      }
+      return (
+        <div className="h-full w-full overflow-hidden rounded" style={{ opacity: opacity / 100 }}>
+          <img
+            src={src}
+            alt={settings.alt || data.label || "ImageWidget"}
+            className="h-full w-full object-contain select-none"
+            draggable={false}
+          />
+        </div>
+      );
+    }
     case "nav-button": {
       const label = data.label || "Boton";
       const variantClass =
@@ -634,6 +669,78 @@ export const renderWidget = ({
             strokeLinejoin="round"
           />
         </svg>
+      );
+    }
+    case "chart-basic": {
+      return (
+        <ChartBasic
+          series={settings.series || settings.options?.series}
+          labels={
+            settings.labels ||
+            settings.options?.xaxis?.categories ||
+            data.labels
+          }
+          title={settings.options?.title?.text || settings.title || data.label}
+          lineColor={settings.lineColor || settings.options?.colors?.[0]}
+          areaColor={settings.areaColor}
+          bgColor={settings.bgColor}
+          axisColor={settings.axisColor}
+          textColor={settings.textColor}
+          height={height ?? settings.height}
+          width={width ?? settings.width}
+        />
+      );
+    }
+    case "chart-high-low": {
+      return (
+        <ChartHighLow
+          series={settings.series}
+          options={settings.options}
+          height={height ?? settings.height}
+          width={width ?? settings.width}
+          type={settings.type || "line"}
+        />
+      );
+    }
+    case "chart-stock-area": {
+      return (
+        <ChartStockArea
+          series={settings.series}
+          options={settings.options}
+          height={height ?? settings.height}
+          width={width ?? settings.width}
+          type={settings.type || "area"}
+        />
+      );
+    }
+    case "chart-social-group": {
+      return (
+        <ChartSocialGroup
+          settings={settings}
+          height={height ?? settings.height}
+          width={width ?? settings.width}
+        />
+      );
+    }
+    case "chart-realtime": {
+      return (
+        <ChartRealtime
+          settings={settings}
+          height={height ?? settings.height}
+          width={width ?? settings.width}
+          type={settings.type || "line"}
+        />
+      );
+    }
+    case "chart-page-stats": {
+      return (
+        <ChartPageStats
+          series={settings.series}
+          options={settings.options}
+          height={height ?? settings.height}
+          width={width ?? settings.width}
+          type={settings.type || "line"}
+        />
       );
     }
     case "luxuries-stacked-bar": {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 
 import { useParams, useNavigate } from "react-router-dom";
 
-import { useGatewayData } from "@/hooks/useGatewayData";
+import { useRealtime } from "@/context/RealtimeProvider";
 import api from "../../../services/api";
 import "@/styles/gateway.css";
 import "../../../styles/Scada.css";
@@ -27,7 +27,9 @@ const ProductionView = () => {
 
   const [appViewsData, setAppViewsData] = useState(null);
 
-  const { allTags, connected } = useGatewayData();
+  const realtime = useRealtime();
+  const allTags = realtime?.allTags || [];
+  const connected = realtime?.connected || false;
 
   // Lógica de Escalado Responsivo (Moved to top to prevent conditional hook error)
   const [scale, setScale] = useState(1);

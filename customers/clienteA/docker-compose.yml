@@ -55,7 +55,6 @@ services:
     image: redis:7
     container_name: redis_customerA
     restart: unless-stopped
- 
     networks:
       - suite-central-net
 
@@ -102,7 +101,7 @@ services:
     container_name: core-backendA
     volumes:
       - ../../edge/core_backend:/app
-      - ../opt/suite/config:/opt/suite/config
+      - ./opt:/opt
     env_file:
       - ./customerA.env
     environment:
@@ -113,6 +112,25 @@ services:
       - "8001:8000"   # 🔥 OJO: puerto distinto al central
     depends_on:
       - redis
+    restart: unless-stopped
+    networks:
+      - suite-central-net
+
+
+  edge-config-sync:
+    build:
+      context: ../../edge/core_backend
+    container_name: edge_config_sync
+    command: python -m edge_config.run
+    env_file:
+      - ./customerA.env
+    # RETOMAR EL HARCODEO
+    environment:
+      - GATEWAY_CONTAINER_NAME=gateway_customerA        # ← nombre via env
+      - SUITE_CONFIG_DIR=/opt/suite/config              # ← ruta config
+    volumes:
+      - ./opt/suite/config:/opt/suite/config            # ← mismo volumen que gateway
+      - /var/run/docker.sock:/var/run/docker.sock       # ← para poder hacer docker restart
     restart: unless-stopped
     networks:
       - suite-central-net
