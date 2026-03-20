@@ -6,7 +6,6 @@ import api from '../../../services/api';
  * (como Isa95SelectorPage.jsx) lo importan directamente.
  */
 export async function apiFetch(path, options = {}) {
-  // Ajustamos para que acepte el formato de options que tenías antes (method, body, etc)
   const { method = 'GET', body, headers } = options;
   const url = `/api/config${path}`;
   
@@ -14,7 +13,7 @@ export async function apiFetch(path, options = {}) {
     const response = await api({
       method,
       url,
-      data: body ? JSON.parse(body) : null, // Convertimos el string JSON de vuelta a objeto para Axios
+      data: body ? JSON.parse(body) : null,
       headers,
     });
     return response.data;
@@ -59,7 +58,7 @@ export const updatePLC = async (id, data) => {
     method: "PUT",
     body: JSON.stringify(data),
   });
-}
+};
 
 export const patchPLC = async (id, data) => {
   return apiFetch(`/plc/${id}/`, {
@@ -80,18 +79,6 @@ export async function togglePLC(id, enabled) {
   return apiFetch(`/plc/${id}/toggle_enabled/`, {
     method: "PATCH",
     body: JSON.stringify({ enabled }),
-  });
-}
-
-export async function regenerateGateway() {
-  return apiFetch(`/regenerate-gateway/`, {
-    method: "POST",
-  });
-}
-
-export async function restartGateway() {
-  return apiFetch(`/restart-gateway/`, {
-    method: "POST",
   });
 }
 
@@ -134,7 +121,7 @@ export async function updateTag(plcId, tagId, payload) {
 }
 
 /* ----------------------------------------------
- Toggle TAG ENABLE
+   Toggle TAG ENABLE
 ------------------------------------------------*/
 export async function toggleTag(plcId, tagId, enabled) {
   return apiFetch(`/plc/${plcId}/tags/${tagId}/toggle/`, {

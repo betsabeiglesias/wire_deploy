@@ -33,6 +33,8 @@ import LayOutDetail from "../modules/Layout/pages/LayOutDetail";
 import PowerBiView from "../modules/powerBI/pages/PowerBiView";
 import PowerBiAll from "../modules/powerBI/pages/PowerBiAll";
 import HmiPage from "../modules/hmi/pages/HmiPage";
+
+import { ScriptEditor } from "../modules/organizarScada/pages/ScriptEditor";
  
 // --- SUB-COMPONENTE PROTECTED ROUTE ---
 const ProtectedRoute = ({ children }) => {
@@ -59,6 +61,7 @@ export default function AppRoutes() {
       <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
       <Route path="/hmi" element={<ProtectedRoute><HmiPage /></ProtectedRoute>} />
       <Route path="/organizar-scada" element={<ProtectedRoute><OrganizarScada /></ProtectedRoute>} />
+      <Route path="/organizar-scada/script" element={<ScriptEditor />} />
       <Route path="/map" element={<ProtectedRoute><Map /></ProtectedRoute>} />
      
       <Route path="/scada" element={<ProtectedRoute><Communications /></ProtectedRoute>} />

@@ -20,7 +20,7 @@ import { GatewayTable } from "../components/GatewayTable";
 import HomeButton from "../../../components/HomeButton";
 import ConfigurarComunicacionesButton from "../components/ConfigurarComunicacionesButton";
 
-import { useRealtime } from "@/realtime/RealtimeProvider";
+import { useRealtime } from "@/context/RealtimeProvider";
 
 export default function Communications() {
   

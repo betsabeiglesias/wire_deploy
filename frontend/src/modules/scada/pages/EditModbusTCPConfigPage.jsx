@@ -2,19 +2,17 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
-import { getPLC, updatePLC, regenerateGateway } from "../api/plcApi";
-import { markConfigDirty } from "../../../utils/configUtils";
+import { getPLC, updatePLC } from "../api/plcApi";
 import Swal from "sweetalert2";
 import WizardNavigation from "../components/WizardNavigationButton";
 
 const EditModbusTCPConfigPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  
+
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
-  
+
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -35,11 +33,10 @@ const EditModbusTCPConfigPage = () => {
     async function loadPLC() {
       try {
         const plc = await getPLC(id);
-        
-        // Parsear connection_string como fallback si connection_data está vacío
+
         let host = "";
         let port = 502;
-        
+
         if (plc.connection_data && plc.connection_data.host) {
           host = plc.connection_data.host;
           port = plc.connection_data.port || 502;
@@ -48,13 +45,13 @@ const EditModbusTCPConfigPage = () => {
           host = parts[0];
           port = parts[1] ? parseInt(parts[1]) : 502;
         }
-        
+
         setForm({
           name: plc.name || "",
           description: plc.description || "",
           enabled: plc.enabled || false,
-          host: host,
-          port: port,
+          host,
+          port,
           poll_rate_ms: plc.connection_data?.poll_rate_ms ?? 500,
           byte_order: plc.connection_data?.byte_order || "big",
           word_order: plc.connection_data?.word_order || "little",
@@ -64,7 +61,6 @@ const EditModbusTCPConfigPage = () => {
           driver: plc.driver,
           work_unit: plc.work_unit,
         });
-
       } catch (err) {
         console.error("Error loading PLC:", err);
         Swal.fire({
@@ -114,24 +110,12 @@ const EditModbusTCPConfigPage = () => {
 
     try {
       await updatePLC(id, payload);
-      
-      // Marcar como sucio Y regenerar automáticamente
-      markConfigDirty();
-      
-      // 🔥 Regenerar gateway automáticamente
-      try {
-        await regenerateGateway();
-        console.log("✅ Gateway regenerated automatically");
-      } catch (regenErr) {
-        console.warn("⚠️ Could not regenerate gateway:", regenErr);
-        // No fallar todo el guardado si la regeneración falla
-      }
-      
+
       Swal.fire({
         icon: "success",
         title: "PLC actualizado",
-        text: "Los cambios se han guardado y aplicado correctamente",
-        timer: 1500,
+        text: "Los cambios se aplicarán automáticamente en unos segundos.",
+        timer: 2000,
         showConfirmButton: false,
       });
 

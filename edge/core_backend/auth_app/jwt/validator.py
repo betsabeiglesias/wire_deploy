@@ -74,7 +74,7 @@ def validate_jwt(token, secret_key, expected_issuer) -> AuthContext:
 
     # 7️⃣ Build AuthContext
     return AuthContext(
-        user_id=str(payload["sub"]),
+        user_id=str(payload.get("sub") or payload.get("user_id")),
         client_id=str(payload["client_id"]),
         roles=payload["roles"],
         scopes=payload["scopes"],

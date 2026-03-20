@@ -216,3 +216,17 @@ class Tag(models.Model):
             payload["attrs"] = attrs
 
         return payload
+    
+
+# BINDING EN DASHBOARD ICONO-TAG
+class WidgetBinding(models.Model):
+    widget_id = models.CharField(max_length=100)        # ID del elemento en el canvas
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, related_name="bindings")
+    property = models.CharField(max_length=50)          # "value", "color", "visibility"
+
+    class Meta:
+        unique_together = [("widget_id", "property")]   # un widget no puede tener dos bindings para la misma propiedad
+        ordering = ["widget_id"]
+
+    def __str__(self):
+        return f"{self.widget_id} → {self.tag} [{self.property}]"
