@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import Sidebar from "../modules/sidebar/Sidebar";
 import { useAuthStore } from "../store/useAuthStore";
+import Header from "../components/ui/Header";
+import { Activity, ChartColumnBig, MapPinned, MonitorCog } from "lucide-react";
 
 const formatJoinDate = (value) =>
   new Date(value).toLocaleDateString("es-ES", {
@@ -98,22 +100,15 @@ export default function UserPage() {
       <main className="flex-1 overflow-y-auto bg-[#f7f7f8]">
         <div className="min-h-full px-4 py-4 md:px-6 md:py-6">
           <div className="overflow-hidden rounded-[30px] border border-[#ececee] bg-[#fbfbfc] shadow-[0_24px_70px_-42px_rgba(31,41,55,0.12)]">
-            <section className="relative border-b border-[#ececee] px-6 pb-10 pt-8 md:px-10 md:pb-12">
-              <div className="absolute inset-x-0 top-0 h-[220px]">
-                <div className="absolute left-1/2 top-[12%] h-[260px] w-[560px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(196,181,253,0.2),transparent_65%)]" />
-                <div className="absolute inset-0 opacity-70 [background-image:radial-gradient(#d9cdf7_1px,transparent_1px)] [background-size:8px_8px]" />
-              </div>
-
-              <div className="relative z-10 flex flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
-                <div className="max-w-3xl">
-                  <h1 className="mt-7 text-5xl font-semibold leading-[0.96] tracking-[-0.05em] text-[#4a4a4e] md:text-6xl">
-                    Perfil del
-                    <br />
-                    <span className="text-[#79c8f1]">Usuario.</span>
-                  </h1>
-                </div>
-              </div>
-            </section>
+            
+              {/* <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(52,85,112,0.42)_1px,transparent_1px),linear-gradient(90deg,rgba(52,85,112,0.42)_1px,transparent_1px)] [background-size:64px_64px]" /> */}
+              <Header
+                badgeText="User"
+                title="Perfil del"
+                highlightText="Usuario"
+                icon={Activity}
+              />{" "}
+          
 
             <section className="px-6 py-8 md:px-5 md:py-5">
               <div className="grid gap-6 xl:grid-cols-[1fr_0.92fr]">
