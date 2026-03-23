@@ -1,6 +1,5 @@
 import React from "react";
 import TempGauge from "@/modules/organizarScada/components/widgets/standard/TempGauge";
-import GaugeMeter from "@/modules/organizarScada/components/widgets/standard/GaugeMeter";
 import SvgGauge from "@/modules/organizarScada/components/widgets/standard/SvgGauge";
 import EnergyBarChart from "@/modules/organizarScada/components/widgets/standard/EnergyBarChart";
 import LuxuriesStackedBarChart from "@/modules/organizarScada/components/widgets/standard/LuxuriesStackedBarChart";
@@ -86,34 +85,6 @@ export const renderWidget = ({
 
   switch (data.type) {
     case "speedometer":
-    case "temperature-gauge": {
-      const isThermo = data.type === "temperature-gauge";
-      return (
-        <div className="w-full h-full flex flex-col items-center">
-          <GaugeMeter
-            initialValue={
-              typeof live.value !== "undefined"
-                ? live.value
-                : (settings.initialValue ?? 0)
-            }
-            minValue={
-              typeof settings.minValue !== "undefined" ? settings.minValue : 0
-            }
-            maxValue={
-              typeof settings.maxValue !== "undefined" ? settings.maxValue : 100
-            }
-            label={settings.attributeLabel || data.label}
-            unit={live.unit}
-            showInput={false}
-            showScroll={false}
-            width={width - 20}
-            height={height - 50}
-            theme={theme}
-            isThermometer={isThermo}
-          />
-        </div>
-      );
-    }
     case "mini-ring":
     case "mini-horizontal":
     case "mini-donut":

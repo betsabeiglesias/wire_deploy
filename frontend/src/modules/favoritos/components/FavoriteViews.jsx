@@ -1,22 +1,52 @@
 import { useEffect, useMemo, useState } from "react";
+import { Search, GripVertical, Radar } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+// Stores
 import { useFavoriteStore } from "@/store/useFavoriteStore";
 import { usePowerBiStore } from "@/store/usePowerBiStore";
 import { useLayoutStore } from "@/store/useLayoutStore";
-import { useNavigate } from "react-router-dom";
-import FavoriteHeart from "@/components/FavoriteHeart";
 
-// DND Kit
-import { DndContext, closestCenter, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { arrayMove, SortableContext, useSortable, rectSortingStrategy } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+// UI
+import ViewCard from "@/components/ui/ViewCard";
 
-export function FavoriteViews({ title, type }) {
+export function FavoriteViews({ title, type, onlyFavorites = true }) {
   const navigate = useNavigate();
-  const { favorites, fetchFavorites, updateFavoriteOrder, isLoading: favLoading } = useFavoriteStore();
-  const { powerBis, fetchPowerBis, isLoading: pbiLoading } = usePowerBiStore();
-  const { layouts, fetchLayouts, isLoading: layoutLoading } = useLayoutStore();
   
-  // Estado para el buscador local de esta sección
+  const {
+    favorites,
+    fetchFavorites,
+    updateFavoriteOrder,
+    isLoading: favLoading,
+  } = useFavoriteStore();
+  const {
+    powerBis,
+    fetchPowerBis,
+    deletePowerBi,
+    isLoading: pbiLoading,
+  } = usePowerBiStore();
+  const { 
+    layouts, 
+    fetchLayouts, 
+    deleteLayout,
+    updateLayoutOrder, 
+    isLoading: layoutLoading 
+  } = useLayoutStore();
+  
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -25,141 +55,152 @@ export function FavoriteViews({ title, type }) {
     fetchLayouts();
   }, []);
 
-  // 1. Combinamos favoritos con sus datos reales (PBI o Layout)
   const allDisplayData = useMemo(() => {
     const dataSource = type === "mypowerbi" ? powerBis : layouts;
+    
+    if (!onlyFavorites) {
+      return dataSource.map(item => ({ ...item, favTableId: item.id }));
+    }
+
     return favorites
       .filter((f) => f.type === type)
       .map((fav) => {
-        const item = dataSource.find((d) => Number(d.id) === Number(fav.object_id));
-        // Mantenemos el objeto original (item) y le pegamos el ID de la relación (favTableId)
+        const item = dataSource.find(
+          (d) => Number(d.id) === Number(fav.object_id),
+        );
         return item ? { ...item, favTableId: fav.id } : null;
       })
       .filter(Boolean);
-  }, [favorites, type, powerBis, layouts]);
+  }, [favorites, type, powerBis, layouts, onlyFavorites]);
 
-  // 2. Filtramos los datos combinados según el término de búsqueda
   const filteredData = useMemo(() => {
     return allDisplayData.filter((item) =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase())
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [allDisplayData, searchTerm]);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = async (event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    // Calculamos el movimiento sobre la lista completa para no perder el orden de los no visibles
     const oldIndex = allDisplayData.findIndex((i) => i.favTableId === active.id);
     const newIndex = allDisplayData.findIndex((i) => i.favTableId === over.id);
     const newArray = arrayMove(allDisplayData, oldIndex, newIndex);
 
-    updateFavoriteOrder(type, newArray.map(i => i.favTableId));
+    if (onlyFavorites) {
+      updateFavoriteOrder(type, newArray.map((i) => i.favTableId));
+    } else if (type === "mylayout") {
+      await updateLayoutOrder(newArray);
+    }
   };
 
-  if (favLoading || pbiLoading || layoutLoading) return <p className="p-8 max-w-7xl mx-auto">Cargando {title}…</p>;
+  const handleDelete = async (id, name) => {
+    if (!window.confirm(`Eliminar "${name}"?`)) return;
+
+    try {
+      if (type === "mypowerbi") {
+        await deletePowerBi(id);
+        await fetchPowerBis();
+      } else if (type === "mylayout") {
+        await deleteLayout(id);
+        await fetchLayouts();
+      }
+
+      await fetchFavorites();
+    } catch (err) {
+      console.error("Error al eliminar desde ViewCard:", err);
+      alert("No se pudo eliminar el elemento.");
+    }
+  };
+
+  if (favLoading || pbiLoading || layoutLoading) {
+    return (
+      <div className="mb-8 rounded-[24px] border border-[#dce3e8] bg-white p-10 text-center text-[#8f919a]">
+        <div className="animate-pulse font-medium">Cargando {title}...</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-        <h2 className="text-2xl font-semibold">{title}</h2>
-        
-        {/* Buscador específico para esta sección */}
-        <input
-          type="text"
-          placeholder={`Buscar en ${title}...`}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none shadow-sm text-sm w-full max-w-xs transition-all"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+    <div className="mb-10">
+      {/* HEADER DE BUSQUEDA */}
+      <div className="mb-8 rounded-[30px] border border-[#dce3e8] bg-white p-6 shadow-[0_18px_36px_-28px_rgba(31,41,55,0.14)]">
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef5f8] text-[#255f82]">
+              <Radar className="h-5 w-5" />
+            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-[#2f3440]">{title}</h2>
+          </div>
+
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8f919a]" />
+            <input
+              type="text"
+              placeholder={`Filtrar ${title.toLowerCase()}...`}
+              className="w-full rounded-2xl border border-[#d9e0e5] bg-[#f8fafc] py-3 pl-12 text-sm outline-none focus:border-[#255f82] transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
       </div>
 
       {filteredData.length > 0 ? (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={filteredData.map(i => i.favTableId)} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <SortableContext items={filteredData.map((i) => i.favTableId)} strategy={rectSortingStrategy}>
+            {/* CORRECCIÓN: Volvemos a grid-cols-2 para que las tarjetas sean grandes */}
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:max-w-[1448px] mx-auto">
               {filteredData.map((item) => (
-                <SortableFavoriteCard 
-                  key={item.favTableId} 
-                  item={item} 
-                  type={type} 
-                  navigate={navigate} 
+                <SortableWrapper
+                  key={item.favTableId}
+                  item={item}
+                  type={type}
+                  navigate={navigate}
+                  onDelete={handleDelete}
                 />
               ))}
             </div>
           </SortableContext>
         </DndContext>
       ) : (
-        <div className="py-10">
-          {allDisplayData.length > 0 ? (
-            <p className="text-gray-400 italic">No se encontraron resultados para "{searchTerm}" en {title}.</p>
-          ) : (
-            <p className="text-gray-500 italic">No tienes {title.toLowerCase()} en favoritos.</p>
-          )}
+        <div className="rounded-[30px] border border-dashed border-[#dce3e8] bg-[#fbfcfd] py-16 text-center text-[#8f919a]">
+          <p className="text-lg font-medium">No se encontraron {title.toLowerCase()}</p>
         </div>
       )}
     </div>
   );
 }
 
-// Sub-componente para manejar el estado de arrastre de cada tarjeta
-function SortableFavoriteCard({ item, type, navigate }) {
+function SortableWrapper({ item, type, navigate, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.favTableId });
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: transition || "transform 200ms cubic-bezier(0.18, 0.67, 0.6, 1.22)",
+    transition: transition || "transform 250ms cubic-bezier(0.2, 0, 0, 1)",
     zIndex: isDragging ? 50 : 0,
     position: "relative",
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden flex flex-col transition-all ${
-        isDragging ? "opacity-50 scale-105 shadow-2xl ring-2 ring-green-500/20" : ""
-      }`}
-    >
-      <div {...attributes} {...listeners} className="h-64 bg-white overflow-hidden relative border-b cursor-grab active:cursor-grabbing">
-        {type === "mypowerbi" ? (
-          item.embed_url ? (
-            <iframe src={item.embed_url} title={item.name} frameBorder="0" allowFullScreen className="w-full h-full pointer-events-none" />
-          ) : (
-            <div className="flex items-center justify-center h-full text-gray-500">URL no disponible</div>
-          )
-        ) : (
-          <iframe
-            src={`/layout/${item.id}`}
-            title={item.name}
-            frameBorder="0"
-            scrolling="yes"
-            className="absolute top-0 left-0 border-0 origin-top-left pointer-events-none"
-            style={{ width: "166.66%", height: "166.66%", transform: "scale(0.6)" }}
-          />
-        )}
-        <div className="absolute inset-0 bg-transparent" />
-      </div>
-
-      <div className="p-4 flex flex-col flex-grow">
-        <h3 className="text-xl font-semibold mb-2 truncate">{item.name}</h3>
-        <p className="text-gray-600 text-sm flex-grow mb-4 line-clamp-2">{item.description || "Sin descripción."}</p>
-
-        <div className="flex justify-end gap-3 border-t pt-3 mt-auto">
-          <FavoriteHeart type={type} objectId={item.id} />
-          <button
-            onClick={() => navigate(
-              type === "mypowerbi" ? "/powerbi-view" : `/layout/${item.id}`,
-              { state: type === "mypowerbi" ? { infoPowerBi: item } : { layoutInfo: item } }
-            )}
-            className="px-3 py-1 text-sm font-medium text-green-700 border border-green-700 rounded-md hover:bg-green-50 transition-all active:scale-95"
-          >
-            Ver
-          </button>
-        </div>
-      </div>
+    <div ref={setNodeRef} style={style} className="touch-none">
+      <ViewCard
+        item={item}
+        type={type}
+        isDragging={isDragging}
+        dragProps={{ ...attributes, ...listeners }}
+        onView={(pbi) =>
+          navigate(type === "mypowerbi" ? "/powerbi-view" : `/layout/${pbi.id}`, {
+            state: type === "mypowerbi" ? { infoPowerBi: pbi } : { layoutInfo: pbi },
+          })
+        }
+        onEdit={(pbi) => console.log("Editar", pbi)}
+        onDelete={onDelete}
+      />
     </div>
   );
 }
