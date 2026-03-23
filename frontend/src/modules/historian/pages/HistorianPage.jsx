@@ -1,6 +1,6 @@
 // historian/pages/HistorianPage.jsx
 import React, { useState, useCallback } from "react";
-import HomeButton from "@/components/HomeButton";
+// import HomeButton from "@/components/HomeButton";
 import TagMultiSelect from "../components/TagMultiSelect";
 import DateRangePicker from "../components/DateRangePicker";
 import TimeSeriesChart from "../components/TimeSeriesChart";
@@ -66,7 +66,7 @@ export default function HistorianPage() {
               Consulta datos históricos de telemetría desde SQL Server
             </p>
           </div>
-          <HomeButton />
+          {/* <HomeButton /> */}
         </header>
 
         {/* Panel de filtros */}

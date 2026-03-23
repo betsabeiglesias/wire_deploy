@@ -27,6 +27,15 @@ const Home = () => {
       badge: "Analítica",
       variant: "analytics",
     },
+      {
+    title: "Historian",
+    description:
+      "Consulta histórica de variables de proceso, tendencias temporales y análisis de datos industriales.",
+    onClick: () => navigate("/historian"),
+    icon: Activity,
+    badge: "Data",
+    variant: "analytics",
+  },
   ];
 
   return (
