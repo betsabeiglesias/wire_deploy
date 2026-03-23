@@ -12,7 +12,6 @@ import { useNavigate } from "react-router-dom";
 import SidebarItem from "./SidebarItem";
 import SidebarProfile from "./SidebarProfile";
 import { useAuthStore } from "../../store/useAuthStore";
-import { useThemeStore } from "../../store/useThemeStore";
 
 const navigationItems = [
   { icon: Orbit, label: "Home", to: "/" },
@@ -27,7 +26,6 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const clearAuth = useAuthStore((state) => state.clearAuth);
-  const toggleTheme = useThemeStore((state) => state.toggleTheme);
   const displayName = user?.username || "Usuario";
 
   const handleLogout = () => {
@@ -80,7 +78,6 @@ export default function Sidebar() {
               <SidebarItem
                 key={item.to}
                 open={open}
-                theme="dark"
                 icon={item.icon}
                 label={item.label}
                 to={item.to}
@@ -89,27 +86,8 @@ export default function Sidebar() {
           </ul>
         </nav>
 
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className={`mb-4 inline-flex items-center rounded-2xl border border-white/10 bg-white/6 text-[#d7e4f8] transition hover:bg-white/10 ${open ? "w-full justify-between px-4 py-3" : "w-full justify-center px-3 py-3"}`}
-          aria-label="Cambiar tema"
-        >
-          <span
-            className={`text-sm font-medium transition-all duration-300 ${
-              open
-                ? "w-auto translate-x-0 opacity-100"
-                : "w-0 -translate-x-2 overflow-hidden opacity-0"
-            }`}
-          >
-            Cambiar tema
-          </span>
-          <Orbit className="h-4 w-4 flex-shrink-0" />
-        </button>
-
         <SidebarProfile
           open={open}
-          theme="dark"
           name={displayName}
           role="Administrador"
           onLogout={handleLogout}

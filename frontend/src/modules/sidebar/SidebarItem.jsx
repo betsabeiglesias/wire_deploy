@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 
-export default function SidebarItem({ icon: Icon, label, to, open, theme }) {
+export default function SidebarItem({ icon: Icon, label, to, open }) {
   return (
     <li>
       <NavLink

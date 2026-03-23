@@ -1,6 +1,6 @@
 import { LogOut } from "lucide-react";
 
-export default function SidebarProfile({ name, role, onLogout, open, theme }) {
+export default function SidebarProfile({ name, role, onLogout, open }) {
   return (
     <div className="mt-6 border-t border-white/10 pt-5">
       <div
