@@ -87,18 +87,27 @@ def parse_timestamp(payload: Dict[str, Any], fallback: datetime) -> datetime:
 
     return fallback
 
+def normalize_datatype(dt: str) -> str:
+    dt = dt.lower()
+
+    if dt in ("float", "double"):
+        return "float"
+    elif dt in ("int", "int16", "int32", "uint16", "uint32"):
+        return "int"
+    elif dt in ("bool", "boolean"):
+        return "bool"
+    elif dt in ("string", "char"):
+        return "string"
+    else:
+        return "unknown"
+
 
 def extract_typed_value(
     value: Any, datatype: str
 ) -> Tuple[Optional[float], Optional[int], Optional[str], Optional[bool]]:
-    """
-    Maps a raw value to the correct typed column.
-    Returns (value_float, value_int, value_string, value_bool).
-    """
     if value is None:
         return (None, None, None, None)
 
-    datatype = datatype.lower()
     try:
         if datatype == "float":
             return (float(value), None, None, None)
@@ -109,7 +118,7 @@ def extract_typed_value(
         elif datatype == "string":
             return (None, None, str(value), None)
         else:
-            return (float(value), None, None, None)  # best-effort
+            return (None, None, None, None)
     except (ValueError, TypeError):
         return (None, None, None, None)
 
@@ -230,29 +239,63 @@ class WriterService:
         topic       = msg.topic
 
         try:
-            # -- 1. Raw insert --------------------------------
+                        # -- 1. Raw insert --------------------------------
             raw_id = self._insert_raw(received_at, topic, payload_str, CLIENT_ID)
 
-            # -- 2. Parse topic -------------------------------
-            topic_data = parse_topic(topic)
-            if not topic_data:
-                self._mark_raw_error(raw_id, "invalid_topic_format")
-                log.warning(f"Invalid topic format: {topic}")
-                return
-
-            equipment_id = topic_data["equipment_id"]
-            variable     = topic_data["variable"]
-
-            # -- 3. Parse payload -----------------------------
+            # -- 2. Parse payload FIRST ------------------------
             data = parse_payload(payload_str)
             if not data:
                 self._mark_raw_error(raw_id, "invalid_json")
                 log.warning(f"Invalid JSON — topic={topic}")
                 return
 
+            # -- 3. Extract identifiers (SOURCE OF TRUTH) ------
+            equipment_id = data.get("equipment_id")
+            variable     = data.get("variable")
+
+            # fallback al topic (por compatibilidad)
+            if not equipment_id or not variable:
+                topic_data = parse_topic(topic)
+                if not topic_data:
+                    self._mark_raw_error(raw_id, "missing_identifiers")
+                    log.warning(f"Missing identifiers — topic={topic}")
+                    return
+
+                equipment_id = equipment_id or topic_data["equipment_id"]
+                variable     = variable or topic_data["variable"]
+
+            # validación final
+            if not equipment_id or not variable:
+                self._mark_raw_error(raw_id, "invalid_identifiers")
+                return
+            # # -- 1. Raw insert --------------------------------
+            # raw_id = self._insert_raw(received_at, topic, payload_str, CLIENT_ID)
+
+            # # -- 2. Parse topic -------------------------------
+            # topic_data = parse_topic(topic)
+            # if not topic_data:
+            #     self._mark_raw_error(raw_id, "invalid_topic_format")
+            #     log.warning(f"Invalid topic format: {topic}")
+            #     return
+
+            # equipment_id = topic_data["equipment_id"]
+            # variable     = topic_data["variable"]
+
+            # # -- 3. Parse payload -----------------------------
+            # data = parse_payload(payload_str)
+            # if not data:
+            #     self._mark_raw_error(raw_id, "invalid_json")
+            #     log.warning(f"Invalid JSON — topic={topic}")
+            #     return
+
             # -- 4. Extract fields ----------------------------
             ts       = parse_timestamp(data, received_at)
-            datatype = data.get("datatype", "float")
+            # datatype = data.get("datatype", "float")
+            datatype_raw = data.get("datatype", "float")
+            datatype = normalize_datatype(datatype_raw)
+            if datatype == "unknown":
+                self._mark_raw_error(raw_id, f"unsupported_datatype:{datatype_raw}")
+                return
             unit     = data.get("unit")
             quality  = data.get("quality", "good")
             batch_id = data.get("batch_id")
