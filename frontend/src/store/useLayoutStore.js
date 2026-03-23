@@ -54,7 +54,7 @@ export const useLayoutStore = create((set) => ({
   deleteLayout: async (id) => {
     try {
       // Coincide con: path("layout/<int:title_id>/", layout_detail)
-      await api.delete(`/api/scada-manager/layout/${id}//`);
+      await api.delete(`/api/scada-manager/layout/${id}/`);
       set((state) => ({
         layouts: state.layouts.filter((l) => l.id !== id),
       }));

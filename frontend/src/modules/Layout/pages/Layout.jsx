@@ -1,198 +1,35 @@
-import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
-import HomeButton from "../../../components/HomeButton";
-import FavoriteHeart from "../../../components/FavoriteHeart";
-import { useLayoutStore } from "@/store/useLayoutStore";
-
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  rectSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import React from "react";
+import Sidebar from "../../sidebar/Sidebar";
+import Header from "../../../components/ui/Header";
+import { Radar } from "lucide-react";
+import { FavoriteViews } from "@/modules/favoritos/components/FavoriteViews";
 
 export default function Layout() {
-  const navigate = useNavigate();
-  const { layouts: storeLayouts, fetchLayouts, deleteLayout, updateLayoutOrder, isLoading } = useLayoutStore();
-  const [layouts, setLayouts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-
-  useEffect(() => {
-    fetchLayouts();
-  }, []);
-
-  useEffect(() => {
-    setLayouts(storeLayouts);
-  }, [storeLayouts]);
-
-  // Filtrado de layouts por nombre basado en el término de búsqueda
-  const filteredLayouts = useMemo(() => {
-    return layouts.filter((l) =>
-      l.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [layouts, searchTerm]);
-
-  const handleDelete = async (id, name) => {
-    if (window.confirm(`¿Estás seguro de eliminar "${name}"?`)) {
-      try {
-        await deleteLayout(id);
-        setLayouts((prev) => prev.filter((l) => l.id !== id));
-      } catch (err) {
-        alert("Error al eliminar el layout");
-      }
-    }
-  };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
-
-  const handleDragEnd = async (event) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = layouts.findIndex((l) => l.id === active.id);
-    const newIndex = layouts.findIndex((l) => l.id === over.id);
-
-    const newLayouts = arrayMove(layouts, oldIndex, newIndex);
-    
-    // Actualización optimista en el estado local
-    setLayouts(newLayouts);
-
-    // Guardar en el Store y Backend
-    try {
-      await updateLayoutOrder(newLayouts);
-    } catch (error) {
-      // Si falla, revertimos al estado del store
-      setLayouts(storeLayouts);
-      alert("No se pudo guardar el nuevo orden");
-    }
-  };
-
   return (
-    <div className="flex min-h-screen bg-gray-50 relative">
-      <div className="absolute top-8 right-8 z-10">
-        <HomeButton />
-      </div>
+    <div className="flex h-screen w-full overflow-hidden bg-[#eef2f4]">
+      <Sidebar />
 
-      <main className="flex-1 p-6 max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mt-10 mb-8 text-gray-800">Mis SCADA</h1>
+      <main className="flex-1 overflow-y-auto bg-[#eef2f4]">
+        <div className="min-h-full px-4 py-4 md:px-6 md:py-6">
+          <div className="overflow-hidden rounded-[30px] border border-[#d9e0e5] bg-[linear-gradient(180deg,#f7f9fa_0%,#f2f5f6_100%)] shadow-[0_28px_68px_-44px_rgba(31,41,55,0.16)]">
+            <Header
+              badgeText="SCADA layout control"
+              title="Consola técnica y"
+              highlightText="la supervisión."
+              icon={Radar}
+            />
 
-        {/* Barra de búsqueda */}
-        <div className="mb-10 max-w-md">
-          <input
-            type="text"
-            placeholder="Buscar SCADA por nombre..."
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none shadow-sm transition-all"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+            <section className="px-6 py-6 md:px-8 md:py-8">
+              {/* REUTILIZACIÓN: Usamos el componente indicando que queremos TODOS los layouts */}
+              <FavoriteViews
+                title="Proyectos HMI"
+                type="mylayout"
+                onlyFavorites={false}
+              />
+            </section>
+          </div>
         </div>
-
-        {isLoading && <p className="text-gray-500">Cargando layouts...</p>}
-
-        {!isLoading && filteredLayouts.length > 0 && (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={filteredLayouts.map((l) => l.id)} strategy={rectSortingStrategy}>
-              <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredLayouts.map((layout) => (
-                  <SortableItem
-                    key={layout.id}
-                    layout={layout}
-                    onDelete={handleDelete}
-                    navigate={navigate}
-                  />
-                ))}
-              </section>
-            </SortableContext>
-          </DndContext>
-        )}
-
-        {!isLoading && layouts.length > 0 && filteredLayouts.length === 0 && (
-          <p className="text-gray-400 italic">No se encontraron SCADAs con el nombre "{searchTerm}".</p>
-        )}
-
-        {!isLoading && layouts.length === 0 && (
-          <p className="text-gray-400 italic">No tienes layouts creados todavía.</p>
-        )}
       </main>
-    </div>
-  );
-}
-
-function SortableItem({ layout, onDelete, navigate }) {
-  const { 
-    attributes, 
-    listeners, 
-    setNodeRef, 
-    transform, 
-    transition, 
-    isDragging 
-  } = useSortable({ id: layout.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition: transition || "transform 200ms cubic-bezier(0.18, 0.67, 0.6, 1.22)",
-    zIndex: isDragging ? 50 : 0,
-    position: "relative",
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`bg-white rounded-xl overflow-hidden flex flex-col border transition-shadow duration-300 ${
-        isDragging ? "shadow-2xl ring-2 ring-green-500/20 scale-105 opacity-90" : "shadow-md border-gray-200"
-      }`}
-    >
-      {/* ZONA DE ARRASTRE */}
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-        <div className="h-64 bg-white overflow-hidden relative border-b pointer-events-none">
-          <iframe
-            src={`/layout/${layout.id}`}
-            title={`preview-${layout.id}`}
-            className="absolute top-0 left-0 border-0 origin-top-left"
-            style={{ width: "166.66%", height: "166.66%", transform: "scale(0.6)" }}
-          />
-          <div className="absolute inset-0 bg-transparent" />
-        </div>
-
-        <div className="p-5 flex-grow bg-white">
-          <h2 className="text-xl font-bold text-gray-800 truncate">{layout.name}</h2>
-          <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mt-1">
-            Arrastra para reordenar
-          </p>
-        </div>
-      </div>
-
-      {/* BOTONES */}
-      <div className="flex items-center justify-start gap-3 p-4 border-t bg-gray-50">
-        <FavoriteHeart type="mylayout" objectId={layout.id} />
-        <button
-          onClick={(e) => { e.stopPropagation(); navigate(`/layout/${layout.id}`); }}
-          className="px-6 py-1.5 text-sm font-semibold text-green-700 border border-green-600 rounded-lg hover:bg-green-100 transition-all active:scale-95"
-        >
-          Ver pantalla completa
-        </button>
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(layout.id, layout.name); }}
-          className="px-4 py-1.5 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 hover:text-red-700 transition-all ml-auto"
-        >
-          Borrar
-        </button>
-      </div>
     </div>
   );
 }
