@@ -4,10 +4,13 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 # --- SEGURIDAD Y NÚCLEO
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "clave-secreta-por-defecto-no-usar-en-prod")
 DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 ALLOWED_HOSTS = ["*"]
+
+EDGE_API_KEY = "dev-secret"
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -27,6 +30,7 @@ INSTALLED_APPS = [
     'core.favorites',
     'core.auth_manager',
     'channels',
+    'edge_config',
 ]
 
 MIDDLEWARE = [

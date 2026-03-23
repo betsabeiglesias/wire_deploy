@@ -1,12 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import HomeButton from '../../../components/HomeButton';
+import Button from '../../../components/Button';
 
 const Sitio1 = () => {
     const navigate = useNavigate();
     return (
         <>
-        <HomeButton />
+        <Button variant="secondary" onClick={() => navigate("/")}>
+          Home
+        </Button>
         
        
         <div className="flex min-h-screen">

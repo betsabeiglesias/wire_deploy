@@ -13,10 +13,13 @@ class Favorite(models.Model):
     content_object = GenericForeignKey("content_type", "object_id")
 
     created_at = models.DateTimeField(auto_now_add=True)
+    # --- ÚNICO CAMBIO: Añadimos order ---
+    order = models.PositiveIntegerField(default=0)
 
     class Meta:
         unique_together = ("user", "content_type", "object_id")
-        ordering = ["-created_at"]
+        # Ordenamos por el nuevo campo order
+        ordering = ["order", "-created_at"]
 
     def __str__(self):
         return f"{self.user} → {self.content_type} ({self.object_id})"

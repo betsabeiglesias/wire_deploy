@@ -19,6 +19,22 @@ export const useLayoutStore = create((set) => ({
     }
   },
 
+  // 🔹 NUEVA: Actualizar el orden de todos los layouts
+  updateLayoutOrder: async (newLayouts) => {
+    // Primero actualizamos el estado global (UI rápida)
+    set({ layouts: newLayouts });
+
+    try {
+      // Enviamos el nuevo orden al backend
+      // El backend deberá recibir la lista de IDs o el nuevo orden
+      const orderData = newLayouts.map((l, index) => ({ id: l.id, order: index }));
+      await api.put("/api/scada-manager/reorder-layouts/", { layouts: orderData });
+    } catch (error) {
+      console.error("Error saving new order to DB:", error);
+      throw error; // El componente capturará esto para revertir si falla
+    }
+  },
+
   // 🔹 PUT: Actualizar un layout
   updateLayout: async (id, data) => {
     try {

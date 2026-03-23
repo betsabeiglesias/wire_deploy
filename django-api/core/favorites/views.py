@@ -1,7 +1,8 @@
-
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
+from django.db import transaction
 
 from .models import Favorite
 from .serializers import FavoriteSerializer
@@ -10,28 +11,24 @@ class FavoriteViewSet(ViewSet):
     permission_classes = [IsAuthenticated]
 
     dicc_conf = {
-            "mylayoutstitle": {
-                "route":  "/layout/",
-                "section": "scada",
-                "fav_type": "mylayout",
-            },
-            "location": {
-                "route": "/map",
-                "section": "location",
-                "fav_type": "location",
-            },
-            "mypowerbi":{
-                "route": "/powerbi-view",
-                "section": "powerbi",
-                "fav_type": "mypowerbi",
-            }
+        "mylayoutstitle": {
+            "route":  "/layout/",
+            "section": "scada",
+            "fav_type": "mylayout",
+        },
+        "location": {
+            "route": "/map",
+            "section": "location",
+            "fav_type": "location",
+        },
+        "mypowerbi":{
+            "route": "/powerbi-view",
+            "section": "powerbi",
+            "fav_type": "mypowerbi",
         }
+    }
 
     def list(self, request):
-        """
-        Lista los favoritos del usuario actual transformando los modelos 
-        genéricos en rutas y títulos legibles para el frontend.
-        """
         favorites = Favorite.objects.filter(user=request.user)
         data = []
 
@@ -47,6 +44,7 @@ class FavoriteViewSet(ViewSet):
             route, title, section, fav_type = None, None, None, None
 
             if model_name in self.dicc_conf:
+                # Mantenemos TU lógica de rutas original
                 route = self.dicc_conf[model_name]["route"] if model_name != "mylayoutstitle" else self.dicc_conf[model_name]["route"] + str(obj.id)
                 title = getattr(obj, 'name', 'Sin nombre')
                 section = self.dicc_conf[model_name]["section"]
@@ -54,22 +52,27 @@ class FavoriteViewSet(ViewSet):
 
                 if fav_type:
                     data.append({
-                        "id": fav.id,
+                        "id": fav.id, # ID de la tabla Favorite para el DND
                         "type": fav_type,
                         "section": section,
                         "object_id": fav.object_id,
                         "title": title,
                         "route": route,
+                        "order": fav.order # Nuevo campo
                     })
-            
-
+        
         return Response(data)
 
+    @action(detail=False, methods=['put'], url_path='reorder')
+    def reorder(self, request):
+        orders = request.data.get("orders", [])
+        with transaction.atomic():
+            for item in orders:
+                # Filtramos por ID de favorito y usuario por seguridad
+                Favorite.objects.filter(id=item["id"], user=request.user).update(order=item["order"])
+        return Response({"status": "reordered"})
+
     def create(self, request):
-        """
-        Crea o elimina un favorito (Toggle). 
-        Toda la lógica de búsqueda y validación está en FavoriteSerializer.
-        """
         serializer = FavoriteSerializer(
             data=request.data,
             context={"request": request}
@@ -77,7 +80,6 @@ class FavoriteViewSet(ViewSet):
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        # Si el objeto devuelto no tiene clave primaria (pk), es que el serializador lo borró
         if instance.pk is None:
             return Response({"status": "removed"})
         

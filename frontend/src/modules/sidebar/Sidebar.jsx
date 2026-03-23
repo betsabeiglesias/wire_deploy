@@ -1,65 +1,95 @@
 import { useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  Heart,
+  Orbit,
+  Settings,
+  UserRound,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import SidebarItem from "./SidebarItem";
 import SidebarProfile from "./SidebarProfile";
 import { useAuthStore } from "../../store/useAuthStore";
 
+const navigationItems = [
+  { icon: Orbit, label: "Home", to: "/" },
+  { icon: UserRound, label: "User", to: "/user" },
+  { icon: Heart, label: "Saved", to: "/saved" },
+  { icon: ClipboardList, label: "Projects", to: "/task-project" },
+  { icon: Settings, label: "Settings", to: "/settings" },
+];
+
 export default function Sidebar() {
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
-  
-  // Extraemos el usuario y la función de limpieza del Store que ya funciona
   const user = useAuthStore((state) => state.user);
   const clearAuth = useAuthStore((state) => state.clearAuth);
-  
-  // Accedemos a user.username porque tu setAuth guarda { username }
   const displayName = user?.username || "Usuario";
 
   const handleLogout = () => {
-    // Usamos la función del store que ya limpia localStorage y favoritos
     clearAuth();
     navigate("/login");
   };
 
   return (
     <aside
-      className={`
-        h-full flex flex-col transition-all duration-300 flex-shrink-0
-        ${open ? "w-64" : "w-20"}
-        bg-white border-r border-gray-200
-      `}
+      className={`h-full flex-shrink-0 transition-all duration-300 ${
+        open ? "w-52" : "w-24"
+      } border-r border-white/10 bg-[linear-gradient(180deg,#09152f_0%,#0d1d40_42%,#132857_100%)]`}
     >
-      {/* HEADER */}
-      <div className="flex items-center justify-between px-4 py-6 border-b border-gray-100">
-        <span
-          className={`text-xl font-extrabold text-blue-900 whitespace-nowrap transition-all duration-200 
-          ${open ? "opacity-100" : "opacity-0 w-0 overflow-hidden"}`}
-        >
-          RDT WIRE
-        </span>
+      <div className="flex h-full flex-col px-4 py-5">
+        <div className="mb-8 flex items-center justify-between">
+          {open ? (
+            <div className="transition-all duration-300 opacity-100 translate-x-0">
+              <div className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-3 backdrop-blur-sm">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.32em] text-cyan-200/80">
+                    RDT Wire
+                  </p>
+                  <p className="text-sm font-semibold text-white">
+                    Control Center
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className=""></div>
+          )}
 
-        <button 
-          onClick={() => setOpen(!open)}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <i className="bx bx-menu text-2xl text-gray-600" />
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => setOpen((prev) => !prev)}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-[#9fb4d8] transition hover:bg-white/10 hover:text-white"
+            aria-label={open ? "Contraer menu" : "Expandir menu"}
+          >
+            {open ? (
+              <ChevronLeft className="h-5 w-5" />
+            ) : (
+              <ChevronRight className="h-5 w-5" />
+            )}
+          </button>
+        </div>
 
-      {/* NAV */}
-      <ul className="flex flex-col gap-2 px-3 py-6 flex-grow overflow-y-auto">
-        <SidebarItem open={open} icon="bx bx-user" label="User" to="/user" />
-        <SidebarItem open={open} icon="bx bx-heart" label="Saved" to="/saved" />
-        <SidebarItem open={open} icon="bx bx-cog" label="Settings" to="/settings" />
-        <SidebarItem open={open} icon="bx bx-edit" label="Task/Project" to="/task-project" />
-      </ul>
+        <nav className="flex-1">
+          <ul className="flex flex-col gap-3">
+            {navigationItems.map((item) => (
+              <SidebarItem
+                key={item.to}
+                open={open}
+                icon={item.icon}
+                label={item.label}
+                to={item.to}
+              />
+            ))}
+          </ul>
+        </nav>
 
-      {/* PROFILE */}
-      <div className="mt-auto border-t border-gray-100">
-        <SidebarProfile 
-          open={open} 
-          name={displayName} 
-          role="Administrador" 
+        <SidebarProfile
+          open={open}
+          name={displayName}
+          role="Administrador"
           onLogout={handleLogout}
         />
       </div>

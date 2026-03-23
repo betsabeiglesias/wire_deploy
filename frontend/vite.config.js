@@ -12,6 +12,24 @@ export default defineConfig({
   server: {
     host: '0.0.0.0', // El contenedor escucha en todas las interfaces
     port: 5173,
+    proxy: {
+
+
+      // SCADA config (EDGE)
+      // '/api/edge/': {
+      //   // target: 'http://core-backendA:8000',
+      //   target: 'http://localhost:8000',
+      //   changeOrigin: true,
+      // },
+
+      // resto de APIs (CENTRAL)
+      '/api/': {
+        target: 'http://django-api:8000',
+        // target: 'http://localhost:8000',
+        changeOrigin: true,
+      }
+
+    },
     watch: {
       usePolling: true,
       interval: 1000,

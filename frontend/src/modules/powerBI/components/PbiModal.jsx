@@ -80,6 +80,7 @@ const PbiModal = ({ showModal, setShowModal, initialData, isEditMode = false }) 
                 await updatePowerBi(initialData.id, requestBody);
                 
             } else {
+                console.log("BODY POWER BI:", requestBody);
                 // Lógica de Creación: Usamos API POST y actualizamos la lista
                 await api.post("/api/powerbi-manager/mypowerbis/", requestBody); 
                 await fetchPowerBis(); 
@@ -93,6 +94,8 @@ const PbiModal = ({ showModal, setShowModal, initialData, isEditMode = false }) 
 
         } catch (err) {
             console.error("Error al guardar Power BI:", err);
+            console.log("ERROR BACK RAW:", err.response);
+            console.log("ERROR BACK DATA:", err.response?.data);
             const errorMessage = err.response?.data?.message || "Error desconocido al guardar.";
             setError(errorMessage);
         } finally {

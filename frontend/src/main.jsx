@@ -9,7 +9,6 @@ import { navigateRef } from './services/router'; // 👈 IMPORTACIÓN CLAVE
 import './styles/index.css'
 import App from './App.jsx'
 import 'leaflet/dist/leaflet.css';
-import HomeButton from './components/HomeButton.jsx'
 
 // 🛑 COMPONENTE DE INICIALIZACIÓN DE NAVEGACIÓN
 // Este componente usa el hook useNavigate y pasa la función a la referencia global
