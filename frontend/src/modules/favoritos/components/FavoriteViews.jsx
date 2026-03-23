@@ -33,10 +33,16 @@ export function FavoriteViews({ title, type, onlyFavorites = true }) {
     updateFavoriteOrder,
     isLoading: favLoading,
   } = useFavoriteStore();
-  const { powerBis, fetchPowerBis, isLoading: pbiLoading } = usePowerBiStore();
+  const {
+    powerBis,
+    fetchPowerBis,
+    deletePowerBi,
+    isLoading: pbiLoading,
+  } = usePowerBiStore();
   const { 
     layouts, 
     fetchLayouts, 
+    deleteLayout,
     updateLayoutOrder, 
     isLoading: layoutLoading 
   } = useLayoutStore();
@@ -92,6 +98,25 @@ export function FavoriteViews({ title, type, onlyFavorites = true }) {
     }
   };
 
+  const handleDelete = async (id, name) => {
+    if (!window.confirm(`Eliminar "${name}"?`)) return;
+
+    try {
+      if (type === "mypowerbi") {
+        await deletePowerBi(id);
+        await fetchPowerBis();
+      } else if (type === "mylayout") {
+        await deleteLayout(id);
+        await fetchLayouts();
+      }
+
+      await fetchFavorites();
+    } catch (err) {
+      console.error("Error al eliminar desde ViewCard:", err);
+      alert("No se pudo eliminar el elemento.");
+    }
+  };
+
   if (favLoading || pbiLoading || layoutLoading) {
     return (
       <div className="mb-8 rounded-[24px] border border-[#dce3e8] bg-white p-10 text-center text-[#8f919a]">
@@ -131,7 +156,13 @@ export function FavoriteViews({ title, type, onlyFavorites = true }) {
             {/* CORRECCIÓN: Volvemos a grid-cols-2 para que las tarjetas sean grandes */}
             <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:max-w-[1448px] mx-auto">
               {filteredData.map((item) => (
-                <SortableWrapper key={item.favTableId} item={item} type={type} navigate={navigate} />
+                <SortableWrapper
+                  key={item.favTableId}
+                  item={item}
+                  type={type}
+                  navigate={navigate}
+                  onDelete={handleDelete}
+                />
               ))}
             </div>
           </SortableContext>
@@ -145,7 +176,7 @@ export function FavoriteViews({ title, type, onlyFavorites = true }) {
   );
 }
 
-function SortableWrapper({ item, type, navigate }) {
+function SortableWrapper({ item, type, navigate, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.favTableId });
 
   const style = {
@@ -168,7 +199,7 @@ function SortableWrapper({ item, type, navigate }) {
           })
         }
         onEdit={(pbi) => console.log("Editar", pbi)}
-        onDelete={(id, name) => console.log("Borrar", id, name)}
+        onDelete={onDelete}
       />
     </div>
   );

@@ -14,7 +14,7 @@ export default function Layout() {
           <div className="overflow-hidden rounded-[30px] border border-[#d9e0e5] bg-[linear-gradient(180deg,#f7f9fa_0%,#f2f5f6_100%)] shadow-[0_28px_68px_-44px_rgba(31,41,55,0.16)]">
             <Header
               badgeText="SCADA layout control"
-              title="Consola técnica"
+              title="Consola técnica y"
               highlightText="la supervisión."
               icon={Radar}
             />

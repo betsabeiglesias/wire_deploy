@@ -255,15 +255,6 @@ export default function LayOutDetail() {
                     Editar
                   </Button>
 
-                  <Button
-                    variant="danger"
-                    onClick={() => confirm(`¿Eliminar ${layoutName}?`)}
-                    className="w-11 h-11 px-0"
-                    title="Eliminar"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </Button>
-
                   <Button onClick={() => navigate(`/scada/production/${id}`)}>
                     <PencilLine className="mr-2 h-4 w-4" />
                     Abrir proyecto HMI

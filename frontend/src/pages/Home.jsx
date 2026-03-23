@@ -41,8 +41,8 @@ const Home = () => {
 
             <Header
               badgeText="RDT WIRE"
-              title="HOME"
-              highlightText="Pagina principal"
+              title="Home"
+              highlightText="RDT WIRE"
               icon={Activity}
             />
 
