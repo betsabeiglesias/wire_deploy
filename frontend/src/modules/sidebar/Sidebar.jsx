@@ -8,15 +8,16 @@ export default function Sidebar() {
   const [open, setOpen] = useState(true);
   const navigate = useNavigate();
   
-  // Extraemos el usuario y la función de limpieza del Store que ya funciona
   const user = useAuthStore((state) => state.user);
+  const activeModules = useAuthStore((state) => state.activeModules);
   const clearAuth = useAuthStore((state) => state.clearAuth);
   
-  // Accedemos a user.username porque tu setAuth guarda { username }
   const displayName = user?.username || "Usuario";
 
+  // Función auxiliar para verificar si un módulo está activo en el backend
+  const isEnabled = (moduleName) => activeModules.includes(moduleName);
+
   const handleLogout = () => {
-    // Usamos la función del store que ya limpia localStorage y favoritos
     clearAuth();
     navigate("/login");
   };
@@ -48,6 +49,34 @@ export default function Sidebar() {
 
       {/* NAV */}
       <ul className="flex flex-col gap-2 px-3 py-6 flex-grow overflow-y-auto">
+        {/* Inicio siempre visible */}
+        <SidebarItem open={open} icon="bx bx-home" label="Inicio" to="/" />
+
+        {/* --- MÓDULOS DINÁMICOS --- */}
+        
+        {/* SCADA Manager */}
+        {isEnabled('scada_manager') && (
+          <SidebarItem open={open} icon="bx bx-broadcast" label="SCADA" to="/scada" />
+        )}
+
+        {/* Map Manager */}
+        {isEnabled('map_manager') && (
+          <SidebarItem open={open} icon="bx bx-map" label="Mapas" to="/map" />
+        )}
+
+        {/* PowerBI Manager */}
+        {isEnabled('powerbi_manager') && (
+          <SidebarItem open={open} icon="bx bx-pie-chart-alt-2" label="Power BI" to="/powerbi-all" />
+        )}
+
+        {/* Industrial Config / HMI */}
+        {isEnabled('industrial_config_manager') && (
+          <SidebarItem open={open} icon="bx bx-chip" label="HMI" to="/hmi" />
+        )}
+
+        <hr className="my-2 border-gray-100" />
+
+        {/* --- ITEMS FIJOS (CORE) --- */}
         <SidebarItem open={open} icon="bx bx-user" label="User" to="/user" />
         <SidebarItem open={open} icon="bx bx-heart" label="Saved" to="/saved" />
         <SidebarItem open={open} icon="bx bx-cog" label="Settings" to="/settings" />
@@ -59,7 +88,7 @@ export default function Sidebar() {
         <SidebarProfile 
           open={open} 
           name={displayName} 
-          role="Administrador" 
+          role={user?.client?.role_display || "Administrador"} 
           onLogout={handleLogout}
         />
       </div>

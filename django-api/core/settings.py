@@ -9,7 +9,9 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "clave-secreta-por-defecto-no-u
 DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 ALLOWED_HOSTS = ["*"]
 
-INSTALLED_APPS = [
+# --- GESTIÓN DE MÓDULOS DINÁMICOS
+# Definimos las apps que son la base del sistema (infraestructura)
+CORE_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -17,17 +19,20 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'rest_framework_simplejwt', 
+    'rest_framework_simplejwt',
     'corsheaders',
-    'industrial_config_manager',
-    'scada_manager',
-    'map_manager',
-    'management',
-    'powerbi_manager',
-    'core.favorites',
-    'core.auth_manager',
     'channels',
+    'core.auth_manager',
+    'core.favorites',
 ]
+
+# Leemos del .env los módulos opcionales. 
+# Ejemplo en .env: ENABLED_MODULES=scada_manager,map_manager,industrial_config_manager,management,powerbi_manager
+enabled_modules_str = os.getenv("ENABLED_MODULES", "")
+DYNAMIC_MODULES = [m.strip() for m in enabled_modules_str.split(",") if m.strip()]
+
+# Combinamos ambos para INSTALLED_APPS
+INSTALLED_APPS = CORE_APPS + DYNAMIC_MODULES
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -94,24 +99,23 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
-    # Dinámico desde .env
     "AUTH_COOKIE": os.getenv("AUTH_COOKIE_NAME", "access_token"),
     "AUTH_COOKIE_REFRESH": os.getenv("AUTH_COOKIE_REFRESH_NAME", "refresh_token"),
     "AUTH_COOKIE_HTTP_ONLY": True, 
-    "AUTH_COOKIE_SECURE": not DEBUG, # True en producción (HTTPS)
+    "AUTH_COOKIE_SECURE": not DEBUG, 
     "AUTH_COOKIE_SAMESITE": "Lax",
 }
 
-# --- CORS & CSRF (esto lo hemos cambiado para que sea 100% dinámico)
+# --- CORS & CSRF
 CORS_ALLOW_CREDENTIALS = True
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173") # esto ahora viene procesado del .env
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 
 CORS_ALLOWED_ORIGINS = [
     FRONTEND_URL,
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    FRONTEND_URL, # antes estaba hardcodeado el puerto
+    FRONTEND_URL,
 ]
 
 # --- SEGURIDAD DE SESIÓN

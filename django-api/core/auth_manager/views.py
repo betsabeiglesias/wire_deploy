@@ -166,8 +166,7 @@ def current_user(request):
     })
 
 
-# si el access token caduca, con esto leemos la cookie y lo actualizamos :
-
+# 5. REFRESH TOKEN DESDE COOKIES
 class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         # 1. Extraemos el refresh token de la cookie
@@ -194,3 +193,16 @@ class CustomTokenRefreshView(TokenRefreshView):
             del response.data['access']
             
         return response
+
+
+# 6. MÓDULOS ACTIVOS (NUEVO)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_active_modules(request):
+    """
+    Devuelve la lista de módulos dinámicos habilitados en el .env 
+    definidos en settings.DYNAMIC_MODULES
+    """
+    return Response({
+        "modules": getattr(settings, 'DYNAMIC_MODULES', [])
+    })

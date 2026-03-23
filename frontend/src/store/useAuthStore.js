@@ -1,21 +1,29 @@
 import { create } from 'zustand';
 import api from '../services/api';
- 
+
 export const useAuthStore = create((set, get) => ({
   user: JSON.parse(localStorage.getItem('user')) || null,
   isAuthenticated: !!localStorage.getItem('user'),
-  loading: true, // Importante: empieza en true para validar la sesión al arrancar
-  error: null,
- 
+  activeModules: [], // Lista de módulos habilitados en el .env de Django
+  loading: true,
+
   setAuth: (userData) => {
     localStorage.setItem('user', JSON.stringify(userData));
     set({ user: userData, isAuthenticated: true, loading: false, error: null });
   },
- 
+
+  // Función para obtener los módulos dinámicos del backend
+  fetchModules: async () => {
+    try {
+      const response = await api.get('/api/auth/modules/');
+      set({ activeModules: response.data.modules || [] });
+    } catch (err) {
+      console.error("Error al obtener módulos activos:", err);
+      set({ activeModules: [] });
+    }
+  },
+
   fetchCurrentUser: async () => {
-    // 1. COMPROBACIÓN PREVIA: Si no hay usuario en localStorage, 
-    // cancelamos la petición antes de enviarla para evitar el 401
-    console.log(localStorage)
     if (!localStorage.getItem('user')) {
       set({ user: null, isAuthenticated: false, loading: false });
       return null;
@@ -23,21 +31,23 @@ export const useAuthStore = create((set, get) => ({
 
     set({ loading: true });
     try {
-      // Intentamos obtener el usuario (la cookie viaja sola por withCredentials)
       const response = await api.get('/api/auth/me/');
       const userData = response.data;
       
       localStorage.setItem('user', JSON.stringify(userData));
       set({ user: userData, isAuthenticated: true, loading: false });
+      
+      // Al validar el usuario con éxito, disparamos la carga de módulos
+      get().fetchModules();
+      
       return userData;
     } catch (err) {
-      // Si falla (token caducado o error), limpiamos
       localStorage.removeItem('user');
-      set({ user: null, isAuthenticated: false, loading: false });
+      set({ user: null, isAuthenticated: false, loading: false, activeModules: [] });
       return null;
     }
   },
- 
+
   clearAuth: async () => {
     try {
       await api.post('/api/auth/logout/');
@@ -45,66 +55,8 @@ export const useAuthStore = create((set, get) => ({
       console.warn("Sesión ya cerrada o error en logout");
     } finally {
       localStorage.removeItem('user');
-      set({ user: null, isAuthenticated: false, loading: false });
+      set({ user: null, isAuthenticated: false, loading: false, activeModules: [] });
       window.location.href = '/login';
     }
   },
 }));
-
-
-
-// import { create } from 'zustand';
-// import api from '../services/api';
-
-// export const useAuthStore = create((set, get) => ({
-//   user: JSON.parse(localStorage.getItem('user')) || null,
-//   isAuthenticated: !!localStorage.getItem('user'),
-//   loading: false,
-//   error: null,
-
-//   setAuth: (userData) => {
-//     localStorage.setItem('user', JSON.stringify(userData));
-//     set({ user: userData, isAuthenticated: true, loading: false, error: null });
-//   },
-
-//   fetchCurrentUser: async () => {
-//     // Si no hay rastro de usuario, no intentamos nada
-//     if (!localStorage.getItem('user') && !get().isAuthenticated) {
-//       return null;
-//     }
-
-//     set({ loading: true });
-//     try {
-//       const response = await api.get('/api/me/');
-//       const userData = response.data;
-      
-//       localStorage.setItem('user', JSON.stringify(userData));
-//       set({ user: userData, isAuthenticated: true, loading: false, error: null });
-//       return userData;
-//     } catch (err) {
-//       console.error("❌ Error validando sesión:", err.response?.status);
-      
-//       if (err.response?.status === 401 || err.response?.status === 403) {
-//         localStorage.removeItem('user');
-//         set({ user: null, isAuthenticated: false, loading: false });
-//       } else {
-//         set({ loading: false });
-//       }
-//       return null;
-//     }
-//   },
-
-//   clearAuth: async () => {
-//     try {
-//       await api.post('/api/logout/');
-//     } catch (err) {
-//       console.warn("Logout en backend fallido o sesión ya expirada");
-//     } finally {
-//       localStorage.removeItem('user');
-//       set({ user: null, isAuthenticated: false, loading: false });
-//       window.location.href = '/login';
-//     }
-//   },
-
-//   clearError: () => set({ error: null }),
-// }));
