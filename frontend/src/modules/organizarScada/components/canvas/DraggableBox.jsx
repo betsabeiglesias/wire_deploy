@@ -1,140 +1,186 @@
-// src/modules/organizarScada/components/canvas/DraggableBox.jsx
 import React, { useEffect, useState } from "react";
 import { Rnd } from "react-rnd";
-import WidgetLiveWrapper from "./WidgetLiveWrapper";
+import useLiveTag from "@/modules/organizarScada/hooks/useLiveTag";
+import { renderWidget } from "@/modules/organizarScada/components/widgets/registry.jsx";
+import { isChartDemoType } from "@/modules/organizarScada/utils/chartDemos";
+import "@/styles/gateway.css";
 
+// ==================== DRAGGABLE BOX COMPONENT ====================
 
 export default function DraggableBox({
-  initialX, initialY, initialWidth, initialHeight,
-  data, id, theme = "theme-clean",
-  isSelected = false, isLiveMode = false,
-  onSelect, onDragStop, onResizeStop, onDelete,
+  initialX,
+  initialY,
+  initialWidth,
+  initialHeight,
+  data,
+  id,
+  theme = "theme-clean",
+  onSelect,
+  onDrag,
+  onDragStop,
+  onResize,
+  onResizeStop,
+  onDelete,
+  isSelected = false,
   isReadOnly = false,
-  projectTags = [],
+  scale = 1,
 }) {
-  if (!data) return null;
+  // Estado local para Rnd, importado de la rama develop
+  const [x, setX] = useState(initialX);
+  const [y, setY] = useState(initialY);
+  const [width, setWidth] = useState(initialWidth);
+  const [height, setHeight] = useState(initialHeight);
+  const [demoNow, setDemoNow] = useState(Date.now());
 
-  const [pos,  setPos]  = useState({ x: initialX, y: initialY });
-  const [size, setSize] = useState({ w: initialWidth, h: initialHeight });
-
+  // Sincronizar el estado interno con las props iniciales
   useEffect(() => {
-    setPos({ x: initialX, y: initialY });
-    setSize({ w: initialWidth, h: initialHeight });
+    setX(initialX);
+    setY(initialY);
+    setWidth(initialWidth);
+    setHeight(initialHeight);
   }, [initialX, initialY, initialWidth, initialHeight]);
 
-  const settings = data.settings || {};
+  const demoEnabled =
+    data?.settings?.demoEnabled !== false && isChartDemoType(data?.type);
 
-  // ── MODO LIVE — completamente pasivo, sin Rnd, sin interacción ─────────────
-  if (isLiveMode) {
-    return (
-      <div
-        style={{
-          position:  "absolute",
-          width:     `${size.w}px`,
-          height:    `${size.h}px`,
-          transform: `translate(${pos.x}px, ${pos.y}px)`,
-          pointerEvents: "none",
-        }}
-      >
-        <WidgetLiveWrapper
-          data={data}
-          width={size.w}
-          height={size.h}
-          theme={theme}
-          isLiveMode={true}
-          projectTags={projectTags}
-        />
+  useEffect(() => {
+    if (!demoEnabled) return;
+    const timer = setInterval(() => setDemoNow(Date.now()), 1200);
+    return () => clearInterval(timer);
+  }, [demoEnabled]);
+
+  const handleDragStop = (_e, d) => {
+    setX(d.x);
+    setY(d.y);
+    onDragStop(id, d.x, d.y);
+  };
+
+  const handleResizeStop = (_e, _dir, ref, _delta, pos) => {
+    const newW = parseInt(ref.style.width, 10);
+    const newH = parseInt(ref.style.height, 10);
+    setWidth(newW);
+    setHeight(newH);
+    setX(pos.x);
+    setY(pos.y);
+    onResizeStop(id, newW, newH, pos.x, pos.y);
+  };
+
+  const handleDelete = (e) => {
+    e.stopPropagation();
+    onDelete(id);
+  };
+
+  if (!data) return null;
+
+  const showFrame = data?.settings?.showFrame ?? false;
+
+  const { live, valueHistory } = useLiveTag(data);
+
+  const renderContent = () =>
+    renderWidget({
+      data,
+      live,
+      width,
+      height,
+      theme,
+      valueHistory,
+      demoNow,
+    });
+
+  // Contenido del widget (unificado desde la rama develop)
+  const WidgetContent = (
+    <div className="drag-handle relative flex flex-col h-full w-full">
+      {/* Contenido principal del componente */}
+      <div className="flex-grow p-2 overflow-hidden flex items-center justify-center">
+        {renderContent()}
       </div>
-    );
-  }
+    </div>
+  );
 
-  // ── MODO READ-ONLY — posición fija, seleccionable pero no arrastrable ──────
+  // Renderizado en modo solo lectura (fijo, sin Rnd)
   if (isReadOnly) {
     return (
       <div
-        className={[
-          "bg-white rounded-lg shadow border absolute transition-shadow cursor-pointer",
-          isSelected ? "border-sky-400 shadow-sky-100" : "border-gray-200",
-        ].join(" ")}
+        className={`${showFrame ? "bg-white rounded-lg shadow-lg border border-gray-200" : "bg-transparent"} absolute`}
         style={{
-          width:     `${size.w}px`,
-          height:    `${size.h}px`,
-          transform: `translate(${pos.x}px, ${pos.y}px)`,
+          width: `${width}px`,
+          height: `${height}px`,
+          // Usamos el estado local x, y para la posición
+          transform: `translate(${x}px, ${y}px)`,
+          pointerEvents: "none",
         }}
-        onClick={() => onSelect?.()}
       >
-        <div style={{ pointerEvents: "none" }}>
-          <WidgetLiveWrapper
-            data={data}
-            width={size.w}
-            height={size.h}
-            theme={theme}
-            isLiveMode={false}
-          />
-        </div>
+        {WidgetContent}
       </div>
     );
   }
 
-  // ── MODO EDICIÓN — arrastrable con Rnd ─────────────────────────────────────
-  // cancel=".widget-content" hace que Rnd ignore eventos dentro del widget,
-  // permitiendo que onClick del Rnd funcione limpiamente sin overlays.
+  // Renderizado en modo editable (con Rnd)
   return (
     <Rnd
-      className={[
-        "bg-white rounded-lg shadow border",
-        isSelected ? "border-sky-400 shadow-sky-100 shadow-md" : "border-gray-200",
-      ].join(" ")}
-      size={{ width: size.w, height: size.h }}
-      position={{ x: pos.x, y: pos.y }}
-      onDragStop={(_e, d) => {
-        setPos({ x: d.x, y: d.y });
-        onDragStop?.(id, d.x, d.y);
-      }}
-      onResizeStop={(_e, _dir, ref, _delta, p) => {
-        const w = parseInt(ref.style.width,  10);
-        const h = parseInt(ref.style.height, 10);
-        setSize({ w, h });
-        setPos({ x: p.x, y: p.y });
-        onResizeStop?.(id, w, h, p.x, p.y);
-      }}
+      className={`${showFrame ? "bg-white rounded-lg shadow-lg border border-gray-200" : "bg-transparent"} node cursor-pointer`}
+      data-node-id={id}
+      // Usamos el estado local para size y position
+      size={{ width: width, height: height }}
+      position={{ x: x, y: y }}
+      scale={scale}
+      style={
+        isSelected
+          ? {
+              border: "1px dashed #38bdf8",
+              boxShadow: "0 0 0 1px rgba(56,189,248,0.25)",
+            }
+          : {}
+      }
+      resizeHandleStyles={
+        isSelected
+          ? {
+              topLeft: handleStyle,
+              topRight: handleStyle,
+              bottomLeft: handleStyle,
+              bottomRight: handleStyle,
+            }
+          : undefined
+      }
+      onDrag={(e, d) => onDrag?.(id, e, d)}
+      onDragStop={handleDragStop}
+      onResize={(e, dir, ref, delta, pos) => onResize?.(id, e, dir, ref, delta, pos)}
+      onResizeStop={handleResizeStop}
       bounds="parent"
-      minWidth={50}
-      minHeight={50}
-      dragHandleClassName="box-header"
-      cancel=".widget-content"
+      minWidth={
+        data.type === "speedometer" || data.type === "temperature-gauge"
+          ? 120
+          : 50
+      }
+      minHeight={
+        data.type === "speedometer" || data.type === "temperature-gauge"
+          ? 150
+          : 50
+      }
+      dragHandleClassName={showFrame ? "box-header drag-handle" : "drag-handle"}
       resizeHandleClasses={{ bottomRight: "resize-handle-br" }}
       onClick={() => onSelect?.()}
     >
-      {/* Header — drag handle + label + delete */}
-      <div className="box-header flex justify-between items-center px-2 py-1 border-b border-gray-200 cursor-grab active:cursor-grabbing">
-        <span className="font-semibold text-xs text-gray-700 truncate">
-          {settings.attributeLabel || settings.equipment || data.label || "Widget"}
-        </span>
+      {!isReadOnly && isSelected && (
         <button
-          onClick={(e) => { e.stopPropagation(); onDelete?.(id); }}
-          className="flex items-center justify-center w-5 h-5 rounded-full text-gray-400 hover:bg-red-100 hover:text-red-600 text-base font-bold shrink-0"
-          aria-label="Eliminar"
-        >×</button>
-      </div>
-
-      {/* Widget — pointer-events none para que los clicks suban al Rnd */}
-      <div className="widget-content" style={{ pointerEvents: "none", height: "calc(100% - 28px)" }}>
-        <WidgetLiveWrapper
-          data={data}
-          width={size.w}
-          height={size.h - 28}
-          theme={theme}
-          isLiveMode={false}
-        />
-      </div>
-
-      {/* Badge equipo */}
-      <div className="component-equipment-label">
-        {settings.tagId
-          ? settings.tagId.split(":")[1] || settings.tagId
-          : settings.equipment || data.label || "Sin binding"}
-      </div>
+          onClick={handleDelete}
+          className="absolute -right-3 -top-3 z-20 flex h-6 w-6 items-center justify-center rounded-full bg-white text-gray-500 shadow hover:bg-red-100 hover:text-red-600 text-lg font-bold"
+          aria-label="Eliminar componente"
+          title="Eliminar"
+        >
+          &times;
+        </button>
+      )}
+      {WidgetContent}
     </Rnd>
   );
 }
+
+const handleStyle = {
+  width: "12px",
+  height: "12px",
+  background: "#38bdf8",
+  borderRadius: "9999px",
+  border: "2px solid white",
+  boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+};

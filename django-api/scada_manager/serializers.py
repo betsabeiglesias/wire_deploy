@@ -1,61 +1,38 @@
 from rest_framework import serializers
-from .models import  MyLayOutsTitle, ProjectVariable, VariableTable
+from django.utils.crypto import get_random_string
+from .models import MyLayOut, MyLayOutsTitle
 
+
+class MyLayOutSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MyLayOut
+        fields = '__all__'
 
 class MyLayOutsTitleSerializer(serializers.ModelSerializer):
+    layouts = MyLayOutSerializer(many=True, source='mylayout_set', read_only=True)
+    elements = serializers.SerializerMethodField()
 
     class Meta:
         model = MyLayOutsTitle
         # Cambio combinado de HEAD: definir campos explícitamente y mantener la lógica de 'elements'
-        fields = ['id', 'name', 'views_data', 'order']
+        fields = ['id', 'name', 'views_data', 'elements', 'layouts']
     
+    def get_elements(self, obj):
+        # Lógica de HEAD: Si tiene views_data (aplicación multi-vista), devolverlo
+        if obj.views_data:
+            return obj.views_data
+        
+        # Si no, devolver layouts tradicionales (backward compatibility)
+        layouts = obj.mylayout_set.all()
+        return MyLayOutSerializer(layouts, many=True).data
 
+# # Serializador nuevo de la rama 'principal'
+# class MyPowerBiSerializer(serializers.ModelSerializer):
+#     user = serializers.PrimaryKeyRelatedField(
+#         many=True,
+#         read_only=True
+#     )
 
- 
-class ProjectVariableSerializer(serializers.ModelSerializer):
-    variable_id = serializers.UUIDField(read_only=True)
- 
-    class Meta:
-        model  = ProjectVariable
-        fields = [
-            "id", "variable_id", "table",
-            "name", "source",
-            "equipment", "equipment_id", "variable", "datatype", "unit", "address", "node_id",
-            "initial_value", "description",
-            "created_at", "updated_at",
-        ]
-        read_only_fields = ["id", "variable_id", "created_at", "updated_at"]
- 
-    def validate(self, data):
-        source = data.get("source", getattr(self.instance, "source", "connection"))
-        if source == "connection":
-            if not data.get("equipment", getattr(self.instance, "equipment", "")):
-                raise serializers.ValidationError({"equipment": "Requerido para variables de conexión."})
-            if not data.get("variable", getattr(self.instance, "variable", "")):
-                raise serializers.ValidationError({"variable": "Requerido para variables de conexión."})
-        if source == "local":
-            data.setdefault("equipment", "")
-            data.setdefault("equipment_id", "") 
-            data.setdefault("variable",  "")
-            data.setdefault("address",   "")
-            data.setdefault("node_id",   "")
-        return data
- 
- 
-class VariableTableSerializer(serializers.ModelSerializer):
-    variables = ProjectVariableSerializer(many=True, read_only=True)
- 
-    class Meta:
-        model  = VariableTable
-        fields = ["id", "layout", "name", "order", "variables", "created_at", "updated_at"]
-        read_only_fields = ["id", "created_at", "updated_at"]
- 
- 
-class VariableTableLightSerializer(serializers.ModelSerializer):
-    """Sin variables anidadas — para listados rápidos."""
-    variable_count = serializers.IntegerField(source="variables.count", read_only=True)
- 
-    class Meta:
-        model  = VariableTable
-        fields = ["id", "layout", "name", "order", "variable_count", "created_at", "updated_at"]
-        read_only_fields = ["id", "created_at", "updated_at"]
+#     class Meta:
+#         model = MyPowerBi
+#         fields = '__all__'

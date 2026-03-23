@@ -5,7 +5,3 @@ paho-mqtt==2.1.0
 PyJWT==2.8.0
 python-dotenv==1.0.1
 redis>=5.0
-PyYAML==6.0.1
-djangorestframework==3.15.1
-psycopg2-binary==2.9.9
-requests==2.31.0

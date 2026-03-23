@@ -21,5 +21,3 @@ def make_driver(cfg: dict, publisher):
     if not cls:
         raise ValueError(f"Driver no soportado: {kind}")
     return cls(cfg, publisher)
-
-

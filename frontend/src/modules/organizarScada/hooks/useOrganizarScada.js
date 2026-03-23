@@ -404,7 +404,7 @@ export const useOrganizarScada = () => {
     setCanvasElements([]);
     setCurrentLayoutId(null);
     setIsEditMode(false);
-    setExportName("Hmi");
+    setExportName("Nuevo Layout");
     localStorage.removeItem(CURRENT_VIEW_KEY);
     
     // 2. Resetear vistas a estado inicial (una vista vacía)

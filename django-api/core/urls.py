@@ -30,10 +30,6 @@ urlpatterns = [
 
     # Path para favoritos
     path("api/favorites/", include("core.favorites.urls")),
-
-    path("api/edge/", include("edge_config.urls")),
-    # path("api/historian/", include("historian.urls")),
-
 ]
 
 if settings.DEBUG:

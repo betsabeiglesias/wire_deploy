@@ -1,66 +1,55 @@
-// src/modules/organizarScada/components/sidebar/NavbarPLCs.jsx
 import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import Button from "@/components/Button";
+import HomeButton from "@/components/HomeButton";
 
 export default function NavbarPLCs({ toolbar }) {
-  const fileRef  = useRef(null);
-  const show     = toolbar?.showActions;
+  const fileRef = useRef(null);
+  const show = toolbar?.showActions;
   const navigate = useNavigate();
 
   return (
     <header className="h-[50px] flex items-center justify-between px-4 border-b border-gray-200 bg-white">
       <div className="flex items-center gap-6">
-        <Button variant="secondary" onClick={() => navigate("/")}>
-          Home
-        </Button>
-        <Button
-          variant="secondary"
-          onClick={() => navigate("/layout")}
-          title="Volver a SCADA"
-        >
-          Mis HMIs
-        </Button>
-      </div>
+        <HomeButton/>
+     
+
+      <button
+            className="px-3 py-1.5 rounded border hover:bg-gray-50"
+            onClick={() => navigate("/layout")}
+            title="Volver a SCADA"
+          >
+            Mis HMIs
+          </button>
+       </div>
 
       {show && (
-        <div className="flex items-center gap-3 mr-8">
-          <Button
-            variant="secondary"
-            className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+        <div className="flex items-center gap-6 mr-8">
+          <button
+            className="px-3 py-1.5 rounded border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium"
             onClick={toolbar.onNewDashboard}
             title="Crear un nuevo proyecto desde cero"
           >
-            Nuevo
-          </Button>
+            Nuevo Dashboard
+          </button>
 
-          {/* Cargar proyecto desde BD */}
-          <Button
-            variant="secondary"
-            className="border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
-            onClick={toolbar.onLoadFromDB}
-            title="Abrir un proyecto guardado"
-          >
-            Mis proyectos
-          </Button>
+          
 
-          <Button
-            variant="secondary"
+          <button
+            className="px-3 py-1.5 rounded border hover:bg-gray-50"
             onClick={toolbar.onClear}
             title="Vaciar lienzo"
           >
             Limpiar
-          </Button>
+          </button>
 
-          <Button
-            variant="secondary"
+          <button
+            className="px-3 py-1.5 rounded border hover:bg-gray-50"
             onClick={toolbar.onExport}
-            title="Exportar JSON local"
+            title="Exportar JSON"
           >
             Exportar
-          </Button>
+          </button>
 
-          {/* Importar JSON local */}
           <input
             type="file"
             ref={fileRef}
@@ -72,22 +61,21 @@ export default function NavbarPLCs({ toolbar }) {
               e.target.value = "";
             }}
           />
-          <Button
-            variant="secondary"
+          <button
+            className="px-3 py-1.5 rounded border hover:bg-gray-50"
             onClick={() => fileRef.current?.click()}
-            title="Importar JSON local"
+            title="Importar JSON"
           >
             Importar
-          </Button>
+          </button>
 
-          <Button
-            variant="secondary"
-            className="border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+          <button
+            className="px-3 py-1.5 rounded border bg-green-50 text-green-700 hover:bg-green-100 font-medium"
             onClick={toolbar.onPublish}
-            title="Guardar en la base de datos"
+            title="Guardar"
           >
             Guardar
-          </Button>
+          </button>
         </div>
       )}
     </header>

@@ -17,10 +17,10 @@ import { NeedleGauge } from "../components/gauges/NeedleGauge";
 // Otros componentes
 import { Filters } from "../components/Filters";
 import { GatewayTable } from "../components/GatewayTable";
-import Button from "../../../components/Button";
+import HomeButton from "../../../components/HomeButton";
 import ConfigurarComunicacionesButton from "../components/ConfigurarComunicacionesButton";
 
-import { useRealtime } from "@/context/RealtimeProvider";
+import { useRealtime } from "@/realtime/RealtimeProvider";
 
 export default function Communications() {
   
@@ -217,9 +217,7 @@ export default function Communications() {
         <ConfigurarComunicacionesButton />
         
         <div className="absolute right-0 top-0">
-          <Button variant="secondary" onClick={() => window.location.assign("/")}>
-            Home
-          </Button>
+          <HomeButton />
         </div>
       </div>
 

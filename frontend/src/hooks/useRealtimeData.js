@@ -7,7 +7,6 @@ const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8002";
 export function useRealtimeData(tenant) {
   const [connected, setConnected] = useState(false);
   const [allTags, setAllTags] = useState([]);
-  const [tagsMap, setTagsMap] = useState(new Map());
   const [lastMessageAt, setLastMessageAt] = useState(null);
   const [dataStale, setDataStale] = useState(false);
 
@@ -63,37 +62,24 @@ export function useRealtimeData(tenant) {
 
           try {
             const msg = JSON.parse(evt.data);
-            const parts = (msg.equipment_id || "").split("/");
+
             const entry = {
-              site:         parts[0] || msg.site || "",
-              area:         parts[1] || msg.area || "",
-              line:         parts[2] || msg.line || "",
-              cell:         parts[3] || msg.cell || "",
-              equipment:    parts[4] || msg.equipment || "",   // ← último segmento
               equipment_id: msg.equipment_id,
-              variable:     msg.variable,
-              value:        msg.value,
-              unit:         msg.unit,
-              quality:      msg.quality,
-              timestamp:    msg.timestamp,
-              source:       msg.source || {},
-              raw:          msg,
+              variable: msg.variable,
+              value: msg.value,
+              unit: msg.unit,
+              quality: msg.quality,
+              timestamp: msg.timestamp,
+              source: msg.source || {},
+              raw: msg,
             };
-            console.log("📨 WS msg:", msg);
-
-            const tagKey = `${entry.equipment_id}:${entry.variable}`;
-
-            setTagsMap((prev) => {
-              const next = new Map(prev);
-              next.set(tagKey, { ...next.get(tagKey), ...entry });
-              return next;
-            });
 
             setAllTags((prev) => {
+              const key = `${entry.equipment_id}:${entry.variable}`;
               const map = new Map(
                 prev.map((t) => [`${t.equipment_id}:${t.variable}`, t])
               );
-              map.set(tagKey, { ...map.get(tagKey), ...entry });
+              map.set(key, { ...map.get(key), ...entry });
               return Array.from(map.values());
             });
           } catch (err) {
@@ -130,5 +116,5 @@ export function useRealtimeData(tenant) {
     return () => clearInterval(interval);
   }, [lastMessageAt]);
 
-  return { connected, dataStale, allTags, tagsMap, lastMessageAt };
+  return { connected, dataStale, allTags, lastMessageAt };
 }

@@ -1,360 +1,298 @@
-// src/modules/organizarScada/components/sidebar/DeviceManagerModal.jsx
-//
-// Gestor de tablas/grupos de tags del proyecto.
-// - Tags disponibles vienen de useScadaConfig (API REST), no del WebSocket.
-// - Los grupos y su contenido se persisten en localStorage como preferencia
-//   de organización del diseñador. No son fuente de datos en tiempo real.
-//
-import React, { useEffect, useMemo, useState } from "react";
-import { useScadaConfig } from "../../../../context/ScadaConfigProvider";
+import React, { useMemo, useState } from "react";
 
-const DEVICES_STORAGE_KEY = "organizarScada.devices.tables";
-
-const loadDevicesFromStorage = () => {
-  try {
-    const raw = localStorage.getItem(DEVICES_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
+// Modal flotante para gestionar PLCs/tablas y tags de ejemplo (mock local).
+const mockDevices = [
+  {
+    id: "PLC 1",
+    name: "PLC 1",
+    tags: [
+      {
+        id: "t1",
+        name: "AI01",
+        type: "Float",
+        conn: "INTENANCE",
+        plcName: "PLC1",
+      },
+    ],
+  },
+  {
+    id: "PLC 2",
+    name: "PLC 2",
+    tags: [
+      {
+        id: "t2",
+        name: "DB2.DBD00_FAST",
+        type: "UInt32",
+        conn: "INTENANCE",
+        plcName: "PLC1",
+      },
+      {
+        id: "t3",
+        name: "T_CUBA2_FAST",
+        type: "Float",
+        conn: "INTENANCE",
+        plcName: "PLC1",
+      },
+      {
+        id: "t4",
+        name: "DB2.DBD22_FAST",
+        type: "Float",
+        conn: "INTENANCE",
+        plcName: "PLC1",
+      },
+    ],
+  },
+  { id: "general", name: "GENERAL", tags: [] },
+];
 
 const DeviceManagerModal = ({ open, onClose }) => {
-  const { config, loading } = useScadaConfig();
-
-  const [devices,          setDevices]          = useState(loadDevicesFromStorage);
-  const [selectedId,       setSelectedId]       = useState(null);
-  const [hasUnsavedChanges,setHasUnsavedChanges]= useState(false);
-
-  // ── Tags de la API ──────────────────────────────────────────────────────────
-  // config.tagIndex: { "equipment.variable": { equipment, variable, datatype, unit, ... } }
-  const tagIndex = config?.tagIndex || {};
-
-  const variablesByEquipment = useMemo(() => {
-    const map = {};
-    Object.values(tagIndex).forEach(tag => {
-      const eq = tag.equipment;
-      if (!eq) return;
-      if (!map[eq]) map[eq] = [];
-      map[eq].push({
-        key:          `${eq}::${tag.variable}`,
-        variableName: tag.variable,
-        datatype:     tag.datatype  || "",
-        unit:         tag.unit      || "",
-      });
-    });
-    return map;
-  }, [tagIndex]);
-
-  const equipmentOptions = useMemo(() =>
-    Object.keys(variablesByEquipment)
-      .sort()
-      .map(eq => ({ value: eq, label: eq })),
-    [variablesByEquipment]
-  );
-
-  // ── Selección de tabla ──────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!devices.length) { setSelectedId(null); return; }
-    if (!selectedId || !devices.some(d => d.id === selectedId)) {
-      setSelectedId(devices[0].id);
-    }
-  }, [devices, selectedId]);
+  const [devices, setDevices] = useState(mockDevices);
+  const [selectedId, setSelectedId] = useState(devices[0]?.id || null);
 
   const selected = useMemo(
     () => devices.find(d => d.id === selectedId) || { tags: [] },
-    [devices, selectedId]
+    [devices, selectedId],
   );
 
-  // ── Mutaciones ──────────────────────────────────────────────────────────────
-  const updateCurrentTag = (tagId, updater) => {
-    setDevices(prev =>
-      prev.map(d =>
-        d.id !== selectedId ? d : {
-          ...d,
-          tags: d.tags.map(t =>
-            t.id !== tagId ? t :
-            typeof updater === "function" ? updater(t) : { ...t, ...updater }
-          ),
-        }
-      )
-    );
-    setHasUnsavedChanges(true);
-  };
-
   const addDevice = () => {
-    const newDevice = { id: `dev-${Date.now()}`, name: "Nueva tabla", tags: [] };
+    const nextIndex = devices.length + 1;
+    const newDevice = {
+      id: `dev-${Date.now()}`,
+      name: `Tabla ${nextIndex}`,
+      tags: [],
+    };
     setDevices(prev => [...prev, newDevice]);
     setSelectedId(newDevice.id);
-    setHasUnsavedChanges(true);
   };
 
-  const deleteDevice = (id) => {
-    if (!confirm("¿Eliminar esta tabla?")) return;
-    setDevices(prev => prev.filter(d => d.id !== id));
-    setHasUnsavedChanges(true);
+  const renameDevice = id => {
+    const current = devices.find(d => d.id === id);
+    const nextName = window.prompt(
+      "Nuevo nombre de tabla/PLC",
+      current?.name || "",
+    );
+    if (!nextName) return;
+    setDevices(prev =>
+      prev.map(d => (d.id === id ? { ...d, name: nextName } : d)),
+    );
   };
 
-  const renameDevice = (id, name) => {
-    setDevices(prev => prev.map(d => d.id === id ? { ...d, name } : d));
-    setHasUnsavedChanges(true);
+  const deleteDevice = id => {
+    if (!window.confirm("¿Eliminar esta tabla/PLC y sus tags?")) return;
+    setDevices(prev => {
+      const filtered = prev.filter(d => d.id !== id);
+      // Reasignar selección
+      if (id === selectedId) {
+        const next = filtered[0]?.id || null;
+        setSelectedId(next);
+      }
+      return filtered;
+    });
   };
 
   const addEmptyTag = () => {
     if (!selectedId) return;
-    const tag = {
-      id:           `tmp-${Date.now()}`,
-      name:         "NuevoTag",
-      equipment:    "",
-      variableName: "",
-      datatype:     "Float",
-      unit:         "",
-    };
-    setDevices(prev =>
-      prev.map(d => d.id === selectedId ? { ...d, tags: [...d.tags, tag] } : d)
-    );
-    setHasUnsavedChanges(true);
-  };
-
-  const removeTag = (tagId) => {
     setDevices(prev =>
       prev.map(d =>
-        d.id !== selectedId ? d : { ...d, tags: d.tags.filter(t => t.id !== tagId) }
-      )
+        d.id === selectedId
+          ? {
+              ...d,
+              tags: [
+                ...d.tags,
+                {
+                  id: `tmp-${Date.now()}`,
+                  name: "NuevoTag",
+                  type: "Float",
+                  conn: "INTENANCE",
+                  plcName: "PLC",
+                },
+              ],
+            }
+          : d,
+      ),
     );
-    setHasUnsavedChanges(true);
-  };
-
-  // ── Guardar ─────────────────────────────────────────────────────────────────
-  const handleSave = () => {
-    localStorage.setItem(DEVICES_STORAGE_KEY, JSON.stringify(devices));
-    setHasUnsavedChanges(false);
-    onClose?.();
-  };
-
-  const handleClose = () => {
-    if (hasUnsavedChanges && !confirm("Hay cambios sin guardar. ¿Salir sin guardar?")) return;
-    onClose?.();
   };
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[2100] bg-black/40 flex items-center justify-center">
-      <div className="w-[1200px] h-[700px] bg-white rounded-lg shadow-xl flex flex-col overflow-hidden">
-
-        {/* HEADER */}
-        <div className="flex justify-between items-center px-4 py-2.5 border-b border-slate-200 bg-slate-50">
+    <div className="fixed inset-0 z-[2100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center px-6">
+      <div className="w-[1200px] h-[620px] bg-slate-50 rounded-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-semibold text-slate-800">Dispositivos</h2>
-            {loading && (
-              <span className="text-[11px] text-slate-400">Cargando tags de la API…</span>
-            )}
-            {hasUnsavedChanges && (
-              <span className="text-[11px] text-amber-600 font-medium">● Sin guardar</span>
-            )}
+            <h2 className="text-sm font-semibold text-slate-800">
+              Dispositivos
+            </h2>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={addDevice}
+                className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
+              >
+                + Nueva tabla/PLC
+              </button>
+              <button
+                onClick={() => renameDevice(selectedId)}
+                disabled={!selectedId}
+                className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Renombrar
+              </button>
+              <button
+                onClick={() => deleteDevice(selectedId)}
+                disabled={!selectedId}
+                className="rounded border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-600 hover:border-rose-300 hover:bg-rose-100 disabled:opacity-50"
+              >
+                Eliminar
+              </button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleSave}
-              className="px-3 py-1 text-xs bg-emerald-500 text-white rounded hover:bg-emerald-600"
-            >
-              Guardar
-            </button>
-            <button
-              onClick={addDevice}
-              className="px-3 py-1 text-xs border border-slate-300 rounded hover:bg-slate-50"
-            >
-              + Tabla
-            </button>
-            <button onClick={handleClose} className="px-2 text-slate-500 hover:text-slate-800">
-              ✕
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-500 hover:text-slate-800 px-2 py-1 rounded hover:bg-slate-100"
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
         </div>
 
-        {/* BODY */}
         <div className="flex flex-1 overflow-hidden">
-
-          {/* LISTA TABLAS */}
-          <div className="w-60 border-r border-slate-200 flex flex-col overflow-hidden">
-            <div className="px-2 py-2 border-b border-slate-100">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
-                Tablas
-              </p>
+          {/* Panel izquierdo (árbol/lista) */}
+          <div className="w-72 border-r border-slate-200 bg-white overflow-y-auto">
+            <div className="px-3 py-2 text-[11px] uppercase tracking-[0.12em] text-slate-500 border-b border-slate-100">
+              Tablas / PLC
             </div>
-            <div className="flex-1 overflow-y-auto">
-              {devices.length === 0 && (
-                <div className="px-3 py-4 text-[11px] text-slate-400">
-                  Sin tablas. Usa "+ Tabla".
-                </div>
-              )}
+            <ul className="divide-y divide-slate-100 text-sm">
               {devices.map(dev => (
-                <div
+                <li
                   key={dev.id}
-                  onClick={() => setSelectedId(dev.id)}
-                  className={[
-                    "group flex items-center justify-between px-3 py-2 cursor-pointer text-[12px]",
+                  className={`px-3 py-2 cursor-pointer flex items-center gap-2 ${
                     dev.id === selectedId
-                      ? "bg-sky-100 text-sky-800 font-semibold"
-                      : "hover:bg-slate-50 text-slate-700",
-                  ].join(" ")}
+                      ? "bg-sky-50 text-sky-800"
+                      : "hover:bg-slate-50"
+                  }`}
+                  onClick={() => setSelectedId(dev.id)}
                 >
-                  <span className="flex-1 truncate">{dev.name}</span>
-                  <span className="text-[10px] text-slate-400 shrink-0 ml-1">
-                    {dev.tags?.length || 0}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={e => { e.stopPropagation(); deleteDevice(dev.id); }}
-                    className="ml-1 hidden group-hover:inline text-rose-400 hover:text-rose-600 text-xs"
-                    title="Eliminar tabla"
-                  >
-                    ×
-                  </button>
-                </div>
+                  <span className="text-slate-500">📄</span>
+                  <div className="flex-1">
+                    <div className="font-semibold text-xs">{dev.name}</div>
+                    <div className="text-[11px] text-slate-500">
+                      {dev.tags.length} tags
+                    </div>
+                  </div>
+                </li>
               ))}
-            </div>
+            </ul>
+            {/* se eliminan acciones duplicadas de pie; ahora están en el header */}
           </div>
 
-          {/* TABLA TAGS */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {!selectedId ? (
-              <div className="flex-1 flex items-center justify-center text-[12px] text-slate-400">
-                Selecciona o crea una tabla.
+          {/* Panel derecho (tabla de tags) */}
+          <div className="flex-1 bg-white flex flex-col">
+            <div className="px-4 py-2 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-800">
+                  {selected.name || "Selecciona un PLC"}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  Tags configurados: {selected.tags?.length || 0}
+                </p>
               </div>
-            ) : (
-              <>
-                {/* Nombre tabla + botón añadir */}
-                <div className="flex items-center gap-3 px-4 py-2 border-b border-slate-200 bg-slate-50">
-                  <input
-                    className="flex-1 rounded border border-slate-300 px-2 py-1 text-[12px] font-semibold focus:border-sky-400 focus:outline-none"
-                    value={selected.name || ""}
-                    onChange={e => renameDevice(selectedId, e.target.value)}
-                    placeholder="Nombre de la tabla"
-                  />
-                  <button
-                    onClick={addEmptyTag}
-                    className="shrink-0 text-xs border border-slate-300 px-3 py-1 rounded hover:border-sky-400 hover:bg-sky-50"
-                  >
-                    + Añadir tag
-                  </button>
-                </div>
+              <button
+                onClick={addEmptyTag}
+                className="rounded border border-sky-300 bg-sky-50 px-3 py-1 text-[11px] font-semibold text-sky-700 hover:border-sky-400"
+              >
+                + Añadir tag
+              </button>
+            </div>
 
-                <div className="flex-1 overflow-auto">
-                  {selected.tags?.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-[12px] text-slate-400">
-                      Sin tags. Usa "+ Añadir tag".
-                    </div>
-                  ) : (
-                    <table className="w-full text-xs">
-                      <thead className="bg-slate-100 sticky top-0">
-                        <tr>
-                          <th className="p-2 text-left font-semibold text-slate-600 w-40">Alias</th>
-                          <th className="p-2 text-left font-semibold text-slate-600">Equipo</th>
-                          <th className="p-2 text-left font-semibold text-slate-600">Variable</th>
-                          <th className="p-2 text-left font-semibold text-slate-600 w-20">Tipo</th>
-                          <th className="p-2 text-left font-semibold text-slate-600 w-14">Unidad</th>
-                          <th className="p-2 w-8"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selected.tags.map(tag => {
-                          const equipmentVariables = variablesByEquipment[tag.equipment] || [];
-                          const varMeta = equipmentVariables.find(v => v.variableName === tag.variableName);
-                          return (
-                            <tr key={tag.id} className="border-t border-slate-100 hover:bg-slate-50">
-                              {/* Alias */}
-                              <td className="p-2">
-                                <input
-                                  className="w-full rounded border border-slate-200 px-2 py-1 text-[11px] focus:border-sky-400 focus:outline-none"
-                                  value={tag.name}
-                                  onChange={e => updateCurrentTag(tag.id, { name: e.target.value })}
-                                />
-                              </td>
-
-                              {/* Equipo */}
-                              <td className="p-2">
-                                <select
-                                  className="w-full rounded border border-slate-200 px-1 py-1 text-[11px] focus:border-sky-400 focus:outline-none"
-                                  value={tag.equipment}
-                                  onChange={e =>
-                                    updateCurrentTag(tag.id, {
-                                      equipment:    e.target.value,
-                                      variableName: "",
-                                      datatype:     "Float",
-                                      unit:         "",
-                                    })
-                                  }
-                                >
-                                  <option value="">Selecciona equipo</option>
-                                  {loading
-                                    ? <option disabled>Cargando…</option>
-                                    : equipmentOptions.map(opt => (
-                                        <option key={opt.value} value={opt.value}>
-                                          {opt.label}
-                                        </option>
-                                      ))
-                                  }
-                                </select>
-                              </td>
-
-                              {/* Variable */}
-                              <td className="p-2">
-                                <select
-                                  className="w-full rounded border border-slate-200 px-1 py-1 text-[11px] focus:border-sky-400 focus:outline-none"
-                                  value={tag.variableName}
-                                  disabled={!tag.equipment}
-                                  onChange={e => {
-                                    const v = equipmentVariables.find(x => x.variableName === e.target.value);
-                                    updateCurrentTag(tag.id, {
-                                      variableName: e.target.value,
-                                      datatype:     v?.datatype || "Float",
-                                      unit:         v?.unit     || "",
-                                    });
-                                  }}
-                                >
-                                  <option value="">Variable</option>
-                                  {equipmentVariables.map(v => (
-                                    <option key={v.key} value={v.variableName}>
-                                      {v.variableName}{v.unit ? ` [${v.unit}]` : ""}
-                                    </option>
-                                  ))}
-                                </select>
-                              </td>
-
-                              {/* Tipo — auto-rellenado */}
-                              <td className="p-2 text-slate-500">
-                                {varMeta?.datatype || tag.datatype || "—"}
-                              </td>
-
-                              {/* Unidad — auto-rellenada */}
-                              <td className="p-2 text-slate-500">
-                                {varMeta?.unit || tag.unit || "—"}
-                              </td>
-
-                              {/* Borrar */}
-                              <td className="p-2">
-                                <button
-                                  type="button"
-                                  onClick={() => removeTag(tag.id)}
-                                  className="text-rose-400 hover:text-rose-600"
-                                  title="Eliminar tag"
-                                >
-                                  ×
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+            <div className="flex-1 overflow-auto">
+              <table className="min-w-full text-[12px]">
+                <thead className="bg-slate-100 text-slate-600 uppercase tracking-[0.08em]">
+                  <tr>
+                    <th className="px-3 py-2 text-left w-60">Name</th>
+                    <th className="px-3 py-2 text-left w-28">Data type</th>
+                    <th className="px-3 py-2 text-left w-32">Connection</th>
+                    <th className="px-3 py-2 text-left w-32">PLC name</th>
+                    <th className="px-3 py-2 text-left">Notes</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {selected.tags?.map(tag => (
+                    <tr key={tag.id} className="hover:bg-slate-50">
+                      <td className="px-3 py-2 text-slate-800">
+                        <input
+                          className="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-sky-400 focus:outline-none rounded px-1"
+                          value={tag.name}
+                          onChange={e =>
+                            setDevices(prev =>
+                              prev.map(d =>
+                                d.id === selectedId
+                                  ? {
+                                      ...d,
+                                      tags: d.tags.map(t =>
+                                        t.id === tag.id
+                                          ? { ...t, name: e.target.value }
+                                          : t,
+                                      ),
+                                    }
+                                  : d,
+                              ),
+                            )
+                          }
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-slate-700">
+                        <select
+                          className="w-full bg-transparent border border-slate-200 rounded px-1 text-[12px]"
+                          value={tag.type}
+                          onChange={e =>
+                            setDevices(prev =>
+                              prev.map(d =>
+                                d.id === selectedId
+                                  ? {
+                                      ...d,
+                                      tags: d.tags.map(t =>
+                                        t.id === tag.id
+                                          ? { ...t, type: e.target.value }
+                                          : t,
+                                      ),
+                                    }
+                                  : d,
+                              ),
+                            )
+                          }
+                        >
+                          {["Float", "UInt32", "Int", "Bool", "String"].map(
+                            opt => (
+                              <option key={opt}>{opt}</option>
+                            ),
+                          )}
+                        </select>
+                      </td>
+                      <td className="px-3 py-2 text-slate-700">{tag.conn}</td>
+                      <td className="px-3 py-2 text-slate-700">
+                        {tag.plcName}
+                      </td>
+                      <td className="px-3 py-2 text-slate-500">
+                        <input
+                          className="w-full bg-transparent border border-transparent hover:border-slate-200 focus:border-sky-400 focus:outline-none rounded px-1"
+                          placeholder="Notas"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                  {!selected.tags?.length && (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="px-3 py-4 text-center text-slate-500"
+                      >
+                        No hay tags. Usa “+ Añadir tag”.
+                      </td>
+                    </tr>
                   )}
-                </div>
-              </>
-            )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

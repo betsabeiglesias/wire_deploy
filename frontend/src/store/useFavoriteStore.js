@@ -5,6 +5,7 @@ export const useFavoriteStore = create((set, get) => ({
   favorites: [],
   isLoading: false,
 
+  // Obtener favoritos del usuario
   fetchFavorites: async () => {
     set({ isLoading: true });
     try {
@@ -17,44 +18,30 @@ export const useFavoriteStore = create((set, get) => ({
     }
   },
 
-  updateFavoriteOrder: async (type, sortedFavIds) => {
-    const { favorites } = get();
-    
-    // 1. Separamos los que no estamos tocando
-    const otherFavs = favorites.filter(f => f.type !== type);
-    // 2. Obtenemos los del tipo actual y los reordenamos según la lista de IDs del DND
-    const currentTypeFavs = favorites.filter(f => f.type === type);
-    const reorderedTypeFavs = sortedFavIds.map((id, index) => {
-      const fav = currentTypeFavs.find(f => f.id === id);
-      return { ...fav, order: index };
-    });
-
-    // 3. Actualización optimista
-    set({ favorites: [...otherFavs, ...reorderedTypeFavs] });
-
-    try {
-      await api.put("/api/favorites/reorder/", { 
-        orders: reorderedTypeFavs.map(f => ({ id: f.id, order: f.order })) 
-      });
-    } catch (err) {
-      console.error("Error al guardar orden", err);
-      get().fetchFavorites(); // Revertimos si falla
-    }
-  },
-
+  // Comprobar si algo es favorito
   isFavorite: (type, objectId) => {
     const id = Number(objectId);
-    return get().favorites.some((f) => f.type === type && Number(f.object_id) === id);
+
+    return get().favorites.some(
+      (f) => f.type === type && Number(f.object_id) === id
+    );
   },
 
+  // Toggle favorito (el backend ya hace el toggle)
   toggleFavorite: async (type, objectId) => {
     try {
-      await api.post("/api/favorites/", { content_type: type, object_id: objectId });
+      await api.post("/api/favorites/", {
+        content_type: type,
+        object_id: objectId,
+      });
+
+      // Refrescamos favoritos después del toggle
       await get().fetchFavorites();
     } catch (err) {
-      console.error("Error al hacer toggle", err);
+      console.error("Error al hacer toggle de favorito", err);
     }
   },
 
+      // Limpiamos favoritos
   clearFavorites: () => set({ favorites: [] }),
 }));
