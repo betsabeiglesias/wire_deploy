@@ -29,7 +29,11 @@ CORE_APPS = [
 # Leemos del .env los módulos opcionales. 
 # Ejemplo en .env: ENABLED_MODULES=scada_manager,map_manager,industrial_config_manager,management,powerbi_manager
 enabled_modules_str = os.getenv("ENABLED_MODULES", "")
-DYNAMIC_MODULES = [m.strip() for m in enabled_modules_str.split(",") if m.strip()]
+DYNAMIC_MODULES = [
+    f"modules.{m.strip()}"
+    for m in enabled_modules_str.split(",")
+    if m.strip()
+]
 
 # Combinamos ambos para INSTALLED_APPS
 INSTALLED_APPS = CORE_APPS + DYNAMIC_MODULES

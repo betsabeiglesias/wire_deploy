@@ -1,5 +1,6 @@
-# core/urls.py
 import logging
+import importlib
+
 from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
@@ -10,7 +11,7 @@ logger = logging.getLogger(__name__)
 # 1. Rutas del CORE (Siempre presentes)
 urlpatterns = [
     path('admin/', admin.site.urls),
-    
+
     # AUTH e INFRAESTRUCTURA
     path('api/auth/', include('core.auth_manager.urls')),
     path("api/realtime/", include("realtime.urls")),
@@ -18,13 +19,11 @@ urlpatterns = [
 ]
 
 # 2. Carga DINÁMICA de aplicaciones de dominio
-# Recorremos los módulos habilitados en settings.py (vienen del .env)
 for app in getattr(settings, 'DYNAMIC_MODULES', []):
-    # Creamos un endpoint amigable (ej: scada_manager -> scada-manager)
+
     endpoint = app.replace('_', '-')
-    
-    # Mapeo especial para mantener tus rutas originales
-    # Si el app es industrial_config_manager, el path será api/config/
+
+    # Mapeos especiales
     if app == 'industrial_config_manager':
         route_path = 'api/config/'
     elif app == 'map_manager':
@@ -33,12 +32,23 @@ for app in getattr(settings, 'DYNAMIC_MODULES', []):
         route_path = f'api/{endpoint}/'
 
     try:
+        # 👇 CLAVE: comprobamos si el módulo existe de verdad
+        importlib.import_module(app)
+
         urlpatterns.append(
             path(route_path, include(f'{app}.urls'))
         )
-        print(f"✅ Módulo cargado en ruta: {route_path}")
+
+        logger.info(f"✅ Módulo cargado: {app} -> {route_path}")
+
+    except ModuleNotFoundError:
+        # 👇 Si el módulo NO está en el código, no rompe nada
+        logger.warning(f"⚠️ Módulo NO instalado: {app}")
+
     except Exception as e:
-        logger.error(f"❌ Error al cargar URLs del módulo {app}: {e}")
+        # 👇 Otros errores sí los queremos ver
+        logger.error(f"❌ Error en módulo {app}: {e}")
+
 
 # 3. Archivos estáticos en desarrollo
 if settings.DEBUG:
