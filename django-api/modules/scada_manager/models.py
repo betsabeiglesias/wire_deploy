@@ -10,10 +10,9 @@ class MyLayOutsTitle(models.Model):
     order = models.PositiveIntegerField(default=0)
     
     class Meta:
+        app_label = "scada_manager"
         ordering = ['order'] # Esto hace que Django los devuelva siempre ordenados
 
-
-    
     def __str__(self):
         return self.name
 

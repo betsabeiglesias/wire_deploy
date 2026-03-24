@@ -3,6 +3,10 @@ from django.conf import settings
 
 class Country(models.Model):
     name = models.CharField(max_length=50, unique=True)
+
+    class Meta:
+        app_label = 'map_manager'
+
     def __str__(self):
         return self.name
     
@@ -17,6 +21,9 @@ class Location(models.Model):
     postal_code = models.CharField(max_length=20)
     llevar_a_url = models.CharField(max_length=200, blank=True, null=True, help_text="URL a la que llevar al hacer clic en 'Ir al sitio'")
     
+    class Meta:
+        app_label = 'map_manager'
+
     def __str__(self):
         return f"{self.name} - {self.direction}"
     
@@ -24,6 +31,10 @@ class Factory(models.Model):
     name = models.CharField(max_length=50)
     location = models.ForeignKey(Location, on_delete=models.PROTECT)
     description = models.CharField(max_length=200)
+
+    class Meta:
+        app_label = 'map_manager'
+
     def __str__(self):
         return self.name
     
@@ -31,6 +42,10 @@ class Area(models.Model):
     name = models.CharField(max_length=50)
     description = models.CharField(max_length=200)
     factory = models.ForeignKey(Factory, on_delete=models.PROTECT)
+
+    class Meta:
+        app_label = 'map_manager'
+
     def __str__(self):
         return self.name
 
@@ -38,6 +53,10 @@ class Manufacturer(models.Model):
     name = models.CharField(max_length=50)
     description = models.CharField(max_length=200)
     country = models.ForeignKey(Country, on_delete=models.PROTECT)
+
+    class Meta:
+        app_label = 'map_manager'
+
     def __str__(self):
         return self.name
     
@@ -55,6 +74,9 @@ class Machine(models.Model):
     area = models.ForeignKey(Area, on_delete=models.PROTECT, null=True)
     type = models.CharField(max_length=50)
     operating_mode = models.CharField(max_length=20, choices=OPERATING_MODES)
+
+    class Meta:
+        app_label = 'map_manager'
 
     def __str__(self):
         return self.name

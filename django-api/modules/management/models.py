@@ -1,7 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
-    
 class Project(models.Model):
     name = models.CharField(max_length=100, unique=True)
     client = models.CharField(max_length=100, unique=True)
@@ -11,6 +10,10 @@ class Project(models.Model):
     date_start = models.DateField(blank=True, null=True)
     date_end = models.DateField(blank=True, null=True)
     priority = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+
+    class Meta:
+        app_label = 'management'
+
     def __str__(self):
         return self.name
     
@@ -19,6 +22,10 @@ class Employee(models.Model):
     name = models.CharField(max_length=100, unique=True)
     company = models.CharField(max_length=100, unique=True)
     role = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        app_label = 'management'
+
     def __str__(self):
         return self.name
     
@@ -41,8 +48,9 @@ class Task(models.Model):
     date_end = models.DateField(blank=True, null=True)
     priority = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     fk_project = models.ForeignKey(Project, on_delete=models.PROTECT)
+
+    class Meta:
+        app_label = 'management'
+
     def __str__(self):
         return self.name
-
-
-

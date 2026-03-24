@@ -10,6 +10,9 @@ class Client(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     metadata = models.JSONField(default=dict, blank=True)
 
+    class Meta:
+        app_label = 'auth_manager'
+
     def __str__(self):
         return self.name
 
@@ -19,6 +22,9 @@ class Role(models.Model):
     name = models.CharField(max_length=64)
     description = models.TextField(blank=True)
     scopes = models.JSONField(default=list, null=True, blank=True) # ej: ["realtime:read", "config:write"]
+
+    class Meta:
+        app_label = 'auth_manager'
 
     def __str__(self):
         return self.name
@@ -32,6 +38,7 @@ class ClientMembership(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        app_label = 'auth_manager'
         unique_together = ("user", "client")
 
     def __str__(self):
@@ -45,6 +52,9 @@ class Plant(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='plants')
     name = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
+
+    class Meta:
+        app_label = 'auth_manager'
 
     def __str__(self):
         return f"{self.client_id} - {self.name}"
