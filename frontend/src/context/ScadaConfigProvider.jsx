@@ -16,7 +16,7 @@ export function ScadaConfigProvider({ children }) {
 
       try {
 
-        const response = await fetch("/api/edge/gateway/tags/", {
+        const response = await fetch("/api/scada/edge/gateway/tags/", {
           credentials: "include",  // esto envía las cookies automáticamente
         });
 

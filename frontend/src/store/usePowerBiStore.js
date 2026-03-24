@@ -8,7 +8,7 @@ export const usePowerBiStore = create((set) => ({
     fetchPowerBis: async () => {
         set({ isLoading: true });
         try {
-            const res = await api.get("/api/powerbi-manager/mypowerbis/");
+            const res = await api.get("/api/powerbi/mypowerbis/");
             set({ powerBis: res.data });
         } catch (error) {
             console.error("Error fetching PowerBIs:", error);
@@ -21,7 +21,7 @@ export const usePowerBiStore = create((set) => ({
         set({ powerBis: newPowerBis });
         try {
             const orderData = newPowerBis.map((pbi, index) => ({ id: pbi.id, order: index }));
-            await api.put("/api/powerbi-manager/mypowerbis/reorder/", { pbis: orderData });
+            await api.put("/api/powerbi/mypowerbis/reorder/", { pbis: orderData });
         } catch (error) {
             console.error("Error updating order:", error);
             throw error;
@@ -30,7 +30,7 @@ export const usePowerBiStore = create((set) => ({
 
     updatePowerBi: async (id, data) => {
         try {
-            const res = await api.put(`/api/powerbi-manager/mypowerbis/${id}/`, data);
+            const res = await api.put(`/api/powerbi/mypowerbis/${id}/`, data);
             set((state) => ({
                 powerBis: state.powerBis.map((pbi) => pbi.id === id ? res.data : pbi),
             }));
@@ -43,7 +43,7 @@ export const usePowerBiStore = create((set) => ({
 
     deletePowerBi: async (id) => {
         try {
-            await api.delete(`/api/powerbi-manager/mypowerbis/${id}/`);
+            await api.delete(`/api/powerbi/mypowerbis/${id}/`);
             set((state) => ({
                 powerBis: state.powerBis.filter((pbi) => pbi.id !== id),
             }));

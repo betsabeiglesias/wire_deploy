@@ -1,4 +1,3 @@
-# django-api/scada_api/mod
 from django.db import models
 
 class Equipment(models.Model):

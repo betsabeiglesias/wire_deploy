@@ -1,0 +1,19 @@
+💻 Cómo usarlo:
+Abre terminal en la raíz de tu proyecto Django (donde está manage.py)
+
+Ejecuta en Bash:
+
+                python core/utils/show_urls.py
+
+
+✅ Qué obtienes
+Por cada endpoint te saldrá algo así:
+
+api/edge/sites/ -> modules.industrial_config_manager.api.views.SiteViewSet
+api/edge/plc/ -> modules.industrial_config_manager.api.views.PLCViewSet
+api/scada/edge/config/ -> modules.scada_manager.edge_config.views.EdgeConfigView
+api/scada/edge/gateway/tags/ -> modules.scada_manager.edge_config.views.GatewayTagsView
+api/scada/realtime/token/ -> modules.scada_manager.realtime.views.realtime_token
+api/powerbi/mypowerbis/ -> modules.powerbi_manager.views.PowerBiViewSet
+
+Con esto tienes el mapa completo de tu backend y sabes exactamente qué ruta usar en frontend.

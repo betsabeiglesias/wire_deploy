@@ -10,7 +10,7 @@ export const useLayoutStore = create((set) => ({
     set({ isLoading: true });
     try {
       // Coincide con: path("my-layouts/", my_layouts, name="my_layouts")
-      const res = await api.get("/api/scada-manager/my-layouts/"); 
+      const res = await api.get("/api/scada/my-layouts/"); 
       set({ layouts: res.data });
     } catch (error) {
       console.error("Error fetching Layouts:", error);
@@ -28,7 +28,7 @@ export const useLayoutStore = create((set) => ({
       // Enviamos el nuevo orden al backend
       // El backend deberá recibir la lista de IDs o el nuevo orden
       const orderData = newLayouts.map((l, index) => ({ id: l.id, order: index }));
-      await api.put("/api/scada-manager/reorder-layouts/", { layouts: orderData });
+      await api.put("/api/scada/reorder-layouts/", { layouts: orderData });
     } catch (error) {
       console.error("Error saving new order to DB:", error);
       throw error; // El componente capturará esto para revertir si falla
@@ -39,7 +39,7 @@ export const useLayoutStore = create((set) => ({
   updateLayout: async (id, data) => {
     try {
       // Coincide con: path("layout/<int:title_id>/", layout_detail)
-      const res = await api.put(`/api/scada-manager/layout/${id}/`, data);
+      const res = await api.put(`/api/scada/layout/${id}/`, data);
       set((state) => ({
         layouts: state.layouts.map((l) => (l.id === id ? res.data : l)),
       }));
@@ -54,7 +54,7 @@ export const useLayoutStore = create((set) => ({
   deleteLayout: async (id) => {
     try {
       // Coincide con: path("layout/<int:title_id>/", layout_detail)
-      await api.delete(`/api/scada-manager/layout/${id}/`);
+      await api.delete(`/api/scada/layout/${id}/`);
       set((state) => ({
         layouts: state.layouts.filter((l) => l.id !== id),
       }));

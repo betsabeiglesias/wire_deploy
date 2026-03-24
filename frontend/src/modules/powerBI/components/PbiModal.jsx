@@ -81,7 +81,7 @@ const PbiModal = ({ showModal, setShowModal, initialData, isEditMode = false }) 
                 
             } else {
                 // Lógica de Creación: Usamos API POST y actualizamos la lista
-                await api.post("/api/powerbi-manager/mypowerbis/", requestBody); 
+                await api.post("/api/powerbi/mypowerbis/", requestBody); 
                 await fetchPowerBis(); 
             }
 

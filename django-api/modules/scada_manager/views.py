@@ -109,9 +109,9 @@ def get_layout_or_404(request, layout_id):
 @permission_classes([IsAuthenticated])
 def variable_tables(request, layout_id):
     """
-    GET  /api/scada-manager/layouts/<layout_id>/tables/
+    GET  /api/scada/layouts/<layout_id>/tables/
          → lista de tablas con sus variables anidadas
-    POST /api/scada-manager/layouts/<layout_id>/tables/
+    POST /api/scada/layouts/<layout_id>/tables/
          → crear tabla  { "name": "Mi tabla" }
     """
     layout = get_layout_or_404(request, layout_id)
@@ -135,7 +135,7 @@ def variable_tables(request, layout_id):
 @permission_classes([IsAuthenticated])
 def variable_table_detail(request, layout_id, table_id):
     """
-    GET    /api/scada-manager/layouts/<layout_id>/tables/<table_id>/
+    GET    /api/scada/layouts/<layout_id>/tables/<table_id>/
     PATCH  → renombrar tabla  { "name": "Nuevo nombre" }
     DELETE → eliminar tabla y todas sus variables
     """
@@ -169,8 +169,8 @@ def variable_table_detail(request, layout_id, table_id):
 @permission_classes([IsAuthenticated])
 def table_variables(request, layout_id, table_id):
     """
-    GET  /api/scada-manager/layouts/<layout_id>/tables/<table_id>/variables/
-    POST /api/scada-manager/layouts/<layout_id>/tables/<table_id>/variables/
+    GET  /api/scada/layouts/<layout_id>/tables/<table_id>/variables/
+    POST /api/scada/layouts/<layout_id>/tables/<table_id>/variables/
     """
     layout = get_layout_or_404(request, layout_id)
     if not layout:
@@ -201,7 +201,7 @@ def table_variables(request, layout_id, table_id):
 @permission_classes([IsAuthenticated])
 def table_variable_detail(request, layout_id, table_id, var_id):
     """
-    GET    /api/scada-manager/layouts/<layout_id>/tables/<table_id>/variables/<var_id>/
+    GET    /api/scada/layouts/<layout_id>/tables/<table_id>/variables/<var_id>/
     PATCH  → editar variable
     DELETE → eliminar variable
     """
@@ -236,7 +236,7 @@ def table_variable_detail(request, layout_id, table_id, var_id):
 @permission_classes([IsAuthenticated])
 def resolve_variable_id(request):
     """
-    GET /api/scada-manager/variables/resolve/?variable_id=<uuid>
+    GET /api/scada/variables/resolve/?variable_id=<uuid>
     Resuelve un variable_id UUID a su ProjectVariable completa.
     Usado por el WebSocket consumer para saber a qué tag real suscribirse.
     """

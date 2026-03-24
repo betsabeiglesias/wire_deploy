@@ -1,4 +1,4 @@
-# django-api/scada_api/services/influx_service.py
+
 from influxdb_client import InfluxDBClient
 from django.conf import settings
 import os

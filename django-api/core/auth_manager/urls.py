@@ -10,3 +10,9 @@ urlpatterns = [
     path('me/', current_user, name="current-user"),
 ]
 
+
+ # Estas rutas se convertirán en:
+    # /api/auth/token/
+    # /api/auth/token/refresh/
+    # ... etc.
+

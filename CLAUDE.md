@@ -64,9 +64,9 @@ Frontend dev proxy: all `/api/*` requests are proxied to `http://django-api:8000
 | `auth_manager` | `/api/auth/` | JWT login/refresh (cookies + tokens) |
 | `industrial_config_manager` | `/api/config/` | ISA-95 hierarchy, PLC, Tag models |
 | `edge_config` | `/api/edge/` | Gateway config export; tag/PLC listing |
-| `scada_manager` | `/api/scada-manager/` | SCADA canvas layouts |
+| `scada_manager` | `/api/scada/` | SCADA canvas layouts |
 | `map_manager` | `/api/map/` | Geographic map data |
-| `powerbi_manager` | `/api/powerbi-manager/` | Power BI embed |
+| `powerbi_manager` | `/api/powerbi/` | Power BI embed |
 | `realtime` | `/api/realtime/` + WS | Channels consumers + Redis stream consumer |
 | `core.favorites` | `/api/favorites/` | Favorite dashboards |
 

@@ -22,10 +22,7 @@ def get_gateway_config():
 # ─── Edge (API key) ───────────────────────────────────────────────────────────
 
 class EdgeConfigView(APIView):
-    """
-    Configuración completa para que el edge genere el YAML.
-    GET /api/edge/config/
-    """
+  
     permission_classes = [EdgeApiKeyPermission]
 
     def get(self, request):
