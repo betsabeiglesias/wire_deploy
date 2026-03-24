@@ -32,7 +32,7 @@ CORE_APPS = [
 ]
 
 # =========================================================
-# 🔥 MÓDULOS DINÁMICOS (Soporte para sub-módulos internos)
+# 🔥 MÓDULOS DINÁMICOS (Auto-descubrimiento Profesional)
 # =========================================================
 enabled_modules_str = os.getenv("ENABLED_MODULES", "")
 enabled_list = [m.strip() for m in enabled_modules_str.split(",") if m.strip()]
@@ -40,25 +40,26 @@ enabled_list = [m.strip() for m in enabled_modules_str.split(",") if m.strip()]
 DYNAMIC_MODULES = []
 
 for m in enabled_list:
-    # 1. Añadimos el módulo principal
-    main_module = f"modules.{m}"
-    DYNAMIC_MODULES.append(main_module)
+    # 1. Registramos el módulo principal (ej: modules.scada_manager)
+    # Buscamos si tiene un apps.py para registrarlo
+    main_module_path = f"modules.{m}"
+    main_module_dir = os.path.join(BASE_DIR, 'modules', m)
+    
+    if os.path.exists(os.path.join(main_module_dir, 'apps.py')):
+        DYNAMIC_MODULES.append(main_module_path)
 
-    # 2. EXCEPCIONES: Si el módulo tiene sub-apps internas, hay que registrarlas
-    if m == "scada_manager":
-        DYNAMIC_MODULES.append("modules.scada_manager.edge_config")
-        DYNAMIC_MODULES.append("modules.scada_manager.realtime")
-        DYNAMIC_MODULES.append("modules.scada_manager.scada_api")
-        
-    if m == "industrial_config_manager":
-        # Si industrial_config_manager tuviera sub-apps, irían aquí
-        pass
+    # 2. AUTO-DESCUBRIMIENTO de sub-apps internas (edge_config, realtime, etc.)
+    if os.path.exists(main_module_dir):
+        for entry in os.listdir(main_module_dir):
+            subapp_dir = os.path.join(main_module_dir, entry)
+            # Si la carpeta tiene un apps.py, Django la carga automáticamente
+            if os.path.isdir(subapp_dir) and os.path.exists(os.path.join(subapp_dir, 'apps.py')):
+                DYNAMIC_MODULES.append(f"modules.{m}.{entry}")
 
 # =========================================================
 # 🧩 INSTALLED_APPS FINAL
 # =========================================================
 INSTALLED_APPS = CORE_APPS + DYNAMIC_MODULES
-
 
 # =========================================================
 # MIDDLEWARE
