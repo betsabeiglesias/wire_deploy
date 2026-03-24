@@ -1,4 +1,4 @@
-# docker-suite\django-api\industrial_config_manager\api\urls.py
+
 
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter

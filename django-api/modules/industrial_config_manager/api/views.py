@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 
 
-from industrial_config_manager.models import (
+from modules.industrial_config_manager.models import (
     Site, Area, WorkCenter, WorkUnit, PLC, Tag
 )
 from .serializers import (

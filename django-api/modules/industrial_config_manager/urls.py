@@ -3,5 +3,5 @@
 from django.urls import path, include
 
 urlpatterns = [
-    path("", include("industrial_config_manager.api.urls")),
+    path("", include("modules.industrial_config_manager.api.urls")),
 ]

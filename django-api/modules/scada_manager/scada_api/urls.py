@@ -1,7 +1,7 @@
-#django-api/scada_api/urls.py 
+# modules/scada_manager/scada_api/urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from . import views
+from modules.scada_manager.scada_api import views
 
 router = DefaultRouter()
 router.register(r'equipment', views.EquipmentViewSet, basename='equipment')
@@ -19,5 +19,5 @@ urlpatterns = [
     path('equipment/list/', views.list_equipment, name='equipment-list'),
     path('equipment/<str:equipment_id>/variables/', views.list_variables, name='equipment-variables'),
     path('equipment/hierarchy/', views.hierarchical_equipment_data),
-    path('api/scada/', include('scada_api.urls')),
+    # ELIMINADA la línea de include('scada_api.urls') que causaba el bucle
 ]

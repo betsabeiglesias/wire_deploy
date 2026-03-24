@@ -1,4 +1,3 @@
-# docker-suite\django-api\industrial_config_manager\models.py
 
 from django.db import models
 from django.utils import timezone

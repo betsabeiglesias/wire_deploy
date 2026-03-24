@@ -4,9 +4,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from django.core.cache import cache
-from .services.influx_service import InfluxService
-from .models import Equipment, TagConfig
-from .serializers import (
+from modules.scada_manager.scada_api.services.influx_services import InfluxService
+from modules.scada_manager.scada_api.models import Equipment, TagConfig
+from modules.scada_manager.scada_api.serializers import (
     EquipmentSerializer, 
     TagConfigSerializer,
     TagHistoryRequestSerializer,

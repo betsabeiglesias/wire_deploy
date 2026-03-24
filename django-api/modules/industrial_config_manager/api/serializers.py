@@ -1,7 +1,6 @@
-# docker-suite\django-api\industrial_config_manager\api\serializers.py
 
 from rest_framework import serializers
-from industrial_config_manager.models import (
+from modules.industrial_config_manager.models import (
     Site, Area, WorkCenter, WorkUnit, PLC, Driver, Tag
 )
 

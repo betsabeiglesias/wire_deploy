@@ -1,4 +1,4 @@
-# django-api/realtime/redis_stream_consumer.py
+
 
 import asyncio
 import json

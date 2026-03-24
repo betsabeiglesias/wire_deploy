@@ -32,15 +32,27 @@ CORE_APPS = [
 ]
 
 # =========================================================
-# 🔥 MÓDULOS DINÁMICOS (desde .env)
+# 🔥 MÓDULOS DINÁMICOS (Soporte para sub-módulos internos)
 # =========================================================
 enabled_modules_str = os.getenv("ENABLED_MODULES", "")
+enabled_list = [m.strip() for m in enabled_modules_str.split(",") if m.strip()]
 
-DYNAMIC_MODULES = [
-    f"modules.{m.strip()}"
-    for m in enabled_modules_str.split(",")
-    if m.strip()
-]
+DYNAMIC_MODULES = []
+
+for m in enabled_list:
+    # 1. Añadimos el módulo principal
+    main_module = f"modules.{m}"
+    DYNAMIC_MODULES.append(main_module)
+
+    # 2. EXCEPCIONES: Si el módulo tiene sub-apps internas, hay que registrarlas
+    if m == "scada_manager":
+        DYNAMIC_MODULES.append("modules.scada_manager.edge_config")
+        DYNAMIC_MODULES.append("modules.scada_manager.realtime")
+        DYNAMIC_MODULES.append("modules.scada_manager.scada_api")
+        
+    if m == "industrial_config_manager":
+        # Si industrial_config_manager tuviera sub-apps, irían aquí
+        pass
 
 # =========================================================
 # 🧩 INSTALLED_APPS FINAL
