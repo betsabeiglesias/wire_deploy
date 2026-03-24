@@ -9,63 +9,81 @@ export default function CommandCard({
   onClick,
   className = "",
 }) {
-  // 1. Configuración de variantes (reemplaza al archivo .js externo)
   const variants = {
     operation: {
-      card: "border-[#0d1d45] bg-[linear-gradient(145deg,#f7fbfd_0%,#edf5f8_55%,#fdfefe_100%)] dark:border-white/10 dark:bg-[linear-gradient(180deg,#09152f_0%,#0d1d40_42%,#132857_100%)]",
-      icon: "bg-[#0d1d45] text-white dark:bg-[#7ec8ff] dark:text-[#09152f]",
-      accent: "text-[#255f82] dark:text-[#8fd0ff]",
+      card: "border-[#17305f] bg-[linear-gradient(180deg,#0b1731_0%,#102247_48%,#15305f_100%)]",
+      icon: "bg-[#7ec8ff]/18 text-[#bde6ff] border border-[#7ec8ff]/20",
+      accent: "text-[#8fd0ff]",
+      title: "text-white",
+      body: "text-[#c7d1db]",
+      badge: "border-white/10 bg-white/6 text-[#dfe9f4]",
+      action: "text-white",
     },
     analytics: {
-      card: "border-[#8f6a18] bg-[linear-gradient(145deg,#fffdf5_0%,#f8f2dd_55%,#fdfcf8_100%)] dark:border-[#4a4c3d] dark:bg-[linear-gradient(145deg,#25281d_0%,#343824_55%,#44492d_100%)]",
-      icon: "bg-[#8f6a18] text-white dark:bg-[#e9c46a] dark:text-[#33270b]",
-      accent: "text-[#8f6a18] dark:text-[#f1cf80]",
+      card: "border-[#6b571b] bg-[linear-gradient(180deg,#231d0d_0%,#352a12_48%,#473817_100%)]",
+      icon: "bg-[#e9c46a]/16 text-[#f3d996] border border-[#e9c46a]/20",
+      accent: "text-[#f1cf80]",
+      title: "text-white",
+      body: "text-[#e0d7bf]",
+      badge: "border-white/10 bg-white/6 text-[#f4ead3]",
+      action: "text-white",
     },
     support: {
-      card: "border-[#051145] bg-[linear-gradient(145deg,#f8f9fc_0%,#eef1f8_55%,#fcfcfe_100%)] dark:border-[#4b465f] dark:bg-[linear-gradient(145deg,#1c1f2b_0%,#2b3042_55%,#3a425a_100%)]",
-      icon: "bg-[#49566f] text-white dark:bg-[#c0c8da] dark:text-[#252c3b]",
-      accent: "text-[#49566f] dark:text-[#d5dbea]",
+      card: "border-[#304765] bg-[linear-gradient(180deg,#182232_0%,#223247_48%,#304765_100%)]",
+      icon: "bg-[#c0c8da]/16 text-[#e1e7f1] border border-[#c0c8da]/20",
+      accent: "text-[#d5dbea]",
+      title: "text-white",
+      body: "text-[#d2dae5]",
+      badge: "border-white/10 bg-white/6 text-[#dfe9f4]",
+      action: "text-white",
     },
   };
 
-  // 2. Clases base (las que no cambian nunca)
-  const baseCard =
-    "group overflow-hidden rounded-[28p  x] border p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_24px_54px_-32px_rgba(0,0,0,0.24)]";
-  const baseIcon = "flex h-14 w-14 items-center justify-center rounded-2xl";
-  const baseAccent = "text-sm font-semibold";
-
-  // 3. Selección de la variante activa
   const active = variants[variant] || variants.operation;
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`${baseCard} ${active.card} ${className} rounded-[30px]`}
+      className={[
+        "group flex h-full w-full flex-col overflow-hidden rounded-[24px] border p-4 text-left transition",
+        "hover:-translate-y-1 hover:shadow-[0_20px_44px_-28px_rgba(9,21,47,0.55)]",
+        "md:rounded-[28px] md:p-5",
+        active.card,
+        className,
+      ].join(" ")}
     >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <span className="inline-flex rounded-full border border-white bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#63707e] dark:border-white/10 dark:bg-white/6 dark:text-[#dfe9f4]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <span
+            className={`inline-flex rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] ${active.badge}`}
+          >
             {badge}
           </span>
 
-          <h2 className="mt-5 text-3xl font-semibold tracking-[-0.05em] text-[#007bf6] dark:text-white">
+          <h2
+            className={`mt-3 text-xl font-semibold tracking-[-0.04em] md:text-2xl ${active.title}`}
+          >
             {title}
           </h2>
         </div>
 
-        <div className={`${baseIcon} ${active.icon}`}>
-          <Icon className="h-6 w-6" />
+        <div
+          className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl ${active.icon}`}
+        >
+          <Icon className="h-5 w-5" />
         </div>
       </div>
 
-      <p className="mt-5 text-sm leading-7 text-[#697682] dark:text-[#c7d1db]">
-        {description}
-      </p>
+      <p className={`mt-3 text-sm leading-6 ${active.body}`}>{description}</p>
 
-      <div className="mt-8 flex items-center justify-between">
-        <span className={`${baseAccent} ${active.accent}`}>Acceso directo</span>
-        <span className="inline-flex items-center gap-2 text-sm font-semibold text-[#2f3942] dark:text-white">
+      <div className="mt-5 flex items-center justify-between gap-3">
+        <span className={`text-sm font-semibold ${active.accent}`}>
+          Acceso directo
+        </span>
+        <span
+          className={`inline-flex flex-shrink-0 items-center gap-2 text-sm font-semibold ${active.action}`}
+        >
           Abrir
           <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
         </span>

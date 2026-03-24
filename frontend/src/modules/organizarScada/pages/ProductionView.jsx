@@ -91,7 +91,9 @@ const ProductionView = () => {
 
       if (!target) return false;
 
-      setLayoutName(target.name || target?.views_data?.app_name || `Layout ${id}`);
+      setLayoutName(
+        target.name || target?.views_data?.app_name || `Layout ${id}`,
+      );
 
       if (target.views_data?.views?.length) {
         const firstView = target.views_data.views[0];
@@ -154,7 +156,9 @@ const ProductionView = () => {
   const handleNavigate = (targetViewId) => {
     if (!targetViewId || !appViewsData) return;
 
-    const targetView = appViewsData.views?.find((view) => view.id === targetViewId);
+    const targetView = appViewsData.views?.find(
+      (view) => view.id === targetViewId,
+    );
 
     if (!targetView) return;
 
