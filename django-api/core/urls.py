@@ -1,39 +1,41 @@
-# core/urls.py
+import os
 from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 
-
-
-from rest_framework_simplejwt.views import (
-    TokenRefreshView,
-)
-
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # ─── AUTH (Infraestructura con Cookies) ───────────────────
-    # Sustituimos TokenObtainPairView por tu nueva LoginView
-    path('api/auth/', include ('core.auth_manager.urls')),
+    # ─── INFRAESTRUCTURA (Fijos) ─────────────────────────────
+    path('api/auth/', include('core.auth_manager.urls')),
     path("api/realtime/", include("realtime.urls")),
-
-    # ─── APPS DE DOMINIO ────────────────────────────────────
-    path('api/scada-manager/', include('scada_manager.urls')),
-    path('api/map/', include('map_manager.urls')),
-
-    # Path para la configuración de los PLC
-    path("api/config/", include("industrial_config_manager.urls")),
-    path('api/management/', include('management.urls')),
-
-    path('api/powerbi-manager/', include('powerbi_manager.urls')),
-
-    # Path para favoritos
     path("api/favorites/", include("core.favorites.urls")),
-
     path("api/edge/", include("edge_config.urls")),
-
 ]
 
+# ─── CARGA DINÁMICA DE MÓDULOS DE CLIENTE ──────────────────
+# Escaneamos la carpeta 'modules' y cargamos sus urls.py automáticamente
+MODULES_DIR = os.path.join(settings.BASE_DIR, 'modules')
+
+if os.path.exists(MODULES_DIR):
+    for module_name in os.listdir(MODULES_DIR):
+        module_path = os.path.join(MODULES_DIR, module_name)
+        
+        # Verificamos que sea una carpeta y tenga un urls.py
+        if os.path.isdir(module_path) and os.path.exists(os.path.join(module_path, 'urls.py')):
+            
+            # Mapeo de nombres de URL para mantener compatibilidad con tu front:
+            url_prefix = module_name.replace('_', '-') # Ej: scada_manager -> scada-manager
+            
+            # Excepciones manuales para respetar tus rutas actuales:
+            if module_name == 'map_manager': url_prefix = 'map'
+            if module_name == 'industrial_config_manager': url_prefix = 'config'
+            
+            urlpatterns.append(
+                path(f'api/{url_prefix}/', include(f'modules.{module_name}.urls'))
+            )
+
+# Static files
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

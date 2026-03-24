@@ -1,5 +1,5 @@
 from django.contrib import admin
-from management.models import Project, Employee, Task
+from .models import Project, Employee, Task
 
 
 

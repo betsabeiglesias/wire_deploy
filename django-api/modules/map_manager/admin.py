@@ -1,5 +1,5 @@
 from django.contrib import admin
-from map_manager.models import Country, Location, Factory, Area, Manufacturer, Machine
+from .models import Country, Location, Factory, Area, Manufacturer, Machine
 
 
 
