@@ -17,7 +17,7 @@ export default function LoadProjectModal({ open, onClose, onLoad }) {
     if (!open) return;
     setLoading(true);
     setError(null);
-    api.get("/api/scada-manager/my-layouts/")
+    api.get("/api/scada/my-layouts/")
       .then(r => setLayouts(r.data || []))
       .catch(() => setError("No se pudieron cargar los proyectos."))
       .finally(() => setLoading(false));
@@ -27,7 +27,7 @@ export default function LoadProjectModal({ open, onClose, onLoad }) {
     setLoadingId(layout.id);
     try {
       // Cargar el detalle completo (vistas + elementos)
-      const r = await api.get(`/api/scada-manager/layout/${layout.id}/`);
+      const r = await api.get(`/api/scada/layout/${layout.id}/`);
       onLoad(r.data, layout.id, layout.name);
       onClose();
     } catch {

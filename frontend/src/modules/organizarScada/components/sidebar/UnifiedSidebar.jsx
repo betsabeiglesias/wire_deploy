@@ -112,7 +112,7 @@ const UnifiedSidebar = ({
     if (!layoutId) return;
     setVarsLoading(true);
     try {
-      const res = await api.get(`/api/scada-manager/layouts/${layoutId}/tables/`);
+      const res = await api.get(`/api/scada/layouts/${layoutId}/tables/`);
       setVariables(res.data || []);  // ahora es array de tablas con variables anidadas
     } catch {
       setVariables([]);

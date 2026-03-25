@@ -118,7 +118,7 @@ const ProductionView = () => {
       setIsLoading(true);
 
       try {
-        const res = await api.get(`/api/scada-manager/layout/${routeViewId}/`);
+        const res = await api.get(`/api/scada/layout/${routeViewId}/`);
 
         if (res.status === 200) {
           const data = res.data;

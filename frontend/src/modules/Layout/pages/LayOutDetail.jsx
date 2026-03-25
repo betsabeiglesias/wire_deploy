@@ -105,7 +105,7 @@ export default function LayOutDetail() {
     async function loadLayout() {
       setIsLoading(true);
       try {
-        const res = await api.get(`/api/scada-manager/layout/${id}/`);
+        const res = await api.get(`/api/scada/layout/${id}/`);
         const data = res.data;
         setLayoutName(data?.name || "Layout");
 

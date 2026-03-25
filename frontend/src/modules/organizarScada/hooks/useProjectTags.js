@@ -9,7 +9,7 @@ export function useProjectTags(layoutId, tagsMap = new Map()) {
   useEffect(() => {
     if (!layoutId) { setTags([]); return; }
     setLoading(true);
-    fetch(`/api/scada-manager/layouts/${layoutId}/tables/`, { credentials: "include" })
+    fetch(`/api/scada/layouts/${layoutId}/tables/`, { credentials: "include" })
       .then(r => r.json())
       .then(tables => {
         const all = tables.flatMap(table =>

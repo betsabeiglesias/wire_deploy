@@ -1,30 +1,25 @@
-"""
-ASGI config for core project.
-
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
-"""
-
 import os
-from django.core.asgi import get_asgi_application
+import importlib
+
 from channels.routing import ProtocolTypeRouter, URLRouter
+from django.core.asgi import get_asgi_application
+from django.conf import settings
 
-import realtime.routing
-from realtime.middleware import JWTAuthMiddleware
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 
 django_asgi_app = get_asgi_application()
-print("🚀 ASGI application loaded")
-application = ProtocolTypeRouter(
-    {
-        "http": django_asgi_app,
-        "websocket": JWTAuthMiddleware(
-            URLRouter(
-                realtime.routing.websocket_urlpatterns
-            )
-        ),
-    }
-)
+
+# 🔥 cargar rutas websocket dinámicamente
+websocket_urlpatterns = []
+
+for app in getattr(settings, "DYNAMIC_MODULES", []):
+    try:
+        routing = importlib.import_module(f"{app}.realtime.routing")
+        websocket_urlpatterns += getattr(routing, "websocket_urlpatterns", [])
+    except ModuleNotFoundError:
+        continue
+
+application = ProtocolTypeRouter({
+    "http": django_asgi_app,
+    "websocket": URLRouter(websocket_urlpatterns),
+})

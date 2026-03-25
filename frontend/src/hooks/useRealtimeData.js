@@ -23,7 +23,7 @@ export function useRealtimeData(tenant) {
       try {
         console.log("🔑 Pidiendo token realtime…");
 
-        const res = await api.get("/api/realtime/token/");
+        const res = await api.get("/api/scada/realtime/token/");
         const token = res.data.token;
 
         if (cancelled) return;
