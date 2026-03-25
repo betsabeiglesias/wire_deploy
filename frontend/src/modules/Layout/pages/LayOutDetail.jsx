@@ -34,7 +34,7 @@ const normalizeElements = (items = []) =>
 /**
  * Componente ViewCard: Renderiza el contenido real del SCADA escalado
  */
-const ViewCard = ({ view, scale = 0.43 }) => {
+const ViewCard = ({ view, scale = 0.33 }) => {
   const originalWidth = 1400;
   const originalHeight = 900;
   const cardContentHeight = originalHeight * scale;
@@ -206,7 +206,7 @@ export default function LayOutDetail() {
       <div className="min-h-screen p-4 bg-white">
         <div className="grid grid-cols-1 gap-6">
           {views.map((view) => (
-            <ViewCard key={view.id} view={view} scale={0.6} />
+            <ViewCard key={view.id} view={view} scale={0.466} />
           ))}
         </div>
       </div>

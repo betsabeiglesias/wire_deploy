@@ -1,8 +1,8 @@
 // src/modules/organizarScada/components/sidebar/UnifiedSidebar.jsx
 //
 // Sidebar del designer SCADA.
-// - Sin useRealtime / allTags: eliminado el árbol ISA-95 en tiempo real.
-// - Sección "Dispositivos" abre DeviceManagerModal (tags desde API REST).
+// - Sin useRealtime / allTags: eliminado el ?rbol ISA-95 en tiempo real.
+// - Secci?n "Dispositivos" abre DeviceManagerModal (tags desde API REST).
 // - El resto de secciones sin cambios respecto al original.
 //
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -80,7 +80,7 @@ const UnifiedSidebar = ({
   layoutId = null,
   projectName = "",
   onProjectNameChange,
-  onSaveProject,        // () => Promise<void> — guarda el proyecto sin validar canvas
+  onSaveProject,        // () => Promise<void> ? guarda el proyecto sin validar canvas
   views = [],
   selectedViewId,
   onCreateView,
@@ -160,7 +160,7 @@ const UnifiedSidebar = ({
 
   const handleSectionClick = (id) => {
     setActiveSection((prev) => (prev === id ? null : id));
-    // Refrescar variables al abrir la sección de dispositivos
+    // Refrescar variables al abrir la secci?n de dispositivos
     if (id === "devices" && layoutId) fetchVariables();
   };
 
@@ -361,7 +361,7 @@ const UnifiedSidebar = ({
 
             {!viewsLoading && views.length === 0 && (
               <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-[11px] text-slate-600">
-                <p className="font-semibold text-slate-700">Aún no tienes vistas.</p>
+                <p className="font-semibold text-slate-700">A?n no tienes vistas.</p>
                 <p className="mt-1 text-slate-500">Crea tu primera vista o importa un JSON existente.</p>
                 <div className="mt-3 flex gap-2">
                   <button
@@ -423,7 +423,7 @@ const UnifiedSidebar = ({
                         title="Renombrar"
                       >??</button>
                       <button
-                        onClick={() => { if (confirm(`¿Eliminar vista "${view.name}"?`)) onDeleteView(view.id); }}
+                        onClick={() => { if (confirm(`?Eliminar vista "${view.name}"?`)) onDeleteView(view.id); }}
                         className="p-1 text-slate-400 hover:text-red-600"
                         title="Eliminar"
                       >???</button>
@@ -462,7 +462,7 @@ const UnifiedSidebar = ({
                       isSelected      ? "border-sky-400 bg-sky-50 text-sky-900" : "border-transparent bg-white text-slate-700 hover:border-slate-300",
                       draggingLayerId === layer.id ? "opacity-60" : "",
                     ].join(" ")}
-                    title={`${layer.fallbackName} • z:${layer.zIndex}`}
+                    title={`${layer.fallbackName} ? z:${layer.zIndex}`}
                   >
                     <button
                       type="button"
@@ -534,7 +534,7 @@ const UnifiedSidebar = ({
             <div className="space-y-2">
               <input
                 className="w-full rounded border border-slate-300 px-2 py-1.5 text-[12px] focus:border-sky-400 focus:outline-none"
-                placeholder="Nombre del proyecto…"
+                placeholder="Nombre del proyecto?"
                 value={projectNameDraft}
                 onChange={(e) => setProjectNameDraft(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") commitProjectName(); }}
@@ -555,14 +555,14 @@ const UnifiedSidebar = ({
                 }}
                 className="w-full rounded border border-sky-400 bg-sky-50 px-2 py-1.5 text-[12px] font-medium text-sky-700 hover:bg-sky-100 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {isSavingProject ? "Guardando…" : "Guardar y continuar"}
+                {isSavingProject ? "Guardando?" : "Guardar y continuar"}
               </button>
             </div>
           </div>
         );
       }
 
-      // Con proyecto guardado: árbol tabla ? variables + botón gestor
+      // Con proyecto guardado: ?rbol tabla ? variables + bot?n gestor
       return (
         <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-2">
           <div className="flex items-center justify-between">
@@ -584,7 +584,7 @@ const UnifiedSidebar = ({
             </div>
           ) : variables.length === 0 ? (
             <p className="text-[10px] text-slate-400">
-              Sin tablas. Usa "Gestionar" para crear tablas y añadir variables.
+              Sin tablas. Usa "Gestionar" para crear tablas y a?adir variables.
             </p>
           ) : (
             <div className="space-y-0.5 max-h-72 overflow-y-auto">
@@ -593,7 +593,7 @@ const UnifiedSidebar = ({
                 const tableVars = table.variables || [];
                 return (
                   <div key={table.id}>
-                    {/* Tabla — rama */}
+                    {/* Tabla ? rama */}
                     <button type="button" onClick={() => toggleTable(table.id)}
                       className="flex w-full items-center gap-1 rounded px-1 py-1 hover:bg-slate-100 text-left">
                       {isOpen
@@ -605,7 +605,7 @@ const UnifiedSidebar = ({
                       <span className="shrink-0 text-[10px] text-slate-400">{tableVars.length}</span>
                     </button>
 
-                    {/* Variables — hojas */}
+                    {/* Variables ? hojas */}
                     {isOpen && (
                       <div className="ml-3 border-l border-slate-200 pl-2 space-y-0.5 pb-1">
                         {tableVars.length === 0 ? (
@@ -615,8 +615,8 @@ const UnifiedSidebar = ({
                             <div key={v.id}
                               className="flex items-center justify-between gap-1 rounded px-1 py-0.5 hover:bg-slate-50"
                               title={v.source === "connection"
-                                ? `${v.equipment} › ${v.variable}`
-                                : `Local · ${v.datatype}${v.initial_value != null ? ` = ${v.initial_value}` : ""}`}>
+                                ? `${v.equipment} ? ${v.variable}`
+                                : `Local ? ${v.datatype}${v.initial_value != null ? ` = ${v.initial_value}` : ""}`}>
                               <span className="truncate text-[11px] text-slate-700">{v.name}</span>
                               <div className="flex shrink-0 items-center gap-1">
                                 {v.source === "connection" && v.equipment && (
@@ -630,7 +630,7 @@ const UnifiedSidebar = ({
                                     ? "bg-purple-100 text-purple-600"
                                     : "bg-slate-100 text-slate-500"
                                 )}>
-                                  {v.datatype || "—"}
+                                  {v.datatype || "?"}
                                 </span>
                               </div>
                             </div>
@@ -653,7 +653,7 @@ const UnifiedSidebar = ({
         { id: "gauges",   label: "Gauges",   items: elementos_scada.gauges   || [] },
         { id: "barras",   label: "Barras",   items: elementos_scada.barras   || [] },
         { id: "tarjetas", label: "Tarjetas", items: elementos_scada.tarjetas || [] },
-        { id: "graficas", label: "Gráficas", items: elementos_scada.graficas || [] },
+        { id: "graficas", label: "Gr?ficas", items: elementos_scada.graficas || [] },
         { id: "minis",    label: "Mini",     items: elementos_scada.minis    || [] },
       ];
       return (
@@ -694,7 +694,7 @@ const UnifiedSidebar = ({
       );
     }
 
-    // -- Iconos básicos ----------------------------------------------------------
+    // -- Iconos b?sicos ----------------------------------------------------------
     if (sectionId === "buttons") {
       return (
         <div className="rounded-lg border border-slate-200 bg-white p-3">
@@ -771,7 +771,7 @@ const UnifiedSidebar = ({
                       onClick={e => { e.stopPropagation(); handleDeleteCustomIcon(icon.id); }}
                       className="absolute right-1 top-1 z-10 hidden h-5 w-5 items-center justify-center rounded bg-white/90 text-[11px] text-rose-600 shadow group-hover:inline-flex"
                       title="Eliminar icono"
-                    >×</button>
+                    >?</button>
                     <div className="flex h-20 items-center justify-center overflow-hidden rounded border border-slate-100 bg-slate-50">
                       <img
                         src={icon.base64}
@@ -798,10 +798,20 @@ const UnifiedSidebar = ({
     <>
       <div className="flex h-full bg-slate-100 text-slate-800 text-[13px]">
         <aside
-          className={`flex flex-col border-r border-slate-200 bg-white shadow-sm transition-all duration-200 ${
+          className={`relative flex flex-col border-r border-slate-200 bg-white shadow-sm transition-all duration-200 ${
             isMainOpen ? "w-64" : "w-12"
           }`}
         >
+          <button
+            type="button"
+            onClick={() => setIsMainOpen((prev) => !prev)}
+            className="absolute -right-3 top-1/2 z-20 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-md transition hover:border-sky-400 hover:text-sky-700"
+            aria-label={isMainOpen ? "Cerrar sidebar" : "Abrir sidebar"}
+            title={isMainOpen ? "Cerrar sidebar" : "Abrir sidebar"}
+          >
+            {isMainOpen ? "<" : ">"}
+          </button>
+
           <div className="flex items-center justify-between h-10 px-2 border-b border-slate-200 bg-slate-50">
             {isMainOpen && (
               <span className="ml-2 text-xs font-semibold tracking-wide text-slate-700">
@@ -884,7 +894,7 @@ const UnifiedSidebar = ({
           open={showDevices}
           onClose={() => {
             setShowDevices(false);
-            fetchVariables();   // refresca el árbol del sidebar
+            fetchVariables();   // refresca el ?rbol del sidebar
           }}
           layoutId={layoutId}
         />
@@ -894,3 +904,4 @@ const UnifiedSidebar = ({
 };
 
 export default UnifiedSidebar;
+

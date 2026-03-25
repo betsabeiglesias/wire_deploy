@@ -20,6 +20,15 @@ const HmiPage = () => {
       variant: "operation",
     },
     {
+      title: "Diseñar HMI 2.0",
+      description:
+        "Configura la estructura visual de cada pantalla, organiza bloques y define la experiencia operativa.",
+      icon: PanelsTopLeft,
+      eyebrow: "Editor visual",
+      route: "/organizar-scada",
+      variant: "operation",
+    },
+    {
       title: "Comunicaciones",
       description:
         "Conecta tags, protocolos y estados para enlazar la capa HMI con la infraestructura industrial.",

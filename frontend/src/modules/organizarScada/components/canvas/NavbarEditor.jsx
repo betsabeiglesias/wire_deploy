@@ -14,6 +14,7 @@ export default function NavbarEditor({
   // ── Live mode ──────────────────────────────────────────────────────────────
   isLiveMode = false,
   onToggleLive,
+  onOpenScript,
 }) {
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-white shadow-sm text-[12px] text-slate-700 flex-wrap">
@@ -33,6 +34,7 @@ export default function NavbarEditor({
         <>
           <button onClick={onDuplicate}     className="px-2 py-1 rounded hover:bg-slate-100 disabled:opacity-40" disabled={isLiveMode}>Duplicar</button>
           <button onClick={onDeleteSelected} className="px-2 py-1 rounded hover:bg-slate-100 disabled:opacity-40" disabled={isLiveMode}>Eliminar</button>
+          <button onClick={onOpenScript} className="px-2 py-1 rounded hover:bg-slate-100">Script</button>
 
           <div className="h-4 w-px bg-slate-200" />
 
@@ -78,3 +80,4 @@ export default function NavbarEditor({
     </div>
   );
 }
+
