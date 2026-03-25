@@ -8,7 +8,7 @@ class Site(models.Model):
     description = models.TextField(blank=True)
 
     class Meta:
-        app_label = 'industrial_config_manager'
+        app_label = 'industrial_config_manager'      
 
     def __str__(self):
         return self.name
