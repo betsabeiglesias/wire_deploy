@@ -20,6 +20,13 @@ if os.path.exists(MODULES_DIR):
         module_path = os.path.join(MODULES_DIR, module_name)
 
         if os.path.isdir(module_path) and os.path.exists(os.path.join(module_path, 'urls.py')):
+
+            # para no confundir api/edge (de industrial_config_manager) y api/scada/edge (de edge manager) renombramos el api/age a api/config
+            if module_name == "industrial_config_manager":     
+                prefix = "config"
+            else:
+                prefix = ""   # el resto se comporta como antes
+
             urlpatterns.append(
                 path('api/', include(f'modules.{module_name}.urls'))
             )

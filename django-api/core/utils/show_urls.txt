@@ -17,3 +17,317 @@ api/scada/realtime/token/ -> modules.scada_manager.realtime.views.realtime_token
 api/powerbi/mypowerbis/ -> modules.powerbi_manager.views.PowerBiViewSet
 
 Con esto tienes el mapa completo de tu backend y sabes exactamente qué ruta usar en frontend.
+
+
+
+aroa.banuelos@PORTOFI0723 MINGW64 ~/Desktop/wire_deploy (feature/modulos)
+$ docker compose exec -it django-api python manage.py shell
+Python 3.12.13 (main, Mar 16 2026, 23:06:54) [GCC 14.2.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+(InteractiveConsole)
+>>> from django.urls import get_resolver
+>>> 
+>>> resolver = get_resolver()
+>>> for pattern in resolver.url_patterns:
+...     print(pattern)
+... 
+<URLResolver <URLPattern list> (admin:admin) 'admin/'>
+<URLResolver <module 'core.auth_manager.urls' from '/app/core/auth_manager/urls.py'> (None:None) 'api/auth/'>
+<URLResolver <module 'core.favorites.urls' from '/app/core/favorites/urls.py'> (None:None) 'api/favorites/'>
+<URLResolver <module 'modules.industrial_config_manager.urls' from '/app/modules/industrial_config_manager/urls.py'> (None:None) 'api/'>
+<URLResolver <module 'modules.management.urls' from '/app/modules/management/urls.py'> (None:None) 'api/'>
+<URLResolver <module 'modules.map_manager.urls' from '/app/modules/map_manager/urls.py'> (None:None) 'api/'>
+<URLResolver <module 'modules.powerbi_manager.urls' from '/app/modules/powerbi_manager/urls.py'> (None:None) 'api/'>
+<URLResolver <module 'modules.scada_manager.urls' from '/app/modules/scada_manager/urls.py'> (None:None) 'api/'>
+<URLPattern '^static/(?P<path>.*)$'>
+>>> from django.urls import get_resolver, URLPattern, URLResolver
+>>>
+>>> def list_urls(urlpatterns, prefix=''):
+...     for pattern in urlpatterns:
+...         if isinstance(pattern, URLPattern):
+...             print(f"{prefix}{pattern.pattern} -> {pattern.lookup_str}")
+...         elif isinstance(pattern, URLResolver):
+...             list_urls(pattern.url_patterns, prefix + str(pattern.pattern))
+...
+>>> resolver = get_resolver()
+>>>
+>>> print("\n--- TODAS LAS URLS REALES ---\n")
+
+--- TODAS LAS URLS REALES ---
+
+>>> list_urls(resolver.url_patterns)
+admin/ -> django.contrib.admin.sites.AdminSite.index
+admin/login/ -> django.contrib.admin.sites.AdminSite.login
+admin/logout/ -> django.contrib.admin.sites.AdminSite.logout
+admin/password_change/ -> django.contrib.admin.sites.AdminSite.password_change
+admin/password_change/done/ -> django.contrib.admin.sites.AdminSite.password_change_done
+admin/autocomplete/ -> django.contrib.admin.sites.AdminSite.autocomplete_view
+admin/jsi18n/ -> django.contrib.admin.sites.AdminSite.i18n_javascript
+admin/r/<int:content_type_id>/<path:object_id>/ -> django.contrib.contenttypes.views.shortcut
+admin/auth/group/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/auth/group/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/auth/group/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/auth/group/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/auth/group/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/auth/group/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/auth/user/<id>/password/ -> django.contrib.auth.admin.UserAdmin.user_change_password
+admin/auth/user/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/auth/user/add/ -> django.contrib.auth.admin.UserAdmin.add_view
+admin/auth/user/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/auth/user/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/auth/user/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/auth/user/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/auth_manager/client/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/auth_manager/client/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/auth_manager/client/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/auth_manager/client/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/auth_manager/client/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/auth_manager/client/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/auth_manager/role/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/auth_manager/role/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/auth_manager/role/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/auth_manager/role/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/auth_manager/role/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/auth_manager/role/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/auth_manager/plant/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/auth_manager/plant/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/auth_manager/plant/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/auth_manager/plant/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/auth_manager/plant/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/auth_manager/plant/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/industrial_config_manager/site/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/industrial_config_manager/site/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/industrial_config_manager/site/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/industrial_config_manager/site/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/industrial_config_manager/site/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/industrial_config_manager/site/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/industrial_config_manager/area/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/industrial_config_manager/area/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/industrial_config_manager/area/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/industrial_config_manager/area/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/industrial_config_manager/area/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/industrial_config_manager/area/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/industrial_config_manager/workcenter/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/industrial_config_manager/workcenter/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/industrial_config_manager/workcenter/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/industrial_config_manager/workcenter/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/industrial_config_manager/workcenter/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/industrial_config_manager/workcenter/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/industrial_config_manager/workunit/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/industrial_config_manager/workunit/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/industrial_config_manager/workunit/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/industrial_config_manager/workunit/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/industrial_config_manager/workunit/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/industrial_config_manager/workunit/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/industrial_config_manager/driver/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/industrial_config_manager/driver/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/industrial_config_manager/driver/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/industrial_config_manager/driver/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/industrial_config_manager/driver/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/industrial_config_manager/driver/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/industrial_config_manager/plc/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/industrial_config_manager/plc/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/industrial_config_manager/plc/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/industrial_config_manager/plc/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/industrial_config_manager/plc/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/industrial_config_manager/plc/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/industrial_config_manager/tag/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/industrial_config_manager/tag/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/industrial_config_manager/tag/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/industrial_config_manager/tag/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/industrial_config_manager/tag/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/industrial_config_manager/tag/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/scada_manager/mylayoutstitle/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/scada_manager/mylayoutstitle/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/scada_manager/mylayoutstitle/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/scada_manager/mylayoutstitle/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/scada_manager/mylayoutstitle/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/scada_manager/mylayoutstitle/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/scada_manager/projectvariable/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/scada_manager/projectvariable/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/scada_manager/projectvariable/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/scada_manager/projectvariable/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/scada_manager/projectvariable/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/scada_manager/projectvariable/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/scada_manager/variabletable/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/scada_manager/variabletable/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/scada_manager/variabletable/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/scada_manager/variabletable/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/scada_manager/variabletable/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/scada_manager/variabletable/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/map_manager/country/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/map_manager/country/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/map_manager/country/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/map_manager/country/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/map_manager/country/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/map_manager/country/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/map_manager/location/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/map_manager/location/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/map_manager/location/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/map_manager/location/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/map_manager/location/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/map_manager/location/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/map_manager/factory/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/map_manager/factory/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/map_manager/factory/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/map_manager/factory/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/map_manager/factory/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/map_manager/factory/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/map_manager/area/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/map_manager/area/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/map_manager/area/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/map_manager/area/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/map_manager/area/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/map_manager/area/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/map_manager/manufacturer/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/map_manager/manufacturer/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/map_manager/manufacturer/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/map_manager/manufacturer/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/map_manager/manufacturer/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/map_manager/manufacturer/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/map_manager/machine/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/map_manager/machine/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/map_manager/machine/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/map_manager/machine/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/map_manager/machine/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/map_manager/machine/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/powerbi_manager/mypowerbi/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/powerbi_manager/mypowerbi/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/powerbi_manager/mypowerbi/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/powerbi_manager/mypowerbi/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/powerbi_manager/mypowerbi/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/powerbi_manager/mypowerbi/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/management/project/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/management/project/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/management/project/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/management/project/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/management/project/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/management/project/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/management/employee/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/management/employee/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/management/employee/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/management/employee/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/management/employee/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/management/employee/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/management/task/ -> django.contrib.admin.options.ModelAdmin.changelist_view
+admin/management/task/add/ -> django.contrib.admin.options.ModelAdmin.add_view
+admin/management/task/<path:object_id>/history/ -> django.contrib.admin.options.ModelAdmin.history_view
+admin/management/task/<path:object_id>/delete/ -> django.contrib.admin.options.ModelAdmin.delete_view
+admin/management/task/<path:object_id>/change/ -> django.contrib.admin.options.ModelAdmin.change_view
+admin/management/task/<path:object_id>/ -> django.views.generic.base.RedirectView
+admin/^(?P<app_label>auth|auth_manager|industrial_config_manager|scada_manager|map_manager|powerbi_manager|management)/$ -> django.contrib.admin.sites.AdminSite.app_index
+admin/(?P<url>.*)$ -> django.contrib.admin.sites.AdminSite.catch_all_view
+api/auth/token/ -> core.auth_manager.views.LoginView
+api/auth/token/refresh/ -> core.auth_manager.views.CustomTokenRefreshView
+api/auth/logout/ -> core.auth_manager.views.WrappedAPIView
+api/auth/check/ -> core.auth_manager.views.WrappedAPIView
+api/auth/me/ -> core.auth_manager.views.WrappedAPIView
+api/favorites/^$ -> core.favorites.views.FavoriteViewSet
+api/favorites/^\.(?P<format>[a-z0-9]+)/?$ -> core.favorites.views.FavoriteViewSet
+api/favorites/^reorder/$ -> core.favorites.views.FavoriteViewSet
+api/favorites/^reorder\.(?P<format>[a-z0-9]+)/?$ -> core.favorites.views.FavoriteViewSet
+api/favorites/ -> rest_framework.routers.APIRootView
+api/favorites/<drf_format_suffix:format> -> rest_framework.routers.APIRootView
+api/edge/^sites/$ -> modules.industrial_config_manager.api.views.SiteViewSet
+api/edge/^sites\.(?P<format>[a-z0-9]+)/?$ -> modules.industrial_config_manager.api.views.SiteViewSet
+api/edge/^sites/(?P<pk>[^/.]+)/$ -> modules.industrial_config_manager.api.views.SiteViewSet
+api/edge/^sites/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.industrial_config_manager.api.views.SiteViewSet
+api/edge/^areas/$ -> modules.industrial_config_manager.api.views.AreaViewSet
+api/edge/^areas\.(?P<format>[a-z0-9]+)/?$ -> modules.industrial_config_manager.api.views.AreaViewSet
+api/edge/^areas/(?P<pk>[^/.]+)/$ -> modules.industrial_config_manager.api.views.AreaViewSet
+api/edge/^areas/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.industrial_config_manager.api.views.AreaViewSet
+api/edge/^workcenters/$ -> modules.industrial_config_manager.api.views.WorkCenterViewSet
+api/edge/^workcenters\.(?P<format>[a-z0-9]+)/?$ -> modules.industrial_config_manager.api.views.WorkCenterViewSet
+api/edge/^workcenters/(?P<pk>[^/.]+)/$ -> modules.industrial_config_manager.api.views.WorkCenterViewSet
+api/edge/^workcenters/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.industrial_config_manager.api.views.WorkCenterViewSet
+api/edge/^workunits/$ -> modules.industrial_config_manager.api.views.WorkUnitViewSet
+api/edge/^workunits\.(?P<format>[a-z0-9]+)/?$ -> modules.industrial_config_manager.api.views.WorkUnitViewSet
+api/edge/^workunits/(?P<pk>[^/.]+)/$ -> modules.industrial_config_manager.api.views.WorkUnitViewSet
+api/edge/^workunits/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.industrial_config_manager.api.views.WorkUnitViewSet
+api/edge/^plc/$ -> modules.industrial_config_manager.api.views.PLCViewSet
+api/edge/^plc\.(?P<format>[a-z0-9]+)/?$ -> modules.industrial_config_manager.api.views.PLCViewSet
+api/edge/^plc/(?P<pk>[^/.]+)/$ -> modules.industrial_config_manager.api.views.PLCViewSet
+api/edge/^plc/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.industrial_config_manager.api.views.PLCViewSet
+api/edge/^plc/(?P<pk>[^/.]+)/tags/(?P<tag_pk>[^/.]+)/$ -> modules.industrial_config_manager.api.views.PLCViewSet
+api/edge/^plc/(?P<pk>[^/.]+)/tags/(?P<tag_pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.industrial_config_manager.api.views.PLCViewSet
+api/edge/^plc/(?P<pk>[^/.]+)/tags/(?P<tag_pk>[^/.]+)/toggle/$ -> modules.industrial_config_manager.api.views.PLCViewSet
+api/edge/^plc/(?P<pk>[^/.]+)/tags/(?P<tag_pk>[^/.]+)/toggle\.(?P<format>[a-z0-9]+)/?$ -> modules.industrial_config_manager.api.views.PLCViewSet
+api/edge/^plc/(?P<pk>[^/.]+)/tags/$ -> modules.industrial_config_manager.api.views.PLCViewSet
+api/edge/^plc/(?P<pk>[^/.]+)/tags\.(?P<format>[a-z0-9]+)/?$ -> modules.industrial_config_manager.api.views.PLCViewSet
+api/edge/^plc/(?P<pk>[^/.]+)/toggle_enabled/$ -> modules.industrial_config_manager.api.views.PLCViewSet
+api/edge/^plc/(?P<pk>[^/.]+)/toggle_enabled\.(?P<format>[a-z0-9]+)/?$ -> modules.industrial_config_manager.api.views.PLCViewSet
+api/edge/ -> rest_framework.routers.APIRootView
+api/edge/<drf_format_suffix:format> -> rest_framework.routers.APIRootView
+api/management/^tasks/$ -> modules.management.views.TaskViewSet
+api/management/^tasks\.(?P<format>[a-z0-9]+)/?$ -> modules.management.views.TaskViewSet
+api/management/^tasks/(?P<pk>[^/.]+)/$ -> modules.management.views.TaskViewSet
+api/management/^tasks/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.management.views.TaskViewSet
+api/management/ -> rest_framework.routers.APIRootView
+api/management/<drf_format_suffix:format> -> rest_framework.routers.APIRootView
+api/map/^countries/$ -> modules.map_manager.views.CountryViewSet
+api/map/^countries\.(?P<format>[a-z0-9]+)/?$ -> modules.map_manager.views.CountryViewSet
+api/map/^countries/(?P<pk>[^/.]+)/$ -> modules.map_manager.views.CountryViewSet
+api/map/^countries/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.map_manager.views.CountryViewSet
+api/map/^locations/$ -> modules.map_manager.views.LocationViewSet
+api/map/^locations\.(?P<format>[a-z0-9]+)/?$ -> modules.map_manager.views.LocationViewSet
+api/map/^locations/(?P<pk>[^/.]+)/$ -> modules.map_manager.views.LocationViewSet
+api/map/^locations/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.map_manager.views.LocationViewSet
+api/map/^factories/$ -> modules.map_manager.views.FactoryViewSet
+api/map/^factories\.(?P<format>[a-z0-9]+)/?$ -> modules.map_manager.views.FactoryViewSet
+api/map/^factories/(?P<pk>[^/.]+)/$ -> modules.map_manager.views.FactoryViewSet
+api/map/^factories/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.map_manager.views.FactoryViewSet
+api/map/^areas/$ -> modules.map_manager.views.AreaViewSet
+api/map/^areas\.(?P<format>[a-z0-9]+)/?$ -> modules.map_manager.views.AreaViewSet
+api/map/^areas/(?P<pk>[^/.]+)/$ -> modules.map_manager.views.AreaViewSet
+api/map/^areas/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.map_manager.views.AreaViewSet
+api/map/^manufacturers/$ -> modules.map_manager.views.ManufacturerViewSet
+api/map/^manufacturers\.(?P<format>[a-z0-9]+)/?$ -> modules.map_manager.views.ManufacturerViewSet
+api/map/^manufacturers/(?P<pk>[^/.]+)/$ -> modules.map_manager.views.ManufacturerViewSet
+api/map/^manufacturers/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.map_manager.views.ManufacturerViewSet
+api/map/^machines/$ -> modules.map_manager.views.MachineViewSet
+api/map/^machines\.(?P<format>[a-z0-9]+)/?$ -> modules.map_manager.views.MachineViewSet
+api/map/^machines/(?P<pk>[^/.]+)/$ -> modules.map_manager.views.MachineViewSet
+api/map/^machines/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.map_manager.views.MachineViewSet
+api/map/ -> rest_framework.routers.APIRootView
+api/map/<drf_format_suffix:format> -> rest_framework.routers.APIRootView
+api/powerbi/^mypowerbis/$ -> modules.powerbi_manager.views.PowerBiViewSet
+api/powerbi/^mypowerbis\.(?P<format>[a-z0-9]+)/?$ -> modules.powerbi_manager.views.PowerBiViewSet
+api/powerbi/^mypowerbis/reorder/$ -> modules.powerbi_manager.views.PowerBiViewSet
+api/powerbi/^mypowerbis/reorder\.(?P<format>[a-z0-9]+)/?$ -> modules.powerbi_manager.views.PowerBiViewSet
+api/powerbi/^mypowerbis/(?P<pk>[^/.]+)/$ -> modules.powerbi_manager.views.PowerBiViewSet
+api/powerbi/^mypowerbis/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.powerbi_manager.views.PowerBiViewSet
+api/powerbi/ -> rest_framework.routers.APIRootView
+api/powerbi/<drf_format_suffix:format> -> rest_framework.routers.APIRootView
+api/scada/ -> modules.scada_manager.views.home
+api/scada/save-layout/ -> modules.scada_manager.views.WrappedAPIView
+api/scada/my-layouts/ -> modules.scada_manager.views.WrappedAPIView
+api/scada/layout/<int:title_id>/ -> modules.scada_manager.views.WrappedAPIView
+api/scada/reorder-layouts/ -> modules.scada_manager.views.WrappedAPIView
+api/scada/layouts/<int:layout_id>/tables/ -> modules.scada_manager.views.WrappedAPIView
+api/scada/layouts/<int:layout_id>/tables/<int:table_id>/ -> modules.scada_manager.views.WrappedAPIView
+api/scada/layouts/<int:layout_id>/tables/<int:table_id>/variables/ -> modules.scada_manager.views.WrappedAPIView
+api/scada/layouts/<int:layout_id>/tables/<int:table_id>/variables/<int:var_id>/ -> modules.scada_manager.views.WrappedAPIView
+api/scada/variables/resolve/ -> modules.scada_manager.views.WrappedAPIView
+api/scada/edge/config/ -> modules.scada_manager.edge_config.views.EdgeConfigView
+api/scada/edge/gateway/tags/ -> modules.scada_manager.edge_config.views.GatewayTagsView
+api/scada/edge/gateway/plcs/ -> modules.scada_manager.edge_config.views.GatewayPLCsView
+api/scada/edge/gateway/cache/invalidate/ -> modules.scada_manager.edge_config.views.CacheInvalidateView
+api/scada/realtime/token/ -> modules.scada_manager.realtime.views.WrappedAPIView
+api/scada/api/^equipment/$ -> modules.scada_manager.scada_api.views.EquipmentViewSet
+api/scada/api/^equipment\.(?P<format>[a-z0-9]+)/?$ -> modules.scada_manager.scada_api.views.EquipmentViewSet
+api/scada/api/^equipment/(?P<pk>[^/.]+)/$ -> modules.scada_manager.scada_api.views.EquipmentViewSet
+api/scada/api/^equipment/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.scada_manager.scada_api.views.EquipmentViewSet
+api/scada/api/^tag-config/$ -> modules.scada_manager.scada_api.views.TagConfigViewSet
+api/scada/api/^tag-config\.(?P<format>[a-z0-9]+)/?$ -> modules.scada_manager.scada_api.views.TagConfigViewSet
+api/scada/api/^tag-config/(?P<pk>[^/.]+)/$ -> modules.scada_manager.scada_api.views.TagConfigViewSet
+api/scada/api/^tag-config/(?P<pk>[^/.]+)\.(?P<format>[a-z0-9]+)/?$ -> modules.scada_manager.scada_api.views.TagConfigViewSet
+api/scada/api/ -> rest_framework.routers.APIRootView
+api/scada/api/<drf_format_suffix:format> -> rest_framework.routers.APIRootView
+api/scada/api/tags/history/ -> modules.scada_manager.scada_api.views.WrappedAPIView
+api/scada/api/tags/history/batch/ -> modules.scada_manager.scada_api.views.WrappedAPIView
+api/scada/api/tags/current/<str:equipment_id>/ -> modules.scada_manager.scada_api.views.WrappedAPIView
+api/scada/api/equipment/list/ -> modules.scada_manager.scada_api.views.WrappedAPIView
+api/scada/api/equipment/<str:equipment_id>/variables/ -> modules.scada_manager.scada_api.views.WrappedAPIView
+api/scada/api/equipment/hierarchy/ -> modules.scada_manager.scada_api.views.WrappedAPIView
+^static/(?P<path>.*)$ -> django.views.static.serve
+>>>

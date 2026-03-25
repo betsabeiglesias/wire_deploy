@@ -7,7 +7,7 @@ export function useScadaConfig() {
   const [config, setConfig] = useState(null);
 
   useEffect(() => {
-    axios.get("/api/config/export/")
+    axios.get("/api/scada/api/tag-config/")              // OJO!!!! creo que es esta ruta, pero no estoy segura 100%
       .then(res => setConfig(res.data))
       .catch(err => console.error("Config error:", err));
   }, []);
