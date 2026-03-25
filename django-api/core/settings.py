@@ -37,7 +37,10 @@ CORE_APPS = [
 enabled_modules_str = os.getenv("ENABLED_MODULES", "")
 enabled_list = [m.strip() for m in enabled_modules_str.split(",") if m.strip()]
 
-DYNAMIC_MODULES = []
+DYNAMIC_MODULES = [
+    "ws_app",                # necesario para ws/realtime/
+    "scada_manager.realtime" # si lo quieres también
+]
 
 for m in enabled_list:
     # 1. Registramos el módulo principal (ej: modules.scada_manager)

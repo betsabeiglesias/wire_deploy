@@ -11,7 +11,7 @@ CENTRAL_HOST = os.getenv("CENTRAL_HOST")
 EDGE_TOKEN = os.getenv("EDGE_TOKEN")
 
 # RETOMAR
-CONFIG_ENDPOINT = "/api/edge/config/"
+CONFIG_ENDPOINT = "/api/scada/edge/config/"
 CENTRAL_API = f"{CENTRAL_HOST}{CONFIG_ENDPOINT}"
 print("CENTRAL_API:", CENTRAL_API)
 
