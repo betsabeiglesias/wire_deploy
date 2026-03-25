@@ -108,7 +108,7 @@ def export_gateway_config():
         equipments.append({
             "equipment_id": plc.equipment_id,
             "driver": protocol,
-            "connection": _build_connection(plc),
+            "connection_data": _build_connection(plc),
             "isa95": _build_isa95(plc),
             "items": items,
         })

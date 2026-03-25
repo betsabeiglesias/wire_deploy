@@ -75,8 +75,9 @@ class ProcessValue:
             logger.error(f"ProcessValue inválido: equipment_id o variable vacío")
             return False
         
-        if self.value is None:
-            logger.error(f"ProcessValue inválido: value es None")
+          # 🔥 SOLO invalidar None si calidad es Good
+        if self.value is None and self.quality == "Good":
+            logger.error(f"ProcessValue inválido: value es None con quality=Good")
             return False
         
         # Validar coherencia datatype <-> value
