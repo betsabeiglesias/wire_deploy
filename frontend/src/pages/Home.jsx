@@ -18,15 +18,7 @@ const Home = () => {
       badge: "Operación",
       variant: "operation",
     },
-    {
-      title: "Analítica Power BI",
-      description:
-        "Indicadores de rendimiento, tendencias de línea y lectura consolidada de KPIs críticos.",
-      onClick: () => navigate("/powerbi-all"),
-      icon: ChartColumnBig,
-      badge: "Analítica",
-      variant: "analytics",
-    },
+   
   ];
 
   return (

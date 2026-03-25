@@ -22,11 +22,7 @@ export default function SavedPage() {
 
             {/* VISTAS DE FAVORITOS */}
             <section className="space-y-8 px-6 py-6 md:px-8 md:py-8">
-              <FavoriteViews
-                title="Power BI"
-                type="mypowerbi"
-                onlyFavorites={true}
-              />
+             
               <FavoriteViews title="HMI" type="mylayout" onlyFavorites={true} />
             </section>
           </div>
