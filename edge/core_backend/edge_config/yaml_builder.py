@@ -163,6 +163,77 @@ def normalize_snap7(eq: dict) -> dict:
 
     return out
 
+def normalize_modbus(eq: dict) -> dict:
+    conn = eq.get("connection_data", {})
+    items = eq.get("items", [])
+
+    # =========================
+    # 🔌 CONNECTION (ALINEADO DRIVER)
+    # =========================
+    host = conn.get("host")
+    if not host:
+        raise ValueError("Modbus: 'host' is required")
+
+    connection = {
+        "host": host,
+        "port": conn.get("port", 502),
+        "poll_rate_ms": conn.get("poll_rate_ms", 500),
+        "unit_id": conn.get("unit_id", 1),  # importante para multi-slave
+    }
+
+    # =========================
+    # 🔁 FORMATO MODBUS (CLAVE)
+    # =========================
+    modbus_format = {
+        "byte_order": conn.get("byte_order", "big"),
+        "word_order": conn.get("word_order", "little"),  # S7 default correcto
+    }
+
+    # =========================
+    # 📡 ITEMS (ALINEADO DRIVER)
+    # =========================
+    norm_items = []
+
+    for item in items:
+        addr = item.get("addressing", {})
+
+        if "address" not in addr:
+            raise ValueError(f"Modbus item '{item.get('name')}' missing address")
+
+        norm_item = {
+            "name": item["name"],
+            "datatype": item.get("datatype", "Int16"),
+            "unit": item.get("unit", ""),
+            "description": item.get("description", ""),
+
+            # 🔥 DRIVER USA address directo
+            "address": addr["address"],
+
+            # 🔥 FC
+            "fc": addr.get("fc", 3),
+
+            # 🔥 OPCIONAL (para overrides por tag)
+            "format": item.get("format", {}),
+            
+            # passthrough
+            "cdc": item.get("cdc", {}),
+        }
+
+        norm_items.append(norm_item)
+
+    # =========================
+    # 🧩 FINAL STRUCTURE
+    # =========================
+    return {
+        "equipment_id": eq["equipment_id"],
+        "driver": "modbus",
+
+        "connection": connection,
+        "modbus_format": modbus_format,  # 👈 CLAVE para tu driver
+        "isa95": eq.get("isa95", {}),
+        "items": norm_items,
+    }
+
 
 def normalize_equipment(eq: dict) -> dict:
     driver = eq.get("driver")
@@ -171,6 +242,8 @@ def normalize_equipment(eq: dict) -> dict:
         return normalize_snap7(eq)
     elif driver == "opcua":
         return normalize_opcua(eq)
+    elif driver == "modbus":   # 👈 AÑADIR ESTO
+        return normalize_modbus(eq)
     else:
         raise ValueError(f"Unknown driver {driver}")
 

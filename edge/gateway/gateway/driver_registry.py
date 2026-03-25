@@ -12,7 +12,8 @@ logger = logging.getLogger("gateway.driver_registry")
 DRIVER_REGISTRY: Dict[str, Type[BaseDriver]] = {
     "opcua": OPCUADriver,
     "snap7": S7Driver,
-    "modbustcp": ModbusTCPDriver
+    "modbustcp": ModbusTCPDriver,
+    "modbus": ModbusTCPDriver,
 }
 
 def make_driver(cfg: dict, publisher):

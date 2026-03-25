@@ -2,13 +2,19 @@
 
 from industrial_config_manager.models import PLC
 
+DRIVER_MAPPING = {
+    "modbus": "modbus_tcp",
+    "snap7": "snap7",
+    "opcua": "opcua",
+}
 
 def _build_connection(plc):
     """
     Construye el bloque 'connection' según el driver,
     usando connection_data (JSONField).
     """
-    protocol = plc.driver.protocol.lower()
+    protocol_raw = plc.driver.protocol.lower()
+    protocol = DRIVER_MAPPING.get(protocol_raw, protocol_raw)
     cd = plc.connection_data or {}
 
     if protocol == "opcua":

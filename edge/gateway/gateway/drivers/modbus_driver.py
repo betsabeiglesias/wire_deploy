@@ -175,44 +175,49 @@ class ModbusTCPDriver(BaseDriver):
         error_count = 0
         
         for item in self.items:
-            variable = item["name"]
-                        
-            addressing = item.get("addressing", {})
-            address_str = (
-                addressing.get("register") or
-                addressing.get("address") or
-                item.get("address")
-            )
-
-            # 🔥 Convertir a entero
+            variable = item["name"]                 
             try:
-                address = int(address_str)
-            except (ValueError, TypeError) as e:
-                self.logger.warning(f"⚠️ Address inválido '{address_str}' para '{variable}': {e}")
+                raw_address = int(item["address"])
+            except (KeyError, ValueError, TypeError) as e:
+                self.logger.warning(f"⚠️ Address inválido '{item.get('address')}' para '{variable}': {e}")
                 continue
 
-
+            # =========================
+            # 🔥 NORMALIZACIÓN MODBUS
+            # =========================
+            if raw_address >= 40001:
+                address = raw_address - 40001
+            elif raw_address >= 30001:
+                address = raw_address - 30001
+            elif raw_address >= 10001:
+                address = raw_address - 10001
+            else:
+                address = raw_address
 
             datatype = item.get("datatype", "Int16")
             scale = item.get("scale", None)
             unit = item.get("unit", "")
-            fc = item.get("fc", self._auto_fc(address))
+            fc = item.get("fc", self._auto_fc(raw_address))
 
             item_format = item.get("format", {})
             byte_order = item_format.get("byte_order", self.default_byte_order)
             word_order = item_format.get("word_order", self.default_word_order)
 
             try:
-                # Leer valor
                 value = self._read(address, datatype, fc, byte_order, word_order)
 
+                # =========================
+                # 🔥 CALIDAD SCADA
+                # =========================
+                quality = "Good"
                 if value is None:
+                    quality = "Bad"
                     self.logger.warning(f"⚠️ Lectura falló para {variable}@{address} (FC{fc})")
-                    error_count += 1
-                    continue
 
-                # Aplicar escala si existe
-                if scale:
+                # =========================
+                # 📐 SCALE (solo si hay valor)
+                # =========================
+                if value is not None and scale:
                     try:
                         original_value = value
                         value = value * float(scale)
@@ -220,17 +225,21 @@ class ModbusTCPDriver(BaseDriver):
                     except Exception as e:
                         self.logger.warning(f"⚠️ Error aplicando escala a {variable}: {e}")
 
-                # Normalizar datatype para Boolean
+                # =========================
+                # DATATYPE NORMALIZATION
+                # =========================
                 normalized_datatype = "Boolean" if datatype == "Bool" else datatype
 
-                # Emitir CDC tag
+                # =========================
+                # 🚀 EMIT (SIEMPRE)
+                # =========================
                 pv = ProcessValue(
                     equipment_id=self.equipment_id,
                     variable=variable,
-                    value=value,
+                    value=value,  # puede ser None
                     datatype=normalized_datatype,
                     unit=unit,
-                    quality="Good",
+                    quality=quality,
                     timestamp=utc_iso(),
                     source={
                         "protocol": "modbus",
@@ -239,8 +248,8 @@ class ModbusTCPDriver(BaseDriver):
                         "format": f"{byte_order}-{word_order}"
                     }
                 )
-                
-                self.logger.debug(f"📤 Emitiendo: {variable}={value} ({normalized_datatype})")
+
+                self.logger.debug(f"📤 Emitiendo: {variable}={value} quality={quality}")
                 self.emit_tag(pv)
                 
                 self.last_emit_ts = time.time()
