@@ -21,15 +21,15 @@ import api from "../../../../services/api";
 const DATATYPES = ["Float", "Bool", "Int", "String", "Double"];
 
 // ── API ───────────────────────────────────────────────────────────────────────
-const apiFetchTables = (lid)          => api.get(`/api/scada-manager/layouts/${lid}/tables/`).then(r => r.data);
-const apiCreateTable = (lid, p)       => api.post(`/api/scada-manager/layouts/${lid}/tables/`, p).then(r => r.data);
-const apiPatchTable  = (lid, tid, p)  => api.patch(`/api/scada-manager/layouts/${lid}/tables/${tid}/`, p).then(r => r.data);
-const apiDeleteTable = (lid, tid)     => api.delete(`/api/scada-manager/layouts/${lid}/tables/${tid}/`);
+const apiFetchTables = (lid)          => api.get(`/api/scada/layouts/${lid}/tables/`).then(r => r.data);
+const apiCreateTable = (lid, p)       => api.post(`/api/scada/layouts/${lid}/tables/`, p).then(r => r.data);
+const apiPatchTable  = (lid, tid, p)  => api.patch(`/api/scada/layouts/${lid}/tables/${tid}/`, p).then(r => r.data);
+const apiDeleteTable = (lid, tid)     => api.delete(`/api/scada/layouts/${lid}/tables/${tid}/`);
 
-const apiFetchVars  = (lid, tid)          => api.get(`/api/scada-manager/layouts/${lid}/tables/${tid}/variables/`).then(r => r.data);
-const apiCreateVar  = (lid, tid, p)       => api.post(`/api/scada-manager/layouts/${lid}/tables/${tid}/variables/`, p).then(r => r.data);
-const apiPatchVar   = (lid, tid, vid, p)  => api.patch(`/api/scada-manager/layouts/${lid}/tables/${tid}/variables/${vid}/`, p).then(r => r.data);
-const apiDeleteVar  = (lid, tid, vid)     => api.delete(`/api/scada-manager/layouts/${lid}/tables/${tid}/variables/${vid}/`);
+const apiFetchVars  = (lid, tid)          => api.get(`/api/scada/layouts/${lid}/tables/${tid}/variables/`).then(r => r.data);
+const apiCreateVar  = (lid, tid, p)       => api.post(`/api/scada/layouts/${lid}/tables/${tid}/variables/`, p).then(r => r.data);
+const apiPatchVar   = (lid, tid, vid, p)  => api.patch(`/api/scada/layouts/${lid}/tables/${tid}/variables/${vid}/`, p).then(r => r.data);
+const apiDeleteVar  = (lid, tid, vid)     => api.delete(`/api/scada/layouts/${lid}/tables/${tid}/variables/${vid}/`);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const cls       = (...p) => p.filter(Boolean).join(" ");

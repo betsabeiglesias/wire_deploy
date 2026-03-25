@@ -68,7 +68,7 @@ const SidebarPropiedades = ({
   useEffect(() => {
     if (!layoutId) { setProjectTables([]); return; }
     setLoadingTables(true);
-    fetch(`/api/scada-manager/layouts/${layoutId}/tables/`, { credentials: "include" })
+    fetch(`/api/scada/layouts/${layoutId}/tables/`, { credentials: "include" })
       .then(r => r.ok ? r.json() : [])
       .then(data => {
           console.log("📦 tables sample:", JSON.stringify(data[0], null, 2));
