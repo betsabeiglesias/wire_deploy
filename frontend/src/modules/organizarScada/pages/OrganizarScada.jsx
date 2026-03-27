@@ -13,6 +13,7 @@ import { buildViewsData } from "../utils/viewsSerializer";
 import useOrganizarScada from "../hooks/useOrganizarScada";
 import { useAuthStore } from "@/store/useAuthStore";
 import SidebarPropiedadesCompact from "../components/sidebar/SidebarPropiedadesCompact";
+import { PanelRightClose, PanelRightOpen, SlidersHorizontal } from "lucide-react";
 import Swal from "sweetalert2";
 
 const OrganizarScada = () => {
@@ -363,17 +364,49 @@ const OrganizarScada = () => {
           </div>
         </div>
 
-        <div className={[
-          "md:static md:w-96 md:translate-x-0 md:translate-y-0 md:opacity-100",
-          "fixed left-0 right-0 bottom-0 z-30",
-          "transition-all duration-250 ease-out",
-          showPropsPanel ? "translate-y-0 opacity-100" : "md:-translate-x-full md:opacity-0 translate-y-full opacity-0 pointer-events-none",
-        ].join(" ")}>
-          <SidebarPropiedadesCompact
-            selectedElement={selectedElement}
-            onOpenAdvanced={() => setIsAdvancedOpen(true)}
-          />
-        </div>
+        <aside className={`flex flex-col border-l border-slate-200 bg-white shadow-sm transition-all duration-200 overflow-hidden shrink-0 ${showPropsPanel ? "w-72" : "w-10"}`}>
+          {/* Header con toggle */}
+          <div className="flex items-center justify-between h-10 px-2 border-b border-slate-200 bg-slate-50 shrink-0">
+            {showPropsPanel && (
+              <span className="ml-1 text-xs font-semibold tracking-wide text-slate-700 truncate">
+                Propiedades
+              </span>
+            )}
+            <button
+              onClick={() => setShowPropsPanel((p) => !p)}
+              title={showPropsPanel ? "Colapsar propiedades" : "Expandir propiedades"}
+              className="ml-auto flex items-center justify-center w-7 h-7 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors shrink-0"
+            >
+              {showPropsPanel
+                ? <PanelRightClose className="w-4 h-4" />
+                : <PanelRightOpen  className="w-4 h-4" />
+              }
+            </button>
+          </div>
+
+          {/* Contenido expandido */}
+          {showPropsPanel && (
+            <div className="flex-1 overflow-y-auto">
+              <SidebarPropiedadesCompact
+                selectedElement={selectedElement}
+                onOpenAdvanced={() => setIsAdvancedOpen(true)}
+              />
+            </div>
+          )}
+
+          {/* Modo colapsado: indicador si hay elemento seleccionado */}
+          {!showPropsPanel && selectedElement && (
+            <div className="flex flex-col items-center gap-2 py-3">
+              <button
+                title="Abrir propiedades"
+                onClick={() => setShowPropsPanel(true)}
+                className="flex items-center justify-center w-7 h-7 rounded bg-sky-100 text-sky-700 hover:bg-sky-200 transition-colors"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </aside>
       </div>
       {isAdvancedOpen && (
   <div className="fixed inset-0 z-50 flex justify-end bg-black/20">
