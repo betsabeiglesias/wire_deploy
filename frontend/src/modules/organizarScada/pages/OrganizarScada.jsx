@@ -44,6 +44,7 @@ const OrganizarScada = () => {
   const [showPropsPanel, setShowPropsPanel] = useState(true);
   const [showLoadModal,  setShowLoadModal]  = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [sidebarOpen,    setSidebarOpen]    = useState(true);
 
   const editorViewportRef = useRef(null);
   const bootstrappedRef   = useRef(false);
@@ -324,6 +325,8 @@ const OrganizarScada = () => {
           viewsLoading={isLoadingViews}
           viewsError={viewsError}
           onRefreshViews={fetchUserViews}
+          isOpen={sidebarOpen}
+          onToggle={setSidebarOpen}
         />
 
         <div className="flex-1 bg-slate-100 overflow-hidden flex flex-col">
@@ -339,6 +342,8 @@ const OrganizarScada = () => {
                 onDeleteSelected={handleDeleteSelected}
                 showProps={showPropsPanel}
                 onToggleProps={() => setShowPropsPanel((p) => !p)}
+                sidebarOpen={sidebarOpen}
+                onToggleSidebar={() => setSidebarOpen((p) => !p)}
                 isLiveMode={isLiveMode}
                 onToggleLive={() => setIsLiveMode((prev) => !prev)}
               />

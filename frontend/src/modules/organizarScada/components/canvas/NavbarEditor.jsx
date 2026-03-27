@@ -1,5 +1,6 @@
 // src/modules/organizarScada/components/canvas/NavbarEditor.jsx
 import React from "react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 export default function NavbarEditor({
   onZoomIn,
@@ -11,12 +12,35 @@ export default function NavbarEditor({
   onDeleteSelected,
   showProps,
   onToggleProps,
+  // ── Sidebar toggle ─────────────────────────────────────────────────────────
+  sidebarOpen = true,
+  onToggleSidebar,
   // ── Live mode ──────────────────────────────────────────────────────────────
   isLiveMode = false,
   onToggleLive,
 }) {
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-white shadow-sm text-[12px] text-slate-700 flex-wrap">
+
+      {/* Sidebar toggle */}
+      {onToggleSidebar && (
+        <>
+          <button
+            onClick={onToggleSidebar}
+            title={sidebarOpen ? "Ocultar panel" : "Mostrar panel"}
+            className={[
+              "flex items-center justify-center w-7 h-7 rounded transition-colors",
+              sidebarOpen ? "bg-sky-100 text-sky-700 hover:bg-sky-200" : "hover:bg-slate-100 text-slate-500",
+            ].join(" ")}
+          >
+            {sidebarOpen
+              ? <PanelLeftClose className="w-4 h-4" />
+              : <PanelLeftOpen  className="w-4 h-4" />
+            }
+          </button>
+          <div className="h-4 w-px bg-slate-200" />
+        </>
+      )}
 
       {/* Zoom controls */}
       <div className="flex items-center gap-1">

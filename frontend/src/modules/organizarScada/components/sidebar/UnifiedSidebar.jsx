@@ -6,7 +6,7 @@
 // - El resto de secciones sin cambios respecto al original.
 //
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Eye, EyeOff, GripVertical, Lock, Unlock } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronLeft, Eye, EyeOff, GripVertical, Lock, Unlock, PanelLeftClose, PanelLeftOpen, Monitor, Cpu, Layout, Image, UploadCloud } from "lucide-react";
 import { elementos_scada } from "@/modules/organizarScada/templates/elementos_scada";
 import { buttons_labels_items } from "@/modules/organizarScada/utils/items";
 import { renderWidget } from "@/modules/organizarScada/components/widgets/registry.jsx";
@@ -99,8 +99,19 @@ const UnifiedSidebar = ({
   viewsLoading = false,
   viewsError = "",
   onRefreshViews,
+  // ── Controlled open/close desde el padre (opcional) ──────────────────────
+  isOpen: isOpenProp,
+  onToggle: onToggleProp,
 }) => {
-  const [isMainOpen,           setIsMainOpen]           = useState(true);
+  const [isMainOpenLocal,      setIsMainOpenLocal]      = useState(true);
+
+  // Si el padre controla la apertura, usamos su valor; si no, el estado local
+  const isMainOpen    = isOpenProp !== undefined ? isOpenProp : isMainOpenLocal;
+  const setIsMainOpen = (val) => {
+    const next = typeof val === "function" ? val(isMainOpen) : val;
+    if (onToggleProp) onToggleProp(next);
+    else setIsMainOpenLocal(next);
+  };
   const [activeSection,        setActiveSection]        = useState("pantallas");
   const [showDevices,          setShowDevices]          = useState(false);
   const [isSavingProject,      setIsSavingProject]      = useState(false);
@@ -150,11 +161,11 @@ const UnifiedSidebar = ({
     {
       id: "main",
       items: [
-        { id: "pantallas",    label: "Pantallas"             },
-        { id: "devices",      label: "Dispositivos"          },
-        { id: "elements",     label: "Iconos hmi"            },
-        { id: "buttons",      label: "Iconos basicos"        },
-        { id: "custom-icons", label: "Iconos personalizados" },
+        { id: "pantallas",    label: "Pantallas",             Icon: Monitor      },
+        { id: "devices",      label: "Dispositivos",          Icon: Cpu          },
+        { id: "elements",     label: "Iconos hmi",            Icon: Layout       },
+        { id: "buttons",      label: "Iconos basicos",        Icon: Image        },
+        { id: "custom-icons", label: "Iconos personalizados", Icon: UploadCloud  },
       ],
     },
   ];
@@ -807,18 +818,30 @@ const UnifiedSidebar = ({
     <>
       <div className="flex h-full bg-slate-100 text-slate-800 text-[13px]">
         <aside
-          className={`flex flex-col border-r border-slate-200 bg-white shadow-sm transition-all duration-200 ${
+          className={`flex flex-col border-r border-slate-200 bg-white shadow-sm transition-all duration-200 overflow-hidden ${
             isMainOpen ? "w-64" : "w-12"
           }`}
         >
-          <div className="flex items-center justify-between h-10 px-2 border-b border-slate-200 bg-slate-50">
+          {/* ── Header con toggle ─────────────────────────────────────────────── */}
+          <div className="flex items-center justify-between h-10 px-2 border-b border-slate-200 bg-slate-50 shrink-0">
             {isMainOpen && (
-              <span className="ml-2 text-xs font-semibold tracking-wide text-slate-700">
+              <span className="ml-1 text-xs font-semibold tracking-wide text-slate-700 truncate">
                 Componentes
               </span>
             )}
+            <button
+              onClick={() => setIsMainOpen((p) => !p)}
+              title={isMainOpen ? "Colapsar sidebar" : "Expandir sidebar"}
+              className="ml-auto flex items-center justify-center w-7 h-7 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors shrink-0"
+            >
+              {isMainOpen
+                ? <PanelLeftClose className="w-4 h-4" />
+                : <PanelLeftOpen  className="w-4 h-4" />
+              }
+            </button>
           </div>
 
+          {/* ── Modo expandido ────────────────────────────────────────────────── */}
           {isMainOpen && (
             <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
               {/* Nombre proyecto */}
@@ -883,6 +906,31 @@ const UnifiedSidebar = ({
                   </ul>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* ── Modo colapsado: iconos de sección como acceso rápido ──────────── */}
+          {!isMainOpen && (
+            <div className="flex flex-col items-center gap-1 py-3 flex-1">
+              {sidebarSections[0].items.map(item => {
+                const isActive = activeSection === item.id;
+                const { Icon } = item;
+                return (
+                  <button
+                    key={item.id}
+                    title={item.label}
+                    onClick={() => { setIsMainOpen(true); setActiveSection(item.id); }}
+                    className={[
+                      "flex items-center justify-center w-8 h-8 rounded transition-colors",
+                      isActive
+                        ? "bg-sky-100 text-sky-700"
+                        : "text-slate-400 hover:bg-slate-100 hover:text-slate-700",
+                    ].join(" ")}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </button>
+                );
+              })}
             </div>
           )}
         </aside>
