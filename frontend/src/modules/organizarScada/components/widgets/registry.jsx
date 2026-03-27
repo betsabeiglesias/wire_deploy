@@ -100,7 +100,7 @@ export const renderWidget = ({
   const settings = data.settings || {};
   const history = valueHistory || [];
 
-
+  
   const label =
     settings.attributeLabel ||
     settings.label ||
@@ -112,7 +112,7 @@ export const renderWidget = ({
 
   const unit = live.unit || settings.unit || "";
 
-  const style = resolveWidgetStyle(settings);
+  const style = resolveWidgetStyle(data.type, settings);
 
   switch (data.type) {
     /* =========================================================
@@ -129,26 +129,26 @@ export const renderWidget = ({
           <MiniHorizontalBar
             percent={numericProps.percent}
             label={numericProps.labelText}
-            color={style.primary} 
+            {...style}
           />
         ) : data.type === "mini-donut" ? (
           <BlueDonutGauge
             percent={numericProps.percent}
             label={numericProps.labelText}
-            color={style.primary} 
+            {...style} 
           />
         ) : data.type === "mini-bubble" ? (
           <ValueBubble
             value={numericProps.bubbleValue}
             unit={numericProps.unit}
-            color={style.primary} 
+            {...style}
           />
         ) : (
           <RingGauge
             percent={numericProps.percent}
             displayValue={numericProps.formattedValue}
             unit={numericProps.unit}
-            color={style.primary} 
+            {...style}
           />
         );
 
@@ -170,7 +170,7 @@ export const renderWidget = ({
             percent={numericProps.percent}
             value={numericProps.formattedValue}
             unit={numericProps.unit}
-            color={style.primary} 
+            {...style} 
           />
         </div>
       );
@@ -207,8 +207,7 @@ export const renderWidget = ({
             label={label}
             unit={unit || "C"}
             size={Math.min(width, height)}
-            valueColor={style.primary}  
-            arcStartColor={style.primary}  
+            {...style}
           />
       );
     }
@@ -227,8 +226,7 @@ export const renderWidget = ({
           label={settings.caption || label}
           width={width}
           height={height}
-          gradientFrom={style.primary}         
-          gradientTo={style.secondary}         
+          {...style}        
         />
       );
     }
@@ -265,9 +263,7 @@ export const renderWidget = ({
       unit={unit}
       width={width}
       height={height}
-      themeColor={style.primary}           
-      valueColor={style.text}             
-      unitColor={style.secondary}          
+      {...style}          
     />
   );
     }
