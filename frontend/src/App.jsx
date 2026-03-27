@@ -9,22 +9,16 @@ function App() {
   const user = useAuthStore((s) => s.user);
   const loading = useAuthStore((s) => s.loading);
   const fetchCurrentUser = useAuthStore((s) => s.fetchCurrentUser);
-  
+
   useEffect(() => {
-    // 1. Verificamos si existe el rastro del usuario en el storage
     const storedUser = localStorage.getItem('user');
-    
     if (!storedUser) {
-      // Si no hay rastro, desactivamos el loading para mostrar el login
       useAuthStore.setState({ loading: false });
       return;
     }
-
-    // 2. Si hay rastro, validamos la sesión con el servidor
     fetchCurrentUser();
   }, [fetchCurrentUser]);
 
-  // Mientras se decide si el usuario está logueado o no
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -33,14 +27,14 @@ function App() {
     );
   }
 
-  // Si no hay usuario, cargamos las rutas directamente (probablemente mostrará el Login)
+  // Caso 1: No hay usuario (Login)
   if (!user) {
     return <AppRoutes />;
   }
 
   const tenant = user.client?.id;
 
-  // Si el usuario está logueado pero no tiene tenant (error de configuración de usuario)
+  // Caso 2: Usuario logueado pero sin cliente asignado
   if (!tenant) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -49,12 +43,7 @@ function App() {
     );
   }
 
-  /**
-   * RENDERIZADO FINAL:
-   * Envolvemos AppRoutes SIEMPRE con los Providers una vez que el usuario es válido.
-   * Esto evita que el RealtimeProvider se desmonte al cambiar de ruta,
-   * manteniendo el WebSocket conectado de forma persistente.
-   */
+  // Caso 3: Usuario OK -> Providers fijos + Rutas
   return (
     <ScadaConfigProvider>
       <RealtimeProvider tenant={tenant}>
