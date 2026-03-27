@@ -1,60 +1,64 @@
 import { useEffect, useRef, useState } from "react";
 import api from "@/services/api";
 
-// 1. Extraemos la URL del WebSocket de las variables de entorno de Vite
 const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8002";
 
 export function useRealtimeData(tenant) {
   const [connected, setConnected] = useState(false);
+  const [status, setStatus] = useState("idle"); // idle | connecting | connected | error
   const [allTags, setAllTags] = useState([]);
   const [tagsMap, setTagsMap] = useState(new Map());
   const [lastMessageAt, setLastMessageAt] = useState(null);
   const [dataStale, setDataStale] = useState(false);
 
   const wsRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
+  const retryCountRef = useRef(0);
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
-    if (!tenant) return;
+    cancelledRef.current = false;
 
-    let ws;
-    let cancelled = false;
+    if (!tenant) {
+      console.warn("⏳ Esperando tenant para iniciar realtime...");
+      return;
+    }
+
+    console.log("🚀 Iniciando realtime con tenant:", tenant);
 
     async function connect() {
-      try {
-        console.log("🔑 Pidiendo token realtime…");
+      if (cancelledRef.current) return;
 
+      try {
+        setStatus("connecting");
+
+        // 🔐 Pedir token
+        console.log("🔑 Pidiendo token realtime…");
         const res = await api.get("/api/scada/realtime/token/");
         const token = res.data.token;
 
-        if (cancelled) return;
+        if (cancelledRef.current) return;
 
-        console.log("🔌 Conectando WS");
+        // 🔒 Cerrar conexión previa si existe
+        if (wsRef.current) {
+          console.log("♻️ Cerrando WS previo");
+          wsRef.current.close();
+          wsRef.current = null;
+        }
 
-        // Usamos la variable dinamica
-        ws = new WebSocket(`${WS_URL}/ws/realtime/?token=${token}`);
+        console.log("🔌 Conectando WS…");
 
+        const ws = new WebSocket(`${WS_URL}/ws/realtime/?token=${token}`);
         wsRef.current = ws;
 
         ws.onopen = () => {
           console.log("🟢 Realtime WS connected");
           setConnected(true);
-        };
+          setStatus("connected");
+          retryCountRef.current = 0;
 
-        ws.onclose = async (event) => {
-          console.warn("🔌 Realtime WS closed", event.code);
-          setConnected(false);
-
-          // 🔐 token expirado → pedir uno nuevo y reconectar
-          if (event.code === 4401 && !cancelled) {
-            console.log("🔄 Token expirado, renovando WS…");
-            setTimeout(() => {
-                connect();
-              }, 500);
-           }
-        };
-
-        ws.onerror = (err) => {
-          console.error("❌ Realtime WS error", err);
+          // 👉 Aquí podrías enviar suscripción si tu backend lo requiere
+          // ws.send(JSON.stringify({ type: "subscribe", variables: [...] }));
         };
 
         ws.onmessage = (evt) => {
@@ -64,22 +68,22 @@ export function useRealtimeData(tenant) {
           try {
             const msg = JSON.parse(evt.data);
             const parts = (msg.equipment_id || "").split("/");
+
             const entry = {
-              site:         parts[0] || msg.site || "",
-              area:         parts[1] || msg.area || "",
-              line:         parts[2] || msg.line || "",
-              cell:         parts[3] || msg.cell || "",
-              equipment:    parts[4] || msg.equipment || "",   // ← último segmento
+              site: parts[0] || msg.site || "",
+              area: parts[1] || msg.area || "",
+              line: parts[2] || msg.line || "",
+              cell: parts[3] || msg.cell || "",
+              equipment: parts[4] || msg.equipment || "",
               equipment_id: msg.equipment_id,
-              variable:     msg.variable,
-              value:        msg.value,
-              unit:         msg.unit,
-              quality:      msg.quality,
-              timestamp:    msg.timestamp,
-              source:       msg.source || {},
-              raw:          msg,
+              variable: msg.variable,
+              value: msg.value,
+              unit: msg.unit,
+              quality: msg.quality,
+              timestamp: msg.timestamp,
+              source: msg.source || {},
+              raw: msg,
             };
-            console.log("📨 WS msg:", msg);
 
             const tagKey = `${entry.equipment_id}:${entry.variable}`;
 
@@ -96,19 +100,59 @@ export function useRealtimeData(tenant) {
               map.set(tagKey, { ...map.get(tagKey), ...entry });
               return Array.from(map.values());
             });
+
           } catch (err) {
-            console.warn("Mensaje WS inválido:", err);
+            console.warn("⚠️ Mensaje WS inválido:", err);
           }
         };
+
+        ws.onerror = (err) => {
+          console.error("❌ WS error", err);
+          setStatus("error");
+        };
+
+        ws.onclose = (event) => {
+          console.warn("🔌 WS cerrado", event.code);
+          setConnected(false);
+          setStatus("idle");
+
+          if (cancelledRef.current) return;
+
+          // 🔁 Reconnect SIEMPRE (con backoff)
+          const retryDelay = Math.min(1000 * 2 ** retryCountRef.current, 10000);
+          retryCountRef.current += 1;
+
+          console.log(`🔄 Reintentando conexión en ${retryDelay} ms`);
+
+          reconnectTimeoutRef.current = setTimeout(() => {
+            connect();
+          }, retryDelay);
+        };
+
       } catch (err) {
-        console.error("❌ No se pudo obtener token realtime", err);
+        console.error("❌ Error obteniendo token realtime", err);
+        setStatus("error");
+
+        // retry también si falla token
+        if (!cancelledRef.current) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            connect();
+          }, 2000);
+        }
       }
     }
 
     connect();
 
     return () => {
-      cancelled = true;
+      console.log("🧹 Cleanup realtime hook");
+
+      cancelledRef.current = true;
+
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
@@ -116,19 +160,28 @@ export function useRealtimeData(tenant) {
     };
   }, [tenant]);
 
-  // -------- WATCHDOG --------
+  // -------- WATCHDOG (detección de datos congelados) --------
   useEffect(() => {
     const interval = setInterval(() => {
       if (!lastMessageAt) {
         setDataStale(true);
         return;
       }
+
       if (Date.now() - lastMessageAt > 10000) {
         setDataStale(true);
       }
     }, 2000);
+
     return () => clearInterval(interval);
   }, [lastMessageAt]);
 
-  return { connected, dataStale, allTags, tagsMap, lastMessageAt };
+  return {
+    connected,
+    status,
+    dataStale,
+    allTags,
+    tagsMap,
+    lastMessageAt,
+  };
 }

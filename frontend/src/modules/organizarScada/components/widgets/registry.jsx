@@ -251,12 +251,12 @@ export const renderWidget = ({
       return (
         <TempGauge
           value={valueToRender}
-          min={settings.min ?? 0}
-          max={settings.max ?? 120}
+          min={settings.minValue ?? settings.min ?? 0}
+          max={settings.maxValue ?? settings.max ?? 120}
           label={settings.label || data.label}
           unit={live.unit || settings.unit || "C"}
           size={Math.min(width, height)}
-          labelColor={settings.labelColor}
+          labelColor={settings.labelColor || "rgba(248,113,113,0.95)"}
           valueColor={settings.valueColor}
           labelOffsetX={settings.labelOffsetX}
           labelOffsetY={settings.labelOffsetY}
@@ -267,9 +267,9 @@ export const renderWidget = ({
           arcStartColor={settings.arcStartColor}
           arcMidColor={settings.arcMidColor}
           arcEndColor={settings.arcEndColor}
-          showMinMax={settings.showMinMax}
-          showLabel={settings.showLabel}
-          showValue={settings.showValue}
+          showValue={settings.showValue !== false}
+          showLabel={settings.showLabel !== false}
+          showMinMax={settings.showMinMax !== false}
           minMaxColor={settings.minMaxColor}
           minMaxFontSize={settings.minMaxFontSize}
         />

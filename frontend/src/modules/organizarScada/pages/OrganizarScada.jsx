@@ -12,6 +12,7 @@ import { RealtimeProvider } from "@/context/RealtimeProvider";
 import { buildViewsData } from "../utils/viewsSerializer";
 import useOrganizarScada from "../hooks/useOrganizarScada";
 import { useAuthStore } from "@/store/useAuthStore";
+import SidebarPropiedadesCompact from "../components/sidebar/SidebarPropiedadesCompact";
 import Swal from "sweetalert2";
 
 const OrganizarScada = () => {
@@ -42,6 +43,7 @@ const OrganizarScada = () => {
   const [stageSize,     setStageSize]     = useState({ width: 0, height: 0 });
   const [showPropsPanel, setShowPropsPanel] = useState(true);
   const [showLoadModal,  setShowLoadModal]  = useState(false);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
   const editorViewportRef = useRef(null);
   const bootstrappedRef   = useRef(false);
@@ -362,17 +364,44 @@ const OrganizarScada = () => {
           "transition-all duration-250 ease-out",
           showPropsPanel ? "translate-y-0 opacity-100" : "md:-translate-x-full md:opacity-0 translate-y-full opacity-0 pointer-events-none",
         ].join(" ")}>
-          <SidebarPropiedades
-            isOpen={isPropsPanelOpen}
-            layoutId={currentLayoutId}
-            exportName={exportName}
-            onExportNameChange={setExportName}
+          <SidebarPropiedadesCompact
             selectedElement={selectedElement}
-            views={views}
-            onChange={(changes) => { selectedElement && handleUpdateComponent(selectedElement.id, changes); }}
+            onOpenAdvanced={() => setIsAdvancedOpen(true)}
           />
         </div>
       </div>
+      {isAdvancedOpen && (
+  <div className="fixed inset-0 z-50 flex justify-end bg-black/20">
+    <div className="w-[720px] max-w-[90vw] h-full bg-white shadow-2xl p-6 overflow-auto">
+      
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-sm font-semibold text-slate-700">
+          Editor avanzado
+        </h2>
+        <button
+          onClick={() => setIsAdvancedOpen(false)}
+          className="text-slate-500 hover:text-slate-800"
+        >
+          ✕
+        </button>
+      </div>
+
+          <SidebarPropiedades
+                isOpen={true}
+                layoutId={currentLayoutId}
+                exportName={exportName}
+                onExportNameChange={setExportName}
+                selectedElement={selectedElement}
+                views={views}
+                onChange={(changes) => {
+                  selectedElement && handleUpdateComponent(selectedElement.id, changes);
+                }}
+                isAdvancedMode={true} 
+              />
+
+        </div>
+  </div>
+)}
     </div>
   );
 };

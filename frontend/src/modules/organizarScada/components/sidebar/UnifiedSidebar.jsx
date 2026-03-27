@@ -13,6 +13,7 @@ import { renderWidget } from "@/modules/organizarScada/components/widgets/regist
 import SkeletonBlock from "@/components/ui/SkeletonBlock";
 import ProjectVariableModal from "../devices/ProjectVariableModal";
 import api from "../../../../services/api";
+import WidgetThumbnail from "@/modules/organizarScada/components/widgets/WidgetThumbnail";
 
 // ─── Image helpers ─────────────────────────────────────────────────────────────
 const CUSTOM_ICONS_STORAGE_KEY = "organizarScada.customIcons.library";
@@ -248,12 +249,20 @@ const UnifiedSidebar = ({
     e.dataTransfer.effectAllowed = "copy";
   };
 
-  const renderTemplatePreview = (tpl) =>
-    renderWidget({
+  const renderTemplatePreview = (tpl) => {
+    if (tpl.thumbnailType === "icon") {
+      return <WidgetThumbnail icon={tpl.icon} type={tpl.data?.type} />;
+    }
+
+    return renderWidget({
       data: tpl.data,
       live: { value: undefined, unit: tpl.data?.settings?.unit },
-      width: 120, height: 90, theme: "theme-clean", valueHistory: [],
+      width: 120,
+      height: 90,
+      theme: "theme-clean",
+      valueHistory: [],
     });
+  };
 
   const handlePickTemplate = (tpl) => addComponentToCanvas?.(tpl.data);
 
