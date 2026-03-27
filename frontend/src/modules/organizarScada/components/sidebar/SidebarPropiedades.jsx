@@ -18,15 +18,16 @@ const SidebarPropiedades = ({
 
   const [activeTab, setActiveTab] = useState("General");
   const [varSearch, setVarSearch] = useState("");
+  const [draftElement, setDraftElement] = useState(selectedElement);
 
   const currentLabel =
-    selectedElement?.label ??
-    selectedElement?.data?.label ??
-    selectedElement?.data?.settings?.attributeLabel;
+    draftElement?.label ??
+    draftElement?.data?.label ??
+    draftElement?.data?.settings?.attributeLabel;
 
-  const currentType     = selectedElement?.data?.type || selectedElement?.type;
-  const currentSettings = selectedElement?.data?.settings || {};
-  const selectedName    = selectedElement?.data?.name || selectedElement?.name || currentLabel;
+  const currentType     = draftElement?.data?.type || draftElement?.type;
+  const currentSettings = draftElement?.data?.settings || {};
+  const selectedName    = draftElement?.data?.name || draftElement?.name || currentLabel;
 
   const isTempGauge        = currentType === "temp-gauge";
   const isScadaGauge       = currentType === "hmi-scada-gauge" || currentType === "hmiScadaGauge";
@@ -37,34 +38,58 @@ const SidebarPropiedades = ({
   const isNavigationButton = currentType === "nav-button" || currentType === "btn-primary" || currentType === "btn-outline";
 
   const currentTargetView =
-    selectedElement?.targetViewId ??
-    selectedElement?.data?.targetViewId ??
-    selectedElement?.data?.settings?.targetViewId ??
+    draftElement?.targetViewId ??
+    draftElement?.data?.targetViewId ??
+    draftElement?.data?.settings?.targetViewId ??
     "";
 
-  // 🔹 UPDATE (SIN TOCAR)
-  const updateSettings = (patch) =>{
-    onChange?.({
+
+  const [originalElement, setOriginalElement] = useState(selectedElement);
+
+  useEffect(() => {
+    setDraftElement(selectedElement);
+    setOriginalElement(JSON.parse(JSON.stringify(selectedElement)));
+  }, [selectedElement?.id]);
+
+   const isDirty = React.useMemo(() => {
+    return JSON.stringify(draftElement) !== JSON.stringify(originalElement);
+  }, [draftElement, originalElement]);
+
+  const updateDraft = (patch) => {
+    setDraftElement(prev => ({
+      ...prev,
+      ...patch,
       data: {
-        ...(selectedElement?.data || {}),
+        ...(prev?.data || {}),
+        ...(patch?.data || {})
+      }
+    }));
+  };
+
+  const updateSettings = (patch) => {
+    setDraftElement(prev => ({
+      ...prev,
+      data: {
+        ...(prev?.data || {}),
         settings: {
-          ...(currentSettings || {}),
+          ...(prev?.data?.settings || {}),
           ...patch
         }
       }
-    });
+    }));
   };
 
   const updateGeometry = (patch) =>
-    onChange?.({
+    setDraftElement(prev => ({
+      ...prev,
       ...patch,
       data: {
-        ...(selectedElement?.data || {}),
-        width: patch?.width !== undefined ? patch.width : selectedElement?.data?.width,
-        height: patch?.height !== undefined ? patch.height : selectedElement?.data?.height,
-        settings: { ...(selectedElement?.data?.settings || {}) }
+        ...(prev?.data || {}),
+        width: patch?.width ?? prev?.data?.width,
+        height: patch?.height ?? prev?.data?.height,
+        settings: { ...(prev?.data?.settings || {}) }
       }
-    });
+    }));
 
   // ─────────────────────────────────────────────
   // VARIABLES API (SIN TOCAR)
@@ -88,7 +113,7 @@ const SidebarPropiedades = ({
 
   useEffect(() => {
     setSelectedTableId(currentSettings.deviceTable || "");
-  }, [selectedElement?.id]);
+  }, [draftElement?.id]);
 
   const selectedTableObj = projectTables.find(t => String(t.id) === String(selectedTableId));
   const tableVariables   = selectedTableObj?.variables || [];
@@ -108,19 +133,19 @@ const SidebarPropiedades = ({
           className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px]"
           value={selectedName || ""}
           onChange={(e) =>
-            onChange?.({
-              data: {
-                ...(selectedElement?.data || {}),
-                name: e.target.value,
-                label: e.target.value,
-                settings: {
-                  ...(selectedElement?.data?.settings || {}),
+              updateDraft({
+                data: {
+                  ...(draftElement?.data || {}),
+                  name: e.target.value,
                   label: e.target.value,
-                  attributeLabel: e.target.value
+                  settings: {
+                    ...(draftElement?.data?.settings || {}),
+                    label: e.target.value,
+                    attributeLabel: e.target.value
+                  }
                 }
-              }
-            })
-          }
+              })
+            }
         />
       </div>
 
@@ -209,29 +234,60 @@ const SidebarPropiedades = ({
   };
 
   // ─────────────────────────────────────────────
-  // ESTILO (SIN TOCAR)
+  // ESTILO
   // ─────────────────────────────────────────────
 
   const renderEstilo = () => (
-    <div className="text-xs text-slate-500">
-      Configuración de estilo
+    <div className="space-y-3 text-xs">
+
+      {/* Color */}
+      <div>
+        <label className="block text-slate-600">Color</label>
+        <input
+          type="color"
+          value={currentSettings.color || "#3b82f6"}
+          onChange={(e) => updateSettings({ color: e.target.value })}
+        />
+      </div>
+
+      {/* Min */}
+      <div>
+        <label className="block text-slate-600">Min</label>
+        <input
+          type="number"
+          className="w-full border px-2 py-1"
+          value={currentSettings.min ?? 0}
+          onChange={(e) => updateSettings({ min: Number(e.target.value) })}
+        />
+      </div>
+
+      {/* Max */}
+      <div>
+        <label className="block text-slate-600">Max</label>
+        <input
+          type="number"
+          className="w-full border px-2 py-1"
+          value={currentSettings.max ?? 100}
+          onChange={(e) => updateSettings({ max: Number(e.target.value) })}
+        />
+      </div>
+
     </div>
   );
 
   // ─────────────────────────────────────────────
-  // UI FINAL (AQUÍ ESTÁ EL CAMBIO IMPORTANTE)
+  // UI FINAL
   // ─────────────────────────────────────────────
 
   const renderContent = () => (
     <div className="p-4 bg-white border rounded-lg shadow-sm space-y-4">
-
       {/* 🔹 HEADER CON PREVIEW */}
       <div className="flex items-center gap-3 p-3 border rounded bg-slate-50">
-
+      
         <div className="w-20 h-20 flex items-center justify-center rounded bg-white border">
-          {selectedElement?.data && (
+          {draftElement?.data && (
             <WidgetPreview
-              data={selectedElement.data}
+              data={draftElement.data}
               unit={currentSettings?.unit}
             />
           )}
@@ -271,7 +327,39 @@ const SidebarPropiedades = ({
         {activeTab==="Dispositivo" && renderDispositivo()}
         {activeTab==="Estilo" && renderEstilo()}
       </div>
-    </div>
+
+    
+    {/* 🔹 BOTONES */}
+        <div className="flex justify-end gap-2 pt-3 border-t">
+
+          <button
+            className="px-3 py-1 text-xs border rounded"
+            onClick={() => setDraftElement(JSON.parse(JSON.stringify(originalElement)))}
+          >
+            Cancelar
+          </button>
+
+          <button
+            className="px-3 py-1 text-xs bg-sky-600 text-white rounded"
+            disabled={!isDirty}
+            onClick={() => {
+                onChange?.(draftElement);
+                setOriginalElement(JSON.parse(JSON.stringify(draftElement)));
+              }}
+          >
+            Aplicar
+          </button>
+          
+
+        </div>
+                {isDirty && (
+        <span className="text-[10px] text-amber-600 bg-amber-100 px-2 py-0.5 rounded">
+           Cambios sin guardar
+        </span>
+      )}
+
+      </div>
+    
   );
 
   const renderEmpty = () => (

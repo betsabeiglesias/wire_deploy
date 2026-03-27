@@ -13,31 +13,25 @@ export default function WidgetPreview({
   const previewLive = useMemo(() => {
     return {
       value: 72, // valor fake estable
-      unit: unit || "",
+      unit: unit || data?.settings?.unit || "",
     };
-  }, [unit]);
+  }, [unit, data?.settings?.unit]);
 
-  // 🔥 evitar recalcular renderWidget cada render
-    const widget = useMemo(() => {
-    if (!data) return null;
 
-    const safeData = {
-        ...data,
-        settings: { ...(data.settings || {}) },
-    };
-
-    return renderWidget({
-        data: safeData,
-        live: previewLive,
-        width,
-        height,
-        preview: true,
-        valueHistory: [],
-    });
-    }, [
-    JSON.stringify(data.settings),
-    previewLive,
+    const widget = renderWidget({
+    data,
+    live: previewLive,
     width,
     height,
-    ]);
+    preview: true,
+    valueHistory: [],
+    });
+
+  return (
+    <div className="flex items-center justify-center w-full h-full bg-white">
+      <div className="scale-[0.85] origin-center pointer-events-none">
+        {widget}
+      </div>
+    </div>
+  );
 }

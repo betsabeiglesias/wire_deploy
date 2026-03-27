@@ -8,10 +8,10 @@ import HmiProgressBar from "@/modules/organizarScada/components/widgets/standard
 import HmiTankLevel from "@/modules/organizarScada/components/widgets/standard/HmiTankLevel";
 import HmiStatusCard from "@/modules/organizarScada/components/widgets/standard/HmiStatusCard";
 import HmiTrendCard from "@/modules/organizarScada/components/widgets/standard/HmiTrendCard";
-import SvgShape from "@/modules/organizarScada/components/widgets/standard/SvgShape";
 import HmiScadaGauge from "@/modules/organizarScada/components/widgets/standard/HmiScadaGauge";
 import HmiHorizontalGauge from "@/modules/organizarScada/components/widgets/standard/HmiHorizontalGauge";
 import HmiEnergySummaryCard from "@/modules/organizarScada/components/widgets/standard/HmiEnergySummaryCard";
+
 import RingGauge from "@/modules/organizarScada/components/widgets/mini/RingGauge";
 import MiniHorizontalBar from "@/modules/organizarScada/components/widgets/mini/MiniHorizontalBar";
 import BlueDonutGauge from "@/modules/organizarScada/components/widgets/mini/BlueDonutGauge";
@@ -22,98 +22,136 @@ import KwShieldGauge from "@/modules/organizarScada/components/widgets/mini/KwSh
 import PressTrendGauge from "@/modules/organizarScada/components/widgets/mini/PressTrendGauge";
 import MiniTable from "@/modules/organizarScada/components/widgets/mini/MiniTable";
 import MiniTrendChart from "@/modules/organizarScada/components/widgets/mini/MiniTrendChart";
+
 import ChartBasic from "@/modules/organizarScada/components/widgets/iconsScada/ChartBasic";
 import ChartHighLow from "@/modules/organizarScada/components/widgets/iconsScada/ChartHighLow";
 import ChartStockArea from "@/modules/organizarScada/components/widgets/iconsScada/ChartStockArea";
 import ChartSocialGroup from "@/modules/organizarScada/components/widgets/iconsScada/ChartSocialGroup";
 import ChartRealtime from "@/modules/organizarScada/components/widgets/iconsScada/ChartRealtime";
 import ChartPageStats from "@/modules/organizarScada/components/widgets/iconsScada/ChartPageStats";
+
+
 import {
   buildEnergyBarChartDemo,
   buildTemperatureLineChartDemo,
 } from "@/modules/organizarScada/utils/chartDemos";
+
 import {
   parseNumericValue,
   normalizePercent,
 } from "@/modules/organizarScada/utils/numbers";
+
 import {
   formatNumericValue,
   formatValueWithDecimals,
 } from "@/modules/organizarScada/utils/formatters";
 
+import { resolveWidgetStyle } from "./WidgetStyleRenderer";
+
+/* =========================================================
+   🔥 FIX: normalización consistente
+========================================================= */
 const buildNumericMiniProps = (settings, liveData) => {
-  const min = typeof settings.minValue !== "undefined" ? settings.minValue : 0;
-  const max =
-    typeof settings.maxValue !== "undefined" ? settings.maxValue : 100;
+  const min = settings.min ?? settings.minValue ?? 0;
+  const max = settings.max ?? settings.maxValue ?? 100;
+
   const rawValue =
     typeof liveData.value !== "undefined"
       ? liveData.value
       : settings.initialValue;
+
   const numericValue = parseNumericValue(rawValue);
+
   const fallbackNumeric =
     numericValue ?? parseNumericValue(settings.initialValue) ?? 0;
+
   const percent = normalizePercent(fallbackNumeric, min, max);
   const formattedValue = formatNumericValue(fallbackNumeric) ?? "-";
+
   const labelText =
     formattedValue === "-"
       ? "-"
       : liveData.unit
         ? `${formattedValue} ${liveData.unit}`
         : formattedValue;
-  const bubbleValue = formatValueWithDecimals(rawValue);
+
   return {
     percent,
     formattedValue,
     labelText,
-    bubbleValue,
+    bubbleValue: formatValueWithDecimals(rawValue),
     unit: liveData.unit,
   };
 };
 
+/* =========================================================
+   RENDER
+========================================================= */
 export const renderWidget = ({
   data,
   live,
   width,
   height,
-  theme,
   valueHistory,
   demoNow,
 }) => {
   if (!data) return null;
+
   const settings = data.settings || {};
   const history = valueHistory || [];
 
+
+  const label =
+    settings.attributeLabel ||
+    settings.label ||
+    data.label ||
+    "";
+
+  const min = settings.min ?? settings.minValue ?? 0;
+  const max = settings.max ?? settings.maxValue ?? 100;
+
+  const unit = live.unit || settings.unit || "";
+
+  const style = resolveWidgetStyle(settings);
+
   switch (data.type) {
-    case "speedometer":
+    /* =========================================================
+       MINI WIDGETS
+    ========================================================= */
     case "mini-ring":
     case "mini-horizontal":
     case "mini-donut":
     case "mini-bubble": {
-      const label = settings.attributeLabel || data.label;
       const numericProps = buildNumericMiniProps(settings, live);
+
       const content =
         data.type === "mini-horizontal" ? (
           <MiniHorizontalBar
             percent={numericProps.percent}
             label={numericProps.labelText}
+            color={style.primary} 
           />
         ) : data.type === "mini-donut" ? (
           <BlueDonutGauge
             percent={numericProps.percent}
             label={numericProps.labelText}
+            color={style.primary} 
           />
         ) : data.type === "mini-bubble" ? (
           <ValueBubble
             value={numericProps.bubbleValue}
             unit={numericProps.unit}
+            color={style.primary} 
           />
         ) : (
           <RingGauge
             percent={numericProps.percent}
             displayValue={numericProps.formattedValue}
             unit={numericProps.unit}
+            color={style.primary} 
           />
         );
+
       return (
         <div className="scada-mini-widget">
           <div className="scada-mini-title">{label}</div>
@@ -121,9 +159,10 @@ export const renderWidget = ({
         </div>
       );
     }
+
     case "mini-needle": {
-      const label = settings.attributeLabel || data.label;
       const numericProps = buildNumericMiniProps(settings, live);
+
       return (
         <div className="scada-mini-widget">
           <div className="scada-mini-title">{label}</div>
@@ -131,43 +170,18 @@ export const renderWidget = ({
             percent={numericProps.percent}
             value={numericProps.formattedValue}
             unit={numericProps.unit}
+            color={style.primary} 
           />
         </div>
       );
     }
-    case "power-card": {
-      const label = settings.attributeLabel || data.label;
-      const numericProps = buildNumericMiniProps(settings, live);
-      return (
-        <KwShieldGauge
-          value={numericProps.formattedValue}
-          unit={numericProps.unit}
-          label={label}
-        />
-      );
-    }
-    case "press-card": {
-      const label = settings.attributeLabel || data.label;
-      const numericProps = buildNumericMiniProps(settings, live);
-      return (
-        <PressTrendGauge
-          value={numericProps.formattedValue}
-          unit={numericProps.unit}
-          label={label}
-          trend={numericProps.percent - 50}
-        />
-      );
-    }
+
     case "mini-lamp": {
-      const label = settings.attributeLabel || data.label;
       const boolValue =
         typeof live.value === "boolean"
           ? live.value
-          : Boolean(
-              typeof settings.initialValue !== "undefined"
-                ? settings.initialValue
-                : false,
-            );
+          : Boolean(settings.initialValue ?? false);
+
       return (
         <div className="scada-mini-widget">
           <div className="scada-mini-title">{label}</div>
@@ -175,555 +189,124 @@ export const renderWidget = ({
         </div>
       );
     }
-    case "mini-table": {
-      const label = settings.attributeLabel || data.label;
-      const fallbackRow =
-        typeof live.value !== "undefined"
-          ? [
-              {
-                site: live.site || settings.site,
-                equipment: live.equipment || settings.equipment,
-                variable: live.variable || settings.attributeKey || data.label,
-                value: formatValueWithDecimals(live.value),
-                timestamp: live.timestamp || new Date().toISOString(),
-              },
-            ]
-          : [];
-      const tableRows = history.length
-        ? [...history]
-            .slice(-10)
-            .reverse()
-            .map((entry) => ({
-              site: entry.site || settings.site,
-              equipment: entry.equipment || settings.equipment,
-              variable: entry.variable || settings.attributeKey || data.label,
-              value: entry.displayValue ?? formatValueWithDecimals(entry.value),
-              timestamp: entry.timestamp,
-            }))
-        : settings.rows || fallbackRow;
-      return (
-        <div className="scada-mini-widget">
-          <div className="scada-mini-title">{label}</div>
-          <MiniTable rows={tableRows} />
-        </div>
-      );
-    }
-    case "mini-chart": {
-      const label = settings.attributeLabel || data.label;
-      const historySeries = history
-        .map((entry) => entry.numericValue)
-        .filter((val) => typeof val === "number");
-      const fallbackSeries =
-        typeof live.value !== "undefined"
-          ? [parseNumericValue(live.value)].filter(
-              (val) => typeof val === "number",
-            )
-          : settings.series || [];
-      const series = historySeries.length >= 2 ? historySeries : fallbackSeries;
-      return (
-        <div className="scada-mini-widget">
-          <div className="scada-mini-title">{label}</div>
-          <MiniTrendChart series={series} />
-        </div>
-      );
-    }
-    case "svg-gauge": {
-      const valueToRender =
-        typeof live.value !== "undefined"
-          ? live.value
-          : (data.gaugeOptions?.value ?? 0);
-      return (
-        <SvgGauge
-          options={data.gaugeOptions}
-          value={valueToRender}
-          className={data.className}
-          width={width}
-          height={height}
-        />
-      );
-    }
+
+    /* =========================================================
+       GAUGES
+    ========================================================= */
     case "temp-gauge": {
-      const valueToRender =
-        typeof live.value !== "undefined"
-          ? parseNumericValue(live.value)
-          : (settings.initialValue ?? 89);
+      const value =
+        parseNumericValue(live.value) ??
+        settings.initialValue ??
+        0;
 
       return (
-        <TempGauge
-          value={valueToRender}
-          min={settings.minValue ?? settings.min ?? 0}
-          max={settings.maxValue ?? settings.max ?? 120}
-          label={settings.label || data.label}
-          unit={live.unit || settings.unit || "C"}
-          size={Math.min(width, height)}
-          labelColor={settings.labelColor || "rgba(248,113,113,0.95)"}
-          valueColor={settings.valueColor}
-          labelOffsetX={settings.labelOffsetX}
-          labelOffsetY={settings.labelOffsetY}
-          valueOffsetX={settings.valueOffsetX}
-          valueOffsetY={settings.valueOffsetY}
-          needleColor={settings.needleColor}
-          tickColor={settings.tickColor}
-          arcStartColor={settings.arcStartColor}
-          arcMidColor={settings.arcMidColor}
-          arcEndColor={settings.arcEndColor}
-          showValue={settings.showValue !== false}
-          showLabel={settings.showLabel !== false}
-          showMinMax={settings.showMinMax !== false}
-          minMaxColor={settings.minMaxColor}
-          minMaxFontSize={settings.minMaxFontSize}
-        />
+          <TempGauge
+            value={value}
+            min={min}
+            max={max}
+            label={label}
+            unit={unit || "C"}
+            size={Math.min(width, height)}
+            valueColor={style.primary}  
+            arcStartColor={style.primary}  
+          />
       );
     }
-    case "energy-bar-chart": {
-      const demo = buildEnergyBarChartDemo({ now: demoNow, settings });
-      return (
-        <EnergyBarChart
-          title={settings.title || data.label}
-          valueText={settings.valueText || demo.valueText || "420 kW"}
-          bars={Array.isArray(settings.series) ? settings.series : demo.bars}
-          xLabels={
-            Array.isArray(settings.xLabels) ? settings.xLabels : demo.labels
-          }
-          maxValue={settings.maxValue || demo.maxScale}
-          limitValue={settings.limitValue || demo.limitValue}
-          width={width}
-          height={height}
-          bgColor={settings.bgColor || "#1e272e"}
-          gridColor={settings.gridColor || "#2f3640"}
-          axisColor={settings.axisColor || "#57606f"}
-          titleColor={settings.titleColor || "#ecf0f1"}
-          valueColor={settings.valueColor || "#00d2d3"}
-          labelColor={settings.labelColor || "#95a5a6"}
-          barGradientFrom={settings.barGradientFrom || "#00d2d3"}
-          barGradientTo={settings.barGradientTo || "#0984e3"}
-          alertBarColor={settings.alertBarColor || "#ff7675"}
-          limitColor={settings.limitColor || "#d63031"}
-          showGrid={settings.showGrid !== false}
-          showLimit={settings.showLimit !== false}
-          showTitle={settings.showTitle !== false}
-          showValue={settings.showValue !== false}
-        />
-      );
-    }
-    case "temperature-line-chart": {
-      const demo = buildTemperatureLineChartDemo({ now: demoNow, settings });
-      return (
-        <TemperatureLineChart
-          label={settings.legendLabel || "Temp °C"}
-          pointLabel={settings.pointLabel || demo.pointLabel || "55ºC"}
-          series={
-            Array.isArray(settings.series) ? settings.series : demo.series
-          }
-          yMin={settings.yMin ?? demo.yMin}
-          yMax={settings.yMax ?? demo.yMax}
-        />
-      );
-    }
+
     case "hmi-progress-bar": {
-      const min =
-        typeof settings.minValue !== "undefined" ? settings.minValue : 0;
-      const max =
-        typeof settings.maxValue !== "undefined" ? settings.maxValue : 100;
-      const rawValue =
-        typeof live.value !== "undefined" ? live.value : settings.initialValue;
-      const numericValue =
-        parseNumericValue(rawValue) ??
+      const value =
+        parseNumericValue(live.value) ??
         parseNumericValue(settings.initialValue) ??
         0;
-      const percent = normalizePercent(numericValue, min, max);
+
+      const percent = normalizePercent(value, min, max);
+
       return (
         <HmiProgressBar
           percent={percent}
-          label={settings.caption || data.label || "LOREM IPSUM"}
+          label={settings.caption || label}
           width={width}
           height={height}
-          trackFill={settings.trackFill || "#1e2a3e"}
-          trackStroke={settings.trackStroke || "#2c6993"}
-          gradientFrom={settings.gradientFrom || "#3498db"}
-          gradientTo={settings.gradientTo || "#2980b9"}
-          hatchStroke={settings.hatchStroke || "#2c6993"}
-          labelColor={settings.labelColor || "#999"}
-          percentColorOverride={settings.percentColor || undefined}
-          showValue={settings.showValue !== false}
-          showLabel={settings.showLabel === true}
-          labelOffsetX={settings.labelOffsetX || 0}
-          labelOffsetY={settings.labelOffsetY || 0}
-          valueOffsetX={settings.valueOffsetX || 0}
-          valueOffsetY={settings.valueOffsetY || 0}
+          gradientFrom={style.primary}         
+          gradientTo={style.secondary}         
         />
       );
     }
+
     case "hmi-tank-level": {
-      const min =
-        typeof settings.minValue !== "undefined" ? settings.minValue : 0;
-      const max =
-        typeof settings.maxValue !== "undefined" ? settings.maxValue : 100;
-      const rawValue =
-        typeof live.value !== "undefined" ? live.value : settings.initialValue;
-      const numericValue =
-        parseNumericValue(rawValue) ??
+      const value =
+        parseNumericValue(live.value) ??
         parseNumericValue(settings.initialValue) ??
         0;
-      const percent = normalizePercent(numericValue, min, max);
+
+      const percent = normalizePercent(value, min, max);
+
       return (
         <HmiTankLevel
           percent={percent}
           width={width}
           height={height}
-          tankDark={settings.tankDark || "#1a1f35"}
-          tankTop={settings.tankTop || "#252b45"}
-          fluidBase={settings.fluidBase || "#8e44ad"}
-          gradientFrom={settings.gradientFrom || "#9b59b6"}
-          gradientTo={settings.gradientTo || "#8e44ad"}
-          topFrom={settings.topFrom || "#d49cf2"}
-          topTo={settings.topTo || "#9b59b6"}
-          percentColorOverride={settings.percentColor || undefined}
-          showValue={settings.showValue !== false}
-          valueOffsetX={settings.valueOffsetX || 0}
-          valueOffsetY={settings.valueOffsetY || 0}
-          label={settings.label || ""}
-          labelColor={settings.labelColor || "#e2e8f0"}
-          labelOffsetX={settings.labelOffsetX || 0}
-          labelOffsetY={settings.labelOffsetY || -6}
-          fontFamily={settings.fontFamily || "Arial, sans-serif"}
-          waveEnabled={settings.waveEnabled !== false}
-          fluidOpacity={
-            typeof settings.fluidOpacity === "number"
-              ? settings.fluidOpacity
-              : 1
-          }
+          label={label}
         />
       );
     }
-    case "hmi-status-card": {
-      const status = settings.status || "ok";
-      const title = settings.title || data.label || "SISTEMA OK";
-      const subtitle = settings.subtitle || "STATUS: READY";
-      return (
-        <HmiStatusCard
-          status={status}
-          title={title}
-          subtitle={subtitle}
-          width={width}
-          height={height}
-        />
-      );
-    }
-    case "hmi-trend-card": {
-      const title =
-        settings.title || data.label || "Caudal de Proceso - Cuba 2";
-      const unitLabel = settings.unitLabel || "LOREM IPSUM";
-      const minValue =
-        typeof settings.minValue !== "undefined" ? settings.minValue : 0;
-      const maxValue =
-        typeof settings.maxValue !== "undefined" ? settings.maxValue : 10000;
-      const rawValue =
-        typeof live.value !== "undefined" ? live.value : settings.initialValue;
-      const numericValue =
-        parseNumericValue(rawValue) ??
-        parseNumericValue(settings.initialValue) ??
-        0;
-      const series = Array.isArray(settings.series) ? settings.series : [];
-      return (
-        <HmiTrendCard
-          title={title}
-          unitLabel={unitLabel}
-          value={numericValue}
-          minValue={minValue}
-          maxValue={maxValue}
-          series={series}
-          width={width}
-          height={height}
-        />
-      );
-    }
+
     case "hmi-scada-gauge": {
-      const min = typeof settings.min !== "undefined" ? settings.min : 0;
-      const max = typeof settings.max !== "undefined" ? settings.max : 100;
-      const rawValue =
-        typeof live.value !== "undefined" ? live.value : settings.initialValue;
-      const numericValue =
-        parseNumericValue(rawValue) ??
+      const value =
+        parseNumericValue(live.value) ??
         parseNumericValue(settings.initialValue) ??
         0;
-      const zones = Array.isArray(settings.zones) ? settings.zones : [];
-      return (
-        <HmiScadaGauge
-          value={numericValue}
-          min={min}
-          max={max}
-          unit={settings.unit || ""}
-          themeColor={settings.themeColor || "#94a3b8"}
-          zones={zones}
-          width={width}
-          height={height}
-          showValue={settings.showValue !== false}
-          visible={settings.visible !== false}
-          showLabel={settings.showLabel !== false}
-          valueOffsetX={settings.valueOffsetX || 0}
-          valueOffsetY={settings.valueOffsetY || 0}
-          unitOffsetX={settings.unitOffsetX || 0}
-          unitOffsetY={settings.unitOffsetY || 0}
-          valueColor={settings.valueColor || "#ffffff"}
-          unitColor={settings.unitColor || "#64748b"}
-        />
-      );
+
+       return (
+    <HmiScadaGauge
+      value={value}
+      min={min}
+      max={max}
+      unit={unit}
+      width={width}
+      height={height}
+      themeColor={style.primary}           
+      valueColor={style.text}             
+      unitColor={style.secondary}          
+    />
+  );
     }
-    case "hmi-horizontal-gauge": {
-      const min = typeof settings.min !== "undefined" ? settings.min : 0;
-      const max = typeof settings.max !== "undefined" ? settings.max : 100;
-      const rawValue =
-        typeof live.value !== "undefined" ? live.value : settings.initialValue;
-      const numericValue =
-        parseNumericValue(rawValue) ??
-        parseNumericValue(settings.initialValue) ??
-        0;
+
+    /* =========================================================
+       CHARTS
+    ========================================================= */
+    case "energy-bar-chart": {
+      const demo = buildEnergyBarChartDemo({ now: demoNow, settings });
+
       return (
-        <HmiHorizontalGauge
-          value={numericValue}
-          min={min}
-          max={max}
-          variant={settings.variant || "precision"}
-          accentColor={settings.accentColor}
+        <EnergyBarChart
+          title={settings.title || label}
+          bars={settings.series || demo.bars}
           width={width}
           height={height}
         />
       );
     }
-    case "hmi-energy-summary": {
+
+    case "temperature-line-chart": {
+      const demo = buildTemperatureLineChartDemo({ now: demoNow, settings });
+
       return (
-        <HmiEnergySummaryCard
-          title={settings.title || data.label || "Consumo 2026"}
-          value={settings.value || "1.627.009,26"}
-          unit={settings.unit || "kWh"}
-          subtitle={settings.subtitle || "Energia Electrica"}
-          deltaText={settings.deltaText || "Superior al mes anterior"}
-          deltaValue={settings.deltaValue || "2%"}
-          deltaDirection={settings.deltaDirection || "up"}
-          width={width}
-          height={height}
+        <TemperatureLineChart
+          label={settings.legendLabel || label}
+          series={settings.series || demo.series}
         />
       );
     }
-    case "image-widget": {
-      const src =
-        settings.imageBase64 ||
-        settings.base64 ||
-        settings.src ||
-        data.src ||
-        "";
-      const opacity = Math.max(
-        0,
-        Math.min(100, Number(settings.opacity ?? 100)),
-      );
-      if (!src) {
-        return (
-          <div className="flex h-full w-full items-center justify-center rounded border border-dashed border-slate-300 bg-slate-50 text-[11px] text-slate-500">
-            Imagen no disponible
-          </div>
-        );
-      }
-      return (
-        <div className="h-full w-full overflow-hidden rounded" style={{ opacity: opacity / 100 }}>
-          <img
-            src={src}
-            alt={settings.alt || data.label || "ImageWidget"}
-            className="h-full w-full object-contain select-none"
-            draggable={false}
-          />
-        </div>
-      );
-    }
-    case "nav-button": {
-      const label = data.label || "Boton";
-      const variantClass =
-        data.variant === "btn-outline"
-          ? "border border-sky-500 text-sky-700 hover:bg-sky-50"
-          : "bg-sky-600 hover:bg-sky-700 text-white";
-      return (
-        <button
-          className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-semibold transition cursor-default ${variantClass}`}
-          onClick={(e) => e.preventDefault()}
-          title="Bot?n de navegaci?n (activo solo en Producci?n)"
-        >
-          {label}
-        </button>
-      );
-    }
-    case "label-pill": {
-      const label = data.label || "Label";
-      return (
-        <div className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 text-xs px-3 py-0.5 border border-emerald-100">
-          {label}
-        </div>
-      );
-    }
-    case "label-badge": {
-      const label = data.label || "Badge";
-      return (
-        <div className="inline-flex items-center rounded bg-slate-800 text-slate-50 text-[10px] px-2 py-0.5 uppercase tracking-wide">
-          {label}
-        </div>
-      );
-    }
-    case "card-soft":
-    case "card-elevated": {
-      const elevated = data.type === "card-elevated";
-      return (
-        <div
-          className={[
-            "w-full h-full rounded-lg border px-3 py-2 text-slate-700 text-sm flex items-center",
-            elevated ? "bg-white shadow-md" : "bg-slate-50 shadow-sm",
-          ].join(" ")}
-        ></div>
-      );
-    }
-    case "shape-rect": {
-      const fill = settings.fill || "#e2e8f0";
-      const stroke = settings.stroke || "#94a3b8";
-      const radius = typeof settings.radius === "number" ? settings.radius : 8;
-      return (
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            background: fill,
-            border: `2px solid ${stroke}`,
-            borderRadius: radius,
-          }}
-        />
-      );
-    }
-    case "shape-circle": {
-      const fill = settings.fill || "#e2e8f0";
-      const stroke = settings.stroke || "#94a3b8";
-      const w = Number(width) || 120;
-      const h = Number(height) || 120;
-      return (
-        <svg
-          width="100%"
-          height="100%"
-          viewBox={`0 0 ${w} ${h}`}
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <ellipse
-            cx={w / 2}
-            cy={h / 2}
-            rx={w / 2}
-            ry={h / 2}
-            fill={fill}
-            stroke={stroke}
-            strokeWidth="2"
-          />
-        </svg>
-      );
-    }
-    case "shape-triangle": {
-      const fill = settings.fill || "#cbd5e1";
-      const stroke = settings.stroke || "#94a3b8";
-      const w = Number(width) || 120;
-      const h = Number(height) || 120;
-      const points = `${w / 2},0 ${w},${h} 0,${h}`;
-      return (
-        <svg
-          width="100%"
-          height="100%"
-          viewBox={`0 0 ${w} ${h}`}
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <polygon
-            points={points}
-            fill={fill}
-            stroke={stroke}
-            strokeWidth="2"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
-    }
-    case "chart-basic": {
-      return (
-        <ChartBasic
-          series={settings.series || settings.options?.series}
-          labels={
-            settings.labels ||
-            settings.options?.xaxis?.categories ||
-            data.labels
-          }
-          title={settings.options?.title?.text || settings.title || data.label}
-          lineColor={settings.lineColor || settings.options?.colors?.[0]}
-          areaColor={settings.areaColor}
-          bgColor={settings.bgColor}
-          axisColor={settings.axisColor}
-          textColor={settings.textColor}
-          height={height ?? settings.height}
-          width={width ?? settings.width}
-        />
-      );
-    }
-    case "chart-high-low": {
-      return (
-        <ChartHighLow
-          series={settings.series}
-          options={settings.options}
-          height={height ?? settings.height}
-          width={width ?? settings.width}
-          type={settings.type || "line"}
-        />
-      );
-    }
-    case "chart-stock-area": {
-      return (
-        <ChartStockArea
-          series={settings.series}
-          options={settings.options}
-          height={height ?? settings.height}
-          width={width ?? settings.width}
-          type={settings.type || "area"}
-        />
-      );
-    }
-    case "chart-social-group": {
-      return (
-        <ChartSocialGroup
-          settings={settings}
-          height={height ?? settings.height}
-          width={width ?? settings.width}
-        />
-      );
-    }
-    case "chart-realtime": {
-      return (
-        <ChartRealtime
-          settings={settings}
-          height={height ?? settings.height}
-          width={width ?? settings.width}
-          type={settings.type || "line"}
-        />
-      );
-    }
-    case "chart-page-stats": {
-      return (
-        <ChartPageStats
-          series={settings.series}
-          options={settings.options}
-          height={height ?? settings.height}
-          width={width ?? settings.width}
-          type={settings.type || "line"}
-        />
-      );
-    }
-    case "luxuries-stacked-bar": {
-      return (
-        <LuxuriesStackedBarChart
-          width={width}
-          height={height}
-          style={{ maxWidth: "100%", maxHeight: "100%" }}
-        />
-      );
-    }
+
+    /* =========================================================
+       DEFAULT
+    ========================================================= */
     default:
-      return <div className="p-2 text-gray-600">Componente: {data.label}</div>;
+      return (
+        <div className="p-2 text-gray-600">
+          {label}
+        </div>
+      );
   }
 };
