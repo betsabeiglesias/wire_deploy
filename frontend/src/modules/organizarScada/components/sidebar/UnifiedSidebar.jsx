@@ -6,7 +6,17 @@
 // - El resto de secciones sin cambios respecto al original.
 //
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Eye, EyeOff, GripVertical, Lock, Unlock } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Lock,
+  Pencil,
+  Trash2,
+  Unlock,
+} from "lucide-react";
 import { elementos_scada } from "@/modules/organizarScada/templates/elementos_scada";
 import { buttons_labels_items } from "@/modules/organizarScada/utils/items";
 import { renderWidget } from "@/modules/organizarScada/components/widgets/registry.jsx";
@@ -419,14 +429,20 @@ const UnifiedSidebar = ({
                     <div className="flex items-center gap-1 pt-1">
                       <button
                         onClick={() => startInlineRename(view)}
-                        className="p-1 text-slate-400 hover:text-sky-600"
+                        className="inline-flex cursor-pointer items-center justify-center rounded p-1 text-slate-400 transition hover:bg-sky-50 hover:text-sky-600"
                         title="Renombrar"
-                      >??</button>
+                        aria-label={`Renombrar vista ${view.name}`}
+                      >
+                        <Pencil size={14} />
+                      </button>
                       <button
                         onClick={() => { if (confirm(`?Eliminar vista "${view.name}"?`)) onDeleteView(view.id); }}
-                        className="p-1 text-slate-400 hover:text-red-600"
+                        className="inline-flex cursor-pointer items-center justify-center rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
                         title="Eliminar"
-                      >???</button>
+                        aria-label={`Eliminar vista ${view.name}`}
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </div>
                 </div>

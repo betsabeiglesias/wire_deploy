@@ -61,7 +61,7 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setOpen((prev) => !prev)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-[#9fb4d8] transition hover:bg-white/10 hover:text-white"
+            className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-[#9fb4d8] transition hover:bg-white/10 hover:text-white"
             aria-label={open ? "Contraer menu" : "Expandir menu"}
           >
             {open ? (

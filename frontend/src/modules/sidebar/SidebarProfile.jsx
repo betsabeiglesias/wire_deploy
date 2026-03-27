@@ -30,7 +30,7 @@ export default function SidebarProfile({ name, role, onLogout, open }) {
         <button
           type="button"
           onClick={onLogout}
-          className={`mt-3 inline-flex items-center rounded-xl border border-white/10 bg-white/8 text-[#d7e4f8] transition hover:bg-white/12 ${
+          className={`mt-3 inline-flex cursor-pointer items-center rounded-xl border border-white/10 bg-white/8 text-[#d7e4f8] transition hover:bg-white/12 ${
             open
               ? "w-full justify-between px-4 py-3"
               : "w-full justify-center px-3 py-3"

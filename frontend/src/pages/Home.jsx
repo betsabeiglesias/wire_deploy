@@ -40,10 +40,8 @@ const Home = () => {
 
   const cardsCount = commandCards.length;
   const hasCarousel = cardsCount > 4;
-  const cardsGridColumns =
-    cardsCount <= 1
-      ? "minmax(0, 1fr)"
-      : `repeat(${Math.min(cardsCount, 4)}, minmax(0, 1fr))`;
+  const commandCardWidth = "20rem";
+  const commandCardsMaxWidth = "calc((20rem * 3) + (1rem * 2))";
 
   const scrollCards = (direction) => {
     const viewport = cardsViewportRef.current;
@@ -97,13 +95,9 @@ const Home = () => {
                       className={[
                         hasCarousel
                           ? "flex w-max gap-4 px-3 py-3 md:px-8 md:py-8"
-                          : "grid w-full gap-4 px-3 py-3 md:px-8 md:py-8",
+                          : "flex w-full flex-wrap justify-center gap-4 px-3 py-3 md:px-8 md:py-8",
                       ].join(" ")}
-                      style={
-                        hasCarousel
-                          ? undefined
-                          : { gridTemplateColumns: cardsGridColumns }
-                      }
+                      style={hasCarousel ? undefined : { maxWidth: commandCardsMaxWidth, marginInline: "auto" }}
                     >
                       {commandCards.map((card, index) => (
                         <div
@@ -111,10 +105,11 @@ const Home = () => {
                           className={
                             hasCarousel
                               ? "w-[280px] flex-shrink-0 md:w-[300px] xl:w-[calc((100%-3rem)/4)] xl:max-w-[320px]"
-                              : "min-w-0"
+                              : "w-full max-w-[20rem] flex-shrink-0"
                           }
+                          style={hasCarousel ? undefined : { width: commandCardWidth }}
                         >
-                          <Card {...card} />
+                          <Card {...card} className="min-h-[220px] p-3.5 md:p-4" />
                         </div>
                       ))}
                     </div>

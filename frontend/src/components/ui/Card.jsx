@@ -46,7 +46,7 @@ export default function CommandCard({
       type="button"
       onClick={onClick}
       className={[
-        "group flex h-full w-full flex-col overflow-hidden rounded-[24px] border p-4 text-left transition",
+        "group flex h-full w-full cursor-pointer flex-col overflow-hidden rounded-[24px] border p-4 text-left transition",
         "hover:-translate-y-1 hover:shadow-[0_20px_44px_-28px_rgba(9,21,47,0.55)]",
         "md:rounded-[28px] md:p-5",
         active.card,
