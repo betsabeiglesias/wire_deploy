@@ -15,6 +15,7 @@ export function useRealtimeData(tenant) {
 
   useEffect(() => {
     if (!tenant) return;
+    console.log("🧠 WS HOOK MOUNT");
 
     let ws;
     let cancelled = false;
@@ -108,6 +109,7 @@ export function useRealtimeData(tenant) {
     connect();
 
     return () => {
+      console.log("💀 WS HOOK UNMOUNT");
       cancelled = true;
       if (wsRef.current) {
         wsRef.current.close();
