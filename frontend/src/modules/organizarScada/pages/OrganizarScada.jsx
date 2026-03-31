@@ -169,6 +169,9 @@ const OrganizarScada = () => {
 
   const handleSelectLayer = (id) => {
     setSelectedId(id);
+  };
+  const handleOpenPropsForElement = (id) => {
+    setSelectedId(id);
     setIsPropsOpen(Boolean(id));
     setShowPropsPanel(Boolean(id));
   };
@@ -205,8 +208,8 @@ const OrganizarScada = () => {
     Array.isArray(views) &&
     views.some((v) => Array.isArray(v?.elements) && v.elements.length > 0);
   const isPropsPanelOpen = showPropsPanel;
-  const canvasWidth = "100rem";
-  const canvasHeight = "49rem";
+  const canvasWidth = "98.875rem";
+  const canvasHeight = "49.95rem";
   const zoomLabel = useMemo(() => `${Math.round((zoom || 1) * 100)}%`, [zoom]);
 
   const ZOOM_STEP = 0.1;
@@ -232,8 +235,9 @@ const OrganizarScada = () => {
       availableH / stageSize.height,
     );
     if (!Number.isFinite(scale) || scale <= 0) {
-      setZoom(1);
+      setZoom(0.6);
       return;
+      s;
     }
     setZoom(Math.max(MIN_ZOOM, Math.min(scale, MAX_ZOOM)));
   };
@@ -250,18 +254,12 @@ const OrganizarScada = () => {
     };
     setCanvasElements((prev) => [...prev, clone]);
     setSelectedId(newId);
-    setIsPropsOpen(true);
   };
 
   const handleDeleteSelected = () => {
     if (!selectedId) return;
     handleDeleteComponent(selectedId);
   };
-
-  useEffect(() => {
-    if (selectedElement) setShowPropsPanel(true);
-    else setShowPropsPanel(false);
-  }, [selectedElement]);
 
   const performPublish = async (nameOverride) => {
     const viewsData = buildViewsData(views, currentViewId);
@@ -481,9 +479,12 @@ const OrganizarScada = () => {
     selectedId,
     onSelect: (id) => {
       setSelectedId(id);
-      setIsPropsOpen(Boolean(id));
-      setShowPropsPanel(Boolean(id));
+      if (!id) {
+        setIsPropsOpen(false);
+        setShowPropsPanel(false);
+      }
     },
+    onOpenProps: handleOpenPropsForElement,
     onUpdate: (id, changes) => handleUpdateComponent(id, changes),
     onDelete: handleDeleteComponent,
     onDrop: (event, canvasEl) =>

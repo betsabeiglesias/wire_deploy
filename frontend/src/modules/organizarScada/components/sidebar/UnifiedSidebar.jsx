@@ -29,6 +29,20 @@ const CUSTOM_ICONS_STORAGE_KEY = "organizarScada.customIcons.library";
 const MAX_IMAGE_DIMENSION = 1200;
 const MAX_IMAGE_BYTES = 500 * 1024;
 const cls = (...parts) => parts.filter(Boolean).join(" ");
+const editorPanelClass =
+  "rounded-2xl border border-[#28486f] bg-[linear-gradient(180deg,rgba(9,21,47,0.96)_0%,rgba(13,29,64,0.98)_100%)] p-3 text-[11px] text-[#d6e4f5] shadow-[0_18px_40px_-30px_rgba(3,10,24,0.75)]";
+const editorSectionTitleClass =
+  "text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8ea9c8]";
+const editorInputClass =
+  "w-full rounded-xl border border-[#355780] bg-[rgba(255,255,255,0.06)] px-2.5 py-2 text-[12px] text-[#eef4ff] placeholder:text-[#7f90a5] focus:border-[#7ec8ff] focus:outline-none";
+const editorGhostButtonClass =
+  "rounded-xl border border-[#355780] bg-[rgba(255,255,255,0.05)] px-2.5 py-1.5 text-[11px] text-[#d6e4f5] transition hover:border-[#7ec8ff] hover:bg-[rgba(126,200,255,0.12)]";
+const editorActionButtonClass =
+  "rounded-xl border border-[#2d6284] bg-[linear-gradient(180deg,#215f82_0%,#194b68_100%)] px-2.5 py-1.5 text-[11px] font-medium text-white shadow-[0_12px_24px_-18px_rgba(25,75,104,0.65)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50";
+const editorCardClass =
+  "rounded-xl border border-[#355780] bg-[rgba(255,255,255,0.05)]";
+const editorScrollClass =
+  "max-h-72 overflow-y-auto rounded-xl border border-[#355780] bg-[rgba(255,255,255,0.04)] p-1";
 
 const readFileAsDataURL = (file) =>
   new Promise((resolve, reject) => {
@@ -337,19 +351,19 @@ const UnifiedSidebar = ({
     // -- Pantallas + Capas ------------------------------------------------------
     if (sectionId === "pantallas") {
       return (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-3">
+        <div className={cls(editorPanelClass, "space-y-3")}>
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-800">Pantallas</h3>
+            <h3 className="text-sm font-semibold text-white">Pantallas</h3>
             <button
               onClick={onCreateView}
-              className="inline-flex items-center justify-center rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
+              className={editorActionButtonClass}
             >
               + Nueva pantalla
             </button>
           </div>
 
           {viewsError && (
-            <div className="rounded-md border border-amber-200 bg-amber-50 px-2 py-2 text-[11px] text-amber-700">
+            <div className="rounded-xl border border-[#8f6a18] bg-[rgba(233,196,106,0.12)] px-2 py-2 text-[11px] text-[#f6d78a]">
               {viewsError}
             </div>
           )}
@@ -358,7 +372,7 @@ const UnifiedSidebar = ({
             {viewsLoading && (
               <div className="space-y-2">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="rounded-md border border-slate-200 bg-white px-3 py-3">
+                  <div key={i} className="rounded-xl border border-[#355780] bg-[rgba(255,255,255,0.05)] px-3 py-3">
                     <div className="flex items-center gap-2">
                       <SkeletonBlock width="w-32" height="h-3.5" />
                       <SkeletonBlock width="w-4" height="h-4" rounded="rounded-full" />
@@ -370,19 +384,19 @@ const UnifiedSidebar = ({
             )}
 
             {!viewsLoading && views.length === 0 && (
-              <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-3 text-[11px] text-slate-600">
-                <p className="font-semibold text-slate-700">A?n no tienes vistas.</p>
-                <p className="mt-1 text-slate-500">Crea tu primera vista o importa un JSON existente.</p>
+              <div className="rounded-xl border border-dashed border-[#355780] bg-[rgba(255,255,255,0.04)] px-3 py-3 text-[11px] text-[#a9bdd7]">
+                <p className="font-semibold text-white">A?n no tienes vistas.</p>
+                <p className="mt-1 text-[#8ea9c8]">Crea tu primera vista o importa un JSON existente.</p>
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={onCreateView}
-                    className="rounded border border-sky-300 bg-sky-50 px-2 py-1 text-[11px] font-semibold text-sky-700 hover:border-sky-400"
+                    className={editorActionButtonClass}
                   >
                     + Crear vista
                   </button>
                   <button
                     onClick={onRefreshViews}
-                    className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400"
+                    className={editorGhostButtonClass}
                   >
                     Reintentar carga
                   </button>
@@ -396,8 +410,10 @@ const UnifiedSidebar = ({
                 <div
                   key={view.id}
                   className={[
-                    "flex items-center justify-between rounded-md border px-3 py-2 transition",
-                    isSelected ? "border-sky-400 bg-sky-50" : "border-slate-200 bg-white hover:bg-slate-50",
+                    "flex items-center justify-between rounded-xl border px-3 py-2 transition",
+                    isSelected
+                      ? "border-[#7ec8ff] bg-[linear-gradient(180deg,rgba(34,86,120,0.95)_0%,rgba(25,75,104,0.98)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+                      : "border-[#355780] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(126,200,255,0.09)]",
                   ].join(" ")}
                 >
                   <div className="flex items-start gap-2 w-full">
@@ -413,23 +429,23 @@ const UnifiedSidebar = ({
                               if (e.key === "Enter")  commitInlineRename(view.id);
                               if (e.key === "Escape") cancelInlineRename();
                             }}
-                            className="w-full rounded border border-sky-300 px-2 py-1 text-[12px] text-slate-800 focus:outline-none"
+                            className={editorInputClass}
                           />
                         ) : (
-                          <span className={isSelected ? "text-sky-800 font-semibold" : "text-slate-700"}>
+                          <span className={isSelected ? "font-semibold text-white" : "text-[#d6e4f5]"}>
                             {view.name}
                           </span>
                         )}
-                        {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+                        {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
                       </div>
-                      <div className="text-[10px] text-slate-500 mt-1">
+                      <div className="mt-1 text-[10px] text-[#8ea9c8]">
                         {view.elements?.length || 0} elementos
                       </div>
                     </button>
                     <div className="flex items-center gap-1 pt-1">
                       <button
                         onClick={() => startInlineRename(view)}
-                        className="inline-flex cursor-pointer items-center justify-center rounded p-1 text-slate-400 transition hover:bg-sky-50 hover:text-sky-600"
+                        className="inline-flex cursor-pointer items-center justify-center rounded-lg p-1 text-[#8ea9c8] transition hover:bg-[rgba(126,200,255,0.12)] hover:text-[#7ec8ff]"
                         title="Renombrar"
                         aria-label={`Renombrar vista ${view.name}`}
                       >
@@ -437,7 +453,7 @@ const UnifiedSidebar = ({
                       </button>
                       <button
                         onClick={() => { if (confirm(`?Eliminar vista "${view.name}"?`)) onDeleteView(view.id); }}
-                        className="inline-flex cursor-pointer items-center justify-center rounded p-1 text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                        className="inline-flex cursor-pointer items-center justify-center rounded-lg p-1 text-[#8ea9c8] transition hover:bg-[rgba(175,71,97,0.14)] hover:text-[#f199ad]"
                         title="Eliminar"
                         aria-label={`Eliminar vista ${view.name}`}
                       >
@@ -451,14 +467,14 @@ const UnifiedSidebar = ({
           </div>
 
           {/* Capas */}
-          <div className="border-t border-slate-200 pt-3">
+          <div className="border-t border-[#28486f] pt-3">
             <div className="mb-2 flex items-center justify-between">
-              <h4 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Capas</h4>
-              <span className="text-[10px] text-slate-400">{layers.length} elementos</span>
+              <h4 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8ea9c8]">Capas</h4>
+              <span className="text-[10px] text-[#6f87a5]">{layers.length} elementos</span>
             </div>
-            <div className="max-h-64 space-y-1 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-1">
+            <div className={cls(editorScrollClass, "max-h-64 space-y-1")}>
               {layers.length === 0 && (
-                <div className="rounded bg-white px-2 py-2 text-[10px] text-slate-500">
+                <div className="rounded-lg bg-[rgba(255,255,255,0.05)] px-2 py-2 text-[10px] text-[#8ea9c8]">
                   No hay elementos en el canvas.
                 </div>
               )}
@@ -474,25 +490,27 @@ const UnifiedSidebar = ({
                     onDrop={() => handleLayerDrop(layer.id)}
                     onClick={() => onSelectElement?.(layer.id)}
                     className={[
-                      "group flex items-center gap-1 rounded border px-1.5 py-1 text-[11px] transition cursor-pointer",
-                      isSelected      ? "border-sky-400 bg-sky-50 text-sky-900" : "border-transparent bg-white text-slate-700 hover:border-slate-300",
+                      "group flex items-center gap-1 rounded-xl border px-1.5 py-1 text-[11px] transition cursor-pointer",
+                      isSelected
+                        ? "border-[#7ec8ff] bg-[rgba(126,200,255,0.14)] text-white"
+                        : "border-transparent bg-[rgba(255,255,255,0.04)] text-[#d6e4f5] hover:border-[#355780] hover:bg-[rgba(126,200,255,0.08)]",
                       draggingLayerId === layer.id ? "opacity-60" : "",
                     ].join(" ")}
                     title={`${layer.fallbackName} ? z:${layer.zIndex}`}
                   >
                     <button
                       type="button"
-                      className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-500 hover:bg-slate-100"
+                      className="inline-flex h-5 w-5 items-center justify-center rounded-lg text-[#8ea9c8] hover:bg-[rgba(126,200,255,0.12)]"
                       onClick={e => { e.stopPropagation(); onToggleElementVisibility?.(layer.id); }}
                     >
-                      {layer.isVisible ? <Eye size={12} /> : <EyeOff size={12} className="text-slate-400" />}
+                      {layer.isVisible ? <Eye size={12} /> : <EyeOff size={12} className="text-[#6f87a5]" />}
                     </button>
                     <button
                       type="button"
-                      className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-500 hover:bg-slate-100"
+                      className="inline-flex h-5 w-5 items-center justify-center rounded-lg text-[#8ea9c8] hover:bg-[rgba(126,200,255,0.12)]"
                       onClick={e => { e.stopPropagation(); onToggleElementLock?.(layer.id); }}
                     >
-                      {layer.isLocked ? <Lock size={12} /> : <Unlock size={12} className="text-slate-400" />}
+                      {layer.isLocked ? <Lock size={12} /> : <Unlock size={12} className="text-[#6f87a5]" />}
                     </button>
                     <div className="min-w-0 flex-1">
                       {isEditing ? (
@@ -505,14 +523,14 @@ const UnifiedSidebar = ({
                             if (e.key === "Enter")  commitLayerRename(layer.id);
                             if (e.key === "Escape") cancelLayerRename();
                           }}
-                          className="w-full rounded border border-sky-300 px-1 py-0.5 text-[11px] focus:outline-none"
+                          className={cls(editorInputClass, "px-1.5 py-1 text-[11px]")}
                         />
                       ) : (
                         <p
                           className={[
                             "truncate",
-                            !layer.isVisible ? "text-slate-400 line-through" : "",
-                            layer.isLocked   ? "text-amber-700" : "",
+                            !layer.isVisible ? "text-[#6f87a5] line-through" : "",
+                            layer.isLocked   ? "text-[#f6d78a]" : "",
                           ].join(" ")}
                           onDoubleClick={e => {
                             e.stopPropagation();
@@ -524,8 +542,8 @@ const UnifiedSidebar = ({
                         </p>
                       )}
                     </div>
-                    <span className="text-[10px] text-slate-400">z:{layer.zIndex}</span>
-                    <span className="text-slate-300 group-hover:text-slate-500">
+                    <span className="text-[10px] text-[#6f87a5]">z:{layer.zIndex}</span>
+                    <span className="text-[#4c6788] group-hover:text-[#8ea9c8]">
                       <GripVertical size={12} />
                     </span>
                   </div>
@@ -542,14 +560,14 @@ const UnifiedSidebar = ({
       // Sin proyecto guardado: formulario de nombre
       if (!layoutId) {
         return (
-          <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-3">
-            <h3 className="text-sm font-semibold text-slate-800">Variables</h3>
-            <p className="text-[10px] text-slate-500">
+          <div className={cls(editorPanelClass, "space-y-3")}>
+            <h3 className="text-sm font-semibold text-white">Variables</h3>
+            <p className="text-[10px] text-[#8ea9c8]">
               Para gestionar variables el proyecto necesita un nombre y estar guardado.
             </p>
             <div className="space-y-2">
               <input
-                className="w-full rounded border border-slate-300 px-2 py-1.5 text-[12px] focus:border-sky-400 focus:outline-none"
+                className={editorInputClass}
                 placeholder="Nombre del proyecto?"
                 value={projectNameDraft}
                 onChange={(e) => setProjectNameDraft(e.target.value)}
@@ -569,7 +587,7 @@ const UnifiedSidebar = ({
                     setIsSavingProject(false);
                   }
                 }}
-                className="w-full rounded border border-sky-400 bg-sky-50 px-2 py-1.5 text-[12px] font-medium text-sky-700 hover:bg-sky-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                className={cls(editorActionButtonClass, "w-full py-2 text-[12px]")}
               >
                 {isSavingProject ? "Guardando?" : "Guardar y continuar"}
               </button>
@@ -580,16 +598,16 @@ const UnifiedSidebar = ({
 
       // Con proyecto guardado: ?rbol tabla ? variables + bot?n gestor
       return (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-2">
+        <div className={cls(editorPanelClass, "space-y-2")}>
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-800">
+            <h3 className="text-sm font-semibold text-white">
               Variables
               {totalVarsCount > 0 && (
-                <span className="ml-1.5 text-[10px] font-normal text-slate-400">({totalVarsCount})</span>
+                <span className="ml-1.5 text-[10px] font-normal text-[#8ea9c8]">({totalVarsCount})</span>
               )}
             </h3>
             <button onClick={() => setShowDevices(true)}
-              className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50">
+              className={editorGhostButtonClass}>
               Gestionar
             </button>
           </div>
@@ -599,11 +617,11 @@ const UnifiedSidebar = ({
               {[1,2,3].map(i => <SkeletonBlock key={i} width="w-full" height="h-4" />)}
             </div>
           ) : variables.length === 0 ? (
-            <p className="text-[10px] text-slate-400">
+            <p className="text-[10px] text-[#8ea9c8]">
               Sin tablas. Usa "Gestionar" para crear tablas y a?adir variables.
             </p>
           ) : (
-            <div className="space-y-0.5 max-h-72 overflow-y-auto">
+            <div className="max-h-72 space-y-0.5 overflow-y-auto rounded-xl border border-[#355780] bg-[rgba(255,255,255,0.04)] p-1.5">
               {variables.map(table => {
                 const isOpen = expandedTables[table.id] ?? true;
                 const tableVars = table.variables || [];
@@ -611,40 +629,40 @@ const UnifiedSidebar = ({
                   <div key={table.id}>
                     {/* Tabla ? rama */}
                     <button type="button" onClick={() => toggleTable(table.id)}
-                      className="flex w-full items-center gap-1 rounded px-1 py-1 hover:bg-slate-100 text-left">
+                      className="flex w-full items-center gap-1 rounded-xl px-2 py-1.5 text-left hover:bg-[rgba(126,200,255,0.08)]">
                       {isOpen
-                        ? <ChevronDown size={11} className="shrink-0 text-slate-400" />
-                        : <ChevronRight size={11} className="shrink-0 text-slate-400" />}
-                      <span className="flex-1 text-[11px] font-semibold text-slate-700 truncate">
+                        ? <ChevronDown size={11} className="shrink-0 text-[#8ea9c8]" />
+                        : <ChevronRight size={11} className="shrink-0 text-[#8ea9c8]" />}
+                      <span className="flex-1 truncate text-[11px] font-semibold text-[#eef4ff]">
                         {table.name}
                       </span>
-                      <span className="shrink-0 text-[10px] text-slate-400">{tableVars.length}</span>
+                      <span className="shrink-0 text-[10px] text-[#8ea9c8]">{tableVars.length}</span>
                     </button>
 
                     {/* Variables ? hojas */}
                     {isOpen && (
-                      <div className="ml-3 border-l border-slate-200 pl-2 space-y-0.5 pb-1">
+                      <div className="ml-3 space-y-0.5 border-l border-[#355780] pl-2 pb-1">
                         {tableVars.length === 0 ? (
-                          <p className="text-[10px] text-slate-400 py-0.5">Sin variables.</p>
+                          <p className="py-0.5 text-[10px] text-[#8ea9c8]">Sin variables.</p>
                         ) : (
                           tableVars.map(v => (
                             <div key={v.id}
-                              className="flex items-center justify-between gap-1 rounded px-1 py-0.5 hover:bg-slate-50"
+                              className="flex items-center justify-between gap-1 rounded-lg px-1.5 py-1 hover:bg-[rgba(126,200,255,0.08)]"
                               title={v.source === "connection"
                                 ? `${v.equipment} ? ${v.variable}`
                                 : `Local ? ${v.datatype}${v.initial_value != null ? ` = ${v.initial_value}` : ""}`}>
-                              <span className="truncate text-[11px] text-slate-700">{v.name}</span>
+                              <span className="truncate text-[11px] text-[#d6e4f5]">{v.name}</span>
                               <div className="flex shrink-0 items-center gap-1">
                                 {v.source === "connection" && v.equipment && (
-                                  <span className="text-[9px] text-slate-400 truncate max-w-[60px]">
+                                  <span className="max-w-[60px] truncate text-[9px] text-[#8ea9c8]">
                                     {v.equipment}
                                   </span>
                                 )}
                                 <span className={cls(
-                                  "rounded px-1 text-[9px]",
+                                  "rounded-full px-1.5 py-0.5 text-[9px]",
                                   v.source === "local"
-                                    ? "bg-purple-100 text-purple-600"
-                                    : "bg-slate-100 text-slate-500"
+                                    ? "bg-[rgba(143,106,24,0.18)] text-[#f6d78a]"
+                                    : "bg-[rgba(126,200,255,0.12)] text-[#9dd7ff]"
                                 )}>
                                   {v.datatype || "?"}
                                 </span>
@@ -673,15 +691,15 @@ const UnifiedSidebar = ({
         { id: "minis",    label: "Mini",     items: elementos_scada.minis    || [] },
       ];
       return (
-        <div className="rounded-lg border border-slate-200 bg-white p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 mb-3">
+        <div className={editorPanelClass}>
+          <p className={cls(editorSectionTitleClass, "mb-3")}>
             Plantillas SCADA
           </p>
           <div className="space-y-3">
             {scadaGroups.map(group =>
               group.items.length ? (
                 <div key={group.id}>
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 mb-2">
+                  <div className={cls(editorSectionTitleClass, "mb-2")}>
                     {group.label}
                   </div>
                   <div className="grid grid-cols-2 gap-1">
@@ -691,7 +709,7 @@ const UnifiedSidebar = ({
                         draggable
                         onDragStart={e => handleTemplateDragStart(e, tpl)}
                         onClick={() => handlePickTemplate(tpl)}
-                        className="cursor-grab select-none rounded-lg border border-slate-200 bg-white shadow-sm hover:border-sky-400 hover:bg-sky-50 active:cursor-grabbing"
+                        className="cursor-grab select-none rounded-2xl border border-[#355780] bg-[rgba(255,255,255,0.05)] shadow-[0_16px_24px_-24px_rgba(3,10,24,0.7)] transition hover:border-[#7ec8ff] hover:bg-[rgba(126,200,255,0.1)] active:cursor-grabbing"
                         title="Arrastra al canvas"
                       >
                         <div className="h-20 w-full overflow-hidden flex items-center justify-center">
@@ -713,8 +731,8 @@ const UnifiedSidebar = ({
     // -- Iconos b?sicos ----------------------------------------------------------
     if (sectionId === "buttons") {
       return (
-        <div className="rounded-lg border border-slate-200 bg-white p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 mb-3">
+        <div className={editorPanelClass}>
+          <p className={cls(editorSectionTitleClass, "mb-3")}>
             Buttons & Labels
           </p>
           <div className="grid grid-cols-2 gap-3">
@@ -724,7 +742,7 @@ const UnifiedSidebar = ({
                 draggable
                 onDragStart={e => handleButtonDragStart(e, item)}
                 onClick={() => handlePickButton(item)}
-                className="cursor-grab select-none rounded-md border border-slate-200 bg-white px-2 py-2 text-[10px] text-slate-700 hover:border-sky-400 hover:bg-sky-50 active:cursor-grabbing"
+                className="cursor-grab select-none rounded-2xl border border-[#355780] bg-[rgba(255,255,255,0.05)] px-2 py-2 text-[10px] text-[#d6e4f5] transition hover:border-[#7ec8ff] hover:bg-[rgba(126,200,255,0.1)] active:cursor-grabbing"
               >
                 <div className={item.previewClass}>
                   {item.kind === "button" ? "Button" : item.kind === "label" ? "Label" : "Caja"}
@@ -739,16 +757,16 @@ const UnifiedSidebar = ({
     // -- Iconos personalizados ---------------------------------------------------
     if (sectionId === "custom-icons") {
       return (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-3">
+        <div className={cls(editorPanelClass, "space-y-3")}>
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+            <p className={editorSectionTitleClass}>
               Libreria de imagenes
             </p>
             <button
               type="button"
               onClick={() => uploadInputRef.current?.click()}
               disabled={isProcessingUpload}
-              className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50 disabled:opacity-50"
+              className={editorGhostButtonClass}
             >
               {isProcessingUpload ? "Procesando..." : "Subir icono"}
             </button>
@@ -761,12 +779,12 @@ const UnifiedSidebar = ({
             />
           </div>
 
-          <p className="text-[10px] text-slate-500">
+          <p className="text-[10px] text-[#8ea9c8]">
             PNG, JPG o SVG. Se optimiza en cliente y se guarda como Base64.
           </p>
 
           {customIcons.length === 0 ? (
-            <div className="rounded border border-dashed border-slate-300 bg-slate-50 px-2 py-3 text-[11px] text-slate-500">
+            <div className="rounded-xl border border-dashed border-[#355780] bg-[rgba(255,255,255,0.04)] px-2 py-3 text-[11px] text-[#8ea9c8]">
               No hay iconos personalizados todavia.
             </div>
           ) : (
@@ -779,16 +797,16 @@ const UnifiedSidebar = ({
                     draggable
                     onDragStart={e => handleTemplateDragStart(e, tpl)}
                     onClick={() => handlePickCustomIcon(icon)}
-                    className="group relative cursor-grab rounded-md border border-slate-200 bg-white p-1.5 shadow-sm hover:border-sky-400 hover:bg-sky-50 active:cursor-grabbing"
+                    className="group relative cursor-grab rounded-2xl border border-[#355780] bg-[rgba(255,255,255,0.05)] p-1.5 shadow-[0_16px_24px_-24px_rgba(3,10,24,0.7)] transition hover:border-[#7ec8ff] hover:bg-[rgba(126,200,255,0.1)] active:cursor-grabbing"
                     title={icon.name}
                   >
                     <button
                       type="button"
                       onClick={e => { e.stopPropagation(); handleDeleteCustomIcon(icon.id); }}
-                      className="absolute right-1 top-1 z-10 hidden h-5 w-5 items-center justify-center rounded bg-white/90 text-[11px] text-rose-600 shadow group-hover:inline-flex"
+                      className="absolute right-1 top-1 z-10 hidden h-5 w-5 items-center justify-center rounded-full border border-[rgba(241,153,173,0.35)] bg-[rgba(9,21,47,0.92)] text-[11px] text-[#f199ad] shadow group-hover:inline-flex"
                       title="Eliminar icono"
                     >?</button>
-                    <div className="flex h-20 items-center justify-center overflow-hidden rounded border border-slate-100 bg-slate-50">
+                    <div className="flex h-20 items-center justify-center overflow-hidden rounded-xl border border-[#355780] bg-[rgba(255,255,255,0.04)]">
                       <img
                         src={icon.base64}
                         alt={icon.name}
@@ -796,7 +814,7 @@ const UnifiedSidebar = ({
                         loading="lazy"
                       />
                     </div>
-                    <p className="mt-1 truncate text-[10px] text-slate-600">{icon.name}</p>
+                    <p className="mt-1 truncate text-[10px] text-[#d6e4f5]">{icon.name}</p>
                   </div>
                 );
               })}
@@ -812,35 +830,48 @@ const UnifiedSidebar = ({
   // -- Shell ---------------------------------------------------------------------
   return (
     <>
-      <div className="flex h-full bg-slate-100 text-slate-800 text-[13px]">
+      <div className="flex h-full bg-transparent text-[13px] text-slate-800">
         <aside
-          className={`relative flex flex-col border-r border-slate-200 bg-white shadow-sm transition-all duration-200 ${
+          className={`relative flex flex-col overflow-hidden rounded-[24px] border border-[#1f3656] bg-[linear-gradient(180deg,#09152f_0%,#0d1d40_42%,#132857_100%)] text-[#d6e4f5] shadow-[0_24px_48px_-32px_rgba(3,10,24,0.8)] transition-all duration-200 ${
             isMainOpen ? "w-64" : "w-12"
           }`}
         >
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(126,200,255,0.14),transparent_34%)]" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-[rgba(255,255,255,0.08)]" />
+
           <button
             type="button"
             onClick={() => setIsMainOpen((prev) => !prev)}
-            className="absolute -right-3 top-1/2 z-20 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-md transition hover:border-sky-400 hover:text-sky-700"
+            className="absolute -right-3 top-1/2 z-20 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[#355780] bg-[linear-gradient(180deg,#163052_0%,#0d1d40_100%)] text-[#d6e4f5] shadow-[0_12px_24px_-16px_rgba(3,10,24,0.85)] transition hover:border-[#7ec8ff] hover:text-white"
             aria-label={isMainOpen ? "Cerrar sidebar" : "Abrir sidebar"}
             title={isMainOpen ? "Cerrar sidebar" : "Abrir sidebar"}
           >
             {isMainOpen ? "<" : ">"}
           </button>
 
-          <div className="flex items-center justify-between h-10 px-2 border-b border-slate-200 bg-slate-50">
+          <div className="relative flex h-14 items-center justify-between border-b border-[#1f3656] px-3">
             {isMainOpen && (
-              <span className="ml-2 text-xs font-semibold tracking-wide text-slate-700">
-                Componentes
-              </span>
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-2xl border border-[#355780] bg-[rgba(255,255,255,0.06)] text-[11px] font-semibold text-[#7ec8ff]">
+                  UI
+                </div>
+                <div>
+                  <span className="block text-[10px] font-semibold uppercase tracking-[0.22em] text-[#8ea9c8]">
+                    Editor
+                  </span>
+                  <span className="block text-sm font-semibold text-white">
+                    Componentes
+                  </span>
+                </div>
+              </div>
             )}
           </div>
 
           {isMainOpen && (
-            <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+            <div className="relative flex-1 space-y-6 overflow-y-auto px-3 py-4">
               {/* Nombre proyecto */}
-              <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+              <div className="rounded-2xl border border-[#28486f] bg-[rgba(255,255,255,0.05)] px-3 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#8ea9c8]">
                   Proyecto
                 </p>
                 {isEditingProjectName ? (
@@ -853,13 +884,13 @@ const UnifiedSidebar = ({
                       if (e.key === "Enter")  commitProjectName();
                       if (e.key === "Escape") cancelProjectName();
                     }}
-                    className="mt-1 w-full rounded border border-sky-300 px-2 py-1 text-[12px] font-semibold text-slate-800 focus:border-sky-500 focus:outline-none"
+                    className={cls(editorInputClass, "mt-2 font-semibold")}
                   />
                 ) : (
                   <button
                     type="button"
                     onClick={() => setIsEditingProjectName(true)}
-                    className="mt-1 block w-full truncate rounded px-1 py-0.5 text-left text-[12px] font-semibold text-slate-800 hover:bg-slate-100"
+                    className="mt-2 block w-full truncate rounded-xl px-2 py-1.5 text-left text-[12px] font-semibold text-white transition hover:bg-[rgba(126,200,255,0.08)]"
                     title="Editar nombre del proyecto"
                   >
                     {projectName || "Sin nombre"}
@@ -878,18 +909,18 @@ const UnifiedSidebar = ({
                           <button
                             onClick={() => handleSectionClick(item.id)}
                             className={[
-                              "flex w-full items-center justify-between rounded px-2 py-1.5 text-left transition-colors",
+                              "flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left transition-colors",
                               isActive
-                                ? "bg-sky-100 text-sky-800 border border-sky-300"
-                                : "text-slate-700 hover:text-slate-900 hover:bg-slate-100",
+                                ? "border-[#7ec8ff] bg-[linear-gradient(180deg,rgba(34,86,120,0.96)_0%,rgba(25,75,104,0.98)_100%)] text-white shadow-[0_12px_24px_-20px_rgba(25,75,104,0.75)]"
+                                : "border-transparent text-[#c8d8eb] hover:border-[#28486f] hover:bg-[rgba(255,255,255,0.05)] hover:text-white",
                             ].join(" ")}
                           >
                             <span className="truncate">{item.label}</span>
-                            {isActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+                            {isActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
                           </button>
                           {isActive && (
                             <div className="mt-2">
-                              <div className="max-h-130 overflow-y-auto custom-scroll px-2">
+                              <div className="custom-scroll max-h-130 overflow-y-auto px-1">
                                 {renderSectionContent(item.id)}
                               </div>
                             </div>

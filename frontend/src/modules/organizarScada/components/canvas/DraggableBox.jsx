@@ -14,6 +14,7 @@ export default function DraggableBox({
   isSelected = false,
   isLiveMode = false,
   onSelect,
+  onOpenProps,
   onDragStop,
   onResizeStop,
   onDelete,
@@ -110,7 +111,7 @@ export default function DraggableBox({
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          onSelect?.();
+          onOpenProps?.();
         }}
         className={[
           "absolute -top-2 right-5 z-20 h-6 w-6 items-center justify-center rounded-full",
