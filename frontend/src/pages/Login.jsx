@@ -298,7 +298,7 @@ const Login = () => {
 
                       <label className="block">
                         <span className="mb-2 block text-sm font-medium text-[#4a617f]">
-                          Contrasena
+                          Contraseña
                         </span>
                         <div className="flex items-center gap-3 rounded-2xl border border-[#d9e0e5] bg-white px-4 py-3 shadow-[0_18px_30px_-28px_rgba(31,41,55,0.16)]">
                           <LockKeyhole className="h-4.5 w-4.5 text-[#6b7681]" />

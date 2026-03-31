@@ -4,18 +4,32 @@ import { useNavigate } from "react-router-dom";
 import Button from "@/components/Button";
 
 export default function NavbarPLCs({ toolbar }) {
-  const fileRef  = useRef(null);
-  const show     = toolbar?.showActions;
+  const fileRef = useRef(null);
+  const show = toolbar?.showActions;
   const navigate = useNavigate();
 
+  const baseButtonClass =
+    "rounded-xl border border-[#355780] bg-[rgba(255,255,255,0.05)] text-[#101f3a] hover:border-[#7ec8ff] hover:bg-[rgba(126,200,255,0.12)]";
+  const accentButtonClass =
+    "rounded-xl border border-[#2d6284] bg-[linear-gradient(180deg,#215f82_0%,#194b68_100%)] text-white shadow-[0_16px_28px_-20px_rgba(25,75,104,0.75)] hover:brightness-110";
+  const successButtonClass =
+    "rounded-xl border border-[rgba(126,200,255,0.35)] bg-[linear-gradient(180deg,#255f82_0%,#1c4f6d_100%)] text-white shadow-[0_16px_28px_-20px_rgba(28,79,109,0.75)] hover:brightness-110";
+
   return (
-    <header className="h-[50px] flex items-center justify-between px-4 border-b border-gray-200 bg-white">
-      <div className="flex items-center gap-6">
-        <Button variant="secondary" onClick={() => navigate("/")}>
+    <header className="relative flex min-h-[58px] items-center justify-between border-b border-[#1f3656] bg-[linear-gradient(180deg,#09152f_0%,#0d1d40_42%,#132857_100%)] px-4 py-2 text-[#d6e4f5] shadow-[0_20px_36px_-28px_rgba(3,10,24,0.8)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(126,200,255,0.14),transparent_28%)]" />
+
+      <div className="relative flex items-center gap-3">
+        <Button
+          variant="secondary"
+          className={baseButtonClass}
+          onClick={() => navigate("/")}
+        >
           Home
         </Button>
         <Button
           variant="secondary"
+          className={baseButtonClass}
           onClick={() => navigate("/layout")}
           title="Volver a SCADA"
         >
@@ -24,20 +38,19 @@ export default function NavbarPLCs({ toolbar }) {
       </div>
 
       {show && (
-        <div className="flex items-center gap-3 mr-8">
+        <div className="relative mr-2 flex flex-wrap items-center justify-end gap-2">
           <Button
             variant="secondary"
-            className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+            className={baseButtonClass}
             onClick={toolbar.onNewDashboard}
             title="Crear un nuevo proyecto desde cero"
           >
             Nuevo
           </Button>
 
-          {/* Cargar proyecto desde BD */}
           <Button
             variant="secondary"
-            className="border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
+            className={accentButtonClass}
             onClick={toolbar.onLoadFromDB}
             title="Abrir un proyecto guardado"
           >
@@ -46,6 +59,7 @@ export default function NavbarPLCs({ toolbar }) {
 
           <Button
             variant="secondary"
+            className={baseButtonClass}
             onClick={toolbar.onClear}
             title="Vaciar lienzo"
           >
@@ -54,13 +68,13 @@ export default function NavbarPLCs({ toolbar }) {
 
           <Button
             variant="secondary"
+            className={baseButtonClass}
             onClick={toolbar.onExport}
             title="Exportar JSON local"
           >
             Exportar
           </Button>
 
-          {/* Importar JSON local */}
           <input
             type="file"
             ref={fileRef}
@@ -74,6 +88,7 @@ export default function NavbarPLCs({ toolbar }) {
           />
           <Button
             variant="secondary"
+            className={baseButtonClass}
             onClick={() => fileRef.current?.click()}
             title="Importar JSON local"
           >
@@ -82,7 +97,7 @@ export default function NavbarPLCs({ toolbar }) {
 
           <Button
             variant="secondary"
-            className="border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+            className={successButtonClass}
             onClick={toolbar.onPublish}
             title="Guardar en la base de datos"
           >

@@ -5,7 +5,13 @@
 // - Secci?n "Dispositivos" abre DeviceManagerModal (tags desde API REST).
 // - El resto de secciones sin cambios respecto al original.
 //
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -71,20 +77,24 @@ const optimizeRasterToBase64 = async (file) => {
   const largestSide = Math.max(image.width, image.height);
   const scale =
     largestSide > MAX_IMAGE_DIMENSION ? MAX_IMAGE_DIMENSION / largestSide : 1;
-  const targetWidth  = Math.max(1, Math.round(image.width  * scale));
+  const targetWidth = Math.max(1, Math.round(image.width * scale));
   const targetHeight = Math.max(1, Math.round(image.height * scale));
 
   const canvas = document.createElement("canvas");
-  canvas.width  = targetWidth;
+  canvas.width = targetWidth;
   canvas.height = targetHeight;
   canvas.getContext("2d").drawImage(image, 0, 0, targetWidth, targetHeight);
 
   const isPng = file.type === "image/png";
   const mimeType = isPng ? "image/png" : "image/jpeg";
   let quality = 0.9;
-  let output  = canvas.toDataURL(mimeType, quality);
+  let output = canvas.toDataURL(mimeType, quality);
 
-  while (!isPng && estimateDataUrlSize(output) > MAX_IMAGE_BYTES && quality > 0.45) {
+  while (
+    !isPng &&
+    estimateDataUrlSize(output) > MAX_IMAGE_BYTES &&
+    quality > 0.45
+  ) {
     quality -= 0.1;
     output = canvas.toDataURL(mimeType, quality);
   }
@@ -104,7 +114,7 @@ const UnifiedSidebar = ({
   layoutId = null,
   projectName = "",
   onProjectNameChange,
-  onSaveProject,        // () => Promise<void> ? guarda el proyecto sin validar canvas
+  onSaveProject, // () => Promise<void> ? guarda el proyecto sin validar canvas
   views = [],
   selectedViewId,
   onCreateView,
@@ -123,21 +133,21 @@ const UnifiedSidebar = ({
   viewsError = "",
   onRefreshViews,
 }) => {
-  const [isMainOpen,           setIsMainOpen]           = useState(true);
-  const [activeSection,        setActiveSection]        = useState("pantallas");
-  const [showDevices,          setShowDevices]          = useState(false);
-  const [isSavingProject,      setIsSavingProject]      = useState(false);
+  const [isMainOpen, setIsMainOpen] = useState(true);
+  const [activeSection, setActiveSection] = useState("pantallas");
+  const [showDevices, setShowDevices] = useState(false);
+  const [isSavingProject, setIsSavingProject] = useState(false);
   // -- Variables tree --------------------------------------------------------
-  const [variables,            setVariables]            = useState([]);
-  const [varsLoading,          setVarsLoading]          = useState(false);
-  const [expandedTables,       setExpandedTables]       = useState({});  // { tableName: bool }
+  const [variables, setVariables] = useState([]);
+  const [varsLoading, setVarsLoading] = useState(false);
+  const [expandedTables, setExpandedTables] = useState({}); // { tableName: bool }
 
   const fetchVariables = useCallback(async () => {
     if (!layoutId) return;
     setVarsLoading(true);
     try {
       const res = await api.get(`/api/scada/layouts/${layoutId}/tables/`);
-      setVariables(res.data || []);  // ahora es array de tablas con variables anidadas
+      setVariables(res.data || []); // ahora es array de tablas con variables anidadas
     } catch {
       setVariables([]);
     } finally {
@@ -151,32 +161,32 @@ const UnifiedSidebar = ({
   }, [layoutId, fetchVariables]);
 
   // variables is now array of VariableTable objects with nested .variables[]
-  const totalVarsCount = useMemo(() =>
-    variables.reduce((acc, t) => acc + (t.variables?.length || 0), 0),
-    [variables]
+  const totalVarsCount = useMemo(
+    () => variables.reduce((acc, t) => acc + (t.variables?.length || 0), 0),
+    [variables],
   );
 
   const toggleTable = (key) =>
-    setExpandedTables(prev => ({ ...prev, [key]: !prev[key] }));
-  const [customIcons,          setCustomIcons]          = useState([]);
-  const [isProcessingUpload,   setIsProcessingUpload]   = useState(false);
-  const [editingViewId,        setEditingViewId]        = useState(null);
-  const [editingName,          setEditingName]          = useState("");
-  const [editingLayerId,       setEditingLayerId]       = useState(null);
-  const [editingLayerName,     setEditingLayerName]     = useState("");
-  const [draggingLayerId,      setDraggingLayerId]      = useState(null);
+    setExpandedTables((prev) => ({ ...prev, [key]: !prev[key] }));
+  const [customIcons, setCustomIcons] = useState([]);
+  const [isProcessingUpload, setIsProcessingUpload] = useState(false);
+  const [editingViewId, setEditingViewId] = useState(null);
+  const [editingName, setEditingName] = useState("");
+  const [editingLayerId, setEditingLayerId] = useState(null);
+  const [editingLayerName, setEditingLayerName] = useState("");
+  const [draggingLayerId, setDraggingLayerId] = useState(null);
   const [isEditingProjectName, setIsEditingProjectName] = useState(false);
-  const [projectNameDraft,     setProjectNameDraft]     = useState(projectName || "");
+  const [projectNameDraft, setProjectNameDraft] = useState(projectName || "");
   const uploadInputRef = useRef(null);
 
   const sidebarSections = [
     {
       id: "main",
       items: [
-        { id: "pantallas",    label: "Pantallas"             },
-        { id: "devices",      label: "Dispositivos"          },
-        { id: "elements",     label: "Iconos hmi"            },
-        { id: "buttons",      label: "Iconos basicos"        },
+        { id: "pantallas", label: "Pantallas" },
+        { id: "devices", label: "Dispositivos" },
+        { id: "elements", label: "Iconos hmi" },
+        { id: "buttons", label: "Iconos basicos" },
         { id: "custom-icons", label: "Iconos personalizados" },
       ],
     },
@@ -209,12 +219,18 @@ const UnifiedSidebar = ({
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) setCustomIcons(parsed);
-    } catch { setCustomIcons([]); }
+    } catch {
+      setCustomIcons([]);
+    }
   }, []);
 
   const persistCustomIcons = (next) => {
     setCustomIcons(next);
-    try { localStorage.setItem(CUSTOM_ICONS_STORAGE_KEY, JSON.stringify(next)); } catch { /* noop */ }
+    try {
+      localStorage.setItem(CUSTOM_ICONS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* noop */
+    }
   };
 
   const iconToTemplate = (icon) => ({
@@ -222,26 +238,33 @@ const UnifiedSidebar = ({
     data: {
       type: "image-widget",
       label: icon.name,
-      width:  Math.min(Number(icon.width)  || 220, 320),
+      width: Math.min(Number(icon.width) || 220, 320),
       height: Math.min(Number(icon.height) || 180, 260),
       settings: {
-        imageBase64:     icon.base64,
-        opacity:         100,
+        imageBase64: icon.base64,
+        opacity: 100,
         lockAspectRatio: true,
-        layer_alias:     icon.name,
+        layer_alias: icon.name,
       },
     },
   });
 
-  const handlePickCustomIcon   = (icon) => addComponentToCanvas?.(iconToTemplate(icon).data);
-  const handleDeleteCustomIcon = (id)   => persistCustomIcons(customIcons.filter((i) => i.id !== id));
+  const handlePickCustomIcon = (icon) =>
+    addComponentToCanvas?.(iconToTemplate(icon).data);
+  const handleDeleteCustomIcon = (id) =>
+    persistCustomIcons(customIcons.filter((i) => i.id !== id));
 
   const handleUploadCustomIcon = async (event) => {
     const file = event?.target?.files?.[0];
     event.target.value = "";
     if (!file) return;
 
-    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/svg+xml"];
+    const allowedTypes = [
+      "image/png",
+      "image/jpeg",
+      "image/jpg",
+      "image/svg+xml",
+    ];
     if (!allowedTypes.includes(file.type)) {
       window.alert("Formato no soportado. Usa PNG, JPG o SVG.");
       return;
@@ -250,11 +273,11 @@ const UnifiedSidebar = ({
     try {
       const processed = await optimizeAndEncodeAsset(file);
       const item = {
-        id:        `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        name:      (file.name || "icono").replace(/\.[^.]+$/, ""),
-        base64:    processed.base64,
-        width:     processed.width,
-        height:    processed.height,
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        name: (file.name || "icono").replace(/\.[^.]+$/, ""),
+        base64: processed.base64,
+        width: processed.width,
+        height: processed.height,
         createdAt: new Date().toISOString(),
       };
       persistCustomIcons([item, ...customIcons].slice(0, 80));
@@ -276,33 +299,57 @@ const UnifiedSidebar = ({
     renderWidget({
       data: tpl.data,
       live: { value: undefined, unit: tpl.data?.settings?.unit },
-      width: 120, height: 90, theme: "theme-clean", valueHistory: [],
+      width: 120,
+      height: 90,
+      theme: "theme-clean",
+      valueHistory: [],
     });
 
   const handlePickTemplate = (tpl) => addComponentToCanvas?.(tpl.data);
 
   // -- Buttons / labels ----------------------------------------------------------
   const getButtonBaseData = (item) => {
-    if (item.kind === "button") return { type: "nav-button", variant: item.id, label: item.label, targetViewId: null, width: 160, height: 48 };
-    if (item.kind === "label")  return { type: item.id, label: item.label, width: 160, height: 40 };
+    if (item.kind === "button")
+      return {
+        type: "nav-button",
+        variant: item.id,
+        label: item.label,
+        targetViewId: null,
+        width: 160,
+        height: 48,
+      };
+    if (item.kind === "label")
+      return { type: item.id, label: item.label, width: 160, height: 40 };
     return { type: item.id, label: item.label, width: 200, height: 120 };
   };
   const handleButtonDragStart = (e, item) =>
-    handleTemplateDragStart(e, { id: `tpl-${item.id}`, data: getButtonBaseData(item) });
-  const handlePickButton = (item) => addComponentToCanvas?.(getButtonBaseData(item));
+    handleTemplateDragStart(e, {
+      id: `tpl-${item.id}`,
+      data: getButtonBaseData(item),
+    });
+  const handlePickButton = (item) =>
+    addComponentToCanvas?.(getButtonBaseData(item));
 
   // -- Layers --------------------------------------------------------------------
   const layers = useMemo(() => {
     return [...canvasElements]
       .map((el, idx) => {
         const s = el?.data?.settings || {};
-        const zIndex = Number.isFinite(Number(s.z_index)) ? Number(s.z_index) : idx + 1;
+        const zIndex = Number.isFinite(Number(s.z_index))
+          ? Number(s.z_index)
+          : idx + 1;
         return {
-          id:          el.id,
+          id: el.id,
           zIndex,
-          isVisible:   s.is_visible !== false,
-          isLocked:    s.is_locked  === true,
-          displayName: s.layer_alias || s.attributeLabel || el?.data?.name || el?.data?.label || el?.data?.type || `Elemento ${idx + 1}`,
+          isVisible: s.is_visible !== false,
+          isLocked: s.is_locked === true,
+          displayName:
+            s.layer_alias ||
+            s.attributeLabel ||
+            el?.data?.name ||
+            el?.data?.label ||
+            el?.data?.type ||
+            `Elemento ${idx + 1}`,
           fallbackName: el?.data?.type || "widget",
           idx,
         };
@@ -316,7 +363,10 @@ const UnifiedSidebar = ({
     setEditingLayerId(null);
     setEditingLayerName("");
   };
-  const cancelLayerRename = () => { setEditingLayerId(null); setEditingLayerName(""); };
+  const cancelLayerRename = () => {
+    setEditingLayerId(null);
+    setEditingLayerName("");
+  };
 
   const handleLayerDragStart = (e, layerId) => {
     setDraggingLayerId(layerId);
@@ -324,11 +374,17 @@ const UnifiedSidebar = ({
     e.dataTransfer.setData("text/plain", String(layerId));
   };
   const handleLayerDrop = (targetLayerId) => {
-    if (!draggingLayerId || draggingLayerId === targetLayerId) { setDraggingLayerId(null); return; }
+    if (!draggingLayerId || draggingLayerId === targetLayerId) {
+      setDraggingLayerId(null);
+      return;
+    }
     const orderedIds = layers.map((l) => l.id);
     const si = orderedIds.findIndex((id) => id === draggingLayerId);
     const ti = orderedIds.findIndex((id) => id === targetLayerId);
-    if (si < 0 || ti < 0) { setDraggingLayerId(null); return; }
+    if (si < 0 || ti < 0) {
+      setDraggingLayerId(null);
+      return;
+    }
     const next = [...orderedIds];
     const [moved] = next.splice(si, 1);
     next.splice(ti, 0, moved);
@@ -337,27 +393,29 @@ const UnifiedSidebar = ({
   };
 
   // -- Views ---------------------------------------------------------------------
-  const startInlineRename  = (view) => { setEditingViewId(view.id); setEditingName(view.name); };
+  const startInlineRename = (view) => {
+    setEditingViewId(view.id);
+    setEditingName(view.name);
+  };
   const commitInlineRename = (viewId) => {
     if (editingName?.trim()) onRenameView?.(viewId, editingName.trim());
     setEditingViewId(null);
     setEditingName("");
   };
-  const cancelInlineRename = () => { setEditingViewId(null); setEditingName(""); };
+  const cancelInlineRename = () => {
+    setEditingViewId(null);
+    setEditingName("");
+  };
 
   // -- Section content -----------------------------------------------------------
   const renderSectionContent = (sectionId) => {
-
     // -- Pantallas + Capas ------------------------------------------------------
     if (sectionId === "pantallas") {
       return (
         <div className={cls(editorPanelClass, "space-y-3")}>
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-white">Pantallas</h3>
-            <button
-              onClick={onCreateView}
-              className={editorActionButtonClass}
-            >
+            <button onClick={onCreateView} className={editorActionButtonClass}>
               + Nueva pantalla
             </button>
           </div>
@@ -371,13 +429,22 @@ const UnifiedSidebar = ({
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {viewsLoading && (
               <div className="space-y-2">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="rounded-xl border border-[#355780] bg-[rgba(255,255,255,0.05)] px-3 py-3">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="rounded-xl border border-[#355780] bg-[rgba(255,255,255,0.05)] px-3 py-3"
+                  >
                     <div className="flex items-center gap-2">
                       <SkeletonBlock width="w-32" height="h-3.5" />
-                      <SkeletonBlock width="w-4" height="h-4" rounded="rounded-full" />
+                      <SkeletonBlock
+                        width="w-4"
+                        height="h-4"
+                        rounded="rounded-full"
+                      />
                     </div>
-                    <div className="mt-2"><SkeletonBlock width="w-16" height="h-2.5" /></div>
+                    <div className="mt-2">
+                      <SkeletonBlock width="w-16" height="h-2.5" />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -385,8 +452,12 @@ const UnifiedSidebar = ({
 
             {!viewsLoading && views.length === 0 && (
               <div className="rounded-xl border border-dashed border-[#355780] bg-[rgba(255,255,255,0.04)] px-3 py-3 text-[11px] text-[#a9bdd7]">
-                <p className="font-semibold text-white">A?n no tienes vistas.</p>
-                <p className="mt-1 text-[#8ea9c8]">Crea tu primera vista o importa un JSON existente.</p>
+                <p className="font-semibold text-white">
+                  A?n no tienes vistas.
+                </p>
+                <p className="mt-1 text-[#8ea9c8]">
+                  Crea tu primera vista o importa un JSON existente.
+                </p>
                 <div className="mt-3 flex gap-2">
                   <button
                     onClick={onCreateView}
@@ -404,73 +475,93 @@ const UnifiedSidebar = ({
               </div>
             )}
 
-            {!viewsLoading && views.map(view => {
-              const isSelected = view.id === selectedViewId;
-              return (
-                <div
-                  key={view.id}
-                  className={[
-                    "flex items-center justify-between rounded-xl border px-3 py-2 transition",
-                    isSelected
-                      ? "border-[#7ec8ff] bg-[linear-gradient(180deg,rgba(34,86,120,0.95)_0%,rgba(25,75,104,0.98)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
-                      : "border-[#355780] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(126,200,255,0.09)]",
-                  ].join(" ")}
-                >
-                  <div className="flex items-start gap-2 w-full">
-                    <button onClick={() => onSelectView(view.id)} className="flex-1 text-left">
-                      <div className="flex items-center gap-2">
-                        {editingViewId === view.id ? (
-                          <input
-                            autoFocus
-                            value={editingName}
-                            onChange={e => setEditingName(e.target.value)}
-                            onBlur={() => commitInlineRename(view.id)}
-                            onKeyDown={e => {
-                              if (e.key === "Enter")  commitInlineRename(view.id);
-                              if (e.key === "Escape") cancelInlineRename();
-                            }}
-                            className={editorInputClass}
-                          />
-                        ) : (
-                          <span className={isSelected ? "font-semibold text-white" : "text-[#d6e4f5]"}>
-                            {view.name}
-                          </span>
-                        )}
-                        {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
-                      </div>
-                      <div className="mt-1 text-[10px] text-[#8ea9c8]">
-                        {view.elements?.length || 0} elementos
-                      </div>
-                    </button>
-                    <div className="flex items-center gap-1 pt-1">
+            {!viewsLoading &&
+              views.map((view) => {
+                const isSelected = view.id === selectedViewId;
+                return (
+                  <div
+                    key={view.id}
+                    className={[
+                      "flex items-center justify-between rounded-xl border px-3 py-2 transition",
+                      isSelected
+                        ? "border-[#7ec8ff] bg-[linear-gradient(180deg,rgba(34,86,120,0.95)_0%,rgba(25,75,104,0.98)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+                        : "border-[#355780] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(126,200,255,0.09)]",
+                    ].join(" ")}
+                  >
+                    <div className="flex items-start gap-2 w-full">
                       <button
-                        onClick={() => startInlineRename(view)}
-                        className="inline-flex cursor-pointer items-center justify-center rounded-lg p-1 text-[#8ea9c8] transition hover:bg-[rgba(126,200,255,0.12)] hover:text-[#7ec8ff]"
-                        title="Renombrar"
-                        aria-label={`Renombrar vista ${view.name}`}
+                        onClick={() => onSelectView(view.id)}
+                        className="flex-1 text-left"
                       >
-                        <Pencil size={14} />
+                        <div className="flex items-center gap-2">
+                          {editingViewId === view.id ? (
+                            <input
+                              autoFocus
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              onBlur={() => commitInlineRename(view.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter")
+                                  commitInlineRename(view.id);
+                                if (e.key === "Escape") cancelInlineRename();
+                              }}
+                              className={editorInputClass}
+                            />
+                          ) : (
+                            <span
+                              className={
+                                isSelected
+                                  ? "font-semibold text-white"
+                                  : "text-[#d6e4f5]"
+                              }
+                            >
+                              {view.name}
+                            </span>
+                          )}
+                          {isSelected && (
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                          )}
+                        </div>
+                        <div className="mt-1 text-[10px] text-[#8ea9c8]">
+                          {view.elements?.length || 0} elementos
+                        </div>
                       </button>
-                      <button
-                        onClick={() => { if (confirm(`?Eliminar vista "${view.name}"?`)) onDeleteView(view.id); }}
-                        className="inline-flex cursor-pointer items-center justify-center rounded-lg p-1 text-[#8ea9c8] transition hover:bg-[rgba(175,71,97,0.14)] hover:text-[#f199ad]"
-                        title="Eliminar"
-                        aria-label={`Eliminar vista ${view.name}`}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div className="flex items-center gap-1 pt-1">
+                        <button
+                          onClick={() => startInlineRename(view)}
+                          className="inline-flex cursor-pointer items-center justify-center rounded-lg p-1 text-[#8ea9c8] transition hover:bg-[rgba(126,200,255,0.12)] hover:text-[#7ec8ff]"
+                          title="Renombrar"
+                          aria-label={`Renombrar vista ${view.name}`}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(`?Eliminar vista "${view.name}"?`))
+                              onDeleteView(view.id);
+                          }}
+                          className="inline-flex cursor-pointer items-center justify-center rounded-lg p-1 text-[#8ea9c8] transition hover:bg-[rgba(175,71,97,0.14)] hover:text-[#f199ad]"
+                          title="Eliminar"
+                          aria-label={`Eliminar vista ${view.name}`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
 
           {/* Capas */}
           <div className="border-t border-[#28486f] pt-3">
             <div className="mb-2 flex items-center justify-between">
-              <h4 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8ea9c8]">Capas</h4>
-              <span className="text-[10px] text-[#6f87a5]">{layers.length} elementos</span>
+              <h4 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#8ea9c8]">
+                Capas
+              </h4>
+              <span className="text-[10px] text-[#6f87a5]">
+                {layers.length} elementos
+              </span>
             </div>
             <div className={cls(editorScrollClass, "max-h-64 space-y-1")}>
               {layers.length === 0 && (
@@ -480,13 +571,13 @@ const UnifiedSidebar = ({
               )}
               {layers.map((layer) => {
                 const isSelected = selectedElementId === layer.id;
-                const isEditing  = editingLayerId    === layer.id;
+                const isEditing = editingLayerId === layer.id;
                 return (
                   <div
                     key={layer.id}
                     draggable
-                    onDragStart={e => handleLayerDragStart(e, layer.id)}
-                    onDragOver={e  => e.preventDefault()}
+                    onDragStart={(e) => handleLayerDragStart(e, layer.id)}
+                    onDragOver={(e) => e.preventDefault()}
                     onDrop={() => handleLayerDrop(layer.id)}
                     onClick={() => onSelectElement?.(layer.id)}
                     className={[
@@ -501,38 +592,57 @@ const UnifiedSidebar = ({
                     <button
                       type="button"
                       className="inline-flex h-5 w-5 items-center justify-center rounded-lg text-[#8ea9c8] hover:bg-[rgba(126,200,255,0.12)]"
-                      onClick={e => { e.stopPropagation(); onToggleElementVisibility?.(layer.id); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleElementVisibility?.(layer.id);
+                      }}
                     >
-                      {layer.isVisible ? <Eye size={12} /> : <EyeOff size={12} className="text-[#6f87a5]" />}
+                      {layer.isVisible ? (
+                        <Eye size={12} />
+                      ) : (
+                        <EyeOff size={12} className="text-[#6f87a5]" />
+                      )}
                     </button>
                     <button
                       type="button"
                       className="inline-flex h-5 w-5 items-center justify-center rounded-lg text-[#8ea9c8] hover:bg-[rgba(126,200,255,0.12)]"
-                      onClick={e => { e.stopPropagation(); onToggleElementLock?.(layer.id); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleElementLock?.(layer.id);
+                      }}
                     >
-                      {layer.isLocked ? <Lock size={12} /> : <Unlock size={12} className="text-[#6f87a5]" />}
+                      {layer.isLocked ? (
+                        <Lock size={12} />
+                      ) : (
+                        <Unlock size={12} className="text-[#6f87a5]" />
+                      )}
                     </button>
                     <div className="min-w-0 flex-1">
                       {isEditing ? (
                         <input
                           autoFocus
                           value={editingLayerName}
-                          onChange={e => setEditingLayerName(e.target.value)}
+                          onChange={(e) => setEditingLayerName(e.target.value)}
                           onBlur={() => commitLayerRename(layer.id)}
-                          onKeyDown={e => {
-                            if (e.key === "Enter")  commitLayerRename(layer.id);
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") commitLayerRename(layer.id);
                             if (e.key === "Escape") cancelLayerRename();
                           }}
-                          className={cls(editorInputClass, "px-1.5 py-1 text-[11px]")}
+                          className={cls(
+                            editorInputClass,
+                            "px-1.5 py-1 text-[11px]",
+                          )}
                         />
                       ) : (
                         <p
                           className={[
                             "truncate",
-                            !layer.isVisible ? "text-[#6f87a5] line-through" : "",
-                            layer.isLocked   ? "text-[#f6d78a]" : "",
+                            !layer.isVisible
+                              ? "text-[#6f87a5] line-through"
+                              : "",
+                            layer.isLocked ? "text-[#f6d78a]" : "",
                           ].join(" ")}
-                          onDoubleClick={e => {
+                          onDoubleClick={(e) => {
                             e.stopPropagation();
                             setEditingLayerId(layer.id);
                             setEditingLayerName(layer.displayName);
@@ -542,7 +652,9 @@ const UnifiedSidebar = ({
                         </p>
                       )}
                     </div>
-                    <span className="text-[10px] text-[#6f87a5]">z:{layer.zIndex}</span>
+                    <span className="text-[10px] text-[#6f87a5]">
+                      z:{layer.zIndex}
+                    </span>
                     <span className="text-[#4c6788] group-hover:text-[#8ea9c8]">
                       <GripVertical size={12} />
                     </span>
@@ -563,7 +675,8 @@ const UnifiedSidebar = ({
           <div className={cls(editorPanelClass, "space-y-3")}>
             <h3 className="text-sm font-semibold text-white">Variables</h3>
             <p className="text-[10px] text-[#8ea9c8]">
-              Para gestionar variables el proyecto necesita un nombre y estar guardado.
+              Para gestionar variables el proyecto necesita un nombre y estar
+              guardado.
             </p>
             <div className="space-y-2">
               <input
@@ -571,7 +684,9 @@ const UnifiedSidebar = ({
                 placeholder="Nombre del proyecto?"
                 value={projectNameDraft}
                 onChange={(e) => setProjectNameDraft(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") commitProjectName(); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") commitProjectName();
+                }}
               />
               <button
                 type="button"
@@ -587,7 +702,10 @@ const UnifiedSidebar = ({
                     setIsSavingProject(false);
                   }
                 }}
-                className={cls(editorActionButtonClass, "w-full py-2 text-[12px]")}
+                className={cls(
+                  editorActionButtonClass,
+                  "w-full py-2 text-[12px]",
+                )}
               >
                 {isSavingProject ? "Guardando?" : "Guardar y continuar"}
               </button>
@@ -603,18 +721,24 @@ const UnifiedSidebar = ({
             <h3 className="text-sm font-semibold text-white">
               Variables
               {totalVarsCount > 0 && (
-                <span className="ml-1.5 text-[10px] font-normal text-[#8ea9c8]">({totalVarsCount})</span>
+                <span className="ml-1.5 text-[10px] font-normal text-[#8ea9c8]">
+                  ({totalVarsCount})
+                </span>
               )}
             </h3>
-            <button onClick={() => setShowDevices(true)}
-              className={editorGhostButtonClass}>
+            <button
+              onClick={() => setShowDevices(true)}
+              className={editorGhostButtonClass}
+            >
               Gestionar
             </button>
           </div>
 
           {varsLoading ? (
             <div className="space-y-1 pt-1">
-              {[1,2,3].map(i => <SkeletonBlock key={i} width="w-full" height="h-4" />)}
+              {[1, 2, 3].map((i) => (
+                <SkeletonBlock key={i} width="w-full" height="h-4" />
+              ))}
             </div>
           ) : variables.length === 0 ? (
             <p className="text-[10px] text-[#8ea9c8]">
@@ -622,48 +746,71 @@ const UnifiedSidebar = ({
             </p>
           ) : (
             <div className="max-h-72 space-y-0.5 overflow-y-auto rounded-xl border border-[#355780] bg-[rgba(255,255,255,0.04)] p-1.5">
-              {variables.map(table => {
+              {variables.map((table) => {
                 const isOpen = expandedTables[table.id] ?? true;
                 const tableVars = table.variables || [];
                 return (
                   <div key={table.id}>
                     {/* Tabla ? rama */}
-                    <button type="button" onClick={() => toggleTable(table.id)}
-                      className="flex w-full items-center gap-1 rounded-xl px-2 py-1.5 text-left hover:bg-[rgba(126,200,255,0.08)]">
-                      {isOpen
-                        ? <ChevronDown size={11} className="shrink-0 text-[#8ea9c8]" />
-                        : <ChevronRight size={11} className="shrink-0 text-[#8ea9c8]" />}
+                    <button
+                      type="button"
+                      onClick={() => toggleTable(table.id)}
+                      className="flex w-full items-center gap-1 rounded-xl px-2 py-1.5 text-left hover:bg-[rgba(126,200,255,0.08)]"
+                    >
+                      {isOpen ? (
+                        <ChevronDown
+                          size={11}
+                          className="shrink-0 text-[#8ea9c8]"
+                        />
+                      ) : (
+                        <ChevronRight
+                          size={11}
+                          className="shrink-0 text-[#8ea9c8]"
+                        />
+                      )}
                       <span className="flex-1 truncate text-[11px] font-semibold text-[#eef4ff]">
                         {table.name}
                       </span>
-                      <span className="shrink-0 text-[10px] text-[#8ea9c8]">{tableVars.length}</span>
+                      <span className="shrink-0 text-[10px] text-[#8ea9c8]">
+                        {tableVars.length}
+                      </span>
                     </button>
 
                     {/* Variables ? hojas */}
                     {isOpen && (
                       <div className="ml-3 space-y-0.5 border-l border-[#355780] pl-2 pb-1">
                         {tableVars.length === 0 ? (
-                          <p className="py-0.5 text-[10px] text-[#8ea9c8]">Sin variables.</p>
+                          <p className="py-0.5 text-[10px] text-[#8ea9c8]">
+                            Sin variables.
+                          </p>
                         ) : (
-                          tableVars.map(v => (
-                            <div key={v.id}
+                          tableVars.map((v) => (
+                            <div
+                              key={v.id}
                               className="flex items-center justify-between gap-1 rounded-lg px-1.5 py-1 hover:bg-[rgba(126,200,255,0.08)]"
-                              title={v.source === "connection"
-                                ? `${v.equipment} ? ${v.variable}`
-                                : `Local ? ${v.datatype}${v.initial_value != null ? ` = ${v.initial_value}` : ""}`}>
-                              <span className="truncate text-[11px] text-[#d6e4f5]">{v.name}</span>
+                              title={
+                                v.source === "connection"
+                                  ? `${v.equipment} ? ${v.variable}`
+                                  : `Local ? ${v.datatype}${v.initial_value != null ? ` = ${v.initial_value}` : ""}`
+                              }
+                            >
+                              <span className="truncate text-[11px] text-[#d6e4f5]">
+                                {v.name}
+                              </span>
                               <div className="flex shrink-0 items-center gap-1">
                                 {v.source === "connection" && v.equipment && (
                                   <span className="max-w-[60px] truncate text-[9px] text-[#8ea9c8]">
                                     {v.equipment}
                                   </span>
                                 )}
-                                <span className={cls(
-                                  "rounded-full px-1.5 py-0.5 text-[9px]",
-                                  v.source === "local"
-                                    ? "bg-[rgba(143,106,24,0.18)] text-[#f6d78a]"
-                                    : "bg-[rgba(126,200,255,0.12)] text-[#9dd7ff]"
-                                )}>
+                                <span
+                                  className={cls(
+                                    "rounded-full px-1.5 py-0.5 text-[9px]",
+                                    v.source === "local"
+                                      ? "bg-[rgba(143,106,24,0.18)] text-[#f6d78a]"
+                                      : "bg-[rgba(126,200,255,0.12)] text-[#9dd7ff]",
+                                  )}
+                                >
                                   {v.datatype || "?"}
                                 </span>
                               </div>
@@ -684,11 +831,19 @@ const UnifiedSidebar = ({
     // -- Iconos HMI --------------------------------------------------------------
     if (sectionId === "elements") {
       const scadaGroups = [
-        { id: "gauges",   label: "Gauges",   items: elementos_scada.gauges   || [] },
-        { id: "barras",   label: "Barras",   items: elementos_scada.barras   || [] },
-        { id: "tarjetas", label: "Tarjetas", items: elementos_scada.tarjetas || [] },
-        { id: "graficas", label: "Gr?ficas", items: elementos_scada.graficas || [] },
-        { id: "minis",    label: "Mini",     items: elementos_scada.minis    || [] },
+        { id: "gauges", label: "Gauges", items: elementos_scada.gauges || [] },
+        { id: "barras", label: "Barras", items: elementos_scada.barras || [] },
+        {
+          id: "tarjetas",
+          label: "Tarjetas",
+          items: elementos_scada.tarjetas || [],
+        },
+        {
+          id: "graficas",
+          label: "Gr?ficas",
+          items: elementos_scada.graficas || [],
+        },
+        { id: "minis", label: "Mini", items: elementos_scada.minis || [] },
       ];
       return (
         <div className={editorPanelClass}>
@@ -696,18 +851,18 @@ const UnifiedSidebar = ({
             Plantillas SCADA
           </p>
           <div className="space-y-3">
-            {scadaGroups.map(group =>
+            {scadaGroups.map((group) =>
               group.items.length ? (
                 <div key={group.id}>
                   <div className={cls(editorSectionTitleClass, "mb-2")}>
                     {group.label}
                   </div>
                   <div className="grid grid-cols-2 gap-1">
-                    {group.items.map(tpl => (
+                    {group.items.map((tpl) => (
                       <div
                         key={tpl.id}
                         draggable
-                        onDragStart={e => handleTemplateDragStart(e, tpl)}
+                        onDragStart={(e) => handleTemplateDragStart(e, tpl)}
                         onClick={() => handlePickTemplate(tpl)}
                         className="cursor-grab select-none rounded-2xl border border-[#355780] bg-[rgba(255,255,255,0.05)] shadow-[0_16px_24px_-24px_rgba(3,10,24,0.7)] transition hover:border-[#7ec8ff] hover:bg-[rgba(126,200,255,0.1)] active:cursor-grabbing"
                         title="Arrastra al canvas"
@@ -721,7 +876,7 @@ const UnifiedSidebar = ({
                     ))}
                   </div>
                 </div>
-              ) : null
+              ) : null,
             )}
           </div>
         </div>
@@ -736,16 +891,20 @@ const UnifiedSidebar = ({
             Buttons & Labels
           </p>
           <div className="grid grid-cols-2 gap-3">
-            {buttons_labels_items.map(item => (
+            {buttons_labels_items.map((item) => (
               <div
                 key={item.id}
                 draggable
-                onDragStart={e => handleButtonDragStart(e, item)}
+                onDragStart={(e) => handleButtonDragStart(e, item)}
                 onClick={() => handlePickButton(item)}
                 className="cursor-grab select-none rounded-2xl border border-[#355780] bg-[rgba(255,255,255,0.05)] px-2 py-2 text-[10px] text-[#d6e4f5] transition hover:border-[#7ec8ff] hover:bg-[rgba(126,200,255,0.1)] active:cursor-grabbing"
               >
                 <div className={item.previewClass}>
-                  {item.kind === "button" ? "Button" : item.kind === "label" ? "Label" : "Caja"}
+                  {item.kind === "button"
+                    ? "Button"
+                    : item.kind === "label"
+                      ? "Label"
+                      : "Caja"}
                 </div>
               </div>
             ))}
@@ -759,9 +918,7 @@ const UnifiedSidebar = ({
       return (
         <div className={cls(editorPanelClass, "space-y-3")}>
           <div className="flex items-center justify-between">
-            <p className={editorSectionTitleClass}>
-              Libreria de imagenes
-            </p>
+            <p className={editorSectionTitleClass}>Libreria de imagenes</p>
             <button
               type="button"
               onClick={() => uploadInputRef.current?.click()}
@@ -795,17 +952,22 @@ const UnifiedSidebar = ({
                   <div
                     key={icon.id}
                     draggable
-                    onDragStart={e => handleTemplateDragStart(e, tpl)}
+                    onDragStart={(e) => handleTemplateDragStart(e, tpl)}
                     onClick={() => handlePickCustomIcon(icon)}
                     className="group relative cursor-grab rounded-2xl border border-[#355780] bg-[rgba(255,255,255,0.05)] p-1.5 shadow-[0_16px_24px_-24px_rgba(3,10,24,0.7)] transition hover:border-[#7ec8ff] hover:bg-[rgba(126,200,255,0.1)] active:cursor-grabbing"
                     title={icon.name}
                   >
                     <button
                       type="button"
-                      onClick={e => { e.stopPropagation(); handleDeleteCustomIcon(icon.id); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteCustomIcon(icon.id);
+                      }}
                       className="absolute right-1 top-1 z-10 hidden h-5 w-5 items-center justify-center rounded-full border border-[rgba(241,153,173,0.35)] bg-[rgba(9,21,47,0.92)] text-[11px] text-[#f199ad] shadow group-hover:inline-flex"
                       title="Eliminar icono"
-                    >?</button>
+                    >
+                      ?
+                    </button>
                     <div className="flex h-20 items-center justify-center overflow-hidden rounded-xl border border-[#355780] bg-[rgba(255,255,255,0.04)]">
                       <img
                         src={icon.base64}
@@ -814,7 +976,9 @@ const UnifiedSidebar = ({
                         loading="lazy"
                       />
                     </div>
-                    <p className="mt-1 truncate text-[10px] text-[#d6e4f5]">{icon.name}</p>
+                    <p className="mt-1 truncate text-[10px] text-[#d6e4f5]">
+                      {icon.name}
+                    </p>
                   </div>
                 );
               })}
@@ -832,7 +996,7 @@ const UnifiedSidebar = ({
     <>
       <div className="flex h-full bg-transparent text-[13px] text-slate-800">
         <aside
-          className={`relative flex flex-col overflow-hidden rounded-[24px] border border-[#1f3656] bg-[linear-gradient(180deg,#09152f_0%,#0d1d40_42%,#132857_100%)] text-[#d6e4f5] shadow-[0_24px_48px_-32px_rgba(3,10,24,0.8)] transition-all duration-200 ${
+          className={`relative flex flex-col overflow-hidden rounded-[4px] border border-[#1f3656] bg-[linear-gradient(180deg,#09152f_0%,#0d1d40_42%,#132857_100%)] text-[#d6e4f5] shadow-[0_24px_48px_-32px_rgba(3,10,24,0.8)] transition-all duration-200 ${
             isMainOpen ? "w-64" : "w-12"
           }`}
         >
@@ -878,10 +1042,10 @@ const UnifiedSidebar = ({
                   <input
                     autoFocus
                     value={projectNameDraft}
-                    onChange={e => setProjectNameDraft(e.target.value)}
+                    onChange={(e) => setProjectNameDraft(e.target.value)}
                     onBlur={commitProjectName}
-                    onKeyDown={e => {
-                      if (e.key === "Enter")  commitProjectName();
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitProjectName();
                       if (e.key === "Escape") cancelProjectName();
                     }}
                     className={cls(editorInputClass, "mt-2 font-semibold")}
@@ -899,10 +1063,10 @@ const UnifiedSidebar = ({
               </div>
 
               {/* Secciones */}
-              {sidebarSections.map(section => (
+              {sidebarSections.map((section) => (
                 <div key={section.id}>
                   <ul className="space-y-1">
-                    {section.items.map(item => {
+                    {section.items.map((item) => {
                       const isActive = activeSection === item.id;
                       return (
                         <li key={item.id}>
@@ -916,7 +1080,9 @@ const UnifiedSidebar = ({
                             ].join(" ")}
                           >
                             <span className="truncate">{item.label}</span>
-                            {isActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
+                            {isActive && (
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                            )}
                           </button>
                           {isActive && (
                             <div className="mt-2">
@@ -941,7 +1107,7 @@ const UnifiedSidebar = ({
           open={showDevices}
           onClose={() => {
             setShowDevices(false);
-            fetchVariables();   // refresca el ?rbol del sidebar
+            fetchVariables(); // refresca el ?rbol del sidebar
           }}
           layoutId={layoutId}
         />
@@ -951,4 +1117,3 @@ const UnifiedSidebar = ({
 };
 
 export default UnifiedSidebar;
-
