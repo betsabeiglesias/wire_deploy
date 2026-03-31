@@ -2,6 +2,7 @@
 // Panel de propiedades con tabs horizontales ligeros.
 // Tab "Dispositivo" usa ProjectVariables de la API (tablas del proyecto).
 import React, { useEffect, useState } from "react";
+import { X } from "lucide-react";
 import { TagSelector } from "./TagSelector";
  
 const tabs = ["General", "Dispositivo", "Estilo"];
@@ -14,6 +15,7 @@ const SidebarPropiedades = ({
   exportName,
   onExportNameChange,
   layoutId = null,
+  onClose,
 }) => {
   console.log("🎯 SidebarPropiedades selectedElement:", selectedElement?.id, selectedElement?.data?.type);
  
@@ -275,13 +277,38 @@ const SidebarPropiedades = ({
  
   const renderEmpty = () => (
     <div className="flex flex-col gap-3 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
-      <p className="text-sm font-semibold text-slate-700">Propiedades</p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-slate-700">Propiedades</p>
+        {typeof onClose === "function" && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
+            aria-label="Cerrar ventana de propiedades"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
       <span className="text-[11px] text-slate-500">Selecciona un icono del canvas.</span>
     </div>
   );
  
   const renderContent = () => (
     <div className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold text-slate-700">Propiedades</p>
+        {typeof onClose === "function" && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
+            aria-label="Cerrar ventana de propiedades"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
       <nav className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 no-scrollbar">
         {tabs.map((tab) => {
           const active = activeTab === tab;

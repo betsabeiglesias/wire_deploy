@@ -169,8 +169,8 @@ const OrganizarScada = () => {
 
   const handleSelectLayer = (id) => {
     setSelectedId(id);
-    setIsPropsOpen(true);
-    setShowPropsPanel(true);
+    setIsPropsOpen(Boolean(id));
+    setShowPropsPanel(Boolean(id));
   };
   const handleToggleLayerVisibility = (id) =>
     updateLayerSettings(id, (s) => ({ is_visible: s.is_visible === false }));
@@ -481,7 +481,8 @@ const OrganizarScada = () => {
     selectedId,
     onSelect: (id) => {
       setSelectedId(id);
-      setIsPropsOpen(true);
+      setIsPropsOpen(Boolean(id));
+      setShowPropsPanel(Boolean(id));
     },
     onUpdate: (id, changes) => handleUpdateComponent(id, changes),
     onDelete: handleDeleteComponent,
@@ -621,6 +622,7 @@ const OrganizarScada = () => {
               layoutId={currentLayoutId}
               exportName={exportName}
               onExportNameChange={setExportName}
+              onClose={() => setShowPropsPanel(false)}
               selectedElement={selectedElement}
               views={views}
               onChange={(changes) => {

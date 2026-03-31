@@ -28,6 +28,12 @@ const CanvasEditor = ({
     onDrop?.(e, canvasRef.current);
   };
 
+  const handleCanvasMouseDown = (e) => {
+    if (isLiveMode) return;
+    if (e.target !== canvasRef.current) return;
+    onSelect?.(null);
+  };
+
   return (
     <div
       className="relative flex-1 overflow-auto bg-slate-100"
@@ -38,6 +44,7 @@ const CanvasEditor = ({
           ref={canvasRef}
           onDrop={!isLiveMode ? handleDrop : undefined}
           onDragOver={!isLiveMode ? (e) => e.preventDefault() : undefined}
+          onMouseDown={!isLiveMode ? handleCanvasMouseDown : undefined}
           className="relative m-8 rounded-xl border border-slate-300 bg-white shadow-sm transition-all duration-300"
           style={{
             width:    canvasWidth,

@@ -1,20 +1,28 @@
-// src/modules/organizarScada/components/canvas/DraggableBox.jsx
 import React, { useEffect, useState } from "react";
+import { Settings } from "lucide-react";
 import { Rnd } from "react-rnd";
 import WidgetLiveWrapper from "./WidgetLiveWrapper";
 
-
 export default function DraggableBox({
-  initialX, initialY, initialWidth, initialHeight,
-  data, id, theme = "theme-clean",
-  isSelected = false, isLiveMode = false,
-  onSelect, onDragStop, onResizeStop, onDelete,
+  initialX,
+  initialY,
+  initialWidth,
+  initialHeight,
+  data,
+  id,
+  theme = "theme-clean",
+  isSelected = false,
+  isLiveMode = false,
+  onSelect,
+  onDragStop,
+  onResizeStop,
+  onDelete,
   isReadOnly = false,
   projectTags = [],
 }) {
   if (!data) return null;
 
-  const [pos,  setPos]  = useState({ x: initialX, y: initialY });
+  const [pos, setPos] = useState({ x: initialX, y: initialY });
   const [size, setSize] = useState({ w: initialWidth, h: initialHeight });
 
   useEffect(() => {
@@ -22,16 +30,13 @@ export default function DraggableBox({
     setSize({ w: initialWidth, h: initialHeight });
   }, [initialX, initialY, initialWidth, initialHeight]);
 
-  const settings = data.settings || {};
-
-  // ── MODO LIVE — completamente pasivo, sin Rnd, sin interacción ─────────────
   if (isLiveMode) {
     return (
       <div
         style={{
-          position:  "absolute",
-          width:     `${size.w}px`,
-          height:    `${size.h}px`,
+          position: "absolute",
+          width: `${size.w}px`,
+          height: `${size.h}px`,
           transform: `translate(${pos.x}px, ${pos.y}px)`,
           pointerEvents: "none",
         }}
@@ -48,22 +53,21 @@ export default function DraggableBox({
     );
   }
 
-  // ── MODO READ-ONLY — posición fija, seleccionable pero no arrastrable ──────
   if (isReadOnly) {
     return (
       <div
         className={[
-          "bg-white rounded-lg shadow border absolute transition-shadow cursor-pointer",
-          isSelected ? "border-sky-400 shadow-sky-100" : "border-gray-200",
+          "absolute cursor-pointer transition-shadow",
+          isSelected ? "rounded-md ring-2 ring-sky-400 ring-offset-2 ring-offset-white" : "",
         ].join(" ")}
         style={{
-          width:     `${size.w}px`,
-          height:    `${size.h}px`,
+          width: `${size.w}px`,
+          height: `${size.h}px`,
           transform: `translate(${pos.x}px, ${pos.y}px)`,
         }}
         onClick={() => onSelect?.()}
       >
-        <div style={{ pointerEvents: "none" }}>
+        <div className="h-full w-full" style={{ pointerEvents: "none" }}>
           <WidgetLiveWrapper
             data={data}
             width={size.w}
@@ -76,14 +80,11 @@ export default function DraggableBox({
     );
   }
 
-  // ── MODO EDICIÓN — arrastrable con Rnd ─────────────────────────────────────
-  // cancel=".widget-content" hace que Rnd ignore eventos dentro del widget,
-  // permitiendo que onClick del Rnd funcione limpiamente sin overlays.
   return (
     <Rnd
       className={[
-        "bg-white rounded-lg shadow border",
-        isSelected ? "border-sky-400 shadow-sky-100 shadow-md" : "border-gray-200",
+        "group",
+        isSelected ? "rounded-md ring-2 ring-sky-400 ring-offset-2 ring-offset-white" : "",
       ].join(" ")}
       size={{ width: size.w, height: size.h }}
       position={{ x: pos.x, y: pos.y }}
@@ -92,7 +93,7 @@ export default function DraggableBox({
         onDragStop?.(id, d.x, d.y);
       }}
       onResizeStop={(_e, _dir, ref, _delta, p) => {
-        const w = parseInt(ref.style.width,  10);
+        const w = parseInt(ref.style.width, 10);
         const h = parseInt(ref.style.height, 10);
         setSize({ w, h });
         setPos({ x: p.x, y: p.y });
@@ -101,39 +102,52 @@ export default function DraggableBox({
       bounds="parent"
       minWidth={50}
       minHeight={50}
-      dragHandleClassName="box-header"
       cancel=".widget-content"
       resizeHandleClasses={{ bottomRight: "resize-handle-br" }}
       onClick={() => onSelect?.()}
     >
-      {/* Header — drag handle + label + delete */}
-      <div className="box-header flex justify-between items-center px-2 py-1 border-b border-gray-200 cursor-grab active:cursor-grabbing">
-        <span className="font-semibold text-xs text-gray-700 truncate">
-          {settings.attributeLabel || settings.equipment || data.label || "Widget"}
-        </span>
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete?.(id); }}
-          className="flex items-center justify-center w-5 h-5 rounded-full text-gray-400 hover:bg-red-100 hover:text-red-600 text-base font-bold shrink-0"
-          aria-label="Eliminar"
-        >×</button>
-      </div>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect?.();
+        }}
+        className={[
+          "absolute -top-2 right-5 z-20 h-6 w-6 items-center justify-center rounded-full",
+          "border border-slate-200 bg-white text-slate-500 shadow-sm transition",
+          "hover:bg-slate-50 hover:text-sky-600",
+          isSelected ? "flex" : "hidden group-hover:flex",
+        ].join(" ")}
+        aria-label="Abrir propiedades"
+      >
+        <Settings size={14} />
+      </button>
 
-      {/* Widget — pointer-events none para que los clicks suban al Rnd */}
-      <div className="widget-content" style={{ pointerEvents: "none", height: "calc(100% - 28px)" }}>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete?.(id);
+        }}
+        className={[
+          "absolute -right-2 -top-2 z-20 h-6 w-6 items-center justify-center rounded-full",
+          "border border-red-200 bg-white text-sm font-bold text-red-500 shadow-sm transition",
+          "hover:bg-red-50 hover:text-red-600",
+          isSelected ? "flex" : "hidden group-hover:flex",
+        ].join(" ")}
+        aria-label="Eliminar"
+      >
+        x
+      </button>
+
+      <div className="widget-content h-full w-full" style={{ pointerEvents: "none" }}>
         <WidgetLiveWrapper
           data={data}
           width={size.w}
-          height={size.h - 28}
+          height={size.h}
           theme={theme}
           isLiveMode={false}
         />
-      </div>
-
-      {/* Badge equipo */}
-      <div className="component-equipment-label">
-        {settings.tagId
-          ? settings.tagId.split(":")[1] || settings.tagId
-          : settings.equipment || data.label || "Sin binding"}
       </div>
     </Rnd>
   );
