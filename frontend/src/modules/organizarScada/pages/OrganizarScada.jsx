@@ -331,7 +331,7 @@ const OrganizarScada = () => {
         />
 
         <div className="flex-1 bg-slate-100 overflow-hidden flex flex-col">
-          <div className="flex flex-1 overflow-hidden px-4 pb-4 gap-4 flex-col">
+          <div className="flex flex-1 overflow-hidden px-2 pb-2 gap-2 flex-col">
             <div className="px-1 pt-1">
               <NavbarEditor
                 onZoomIn={handleZoomIn}
@@ -350,7 +350,7 @@ const OrganizarScada = () => {
               />
             </div>
 
-            <main className="relative bg-slate-200/50 overflow-hidden flex-col justify-center items-center p-4 transition-all duration-300 flex-1 rounded-xl border border-slate-200">
+            <main className="relative bg-slate-200/50 overflow-hidden flex-col justify-center items-center p-1 transition-all duration-300 flex-1 rounded-lg border border-slate-200">
               <div ref={editorViewportRef} className="relative w-full h-full flex items-stretch">
                 {isLiveMode ? (
                   <RealtimeProvider tenant={tenant}>
@@ -364,7 +364,7 @@ const OrganizarScada = () => {
           </div>
         </div>
 
-        <aside className={`flex flex-col border-l border-slate-200 bg-white shadow-sm transition-all duration-200 overflow-hidden shrink-0 ${showPropsPanel ? "w-72" : "w-10"}`}>
+        <aside className={`flex flex-col border-l border-slate-200 bg-slate-100/80 backdrop-blur shadow-sm transition-all duration-200 overflow-hidden shrink-0 ${showPropsPanel ? "w-72" : "w-10"}`}>
           {/* Header con toggle */}
           <div className="flex items-center justify-between h-10 px-2 border-b border-slate-200 bg-slate-50 shrink-0">
             {showPropsPanel && (
@@ -410,7 +410,7 @@ const OrganizarScada = () => {
       </div>
       {isAdvancedOpen && (
   <div className="fixed inset-0 z-50 flex justify-end bg-black/20">
-    <div className="w-[720px] max-w-[90vw] h-full bg-white shadow-2xl p-6 overflow-auto">
+    <div className="w-[720px] max-w-[90vw] h-full bg-slate-100/80 backdrop-blur shadow-2xl p-6 overflow-auto">
       
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-sm font-semibold text-slate-700">

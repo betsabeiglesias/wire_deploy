@@ -24,8 +24,8 @@
 .canvas-main-content {
     flex-grow: 1; /* Ocupa el espacio restante junto al Sidebar */
     display: flex;
-    justify-content: center; /* Centra el Canvas Blanco horizontalmente */
-    align-items: center; /* Centra el Canvas Blanco verticalmente */
+    justify-content: stretch; /* Centra el Canvas Blanco horizontalmente */
+    align-items: stretch; /* Centra el Canvas Blanco verticalmente */
     background-color: #f0f0f0; /* Color gris de fondo del área de trabajo */
     overflow: auto; /* Permite el scroll si el Canvas es más grande que la ventana */
     padding: 20px; /* Espacio alrededor del canvas blanco */

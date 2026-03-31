@@ -12,7 +12,7 @@ const SidebarPropiedadesCompact = ({
     <div className="p-3 space-y-3">
       
       {/* Preview */}
-      <div className="h-24 border rounded bg-white">
+      <div className="h-24 border rounded bg-slate-50">
         <WidgetPreview data={selectedElement.data} />
       </div>
 

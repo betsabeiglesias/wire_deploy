@@ -6,7 +6,7 @@
 // - El resto de secciones sin cambios respecto al original.
 //
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, ChevronLeft, Eye, EyeOff, GripVertical, Lock, Unlock, PanelLeftClose, PanelLeftOpen, Monitor, Cpu, Layout, Image, UploadCloud } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronLeft, Eye, EyeOff, GripVertical, Lock, Unlock, Monitor, Cpu, Layout, Image, UploadCloud } from "lucide-react";
 import { elementos_scada } from "@/modules/organizarScada/templates/elementos_scada";
 import { buttons_labels_items } from "@/modules/organizarScada/utils/items";
 import { renderWidget } from "@/modules/organizarScada/components/widgets/registry.jsx";
@@ -119,6 +119,18 @@ const UnifiedSidebar = ({
   const [variables,            setVariables]            = useState([]);
   const [varsLoading,          setVarsLoading]          = useState(false);
   const [expandedTables,       setExpandedTables]       = useState({});  // { tableName: bool }
+  const [visibleSection, setVisibleSection] = useState(null);
+  useEffect(() => {
+	if (activeSection) {
+		setVisibleSection(activeSection);
+	} else {
+		// delay para animación de salida
+		const timeout = setTimeout(() => {
+		setVisibleSection(null);
+		}, 180); // mismo que duration
+		return () => clearTimeout(timeout);
+	}
+	}, [activeSection]);
 
   const fetchVariables = useCallback(async () => {
     if (!layoutId) return;
@@ -347,12 +359,12 @@ const UnifiedSidebar = ({
     // ── Pantallas + Capas ──────────────────────────────────────────────────────
     if (sectionId === "pantallas") {
       return (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-3">
+        <div className="rounded-lg border border-slate-300/60 bg-slate-100/80 backdrop-blur p-3 text-[11px] space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-800">Pantallas</h3>
             <button
               onClick={onCreateView}
-              className="inline-flex items-center justify-center rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded border border-slate-300 bg-slate-50 px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
             >
               + Nueva pantalla
             </button>
@@ -368,7 +380,7 @@ const UnifiedSidebar = ({
             {viewsLoading && (
               <div className="space-y-2">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="rounded-md border border-slate-200 bg-white px-3 py-3">
+                  <div key={i} className="rounded-md border border-slate-300/60 bg-slate-50 px-3 py-3">
                     <div className="flex items-center gap-2">
                       <SkeletonBlock width="w-32" height="h-3.5" />
                       <SkeletonBlock width="w-4" height="h-4" rounded="rounded-full" />
@@ -392,7 +404,7 @@ const UnifiedSidebar = ({
                   </button>
                   <button
                     onClick={onRefreshViews}
-                    className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400"
+                    className="rounded border border-slate-300 bg-slate-50 px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400"
                   >
                     Reintentar carga
                   </button>
@@ -407,7 +419,7 @@ const UnifiedSidebar = ({
                   key={view.id}
                   className={[
                     "flex items-center justify-between rounded-md border px-3 py-2 transition",
-                    isSelected ? "border-sky-400 bg-sky-50" : "border-slate-200 bg-white hover:bg-slate-50",
+                    isSelected ? "border-sky-400 bg-sky-50" : "border-slate-300/60 bg-slate-50 hover:bg-slate-50",
                   ].join(" ")}
                 >
                   <div className="flex items-start gap-2 w-full">
@@ -455,14 +467,14 @@ const UnifiedSidebar = ({
           </div>
 
           {/* Capas */}
-          <div className="border-t border-slate-200 pt-3">
+          <div className="border-t border-slate-300/60 pt-3">
             <div className="mb-2 flex items-center justify-between">
               <h4 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Capas</h4>
               <span className="text-[10px] text-slate-400">{layers.length} elementos</span>
             </div>
-            <div className="max-h-64 space-y-1 overflow-y-auto rounded border border-slate-200 bg-slate-50 p-1">
+            <div className="max-h-64 space-y-1 overflow-y-auto rounded border border-slate-300/60 bg-slate-50 p-1">
               {layers.length === 0 && (
-                <div className="rounded bg-white px-2 py-2 text-[10px] text-slate-500">
+                <div className="rounded bg-slate-50 px-2 py-2 text-[10px] text-slate-500">
                   No hay elementos en el canvas.
                 </div>
               )}
@@ -479,7 +491,7 @@ const UnifiedSidebar = ({
                     onClick={() => onSelectElement?.(layer.id)}
                     className={[
                       "group flex items-center gap-1 rounded border px-1.5 py-1 text-[11px] transition cursor-pointer",
-                      isSelected      ? "border-sky-400 bg-sky-50 text-sky-900" : "border-transparent bg-white text-slate-700 hover:border-slate-300",
+                      isSelected      ? "border-sky-400 bg-sky-50 text-sky-900" : "border-transparent bg-slate-50 text-slate-700 hover:border-slate-300",
                       draggingLayerId === layer.id ? "opacity-60" : "",
                     ].join(" ")}
                     title={`${layer.fallbackName} • z:${layer.zIndex}`}
@@ -546,7 +558,7 @@ const UnifiedSidebar = ({
       // Sin proyecto guardado: formulario de nombre
       if (!layoutId) {
         return (
-          <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-3">
+          <div className="rounded-lg border border-slate-300/60 bg-slate-50 p-3 text-[11px] space-y-3">
             <h3 className="text-sm font-semibold text-slate-800">Variables</h3>
             <p className="text-[10px] text-slate-500">
               Para gestionar variables el proyecto necesita un nombre y estar guardado.
@@ -584,7 +596,7 @@ const UnifiedSidebar = ({
 
       // Con proyecto guardado: árbol tabla → variables + botón gestor
       return (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 text-[11px] space-y-2">
+        <div className="rounded-lg border border-slate-300/60 bg-slate-50 p-3 text-[11px] space-y-2">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-slate-800">
               Variables
@@ -593,7 +605,7 @@ const UnifiedSidebar = ({
               )}
             </h3>
             <button onClick={() => setShowDevices(true)}
-              className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50">
+              className="rounded border border-slate-300 bg-slate-50 px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50">
               Gestionar
             </button>
           </div>
@@ -627,7 +639,7 @@ const UnifiedSidebar = ({
 
                     {/* Variables — hojas */}
                     {isOpen && (
-                      <div className="ml-3 border-l border-slate-200 pl-2 space-y-0.5 pb-1">
+                      <div className="ml-3 border-l border-slate-300/60 pl-2 space-y-0.5 pb-1">
                         {tableVars.length === 0 ? (
                           <p className="text-[10px] text-slate-400 py-0.5">Sin variables.</p>
                         ) : (
@@ -677,7 +689,7 @@ const UnifiedSidebar = ({
         { id: "minis",    label: "Mini",     items: elementos_scada.minis    || [] },
       ];
       return (
-        <div className="rounded-lg border border-slate-200 bg-white p-3">
+        <div className="rounded-lg border border-slate-300/60 bg-slate-50 p-3">
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 mb-3">
             Plantillas SCADA
           </p>
@@ -695,7 +707,7 @@ const UnifiedSidebar = ({
                         draggable
                         onDragStart={e => handleTemplateDragStart(e, tpl)}
                         onClick={() => handlePickTemplate(tpl)}
-                        className="cursor-grab select-none rounded-lg border border-slate-200 bg-white shadow-sm hover:border-sky-400 hover:bg-sky-50 active:cursor-grabbing"
+                        className="cursor-grab select-none rounded-lg border border-slate-300/60 bg-slate-50 shadow-sm hover:border-sky-400 hover:bg-sky-50 active:cursor-grabbing"
                         title="Arrastra al canvas"
                       >
                         <div className="h-20 w-full overflow-hidden flex items-center justify-center">
@@ -717,7 +729,7 @@ const UnifiedSidebar = ({
     // ── Iconos básicos ──────────────────────────────────────────────────────────
     if (sectionId === "buttons") {
       return (
-        <div className="rounded-lg border border-slate-200 bg-white p-3">
+        <div className="rounded-lg border border-slate-300/60 bg-slate-50 p-3">
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400 mb-3">
             Buttons & Labels
           </p>
@@ -728,7 +740,7 @@ const UnifiedSidebar = ({
                 draggable
                 onDragStart={e => handleButtonDragStart(e, item)}
                 onClick={() => handlePickButton(item)}
-                className="cursor-grab select-none rounded-md border border-slate-200 bg-white px-2 py-2 text-[10px] text-slate-700 hover:border-sky-400 hover:bg-sky-50 active:cursor-grabbing"
+                className="cursor-grab select-none rounded-md border border-slate-300/60 bg-slate-50 px-2 py-2 text-[10px] text-slate-700 hover:border-sky-400 hover:bg-sky-50 active:cursor-grabbing"
               >
                 <div className={item.previewClass}>
                   {item.kind === "button" ? "Button" : item.kind === "label" ? "Label" : "Caja"}
@@ -743,7 +755,7 @@ const UnifiedSidebar = ({
     // ── Iconos personalizados ───────────────────────────────────────────────────
     if (sectionId === "custom-icons") {
       return (
-        <div className="rounded-lg border border-slate-200 bg-white p-3 space-y-3">
+        <div className="rounded-lg border border-slate-300/60 bg-slate-50 p-3 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
               Libreria de imagenes
@@ -752,7 +764,7 @@ const UnifiedSidebar = ({
               type="button"
               onClick={() => uploadInputRef.current?.click()}
               disabled={isProcessingUpload}
-              className="rounded border border-slate-300 bg-white px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded border border-slate-300 bg-slate-50 px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50 disabled:opacity-50"
             >
               {isProcessingUpload ? "Procesando..." : "Subir icono"}
             </button>
@@ -783,13 +795,13 @@ const UnifiedSidebar = ({
                     draggable
                     onDragStart={e => handleTemplateDragStart(e, tpl)}
                     onClick={() => handlePickCustomIcon(icon)}
-                    className="group relative cursor-grab rounded-md border border-slate-200 bg-white p-1.5 shadow-sm hover:border-sky-400 hover:bg-sky-50 active:cursor-grabbing"
+                    className="group relative cursor-grab rounded-md border border-slate-300/60 bg-slate-50 p-1.5 shadow-sm hover:border-sky-400 hover:bg-sky-50 active:cursor-grabbing"
                     title={icon.name}
                   >
                     <button
                       type="button"
                       onClick={e => { e.stopPropagation(); handleDeleteCustomIcon(icon.id); }}
-                      className="absolute right-1 top-1 z-10 hidden h-5 w-5 items-center justify-center rounded bg-white/90 text-[11px] text-rose-600 shadow group-hover:inline-flex"
+                      className="absolute right-1 top-1 z-10 hidden h-5 w-5 items-center justify-center rounded bg-slate-50/90 text-[11px] text-rose-600 shadow group-hover:inline-flex"
                       title="Eliminar icono"
                     >×</button>
                     <div className="flex h-20 items-center justify-center overflow-hidden rounded border border-slate-100 bg-slate-50">
@@ -813,141 +825,328 @@ const UnifiedSidebar = ({
     return null;
   };
 
-  // ── Shell ─────────────────────────────────────────────────────────────────────
+  // ── Sidebar Rail (iconos tipo VS Code) ─────────────────────────────
+	const SidebarRail = ({ items, activeSection, onSelect }) => {
+	return (
+		<div className="w-12 bg-slate-900 flex flex-col items-center py-2 gap-1">
+		{items.map(item => {
+			const { Icon } = item;
+			const isActive = activeSection === item.id;
+
+			return (
+			<button
+				key={item.id}
+				title={item.label}
+				onClick={() => onSelect(item.id)}
+				className={`
+					w-10 h-10 flex items-center justify-center rounded-md
+					transition-all duration-150
+					hover:scale-105 active:scale-95
+				${isActive
+					? "bg-sky-500 text-white shadow"
+					: "text-slate-400 hover:bg-slate-700 hover:text-white"}
+				`}
+			>
+				<Icon className="w-5 h-5" />
+			</button>
+			);
+		})}
+		</div>
+	);
+	};
+
+// ── Panel lateral (contenido de sección) ───────────────────────────
+const SidebarPanel = ({
+  activeSection,
+  renderSectionContent,
+  projectName,
+  isEditingProjectName,
+  projectNameDraft,
+  setProjectNameDraft,
+  setIsEditingProjectName,
+  commitProjectName,
+  cancelProjectName,
+}) => {
+  if (!activeSection) return null;
+
   return (
-    <>
-      <div className="flex h-full bg-slate-100 text-slate-800 text-[13px]">
-        <aside
-          className={`flex flex-col border-r border-slate-200 bg-white shadow-sm transition-all duration-200 overflow-hidden ${
-            isMainOpen ? "w-64" : "w-12"
-          }`}
-        >
-          {/* ── Header con toggle ─────────────────────────────────────────────── */}
-          <div className="flex items-center justify-between h-10 px-2 border-b border-slate-200 bg-slate-50 shrink-0">
-            {isMainOpen && (
-              <span className="ml-1 text-xs font-semibold tracking-wide text-slate-700 truncate">
-                Componentes
-              </span>
-            )}
-            <button
-              onClick={() => setIsMainOpen((p) => !p)}
-              title={isMainOpen ? "Colapsar sidebar" : "Expandir sidebar"}
-              className="ml-auto flex items-center justify-center w-7 h-7 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors shrink-0"
-            >
-              {isMainOpen
-                ? <PanelLeftClose className="w-4 h-4" />
-                : <PanelLeftOpen  className="w-4 h-4" />
-              }
-            </button>
-          </div>
-
-          {/* ── Modo expandido ────────────────────────────────────────────────── */}
-          {isMainOpen && (
-            <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-              {/* Nombre proyecto */}
-              <div className="rounded-md border border-slate-200 bg-slate-50 px-2 py-2">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                  Proyecto
-                </p>
-                {isEditingProjectName ? (
-                  <input
-                    autoFocus
-                    value={projectNameDraft}
-                    onChange={e => setProjectNameDraft(e.target.value)}
-                    onBlur={commitProjectName}
-                    onKeyDown={e => {
-                      if (e.key === "Enter")  commitProjectName();
-                      if (e.key === "Escape") cancelProjectName();
-                    }}
-                    className="mt-1 w-full rounded border border-sky-300 px-2 py-1 text-[12px] font-semibold text-slate-800 focus:border-sky-500 focus:outline-none"
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingProjectName(true)}
-                    className="mt-1 block w-full truncate rounded px-1 py-0.5 text-left text-[12px] font-semibold text-slate-800 hover:bg-slate-100"
-                    title="Editar nombre del proyecto"
-                  >
-                    {projectName || "Sin nombre"}
-                  </button>
-                )}
-              </div>
-
-              {/* Secciones */}
-              {sidebarSections.map(section => (
-                <div key={section.id}>
-                  <ul className="space-y-1">
-                    {section.items.map(item => {
-                      const isActive = activeSection === item.id;
-                      return (
-                        <li key={item.id}>
-                          <button
-                            onClick={() => handleSectionClick(item.id)}
-                            className={[
-                              "flex w-full items-center justify-between rounded px-2 py-1.5 text-left transition-colors",
-                              isActive
-                                ? "bg-sky-100 text-sky-800 border border-sky-300"
-                                : "text-slate-700 hover:text-slate-900 hover:bg-slate-100",
-                            ].join(" ")}
-                          >
-                            <span className="truncate">{item.label}</span>
-                            {isActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
-                          </button>
-                          {isActive && (
-                            <div className="mt-2">
-                              <div className="max-h-130 overflow-y-auto custom-scroll px-2">
-                                {renderSectionContent(item.id)}
-                              </div>
-                            </div>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* ── Modo colapsado: iconos de sección como acceso rápido ──────────── */}
-          {!isMainOpen && (
-            <div className="flex flex-col items-center gap-1 py-3 flex-1">
-              {sidebarSections[0].items.map(item => {
-                const isActive = activeSection === item.id;
-                const { Icon } = item;
-                return (
-                  <button
-                    key={item.id}
-                    title={item.label}
-                    onClick={() => { setIsMainOpen(true); setActiveSection(item.id); }}
-                    className={[
-                      "flex items-center justify-center w-8 h-8 rounded transition-colors",
-                      isActive
-                        ? "bg-sky-100 text-sky-700"
-                        : "text-slate-400 hover:bg-slate-100 hover:text-slate-700",
-                    ].join(" ")}
-                  >
-                    <Icon className="w-4 h-4" />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </aside>
+<div className="w-72 bg-slate-100/90 backdrop-blur border-r border-slate-300/60 flex flex-col shadow-sm">      
+{/* Header */}
+      <div className="h-10 px-3 flex items-center justify-between border-b bg-slate-200/60">
+        <span className="text-xs font-semibold text-slate-700 capitalize">
+          {activeSection}
+        </span>
       </div>
 
-      {showDevices && (
-        <ProjectVariableModal
-          open={showDevices}
-          onClose={() => {
-            setShowDevices(false);
-            fetchVariables();   // refresca el árbol del sidebar
-          }}
-          layoutId={layoutId}
-        />
-      )}
-    </>
+
+		{/* Proyecto */}
+		<div className="p-3 border-b border-slate-300/60 bg-slate-100/70 backdrop-blur-md">
+		
+		<div
+			onClick={() => !isEditingProjectName && setIsEditingProjectName(true)}
+			className="flex flex-col gap-1 px-3 py-2 rounded-md hover:bg-slate-200/60 transition cursor-pointer group"
+		>
+			
+			{/* Label */}
+			<p className="text-[10px] font-semibold tracking-wide text-slate-400">
+			PROYECTO
+			</p>
+
+			{/* Nombre + estado */}
+			<div className="flex items-center gap-2 min-h-[20px]">
+
+			{/* Estado SCADA */}
+			<span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+
+			{/* MODO EDICIÓN */}
+			{isEditingProjectName ? (
+				<input
+				autoFocus
+				value={projectNameDraft}
+				onChange={(e) => setProjectNameDraft(e.target.value)}
+				onBlur={commitProjectName}
+				onKeyDown={(e) => {
+					if (e.key === "Enter") commitProjectName();
+					if (e.key === "Escape") cancelProjectName();
+				}}
+				className="w-full text-[14px] font-semibold text-slate-800 bg-white border border-blue-300 rounded px-2 py-1 outline-none"
+				/>
+			) : (
+				<>
+				{/* Nombre */}
+				<p className="text-[14px] font-semibold text-slate-800 leading-none">
+					{projectName || "Sin nombre"}
+				</p>
+
+				{/* Icono editar */}
+				<span className="opacity-0 group-hover:opacity-100 transition text-slate-400 hover:text-slate-700 text-[12px]">
+					✎
+				</span>
+				</>
+			)}
+			</div>
+
+		</div>
+		</div>
+
+      {/* Contenido */}
+      <div className="flex-1 overflow-y-auto p-3 animate-fadeIn">
+        {renderSectionContent(activeSection)}
+      </div>
+    </div>
   );
 };
 
+  // ── Shell ─────────────────────────────────────────────────────────────────────
+//   return (
+//     <>
+//       <div className="flex h-full bg-slate-100 text-slate-800 text-[13px]">
+//         <aside
+//           className={`flex flex-col border-r border-slate-300/60 bg-white shadow-sm transition-all duration-200 overflow-hidden ${
+//             isMainOpen ? "w-64" : "w-12"
+//           }`}
+//         >
+//           {/* ── Header con toggle ─────────────────────────────────────────────── */}
+//           <div className="flex items-center justify-between h-10 px-2 border-b border-slate-300/60 bg-slate-50 shrink-0">
+//             {isMainOpen && (
+//               <span className="ml-1 text-xs font-semibold tracking-wide text-slate-700 truncate">
+//                 Componentes
+//               </span>
+//             )}
+//             <button
+//               onClick={() => setIsMainOpen((p) => !p)}
+//               title={isMainOpen ? "Colapsar sidebar" : "Expandir sidebar"}
+//               className="ml-auto flex items-center justify-center w-7 h-7 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors shrink-0"
+//             >
+//               {isMainOpen
+//                 ? <PanelLeftClose className="w-4 h-4" />
+//                 : <PanelLeftOpen  className="w-4 h-4" />
+//               }
+//             </button>
+//           </div>
+
+//           {/* ── Modo expandido ────────────────────────────────────────────────── */}
+//           {isMainOpen && (
+//             <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+//               {/* Nombre proyecto */}
+//               <div className="rounded-md border border-slate-300/60 bg-slate-50 px-2 py-2">
+//                 <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+//                   Proyecto
+//                 </p>
+//                 {isEditingProjectName ? (
+//                   <input
+//                     autoFocus
+//                     value={projectNameDraft}
+//                     onChange={e => setProjectNameDraft(e.target.value)}
+//                     onBlur={commitProjectName}
+//                     onKeyDown={e => {
+//                       if (e.key === "Enter")  commitProjectName();
+//                       if (e.key === "Escape") cancelProjectName();
+//                     }}
+//                     className="mt-1 w-full rounded border border-sky-300 px-2 py-1 text-[12px] font-semibold text-slate-800 focus:border-sky-500 focus:outline-none"
+//                   />
+//                 ) : (
+//                   <button
+//                     type="button"
+//                     onClick={() => setIsEditingProjectName(true)}
+//                     className="mt-1 block w-full truncate rounded px-1 py-0.5 text-left text-[12px] font-semibold text-slate-800 hover:bg-slate-100"
+//                     title="Editar nombre del proyecto"
+//                   >
+//                     {projectName || "Sin nombre"}
+//                   </button>
+//                 )}
+//               </div>
+
+//               {/* Secciones */}
+//               {sidebarSections.map(section => (
+//                 <div key={section.id}>
+//                   <ul className="space-y-1">
+//                     {section.items.map(item => {
+//                       const isActive = activeSection === item.id;
+//                       return (
+//                         <li key={item.id}>
+//                           <button
+//                             onClick={() => handleSectionClick(item.id)}
+//                             className={[
+//                               "flex w-full items-center justify-between rounded px-2 py-1.5 text-left transition-colors",
+//                               isActive
+//                                 ? "bg-sky-100 text-sky-800 border border-sky-300"
+//                                 : "text-slate-700 hover:text-slate-900 hover:bg-slate-100",
+//                             ].join(" ")}
+//                           >
+//                             <span className="truncate">{item.label}</span>
+//                             {isActive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />}
+//                           </button>
+//                           {isActive && (
+//                             <div className="mt-2">
+//                               <div className="max-h-130 overflow-y-auto custom-scroll px-2">
+//                                 {renderSectionContent(item.id)}
+//                               </div>
+//                             </div>
+//                           )}
+//                         </li>
+//                       );
+//                     })}
+//                   </ul>
+//                 </div>
+//               ))}
+//             </div>
+//           )}
+
+//           {/* ── Modo colapsado: iconos de sección como acceso rápido ──────────── */}
+//           {!isMainOpen && (
+//             <div className="flex flex-col items-center gap-1 py-3 flex-1">
+//               {sidebarSections[0].items.map(item => {
+//                 const isActive = activeSection === item.id;
+//                 const { Icon } = item;
+//                 return (
+//                   <button
+//                     key={item.id}
+//                     title={item.label}
+//                     onClick={() => { setIsMainOpen(true); setActiveSection(item.id); }}
+//                     className={[
+//                       "flex items-center justify-center w-8 h-8 rounded transition-colors",
+//                       isActive
+//                         ? "bg-sky-100 text-sky-700"
+//                         : "text-slate-400 hover:bg-slate-100 hover:text-slate-700",
+//                     ].join(" ")}
+//                   >
+//                     <Icon className="w-4 h-4" />
+//                   </button>
+//                 );
+//               })}
+//             </div>
+//           )}
+//         </aside>
+//       </div>
+
+//       {showDevices && (
+//         <ProjectVariableModal
+//           open={showDevices}
+//           onClose={() => {
+//             setShowDevices(false);
+//             fetchVariables();   // refresca el árbol del sidebar
+//           }}
+//           layoutId={layoutId}
+//         />
+//       )}
+//     </>
+//   );
+// };
+
+return (
+  <>
+    <div className="flex h-full">
+
+      {/* ── RAIL (SIEMPRE visible) ───────────────────────── */}
+      <SidebarRail
+        items={sidebarSections[0].items}
+        activeSection={activeSection}
+        onSelect={(id) => {
+          setActiveSection(prev => prev === id ? null : id);
+          if (id === "devices" && layoutId) fetchVariables();
+        }}
+      />
+
+      {/* ── PANEL (desplegable) ─────────────────────────── */}
+     {visibleSection && (
+			<div
+				className={`
+				w-72 relative
+				transition-all duration-200 ease-out
+				${activeSection
+					? "opacity-100 translate-x-0 scale-100"
+					: "opacity-0 -translate-x-4 scale-95"}
+				`}
+			>
+				{/* Overlay sutil */}
+				<div
+				className={`
+					absolute inset-0 bg-black/5 pointer-events-none
+					transition-opacity duration-200
+					${activeSection ? "opacity-100" : "opacity-0"}
+				`}
+				/>
+
+				<SidebarPanel
+				activeSection={visibleSection}
+				renderSectionContent={renderSectionContent}
+				projectName={projectName}
+				isEditingProjectName={isEditingProjectName}
+				projectNameDraft={projectNameDraft}
+				setProjectNameDraft={setProjectNameDraft}
+				setIsEditingProjectName={setIsEditingProjectName}
+				commitProjectName={commitProjectName}
+				cancelProjectName={cancelProjectName}
+				/>
+			</div>
+			)}
+
+      {/* ── BOTÓN COLAPSE GLOBAL (overlay lateral) ─────── */}
+      {/* <button
+        onClick={() => setIsMainOpen(prev => !prev)}
+        className="absolute top-2 left-14 z-50 w-7 h-7 flex items-center justify-center rounded bg-white border border-slate-300/60 shadow hover:bg-slate-100"
+        title={isMainOpen ? "Colapsar sidebar" : "Expandir sidebar"}
+      >
+        {isMainOpen
+          ? <PanelLeftClose className="w-4 h-4 text-slate-600" />
+          : <PanelLeftOpen className="w-4 h-4 text-slate-600" />
+        }
+      </button> */}
+
+    </div>
+
+    {showDevices && (
+      <ProjectVariableModal
+        open={showDevices}
+        onClose={() => {
+          setShowDevices(false);
+          fetchVariables();
+        }}
+        layoutId={layoutId}
+      />
+    )}
+  </>
+);
+}
 export default UnifiedSidebar;

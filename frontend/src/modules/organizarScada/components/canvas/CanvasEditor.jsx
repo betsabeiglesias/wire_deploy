@@ -11,8 +11,8 @@ const CanvasEditor = ({
   onUpdate,
   onDelete,
   onDrop,
-  canvasWidth  = "1180px",
-  canvasHeight = "710px",
+  canvasWidth  = "100%",
+  canvasHeight = "100%",
   zoom = 1,
   onStageSize,
   isLiveMode = false,
@@ -30,19 +30,26 @@ const CanvasEditor = ({
 
   return (
     <div
-      className="relative flex-1 overflow-auto bg-slate-100"
+      className="absolute inset-0 overflow-auto bg-slate-100"
       style={{ cursor: isLiveMode ? "default" : undefined }}
     >
-      <div className="flex h-full items-center justify-center">
+
+    {/* // Viewport = scrollable, ocupa todo el espacio disponible */}
+    <div className="absolute inset-0 overflow-auto bg-slate-100"
+     style={{ backgroundImage: "radial-gradient(circle at 1px 1px, #e2e8f0 1px, transparent 0)", backgroundSize: "20px 20px" }}>
+
+    {/* STAGE */}
+      {/* <div className="absolute inset-0"> */}
         <div
           ref={canvasRef}
           onDrop={!isLiveMode ? handleDrop : undefined}
           onDragOver={!isLiveMode ? (e) => e.preventDefault() : undefined}
-          className="relative m-8 rounded-xl border border-slate-300 bg-white shadow-sm transition-all duration-300"
+          className="relative rounded-xl border border-slate-300 bg-white shadow-sm transition-all duration-300"
           style={{
-            width:    canvasWidth,
-            height:   canvasHeight,
-            minWidth: 640,
+            width:    canvasWidth || "100%",
+            height:   canvasHeight|| "100%",
+            minWidth: "100%",
+            minHeight: "100%",
             transform: `scale(${zoom})`,
             transformOrigin: "top left",
             backgroundImage: isLiveMode
@@ -84,7 +91,7 @@ const CanvasEditor = ({
           )}
         </div>
       </div>
-    </div>
+    // </div>
   );
 };
 

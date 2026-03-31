@@ -449,7 +449,7 @@ const SidebarPropiedades = ({
 
   // ─── SHELL ────────────────────────────────────────────────────────────────
   const renderContent = () => (
-    <div className="flex flex-col bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+    <div className="flex flex-col bg-slate-100/80 backdrop-blur border border-slate-300/60 rounded-xl overflow-hidden shadow-sm">
 
       {/* HEADER */}
       <div className="flex items-center justify-between px-5 py-3.5 bg-slate-50 border-b border-slate-200">
@@ -479,19 +479,19 @@ const SidebarPropiedades = ({
       </nav>
 
       {/* CONTENT con scroll */}
-      <div className="p-4 overflow-y-auto max-h-[40vh]">
+      <div className="p-4 overflow-y-auto max-h-[40vh] space-y-3">
         {activeTab === "General"     && renderGeneral()}
         {activeTab === "Dispositivo" && renderDispositivo()}
         {activeTab === "Estilo"      && renderEstilo()}
       </div>
 
       {/* PREVIEW GRANDE — ScaledPreview escala el widget para llenar el área */}
-      <div className="border-t border-slate-100 bg-slate-50 px-5 py-4">
+      <div className="border-t border-slate-100 bg-slate-100/70 px-5 py-4">
         <p className="text-[9px] font-medium tracking-[0.08em] uppercase text-slate-400 mb-3">
           Vista previa
         </p>
         {draftElement?.data ? (
-          <div className="w-full h-[180px] bg-white border border-slate-200 rounded-xl overflow-hidden">
+          <div className="w-full h-[180px] bg-slate-50 border-slate-300/60 rounded-xl overflow-hidden">
             <ScaledPreview
               data={draftElement.data}
               unit={currentSettings?.unit}
@@ -526,7 +526,7 @@ const SidebarPropiedades = ({
             onClick={() => setDraftElement(JSON.parse(JSON.stringify(originalElement)))}
             className={`px-4 py-2.5 rounded-lg text-[11px] font-medium transition border whitespace-nowrap
               ${isDirty
-                ? "bg-white border-slate-200 text-slate-500 cursor-pointer hover:border-slate-300 hover:text-slate-700"
+                ? "bg-slate-100 border-slate-300/60 text-slate-500 cursor-pointer hover:border-slate-300 hover:text-slate-700"
                 : "bg-white border-slate-100 text-slate-300 cursor-not-allowed"
               }`}
           >
