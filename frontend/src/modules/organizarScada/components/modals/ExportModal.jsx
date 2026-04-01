@@ -39,10 +39,10 @@ const ExportModal = ({
         // Lógica de URL
         if (isUpdating) {
             httpMethod = "put";
-            apiUrl = `http://localhost:8000/api/scada-manager/layout/${currentLayoutId}/`; 
+            apiUrl = `http://localhost:8000/api/scada/layout/${currentLayoutId}/`;
         } else {
             httpMethod = "post";
-            apiUrl = `http://localhost:8000/api/scada-manager/save-layout/`; 
+            apiUrl = `http://localhost:8000/api/scada/save-layout/`;
         }
 
         const requestBody = {

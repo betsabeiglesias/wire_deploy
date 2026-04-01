@@ -1,11 +1,12 @@
-import gaugeDefaultIcon from "@/assets/icons/gaugeDefault.svg";
+// import gaugeDefaultIcon from "@/assets/icons/gaugeDefault.svg";
 
 export const elementos_scada = {
   gauges: [
         {
       id: "tpl-temp-gauge",
       title: "Temp Gauge",
-      thumbnailUrl: gaugeDefaultIcon, // Reusamos icono por ahora
+          icon: "gauge",
+      thumbnailType: "preview", // Reusamos icono por ahora
       data: {
         type: "temp-gauge",
         width: 160,
@@ -40,7 +41,9 @@ export const elementos_scada = {
     {
       id: "tpl-hmi-scada-gauge-thermal",
       title: "SCADA Gauge Thermal",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon: "gauge",
+      thumbnailType: "preview",
+
       data: {
         type: "hmi-scada-gauge",
         width: 220,
@@ -62,7 +65,7 @@ export const elementos_scada = {
     // {
     //   id: "tpl-hmi-scada-gauge-pressure",
     //   title: "SCADA Gauge Pressure",
-    //   thumbnailUrl: gaugeDefaultIcon,
+    //   thumbnailType: gaugeDefaultIcon,
     //   data: {
     //     type: "hmi-scada-gauge",
     //     width: 220,
@@ -81,7 +84,7 @@ export const elementos_scada = {
     // {
     //   id: "tpl-hmi-scada-gauge-flow",
     //   title: "SCADA Gauge Flow",
-    //   thumbnailUrl: gaugeDefaultIcon,
+    //   thumbnailType: gaugeDefaultIcon,
     //   data: {
     //     type: "hmi-scada-gauge",
     //     width: 220,
@@ -100,7 +103,9 @@ export const elementos_scada = {
     {
       id: "tpl-hmi-horizontal-gauge-precision",
       title: "Horizontal Gauge Precision",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon: "gauge",
+      thumbnailType: "preview",
+
       data: {
         type: "hmi-horizontal-gauge",
         width: 240,
@@ -159,7 +164,8 @@ export const elementos_scada = {
     {
       id: "tpl-hmi-progress-bar",
       title: "Barra HMI",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon: "gauge",
+      thumbnailType: "preview",
       data: {
         type: "hmi-progress-bar",
         width: 230,
@@ -174,7 +180,9 @@ export const elementos_scada = {
     {
       id: "tpl-hmi-tank-level",
       title: "Tanque Cilíndrico",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon: "tank",
+      thumbnailType: "preview",
+
       data: {
         type: "hmi-tank-level",
         width: 150,
@@ -204,7 +212,9 @@ export const elementos_scada = {
     {
       id: "tpl-hmi-status-ok",
       title: "Status OK",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon: "status",
+      thumbnailType: "preview",
+
       data: {
         type: "hmi-status-card",
         width: 280,
@@ -251,7 +261,8 @@ export const elementos_scada = {
     {
       id: "tpl-hmi-energy-summary",
       title: "Tarjeta Energy Summary",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon: "card",
+      thumbnailType: "preview",
       data: {
         type: "hmi-energy-summary",
         width: 380,
@@ -273,7 +284,8 @@ export const elementos_scada = {
     {
       id: "tpl-chart-high-low",
       title: "Chart High/Low",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon:"chart",
+      thumbnailType: "preview",
       data: {
         type: "chart-high-low",
         width: 320,
@@ -308,7 +320,8 @@ export const elementos_scada = {
     {
       id: "tpl-chart-stock-area",
       title: "Chart Stock Area",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon: "chart",
+      thumbnailType: "preview",
       data: {
         type: "chart-stock-area",
         width: 360,
@@ -359,7 +372,8 @@ export const elementos_scada = {
     {
       id: "tpl-chart-social-group",
       title: "Chart Social Group",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon: "chart",
+      thumbnailType: "preview",
       data: {
         type: "chart-social-group",
         width: 360,
@@ -373,7 +387,8 @@ export const elementos_scada = {
     {
       id: "tpl-chart-realtime",
       title: "Chart Realtime",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon: "chart",
+      thumbnailType: "preview",
       data: {
         type: "chart-realtime",
         width: 340,
@@ -389,7 +404,8 @@ export const elementos_scada = {
     {
       id: "tpl-chart-page-stats",
       title: "Chart Page Stats",
-      thumbnailUrl: gaugeDefaultIcon,
+          icon: "chart",
+      thumbnailType: "preview",
       data: {
         type: "chart-page-stats",
         width: 360,
@@ -449,7 +465,8 @@ export const elementos_scada = {
     {
       id: "tpl-chart-basic",
       title: "Chart Basic",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon: "chart",
+      thumbnailType: "preview",
       data: {
         type: "chart-basic",
         width: 320,
@@ -474,7 +491,8 @@ export const elementos_scada = {
     {
       id: "tpl-energy-bar-chart",
       title: "Energy Bar Chart",
-      thumbnailUrl: gaugeDefaultIcon,
+         icon: "chart",
+      thumbnailType: "preview",
       data: {
         type: "energy-bar-chart",
         width: 100,
@@ -489,7 +507,8 @@ export const elementos_scada = {
     {
       id: "tpl-temperature-line-chart",
       title: "Temperature Line Chart",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon: "chart",
+      thumbnailType: "preview",
       data: {
         type: "temperature-line-chart",
         width: 400,
@@ -504,7 +523,8 @@ export const elementos_scada = {
     {
       id: "tpl-luxuries-stacked-bar",
       title: "Luxuries Stacked Bar (full)",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon: "chart",
+      thumbnailType: "preview",
       data: {
         type: "luxuries-stacked-bar",
         width: 600,
@@ -517,7 +537,8 @@ export const elementos_scada = {
     {
       id: "tpl-mini-chart",
       title: "Mini Trend",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon: "table",
+      thumbnailType: "preview",
       data: {
         type: "mini-chart",
         width: 220,
@@ -532,7 +553,8 @@ export const elementos_scada = {
    {
       id: "tpl-mini-table",
       title: "Mini Table",
-      thumbnailUrl: gaugeDefaultIcon,
+           icon: "table",
+      thumbnailType: "preview",
       data: {
         type: "mini-table",
         width: 220,

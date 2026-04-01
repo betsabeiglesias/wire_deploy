@@ -66,7 +66,7 @@ export const useOrganizarScada = () => {
     setViewsError("");
 
     try {
-      const response = await api.get("/api/scada-manager/my-layouts/");
+      const response = await api.get("/api/scada/my-layouts/");
       const data = response.data;
       const normalized = Array.isArray(data)
         ? data.map((item) => ({
@@ -100,7 +100,7 @@ export const useOrganizarScada = () => {
   const loadViewDetail = useCallback(
     async (viewId) => {
 
-      const response = await api.get(`/api/scada-manager/layout/${viewId}/`);
+      const response = await api.get(`/api/scada/layout/${viewId}/`);
       const data = response.data;
       const elementsRaw = Array.isArray(data) ? data : data?.elements || [];
       return {
@@ -211,7 +211,7 @@ export const useOrganizarScada = () => {
         return;
       }
 
-      const response = await api.delete(`/api/scada-manager/layout/${layoutIdToDelete}/`);
+      const response = await api.delete(`/api/scada/layout/${layoutIdToDelete}/`);
       if (response.status === 204 || response.status === 200) {
         const updatedViews = viewsRef.current.filter((v) => v.id !== viewId);
         setViews(updatedViews);
@@ -357,8 +357,8 @@ export const useOrganizarScada = () => {
     async ({ filename, viewsData, isUpdating }) => {
       const payload = { name: filename, views_data: viewsData };
       const apiUrl = isUpdating
-        ? `/api/scada-manager/layout/${currentLayoutId}/`
-        : `/api/scada-manager/save-layout/`;
+        ? `/api/scada/layout/${currentLayoutId}/`
+        : `/api/scada/save-layout/`;
       try {
         const response = await api({
           url: apiUrl,

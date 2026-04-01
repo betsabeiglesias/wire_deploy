@@ -1,40 +1,35 @@
-# core/urls.py
+
+import os
 from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 
-
-
-from rest_framework_simplejwt.views import (
-    TokenRefreshView,
-)
-
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    # ─── AUTH (Infraestructura con Cookies) ───────────────────
-    # Sustituimos TokenObtainPairView por tu nueva LoginView
-    path('api/auth/', include ('core.auth_manager.urls')),
-    path("api/realtime/", include("realtime.urls")),
-
-    # ─── APPS DE DOMINIO ────────────────────────────────────
-    path('api/scada-manager/', include('scada_manager.urls')),
-    path('api/map/', include('map_manager.urls')),
-
-    # Path para la configuración de los PLC
-    path("api/config/", include("industrial_config_manager.urls")),
-    path('api/management/', include('management.urls')),
-
-    path('api/powerbi-manager/', include('powerbi_manager.urls')),
-
-    # Path para favoritos
-    path("api/favorites/", include("core.favorites.urls")),
-
-    path("api/edge/", include("edge_config.urls")),
-    # path("api/historian/", include("historian.urls")),
-
+    path('api/auth/', include('core.auth_manager.urls')),
+    path('api/favorites/', include('core.favorites.urls')),
 ]
+
+# 🔥 CARGA DINÁMICA REAL (sin lógica rara)
+MODULES_DIR = os.path.join(settings.BASE_DIR, 'modules')
+
+if os.path.exists(MODULES_DIR):
+    for module_name in os.listdir(MODULES_DIR):
+        module_path = os.path.join(MODULES_DIR, module_name)
+
+        if os.path.isdir(module_path) and os.path.exists(os.path.join(module_path, 'urls.py')):
+
+            # para no confundir api/edge (de industrial_config_manager) y api/scada/edge (de edge manager) renombramos el api/age a api/config
+            if module_name == "industrial_config_manager":     
+                prefix = "config"
+            else:
+                prefix = ""   # el resto se comporta como antes
+
+            urlpatterns.append(
+                path('api/', include(f'modules.{module_name}.urls'))
+            )
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

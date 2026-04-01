@@ -236,7 +236,7 @@ def normalize_modbus(eq: dict) -> dict:
 
 
 def normalize_equipment(eq: dict) -> dict:
-    driver = eq.get("driver")
+    driver = eq.get("driver", "").lower().replace("-", "")
 
     if driver == "snap7":
         return normalize_snap7(eq)

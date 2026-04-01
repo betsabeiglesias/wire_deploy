@@ -1,10 +1,178 @@
 // src/modules/organizarScada/components/sidebar/SidebarPropiedades.jsx
-// Panel de propiedades con tabs horizontales ligeros.
-// Tab "Dispositivo" usa ProjectVariables de la API (tablas del proyecto).
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useState, useRef } from "react";
 import { TagSelector } from "./TagSelector";
+import WidgetPreview from "@/modules/organizarScada/components/widgets/WidgetPreview";
+import { widgetStyleSchema } from "../widgets/WidgetStyleSchema";
 
 const tabs = ["General", "Dispositivo", "Estilo"];
+
+// ─── átomos de UI ─────────────────────────────────────────────────────────────
+
+const FieldLabel = ({ children }) => (
+  <p className="text-[10px] font-medium tracking-[0.06em] uppercase text-slate-400 mb-1.5">
+    {children}
+  </p>
+);
+
+const FieldInput = ({ className = "", ...props }) => (
+  <input
+    className={`w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2
+      text-[12px] text-slate-800 outline-none appearance-none placeholder:text-slate-300
+      focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:bg-white transition
+      ${className}`}
+    {...props}
+  />
+);
+
+const FieldSelect = ({ className = "", children, ...props }) => (
+  <select
+    className={`w-full bg-slate-50 border border-slate-200 rounded-md px-3 py-2
+      text-[12px] text-slate-800 outline-none appearance-none
+      focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:bg-white transition
+      ${className}`}
+    {...props}
+  >
+    {children}
+  </select>
+);
+
+const SectionCard = ({ title, children }) => (
+  <div className="border border-slate-200 rounded-[10px] overflow-hidden">
+    <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200">
+      <p className="text-[10px] font-semibold tracking-[0.06em] uppercase text-slate-500">
+        {title}
+      </p>
+    </div>
+    <div className="p-4 bg-white flex flex-col gap-3">
+      {children}
+    </div>
+  </div>
+);
+
+const Toggle = ({ checked, onChange }) => (
+  <button
+    type="button"
+    onClick={() => onChange(!checked)}
+    className={`w-[34px] h-[18px] rounded-full relative transition-colors flex-shrink-0 border-none outline-none
+      ${checked ? "bg-blue-500" : "bg-slate-200"}`}
+  >
+    <span className={`absolute top-[3px] w-3 h-3 bg-white rounded-full shadow-sm transition-transform
+      ${checked ? "translate-x-[19px]" : "translate-x-[3px]"}`}
+    />
+  </button>
+);
+
+const SegmentedControl = ({ options, value, onChange }) => (
+  <div className="flex gap-1.5">
+    {options.map(opt => (
+      <button
+        key={opt.value}
+        type="button"
+        onClick={() => onChange(opt.value)}
+        className={`px-4 py-1.5 rounded-md text-[11px] font-medium border transition
+          ${value === opt.value
+            ? "bg-blue-50 border-blue-200 text-blue-600"
+            : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:border-slate-300"
+          }`}
+      >
+        {opt.label}
+      </button>
+    ))}
+  </div>
+);
+
+const ColorField = ({ label, value, onChange }) => (
+  <div className="flex flex-col gap-1.5">
+    {label && <FieldLabel>{label}</FieldLabel>}
+    <label
+      className="w-full h-8 rounded-md border border-slate-200 cursor-pointer
+        overflow-hidden hover:border-blue-300 transition relative block"
+      style={{ background: value || "#3b82f6" }}
+    >
+      <input
+        type="color"
+        className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+        value={value || "#3b82f6"}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </label>
+    <input
+      className="w-full bg-slate-50 border border-slate-200 rounded-md px-2.5 py-1.5
+        text-[11px] text-slate-700 font-mono outline-none
+        focus:border-blue-400 focus:ring-2 focus:ring-blue-100 focus:bg-white transition"
+      value={value || ""}
+      maxLength={7}
+      onChange={(e) => {
+        if (/^#[0-9a-fA-F]{0,6}$/.test(e.target.value)) onChange(e.target.value);
+      }}
+    />
+  </div>
+);
+
+const LinkedVarBadge = ({ variable }) => (
+  <div className="flex items-center justify-between bg-slate-50 border border-slate-200
+    rounded-md px-3 py-2.5">
+    <div>
+      <p className="text-[12px] font-medium text-slate-700">{variable.name}</p>
+      <p className="text-[10px] text-slate-400 mt-0.5">
+        {variable.equipment} · {variable.datatype}
+      </p>
+    </div>
+    <span className="text-[10px] font-mono text-blue-600 bg-blue-50
+      border border-blue-100 rounded px-2 py-0.5">
+      {variable.unit}
+    </span>
+  </div>
+);
+
+// ─── ScaledPreview: escala el widget para que llene el contenedor ─────────────
+// WidgetPreview renderiza a su tamaño natural. Lo envolvemos en un contenedor
+// con overflow:hidden y aplicamos transform:scale calculado dinámicamente.
+const ScaledPreview = ({ data, unit }) => {
+  const outerRef = useRef(null);
+  const innerRef = useRef(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const outer = outerRef.current;
+    const inner = innerRef.current;
+    if (!outer || !inner) return;
+
+    const calc = () => {
+      const ow = outer.clientWidth  || 1;
+      const oh = outer.clientHeight || 1;
+      const iw = inner.scrollWidth  || 1;
+      const ih = inner.scrollHeight || 1;
+      // padding interior: dejamos un margen del 10%
+      const sx = (ow * 0.90) / iw;
+      const sy = (oh * 0.90) / ih;
+      setScale(Math.min(sx, sy, 3)); // cap en 3× para no distorsionar
+    };
+
+    calc();
+    const ro = new ResizeObserver(calc);
+    ro.observe(outer);
+    ro.observe(inner);
+    return () => ro.disconnect();
+  }, [data, unit]);
+
+  return (
+    <div
+      ref={outerRef}
+      className="w-full h-full flex items-center justify-center overflow-hidden"
+    >
+      <div
+        ref={innerRef}
+        style={{ transform: `scale(${scale})`, transformOrigin: "center center" }}
+      >
+        <WidgetPreview data={data} unit={unit} />
+      </div>
+    </div>
+  );
+};
+
+// ─── componente principal ─────────────────────────────────────────────────────
 
 const SidebarPropiedades = ({
   isOpen = true,
@@ -15,17 +183,30 @@ const SidebarPropiedades = ({
   onExportNameChange,
   layoutId = null,
 }) => {
-  console.log("🎯 SidebarPropiedades selectedElement:", selectedElement?.id, selectedElement?.data?.type);
-
   const [activeTab, setActiveTab] = useState("General");
   const [varSearch, setVarSearch] = useState("");
+
+  // ── draft completo del elemento (lógica original) ─────────────────────────
+  const [draftElement,    setDraftElement]    = useState(selectedElement);
+  const [originalElement, setOriginalElement] = useState(selectedElement);
+
+  useEffect(() => {
+    setDraftElement(selectedElement);
+    setOriginalElement(JSON.parse(JSON.stringify(selectedElement)));
+  }, [selectedElement?.id]);
+
+  const isDirty = React.useMemo(() => {
+    return JSON.stringify(draftElement) !== JSON.stringify(originalElement);
+  }, [draftElement, originalElement]);
+
   const currentLabel =
-    selectedElement?.label ??
-    selectedElement?.data?.label ??
-    selectedElement?.data?.settings?.attributeLabel;
-  const currentType     = selectedElement?.data?.type || selectedElement?.type;
-  const currentSettings = selectedElement?.data?.settings || {};
-  const selectedName    = selectedElement?.data?.name || selectedElement?.name || currentLabel;
+    draftElement?.label ??
+    draftElement?.data?.label ??
+    draftElement?.data?.settings?.attributeLabel;
+
+  const currentType     = draftElement?.data?.type || draftElement?.type;
+  const currentSettings = draftElement?.data?.settings || {};
+  const selectedName    = draftElement?.data?.name || draftElement?.name || currentLabel;
 
   const isTempGauge        = currentType === "temp-gauge";
   const isScadaGauge       = currentType === "hmi-scada-gauge" || currentType === "hmiScadaGauge";
@@ -36,31 +217,49 @@ const SidebarPropiedades = ({
   const isNavigationButton = currentType === "nav-button" || currentType === "btn-primary" || currentType === "btn-outline";
 
   const currentTargetView =
-    selectedElement?.targetViewId ??
-    selectedElement?.data?.targetViewId ??
-    selectedElement?.data?.settings?.targetViewId ??
+    draftElement?.targetViewId ??
+    draftElement?.data?.targetViewId ??
+    draftElement?.data?.settings?.targetViewId ??
     "";
 
-  const updateSettings = (patch) =>{
-    console.log("💾 updateSettings patch:", patch);
-    console.log("💾 selectedElement?.id:", selectedElement?.id);
-    onChange?.({ data: { ...(selectedElement?.data || {}), settings: { ...(currentSettings || {}), ...patch } } });
+  // ── helpers de mutación originales (sin tocar) ────────────────────────────
+  const updateDraft = (patch) => {
+    setDraftElement(prev => ({
+      ...prev,
+      ...patch,
+      data: {
+        ...(prev?.data || {}),
+        ...(patch?.data || {}),
+      },
+    }));
   };
+
+  const updateSettings = (patch) => {
+    setDraftElement(prev => ({
+      ...prev,
+      data: {
+        ...(prev?.data || {}),
+        settings: {
+          ...(prev?.data?.settings || {}),
+          ...patch,
+        },
+      },
+    }));
+  };
+
   const updateGeometry = (patch) =>
-    onChange?.({ ...patch, data: { ...(selectedElement?.data || {}), width: patch?.width !== undefined ? patch.width : selectedElement?.data?.width, height: patch?.height !== undefined ? patch.height : selectedElement?.data?.height, settings: { ...(selectedElement?.data?.settings || {}) } } });
+    setDraftElement(prev => ({
+      ...prev,
+      ...patch,
+      data: {
+        ...(prev?.data || {}),
+        width:  patch?.width  ?? prev?.data?.width,
+        height: patch?.height ?? prev?.data?.height,
+        settings: { ...(prev?.data?.settings || {}) },
+      },
+    }));
 
-  const rgbaToHex = (value, fallback) => {
-    if (!value) return fallback;
-    const t = String(value).trim();
-    if (t.startsWith("#")) { if (t.length === 7) return t; if (t.length === 4) return "#" + t[1]+t[1]+t[2]+t[2]+t[3]+t[3]; return fallback; }
-    const m = t.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
-    if (!m) return fallback;
-    const [r,g,b] = [Number(m[1]),Number(m[2]),Number(m[3])];
-    if ([r,g,b].some(Number.isNaN)) return fallback;
-    return `#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`;
-  };
-
-  // ── ProjectVariables desde API ──────────────────────────────────────────────
+  // ── variables API original (sin tocar) ────────────────────────────────────
   const [projectTables,   setProjectTables]   = useState([]);
   const [loadingTables,   setLoadingTables]   = useState(false);
   const [selectedTableId, setSelectedTableId] = useState("");
@@ -68,93 +267,56 @@ const SidebarPropiedades = ({
   useEffect(() => {
     if (!layoutId) { setProjectTables([]); return; }
     setLoadingTables(true);
-    fetch(`/api/scada-manager/layouts/${layoutId}/tables/`, { credentials: "include" })
+    fetch(`/api/scada/layouts/${layoutId}/tables/`, { credentials: "include" })
       .then(r => r.ok ? r.json() : [])
-      .then(data => {
-          console.log("📦 tables sample:", JSON.stringify(data[0], null, 2));
-          setProjectTables(Array.isArray(data) ? data : []);
-        })
+      .then(data => setProjectTables(Array.isArray(data) ? data : []))
       .catch(() => setProjectTables([]))
       .finally(() => setLoadingTables(false));
   }, [layoutId]);
 
   useEffect(() => {
     setSelectedTableId(currentSettings.deviceTable || "");
-  }, [selectedElement?.id]);
+  }, [draftElement?.id]);
 
   const selectedTableObj = projectTables.find(t => String(t.id) === String(selectedTableId));
   const tableVariables   = selectedTableObj?.variables || [];
 
   if (!isOpen) return null;
 
-  // ── GENERAL ─────────────────────────────────────────────────────────────────
+  // ─── TAB: General ─────────────────────────────────────────────────────────
   const renderGeneral = () => (
-    <div className="space-y-3">
-      <div>
-        <label className="block text-[11px] text-slate-600">Nombre</label>
-        <input className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
-          value={selectedName || ""}
-          onChange={(e) => onChange?.({ data: { ...(selectedElement?.data || {}), name: e.target.value, label: e.target.value, settings: { ...(selectedElement?.data?.settings || {}), label: e.target.value, attributeLabel: e.target.value } } })} />
-      </div>
-      {isImageWidget && (
-        <div className="rounded border border-slate-200 bg-slate-50 p-3 space-y-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">Posición y tamaño</p>
-          <div className="grid grid-cols-2 gap-2">
-            {[["X","x",null],["Y","y",null],["Width","width",20],["Height","height",20]].map(([lbl,key,min]) => (
-              <div key={key}>
-                <label className="block text-[10px] text-slate-500">{lbl}</label>
-                <input type="number" {...(min !== null ? {min} : {})} className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]"
-                  value={Number(key==="x"||key==="y" ? selectedElement?.[key]??0 : selectedElement?.data?.[key]??(key==="width"?220:180))}
-                  onChange={(e) => { const v = min!==null ? Math.max(min,Number(e.target.value)||min) : Number(e.target.value)||0; updateGeometry({[key]:v}); }} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {isNavigationButton && (
+    <div className="flex flex-col gap-3">
+      <SectionCard title="Identificación">
         <div>
-          <label className="block text-[11px] text-slate-600">Vista destino</label>
-          <select className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
-            value={currentTargetView}
-            onChange={(e) => { const v=e.target.value; onChange?.({targetViewId:v,data:{...(selectedElement?.data||{}),targetViewId:v,settings:{...(selectedElement?.data?.settings||{}),targetViewId:v}}}); }}>
-            <option value="">Selecciona una vista</option>
-            {views.map(v => <option key={v.id} value={v.id}>{v.name||v.id}</option>)}
-          </select>
-          <p className="mt-1 text-[10px] text-slate-500">En producción este botón navegará a la vista seleccionada.</p>
+          <FieldLabel>Nombre</FieldLabel>
+          <FieldInput
+            value={selectedName || ""}
+            placeholder="Nombre del widget"
+            onChange={(e) =>
+              updateDraft({
+                data: {
+                  ...(draftElement?.data || {}),
+                  name:  e.target.value,
+                  label: e.target.value,
+                  settings: {
+                    ...(draftElement?.data?.settings || {}),
+                    label:          e.target.value,
+                    attributeLabel: e.target.value,
+                  },
+                },
+              })
+            }
+          />
         </div>
-      )}
-      {!isImageWidget && (
-        <>
-          <div className="grid grid-cols-2 gap-3">
-            {[["Min","min"],["Max","max"]].map(([lbl,key]) => (
-              <div key={key}>
-                <label className="block text-[11px] text-slate-600">{lbl}</label>
-                <input type="number" className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
-                  value={typeof currentSettings[key]==="number" ? currentSettings[key] : ""}
-                  onChange={(e) => updateSettings({[key]: e.target.value===""?undefined:Number(e.target.value)})} />
-              </div>
-            ))}
-          </div>
-          <div className="flex flex-col gap-1">
-            {[["Ver nombre","showLabel"],["Mostrar valor del SVG","showValue"]].map(([lbl,key]) => (
-              <label key={key} className="inline-flex items-center gap-2 text-[12px] text-slate-700">
-                <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400"
-                  checked={currentSettings[key]!==false} onChange={(e) => updateSettings({[key]:e.target.checked})} />
-                {lbl}
-              </label>
-            ))}
-          </div>
-        </>
-      )}
+      </SectionCard>
     </div>
   );
 
-  // ── DISPOSITIVO ──────────────────────────────────────────────────────────────
+  // ─── TAB: Dispositivo (lógica original) ───────────────────────────────────
   const renderDispositivo = () => {
     const linkedVarId = currentSettings.variableId || "";
     const linkedVar   = tableVariables.find(v => v.variable_id === linkedVarId);
 
-    // Filtrar variables según búsqueda
     const filteredVariables = tableVariables.filter(v => {
       if (!varSearch.trim()) return true;
       const q = varSearch.toLowerCase();
@@ -166,138 +328,223 @@ const SidebarPropiedades = ({
     });
 
     return (
-      <div className="space-y-4">
+      <div className="flex flex-col gap-3">
+        <SectionCard title="Origen de datos">
 
-        {/* Buscador libre */}
-        <div>
-          <label className="block text-[11px] text-slate-600 mb-1">Buscar variable</label>
-          <input
-            className="w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
-            placeholder="Escribe para filtrar..."
-            value={varSearch}
-            onChange={(e) => setVarSearch(e.target.value)}
-          />
-        </div>
+          <div className="relative">
+            <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-30 pointer-events-none"
+              width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <circle cx="6.5" cy="6.5" r="4.5" stroke="#475569" strokeWidth="1.5"/>
+              <line x1="10" y1="10" x2="14" y2="14" stroke="#475569" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+            <FieldInput
+              className="pl-8"
+              placeholder="Buscar variable..."
+              value={varSearch}
+              onChange={(e) => setVarSearch(e.target.value)}
+            />
+          </div>
 
-        {/* Selector de tabla */}
-        <div>
-          <label className="block text-[11px] text-slate-600 mb-1">Tabla</label>
-          {!layoutId ? (
-            <p className="text-[11px] text-amber-600">⚠ Guarda el proyecto primero.</p>
-          ) : loadingTables ? (
-            <p className="text-[11px] text-slate-400">Cargando tablas…</p>
-          ) : projectTables.length === 0 ? (
-            <p className="text-[11px] text-amber-600">⚠ Sin tablas. Ve a "Dispositivos" para crearlas.</p>
-          ) : (
-            <select
-              className="w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
+          <div>
+            <FieldLabel>Tabla</FieldLabel>
+            <FieldSelect
               value={selectedTableId}
               onChange={(e) => {
                 setSelectedTableId(e.target.value);
-                setVarSearch("");
                 updateSettings({ deviceTable: e.target.value, variableId: "" });
-              }}>
-              <option value="">— selecciona tabla —</option>
-              {projectTables.map(t => <option key={t.id} value={String(t.id)}>{t.name}</option>)}
-            </select>
-          )}
-        </div>
+              }}
+            >
+              <option value="">Selecciona tabla</option>
+              {projectTables.map(t => (
+                <option key={t.id} value={String(t.id)}>{t.name}</option>
+              ))}
+            </FieldSelect>
+          </div>
 
-        {/* Selector de variable filtrado */}
-        {selectedTableId && (
-          <div>
-            <label className="block text-[11px] text-slate-600 mb-1">Variable</label>
-            {filteredVariables.length === 0 ? (
-              <p className="text-[11px] text-slate-400">
-                {varSearch ? "Sin coincidencias." : "Sin variables en esta tabla."}
-              </p>
-            ) : (
-              <select
-                className="w-full rounded border border-slate-300 px-2 py-1 text-[12px] focus:border-sky-400 focus:outline-none"
+          {selectedTableId && (
+            <div>
+              <FieldLabel>Variable</FieldLabel>
+              <FieldSelect
                 value={linkedVarId}
                 onChange={(e) => {
                   const varId = e.target.value;
                   const meta  = tableVariables.find(v => v.variable_id === varId);
                   updateSettings({
-                    variableId:   varId,
-                    variable:     meta?.variable  || meta?.name || "",
-                    equipment:    meta?.equipment || "",
-                    unit:         meta?.unit      || "",
-                    datatype:     meta?.datatype  || "",
-                    deviceTable:  selectedTableId,
+                    variableId:  varId,
+                    variable:    meta?.variable || meta?.name || "",
+                    equipment:   meta?.equipment || "",
+                    unit:        meta?.unit || "",
+                    datatype:    meta?.datatype || "",
+                    deviceTable: selectedTableId,
                   });
-                }}>
-                <option value="">— selecciona variable —</option>
+                }}
+              >
+                <option value="">Selecciona variable</option>
                 {filteredVariables.map(v => (
-                  <option key={v.variable_id} value={v.variable_id}>
-                    {v.name}{v.source === "connection" ? ` · ${v.equipment}` : " (local)"}
-                  </option>
+                  <option key={v.variable_id} value={v.variable_id}>{v.name}</option>
                 ))}
-              </select>
-            )}
-          </div>
-        )}
+              </FieldSelect>
+            </div>
+          )}
+        </SectionCard>
 
-        {/* Info del binding actual */}
         {linkedVar && (
-          <div className="rounded border border-slate-100 bg-slate-50 px-3 py-2 space-y-1">
-            <p className="text-[10px] uppercase tracking-wide text-slate-400">Vinculado</p>
-            <p className="text-[11px] font-semibold text-slate-800">{linkedVar.name}</p>
-            {linkedVar.source === "connection" ? (
-              <p className="text-[10px] text-slate-600">{linkedVar.equipment} › {linkedVar.variable}</p>
-            ) : (
-              <p className="text-[10px] text-slate-600">
-                Local · {linkedVar.datatype}
-                {linkedVar.initial_value != null ? ` = ${linkedVar.initial_value}` : ""}
-              </p>
-            )}
-            {linkedVar.unit && <p className="text-[10px] text-slate-400">Unidad: {linkedVar.unit}</p>}
-          </div>
+          <SectionCard title="Variable enlazada">
+            <LinkedVarBadge variable={linkedVar} />
+          </SectionCard>
         )}
       </div>
     );
   };
 
-  // ── ESTILO ───────────────────────────────────────────────────────────────────
-  const renderEstilo = () => (
-    <div className="space-y-3">
-      {!isTempGauge&&!isScadaGauge&&!isProgressBar&&!isTankLevel&&!isImageWidget&&!isEnergyBar&&(
-        <div className="text-[12px] text-slate-500">Este widget no tiene controles de estilo personalizados.</div>
-      )}
-      {isImageWidget&&(<div className="rounded border border-slate-200 bg-white p-3 space-y-3"><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Image Widget</p><div><label className="block text-[11px] text-slate-600">Opacidad ({Number(currentSettings.opacity??100)}%)</label><input type="range" min={0} max={100} step={1} className="mt-2 w-full" value={Number(currentSettings.opacity??100)} onChange={(e)=>updateSettings({opacity:Number(e.target.value)||0})}/></div><label className="inline-flex items-center gap-2 text-[12px] text-slate-700"><input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400" checked={currentSettings.lockAspectRatio!==false} onChange={(e)=>updateSettings({lockAspectRatio:e.target.checked})}/>Mantener relación de aspecto</label></div>)}
-      {isScadaGauge&&(<div className="rounded border border-slate-200 bg-white p-3 space-y-3"><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">HMI Scada Gauge</p><div className="grid grid-cols-2 gap-3">{[["Color principal","themeColor","#94a3b8"],["Color valor","valueColor","#ffffff"],["Color unidad","unitColor","#64748b"]].map(([lbl,key,def])=>(<div key={key}><label className="block text-[11px] text-slate-600 mb-1">{lbl}</label><input type="color" className="h-10 w-full rounded border border-slate-300 bg-white" value={currentSettings[key]||def} onChange={(e)=>updateSettings({[key]:e.target.value})}/></div>))}</div><div className="grid grid-cols-2 gap-2">{[["Valor X","valueOffsetX"],["Valor Y","valueOffsetY"],["Unidad X","unitOffsetX"],["Unidad Y","unitOffsetY"]].map(([lbl,key])=>(<div key={key}><label className="block text-[10px] text-slate-500">{lbl}</label><input type="number" className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]" value={currentSettings[key]??0} onChange={(e)=>updateSettings({[key]:Number(e.target.value)||0})}/></div>))}</div></div>)}
-      {isTempGauge&&(<div className="rounded border border-slate-200 bg-white p-3 space-y-3"><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">TempGauge</p><div className="grid grid-cols-2 gap-2">{[["Label X","labelOffsetX"],["Label Y","labelOffsetY"],["Valor X","valueOffsetX"],["Valor Y","valueOffsetY"]].map(([lbl,key])=>(<div key={key}><label className="block text-[10px] text-slate-500">{lbl}</label><input type="number" className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]" value={currentSettings[key]??0} onChange={(e)=>updateSettings({[key]:Number(e.target.value)||0})}/></div>))}</div><label className="inline-flex items-center gap-2 text-[12px] text-slate-700"><input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400" checked={currentSettings.showMinMax!==false} onChange={(e)=>updateSettings({showMinMax:e.target.checked})}/>Mostrar min/max</label><div className="grid grid-cols-2 gap-2">{[["Min/Max size","minMaxFontSize","number",11],["Min/Max color","minMaxColor","color","#94a3b8"],["Label color","labelColor","color","#f87171"],["Value color","valueColor","color","#f87171"],["Needle color","needleColor","color","#ffffff"],["Tick color","tickColor","color","#fb923c"]].map(([lbl,key,type,def])=>(<div key={key}><label className="block text-[10px] text-slate-500">{lbl}</label><input type={type} className={`mt-1 w-full rounded border border-slate-300 ${type==="color"?"h-9":"px-2 py-1 text-[11px]"}`} value={type==="color"?rgbaToHex(currentSettings[key],def):(currentSettings[key]??def)} onChange={(e)=>updateSettings({[key]:type==="number"?Number(e.target.value)||def:e.target.value})}/></div>))}</div></div>)}
-      {isProgressBar&&(<div className="rounded border border-slate-200 bg-white p-3 space-y-3"><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">HMI Progress Bar</p><div className="grid grid-cols-2 gap-3">{[["Color pista","trackFill","#1e2a3e"],["Borde pista","trackStroke","#2c6993"],["Gradiente inicio","gradientFrom","#3498db"],["Gradiente fin","gradientTo","#2980b9"],["Hatch stroke","hatchStroke","#2c6993"],["Color valor","percentColor","#ffffff"]].map(([lbl,key,def])=>(<div key={key}><label className="block text-[11px] text-slate-600 mb-1">{lbl}</label><input type="color" className="h-10 w-full rounded border border-slate-300 bg-white" value={currentSettings[key]||def} onChange={(e)=>updateSettings({[key]:e.target.value})}/></div>))}</div><div className="grid grid-cols-2 gap-2">{[["Valor X","valueOffsetX"],["Valor Y","valueOffsetY"],["Label X","labelOffsetX"],["Label Y","labelOffsetY"]].map(([lbl,key])=>(<div key={key}><label className="block text-[10px] text-slate-500">{lbl}</label><input type="number" className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]" value={currentSettings[key]??0} onChange={(e)=>updateSettings({[key]:Number(e.target.value)||0})}/></div>))}</div><div className="flex flex-col gap-1">{[["Mostrar label","showLabel"],["Mostrar valor","showValue"]].map(([lbl,key])=>(<label key={key} className="inline-flex items-center gap-2 text-[12px] text-slate-700"><input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400" checked={key==="showLabel"?currentSettings[key]===true:currentSettings[key]!==false} onChange={(e)=>updateSettings({[key]:e.target.checked})}/>{lbl}</label>))}</div></div>)}
-      {isEnergyBar&&(<div className="rounded border border-slate-200 bg-white p-3 space-y-3"><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Energy Bar Chart</p><div className="grid grid-cols-2 gap-3">{[["Fondo","bgColor","#1e272e"],["Grid","gridColor","#2f3640"],["Eje","axisColor","#57606f"],["Título","titleColor","#ecf0f1"],["Valor","valueColor","#00d2d3"],["Labels eje","labelColor","#95a5a6"],["Barra from","barGradientFrom","#00d2d3"],["Barra to","barGradientTo","#0984e3"],["Barra alerta","alertBarColor","#ff7675"],["Color límite","limitColor","#d63031"]].map(([lbl,key,def])=>(<div key={key}><label className="block text-[11px] text-slate-600 mb-1">{lbl}</label><input type="color" className="h-10 w-full rounded border border-slate-300 bg-white" value={currentSettings[key]||def} onChange={(e)=>updateSettings({[key]:e.target.value})}/></div>))}</div><div className="flex flex-wrap gap-3">{[["Mostrar título","showTitle"],["Mostrar valor","showValue"],["Mostrar grid","showGrid"],["Mostrar límite","showLimit"]].map(([lbl,key])=>(<label key={key} className="inline-flex items-center gap-2 text-[12px] text-slate-700"><input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400" checked={currentSettings[key]!==false} onChange={(e)=>updateSettings({[key]:e.target.checked})}/>{lbl}</label>))}</div></div>)}
-      {isTankLevel&&(<div className="rounded border border-slate-200 bg-white p-3 space-y-3"><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">HMI Tank Level</p><div className="grid grid-cols-2 gap-3">{[["Tank dark","tankDark","#1a1f35"],["Tank top","tankTop","#252b45"],["Fluid base","fluidBase","#8e44ad"],["Gradient from","gradientFrom","#9b59b6"],["Gradient to","gradientTo","#8e44ad"],["Top from","topFrom","#d49cf2"],["Top to","topTo","#9b59b6"],["Color valor","percentColor","#ffffff"],["Color label","labelColor","#e2e8f0"]].map(([lbl,key,def])=>(<div key={key}><label className="block text-[11px] text-slate-600 mb-1">{lbl}</label><input type="color" className="h-10 w-full rounded border border-slate-300 bg-white" value={currentSettings[key]||def} onChange={(e)=>updateSettings({[key]:e.target.value})}/></div>))}<div className="col-span-2"><label className="block text-[11px] text-slate-600 mb-1">Label</label><input type="text" className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px]" value={currentSettings.label||""} onChange={(e)=>updateSettings({label:e.target.value})}/></div><div className="col-span-2"><label className="block text-[11px] text-slate-600 mb-1">Fuente</label><input type="text" className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[12px]" value={currentSettings.fontFamily||"Arial, sans-serif"} onChange={(e)=>updateSettings({fontFamily:e.target.value})}/></div></div><div className="grid grid-cols-2 gap-2">{[["Valor X","valueOffsetX"],["Valor Y","valueOffsetY"]].map(([lbl,key])=>(<div key={key}><label className="block text-[10px] text-slate-500">{lbl}</label><input type="number" className="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-[11px]" value={currentSettings[key]??0} onChange={(e)=>updateSettings({[key]:Number(e.target.value)||0})}/></div>))}</div><label className="inline-flex items-center gap-2 text-[12px] text-slate-700"><input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-sky-500 focus:ring-sky-400" checked={currentSettings.showValue!==false} onChange={(e)=>updateSettings({showValue:e.target.checked})}/>Mostrar valor</label></div>)}
+  // ─── TAB: Estilo (widgetStyleSchema original) ──────────────────────────────
+  const renderEstilo = () => {
+    const schema  = widgetStyleSchema[currentType] || widgetStyleSchema.default;
+    const palette = currentSettings.style?.palette || {};
+    const mode    = currentSettings.style?.mode || "solid";
+
+    return (
+      <div className="flex flex-col gap-3">
+
+        <SectionCard title="Modo de color">
+          <SegmentedControl
+            options={[
+              { value: "solid", label: "Sólido" },
+              { value: "zones", label: "Zonas"  },
+            ]}
+            value={mode}
+            onChange={(val) =>
+              updateSettings({
+                style: { ...(currentSettings.style || {}), mode: val },
+              })
+            }
+          />
+        </SectionCard>
+
+        {schema.map((group) => (
+          <SectionCard key={group.group} title={group.group}>
+            <div className="grid grid-cols-2 gap-3">
+              {group.fields.map((field) => (
+                <ColorField
+                  key={field.key}
+                  label={field.label}
+                  value={palette[field.key] || "#3b82f6"}
+                  onChange={(val) =>
+                    updateSettings({
+                      style: {
+                        ...(currentSettings.style || {}),
+                        palette: { ...(palette || {}), [field.key]: val },
+                      },
+                    })
+                  }
+                />
+              ))}
+            </div>
+          </SectionCard>
+        ))}
+
+      </div>
+    );
+  };
+
+  // ─── SHELL ────────────────────────────────────────────────────────────────
+  const renderContent = () => (
+    <div className="flex flex-col bg-slate-100/80 backdrop-blur border border-slate-300/60 rounded-xl overflow-hidden shadow-sm">
+
+      {/* HEADER */}
+      <div className="flex items-center justify-between px-5 py-3.5 bg-slate-50 border-b border-slate-200">
+        <div className="min-w-0">
+          <p className="text-[13px] font-semibold text-slate-800 truncate leading-tight">
+            {selectedName || "Sin nombre"}
+          </p>
+          <p className="text-[11px] text-slate-400 leading-tight">{currentType}</p>
+        </div>
+        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+      </div>
+
+      {/* TABS */}
+      <nav className="flex px-5 bg-white border-b border-slate-200 gap-1">
+        {tabs.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{ borderBottom: activeTab === tab ? "2px solid #2563eb" : "2px solid transparent" }}
+            className={`py-2.5 px-3 text-[11px] font-medium border-none outline-none
+              cursor-pointer transition bg-transparent
+              ${activeTab === tab ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}
+          >
+            {tab}
+          </button>
+        ))}
+      </nav>
+
+      {/* CONTENT con scroll */}
+      <div className="p-4 overflow-y-auto max-h-[40vh] space-y-3">
+        {activeTab === "General"     && renderGeneral()}
+        {activeTab === "Dispositivo" && renderDispositivo()}
+        {activeTab === "Estilo"      && renderEstilo()}
+      </div>
+
+      {/* PREVIEW GRANDE — ScaledPreview escala el widget para llenar el área */}
+      <div className="border-t border-slate-100 bg-slate-100/70 px-5 py-4">
+        <p className="text-[9px] font-medium tracking-[0.08em] uppercase text-slate-400 mb-3">
+          Vista previa
+        </p>
+        {draftElement?.data ? (
+          <div className="w-full h-[180px] bg-slate-50 border-slate-300/60 rounded-xl overflow-hidden">
+            <ScaledPreview
+              data={draftElement.data}
+              unit={currentSettings?.unit}
+            />
+          </div>
+        ) : null}
+      </div>
+
+      {/* FOOTER */}
+      <div className="px-5 pb-5 pt-3 bg-white border-t border-slate-100 flex flex-col gap-2.5">
+        <p className={`text-[10px] font-mono text-center min-h-[14px] transition-colors
+          ${isDirty ? "text-amber-500" : "text-slate-300"}`}>
+          {isDirty ? "Cambios sin guardar" : "Sin cambios pendientes"}
+        </p>
+        <div className="grid grid-cols-[1fr_auto] gap-2">
+          <button
+            disabled={!isDirty}
+            onClick={() => {
+              onChange?.(draftElement);
+              setOriginalElement(JSON.parse(JSON.stringify(draftElement)));
+            }}
+            className={`py-2.5 rounded-lg text-[11px] font-semibold tracking-wide transition border
+              ${isDirty
+                ? "bg-blue-600 border-blue-700 text-white cursor-pointer hover:bg-blue-700"
+                : "bg-slate-100 border-slate-100 text-slate-300 cursor-not-allowed"
+              }`}
+          >
+            ▶ Aplicar cambios
+          </button>
+          <button
+            disabled={!isDirty}
+            onClick={() => setDraftElement(JSON.parse(JSON.stringify(originalElement)))}
+            className={`px-4 py-2.5 rounded-lg text-[11px] font-medium transition border whitespace-nowrap
+              ${isDirty
+                ? "bg-slate-100 border-slate-300/60 text-slate-500 cursor-pointer hover:border-slate-300 hover:text-slate-700"
+                : "bg-white border-slate-100 text-slate-300 cursor-not-allowed"
+              }`}
+          >
+            Descartar
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 
   const renderEmpty = () => (
-    <div className="flex flex-col gap-3 p-4 bg-white border border-slate-200 rounded-lg shadow-sm">
-      <p className="text-sm font-semibold text-slate-700">Propiedades</p>
-      <span className="text-[11px] text-slate-500">Selecciona un icono del canvas.</span>
-    </div>
-  );
-
-  const renderContent = () => (
-    <div className="p-4 bg-white border border-slate-200 rounded-lg shadow-sm space-y-4">
-      <nav className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 no-scrollbar">
-        {tabs.map((tab) => {
-          const active = activeTab === tab;
-          return (
-            <button key={tab} type="button" onClick={() => setActiveTab(tab)}
-              className={["min-w-[72px] px-4 py-2 text-[12px] font-medium transition-colors border border-transparent rounded-t-sm", active?"bg-slate-100 text-slate-900 border-slate-300 border-b-2 border-b-sky-500":"bg-white text-slate-600 hover:text-slate-900"].join(" ")}>
-              {tab}
-            </button>
-          );
-        })}
-      </nav>
-      <div className="bg-white border border-slate-200 border-t-0 rounded-sm p-4 min-h-[240px]">
-        {activeTab==="General"     && renderGeneral()}
-        {activeTab==="Dispositivo" && renderDispositivo()}
-        {activeTab==="Estilo"      && renderEstilo()}
-      </div>
+    <div className="flex flex-col items-center justify-center gap-2 p-8 text-center">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-slate-200">
+        <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M9 12h6M12 9v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+      </svg>
+      <p className="text-[12px] text-slate-400">Selecciona un elemento del canvas</p>
     </div>
   );
 

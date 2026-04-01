@@ -31,7 +31,7 @@ services:
     build:
       context: ./django-api
     container_name: ${COMPOSE_PROJECT_NAME}-redis-consumer 
-    command: python -m realtime.redis_stream_consumer
+    command: python -m modules.scada_manager.realtime.redis_stream_consumer
     env_file:
       - .env
     environment:
