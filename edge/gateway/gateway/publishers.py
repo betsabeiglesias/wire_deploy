@@ -214,6 +214,24 @@ def make_publisher(root_cfg: Dict[str, Any]) -> Callable[[ProcessValue], None]:
         dt = pv.datatype
         val = pv.value
 
+        # RETOMAR
+        # 🔥 fallback para frontend (NO romper UI)
+        if val is None:
+            logger.warning(
+                "Valor None recibido (%s %s) → fallback a 0",
+                pv.equipment_id, pv.variable
+            )
+
+            if dt in ("Boolean",):
+                val = False
+            elif dt in ("Int16", "Int32", "UInt16", "UInt32", "Float", "Double"):
+                val = 0
+            elif dt in ("String", "Char"):
+                val = ""
+            else:
+                val = 0
+       
+
         if dt == "Boolean":
             payload["value_bool"] = bool(val)
         elif dt in ("Int16", "Int32", "UInt16", "UInt32"):

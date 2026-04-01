@@ -25,6 +25,8 @@ def main():
     while True:
         try:
             cfg = fetch_config()
+            print("🔥 CFG:", cfg)
+            print("🔥 equipments:", len(cfg.get("equipments", [])))
             new_hash = config_hash(cfg)
             old_hash = read_last_hash()
 

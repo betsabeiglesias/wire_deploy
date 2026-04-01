@@ -1,7 +1,7 @@
 # management/commands/fix_equipment_ids.py
 
 from django.core.management.base import BaseCommand
-from industrial_config_manager.models import PLC
+from modules.industrial_config_manager.models import PLC
 
 class Command(BaseCommand):
     help = "Recalcula y actualiza todos los equipment_id de los PLC según la jerarquía ISA-95."

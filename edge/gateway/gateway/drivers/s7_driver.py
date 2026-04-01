@@ -367,7 +367,7 @@ class S7Driver(BaseDriver):
             # dormir el periodo configurado
             time.sleep(max(0.01, self.poll_ms / 1000.0))
 
-    def read_once(self, endpoint: str) -> List[Dict[str, Any]]:
+    def read_once(self, endpoint: str) -> List[ProcessValue]:
         """
         Lee una vez todos los items configurados, agrupando por DB para minimizar lecturas.
         Devuelve una lista de CDC tags (Good/Bad según resultado).
@@ -417,18 +417,25 @@ class S7Driver(BaseDriver):
 
             except Exception as ex:
                 # Si falla la lectura del bloque DB completo, marca todos los items de ese DB como Bad
-                now_iso = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).isoformat().replace("+00:00", "Z")
+                now = datetime.datetime.now(datetime.timezone.utc)
                 for it in db_items:
-                    bad_tag = build_tag(
+                    bad_tag = ProcessValue(
                         equipment_id=self.equipment_id,
-                        item=it,
+                        variable=it["name"],
                         value=None,
-                        endpoint=endpoint,
+                        datatype=it["datatype"],
+                        timestamp=now,
                         quality="Bad",
-                        error=str(ex),
+                        unit=it.get("unit"),
+                        source={
+                            "protocol": "snap7",
+                            "endpoint": endpoint,
+                            "ip": self.ip,
+                            "address": it["address"],
+                            "error": str(ex),
+                        }
                     )
-                    # Sobrescribe timestamp para coherencia (opcional)
-                    bad_tag["timestamp"] = now_iso
+
                     out_tags.append(bad_tag)
 
         return out_tags
