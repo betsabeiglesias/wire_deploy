@@ -11,10 +11,14 @@ const CanvasEditor = ({
   onUpdate,
   onDelete,
   onDrop,
+  onStageSize,
   zoom = 1,
   isLiveMode = false,
   layoutId = null,
 }) => {
+
+  const BASE_WIDTH = 1920;
+  const BASE_HEIGHT = 1080;
   const viewportRef = useRef(null);
   const canvasRef   = useRef(null);
 
@@ -22,7 +26,17 @@ const CanvasEditor = ({
   const tagsMap   = realtime?.tagsMap || new Map();
   const { tags: projectTags } = useProjectTags(isLiveMode ? layoutId : null, tagsMap);
 
+
+  useEffect(() => {
+      onStageSize?.({
+        width: BASE_WIDTH,
+        height: BASE_HEIGHT,
+      });
+    }, []);
+
   const [autoZoom, setAutoZoom] = useState(1);
+
+
   useEffect(() => {
   const updateZoom = () => {
     if (!viewportRef.current) return;
@@ -45,11 +59,10 @@ const CanvasEditor = ({
     return () => observer.disconnect();
   }, []);
 
-  const effectiveZoom = zoom === 1 ? autoZoom : zoom;
+  const effectiveZoom = zoom * autoZoom;
 
 
-  const BASE_WIDTH = 1920;
-  const BASE_HEIGHT = 1080;
+  
 
   const handleDrop = (e) => {
   e.preventDefault();
@@ -65,16 +78,16 @@ const CanvasEditor = ({
 
   return (
     <div
-      ref={viewportRef}
-      className="absolute inset-0 overflow-auto bg-slate-100"
-      style={{
-        backgroundImage:
-          "radial-gradient(circle at 1px 1px, #e2e8f0 1px, transparent 0)",
-        backgroundSize: "20px 20px",
-      }}
-    >
+        ref={viewportRef}
+        className="absolute inset-0 overflow-auto bg-slate-100"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 1px 1px, #e2e8f0 1px, transparent 0)",
+          backgroundSize: "20px 20px",
+        }}
+      >
        {/* CENTRADO REAL */}
-    <div className="min-w-full min-h-full flex items-center justify-center">
+      {/* <div className="w-full h-full flex relative"> */}
 
         {/* 🔥 WRAPPER CON TAMAÑO REAL ESCALADO */}
         <div
@@ -82,6 +95,7 @@ const CanvasEditor = ({
             width: BASE_WIDTH * effectiveZoom,
             height: BASE_HEIGHT * effectiveZoom,
             position: "relative",
+             margin: "0 auto",
           }}
         >
       
@@ -135,7 +149,6 @@ const CanvasEditor = ({
           </div>
         </div>
       </div>
-    </div>
   );
 };
 

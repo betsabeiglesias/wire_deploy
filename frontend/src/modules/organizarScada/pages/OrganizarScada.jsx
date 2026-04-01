@@ -5,7 +5,7 @@ import UnifiedSidebar from "../components/sidebar/UnifiedSidebar";
 import CanvasEditor from "../components/canvas/CanvasEditor";
 import SidebarPropiedades from "../components/sidebar/SidebarPropiedades";
 import NavbarPLCs from "../components/sidebar/NavbarPLCs";
-import NavbarEditor from "../components/canvas/NavbarEditor";
+import EditorLayout from "../components/layout/EditorLayout";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import LoadProjectModal from "../components/modals/LoadProjectModal";
 import { RealtimeProvider } from "@/context/RealtimeProvider";
@@ -332,33 +332,41 @@ const OrganizarScada = () => {
 
         <div className="flex-1 bg-slate-100 overflow-hidden flex flex-col">
           <div className="flex flex-1 overflow-hidden px-4 pb-4 gap-4 flex-col">
-            <div className="px-1 pt-1">
-              <NavbarEditor
-                onZoomIn={handleZoomIn}
-                onZoomOut={handleZoomOut}
-                onResetZoom={handleResetZoom}
-                onFitToScreen={handleFitToScreen}
-                zoomLabel={zoomLabel}
-                onDuplicate={handleDuplicateSelected}
-                onDeleteSelected={handleDeleteSelected}
-                showProps={showPropsPanel}
-                onToggleProps={() => setShowPropsPanel((p) => !p)}
-                sidebarOpen={sidebarOpen}
-                onToggleSidebar={() => setSidebarOpen((p) => !p)}
-                isLiveMode={isLiveMode}
-                onToggleLive={() => setIsLiveMode((prev) => !prev)}
-              />
-            </div>
+              <main className="relative bg-slate-200/50 overflow-hidden flex-col justify-center items-center p-4 transition-all duration-300 flex-1 rounded-xl border border-slate-200">
+            <div ref={editorViewportRef} className="relative w-full h-full">
 
-            <main className="relative bg-slate-200/50 overflow-hidden flex-col justify-center items-center p-4 transition-all duration-300 flex-1 rounded-xl border border-slate-200">
-              <div ref={editorViewportRef} className="relative w-full h-full flex items-stretch">
                 {isLiveMode ? (
                   <RealtimeProvider tenant={tenant}>
-                    <CanvasEditor {...canvasProps} isLiveMode={true} />
+                    <EditorLayout
+                      {...canvasProps}
+                      zoom={zoom}
+                      onZoomIn={handleZoomIn}
+                      onZoomOut={handleZoomOut}
+                      onResetZoom={handleResetZoom}
+                      onFitToScreen={handleFitToScreen}
+                      zoomLabel={zoomLabel}
+                      isLiveMode={true}
+                      onToggleLive={() => setIsLiveMode((prev) => !prev)}
+                      sidebarOpen={sidebarOpen}
+                      onToggleSidebar={() => setSidebarOpen((p) => !p)}
+                    />
                   </RealtimeProvider>
                 ) : (
-                  <CanvasEditor {...canvasProps} isLiveMode={false} />
+                  <EditorLayout
+                    {...canvasProps}
+                    zoom={zoom}
+                    onZoomIn={handleZoomIn}
+                    onZoomOut={handleZoomOut}
+                    onResetZoom={handleResetZoom}
+                    onFitToScreen={handleFitToScreen}
+                    zoomLabel={zoomLabel}
+                    isLiveMode={false}
+                    onToggleLive={() => setIsLiveMode((prev) => !prev)}
+                    sidebarOpen={sidebarOpen}
+                    onToggleSidebar={() => setSidebarOpen((p) => !p)}
+                  />
                 )}
+
               </div>
             </main>
           </div>
@@ -439,6 +447,7 @@ const OrganizarScada = () => {
 
         </div>
   </div>
+   
 )}
     </div>
   );
