@@ -20,8 +20,10 @@ export default function EditorToolbar({
       {/* Play */}
       <button
         onClick={onToggleLive}
-        className={`px-3 py-1 rounded-lg text-white ${
-          isLiveMode ? "bg-red-500" : "bg-green-500"
+        className={`px-3 py-1 rounded-lg text-white transition-all duration-200 hover:scale-[1.05] active:scale-95 ${
+          isLiveMode
+            ? "bg-red-500 hover:bg-red-600"
+            : "bg-green-500 hover:bg-green-600"
         }`}
       >
         {isLiveMode ? "Stop" : "Play"}
@@ -29,3 +31,4 @@ export default function EditorToolbar({
     </div>
   );
 }
+
