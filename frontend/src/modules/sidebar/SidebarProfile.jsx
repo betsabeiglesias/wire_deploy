@@ -30,13 +30,13 @@ export default function SidebarProfile({ name, role, onLogout, open }) {
         <button
           type="button"
           onClick={onLogout}
-          className={`mt-3 inline-flex items-center rounded-xl border border-white/10 bg-white/8 text-[#d7e4f8] transition hover:bg-white/12 ${
+          className={` group mt-3 inline-flex cursor-pointer items-center rounded-xl border border-white/10 bg-white/8 text-[#d7e4f8] transition-all duration-200 hover:bg-white/12 hover:scale-[1.02] active:scale-95 ${
             open
               ? "w-full justify-between px-4 py-3"
               : "w-full justify-center px-3 py-3"
           }`}
           aria-label="Cerrar sesion"
-        >
+      >
           <span
             className={`text-sm font-medium transition-all duration-300 ${
               open
@@ -46,7 +46,7 @@ export default function SidebarProfile({ name, role, onLogout, open }) {
           >
             Logout
           </span>
-          <LogOut className="h-4 w-4 flex-shrink-0" />
+          <LogOut className="h-4 w-4 flex-shrink-0 transition-transform duration-200 group-hover:translate-x-1" />
         </button>
       </div>
     </div>

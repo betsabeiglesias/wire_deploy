@@ -59,17 +59,17 @@ export default function Sidebar() {
           )}
 
           <button
-            type="button"
-            onClick={() => setOpen((prev) => !prev)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-[#9fb4d8] transition hover:bg-white/10 hover:text-white"
-            aria-label={open ? "Contraer menu" : "Expandir menu"}
-          >
-            {open ? (
-              <ChevronLeft className="h-5 w-5" />
-            ) : (
-              <ChevronRight className="h-5 w-5" />
-            )}
-          </button>
+              type="button"
+              onClick={() => setOpen((prev) => !prev)}
+              className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-[#9fb4d8] transition-all duration-200 hover:bg-white/10 hover:text-white hover:scale-105 active:scale-95"
+              aria-label={open ? "Contraer menu" : "Expandir menu"}
+            >
+              {open ? (
+                <ChevronLeft className="h-5 w-5 transition-transform duration-200" />
+              ) : (
+                <ChevronRight className="h-5 w-5 transition-transform duration-200" />
+              )}
+        </button>
         </div>
 
         <nav className="flex-1">

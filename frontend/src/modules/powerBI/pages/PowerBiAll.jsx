@@ -145,11 +145,11 @@ const PowerBiAll = () => {
                     setIsEditMode(false);
                     setShowModal(true);
                   }}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#194b68] px-5 py-3 text-sm font-medium text-white shadow-[0_18px_30px_-18px_rgba(25,75,104,0.45)] transition hover:bg-[#215f82]"
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#194b68] px-5 py-3 text-sm font-medium text-white shadow-[0_18px_30px_-18px_rgba(25,75,104,0.45)] transition-all duration-200 hover:bg-[#215f82] hover:scale-[1.03] active:scale-95"
                 >
                   <Plus className="h-4 w-4" />
                   Nueva vista
-                </button>
+              </button>
               </div>
 
               {isLoading && (
@@ -298,22 +298,22 @@ function SortablePbiCard({ pbi, onDelete, onEdit, onView }) {
       <div className="flex items-center justify-between border-t border-[#eef1f5] bg-[#fbfbfc] px-4 py-4">
         <FavoriteHeart type="mypowerbi" objectId={pbi.id} />
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 [&>button]:transition-all">
           <button
             onClick={() => onView(pbi)}
-            className="rounded-2xl bg-[#194b68] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#215f82]"
+            className="cursor-pointer rounded-2xl bg-[#194b68] px-4 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-[#215f82] hover:scale-[1.03] active:scale-95"
           >
             Ver
           </button>
           <button
             onClick={() => onEdit(pbi)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[#d9e0e5] bg-white text-[#255f82] transition hover:bg-[#f5f9fb]"
+            className="inline-flex cursor-pointer h-10 w-10 items-center justify-center rounded-2xl border border-[#d9e0e5] bg-white text-[#255f82] transition-all duration-200 hover:bg-[#f5f9fb] hover:scale-110 active:scale-95"
           >
             <SquarePen className="h-4 w-4" />
           </button>
           <button
             onClick={() => onDelete(pbi.id, pbi.name)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[#f1d7dc] bg-[#fff8f9] text-[#cf4b68] transition hover:bg-[#fff1f3]"
+            className="inline-flex cursor-pointer h-10 w-10 items-center justify-center rounded-2xl border border-[#f1d7dc] bg-[#fff8f9] text-[#cf4b68] transition-all duration-200 hover:bg-[#fff1f3] hover:scale-110 active:scale-95 hover:shadow-[0_0_10px_rgba(207,75,104,0.25)]"
           >
             <Trash2 className="h-4 w-4" />
           </button>

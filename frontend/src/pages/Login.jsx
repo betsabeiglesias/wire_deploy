@@ -323,11 +323,13 @@ const Login = () => {
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#194b68] px-5 py-3 text-sm font-medium text-white shadow-[0_18px_30px_-18px_rgba(25,75,104,0.45)] transition hover:bg-[#215f82] disabled:cursor-not-allowed disabled:bg-[#93a6bf]"
+                        className="group inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#194b68] px-5 py-3 text-sm font-medium text-white shadow-[0_18px_30px_-18px_rgba(25,75,104,0.45)] transition-all duration-200 hover:bg-[#215f82] hover:scale-[1.03] active:scale-95 disabled:cursor-not-allowed disabled:bg-[#93a6bf] disabled:hover:scale-100"
                       >
                         {isSubmitting ? "Entrando..." : "Entrar"}
-                        {!isSubmitting && <ArrowRight className="h-4 w-4" />}
-                      </button>
+                        {!isSubmitting && (
+                          <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                        )}
+                    </button>
 
                       <p className="pt-2 text-center text-sm text-[#7f90a5]">
                         Necesitas ayuda con tu acceso?

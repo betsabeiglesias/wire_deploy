@@ -188,7 +188,7 @@ const PbiModal = ({ showModal, setShowModal, initialData, isEditMode = false }) 
                     <button
                         onClick={handleClose}
                         disabled={isLoading}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50"
+                        className="cursor-pointer transition-all duration-200 hover:scale-[1.03] active:scale-95 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50"
                     >
                         Cancelar
                     </button>
@@ -197,6 +197,7 @@ const PbiModal = ({ showModal, setShowModal, initialData, isEditMode = false }) 
                         onClick={confirmSave}
                         disabled={isLoading}
                         className="
+                            cursor-pointer transition-all duration-200 hover:scale-[1.03] active:scale-95
                             px-4 py-2
                             text-sm font-medium
                             text-blue-600

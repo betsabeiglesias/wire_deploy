@@ -42,7 +42,7 @@ const Button = ({
       type={type}
       onClick={onClick}
       // Clases base (layout y transiciones) + Clases de variante + Clases extra
-      className={`inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-medium transition active:scale-95 ${variantClasses} ${className}`}
+      className={`inline-flex cursor-pointer items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:scale-[1.03] active:scale-95 ${variantClasses} ${className}`}
       {...props}
     >
       {children}

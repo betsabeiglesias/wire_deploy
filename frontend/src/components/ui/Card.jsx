@@ -30,7 +30,7 @@ export default function CommandCard({
 
   // 2. Clases base (las que no cambian nunca)
   const baseCard =
-    "group overflow-hidden rounded-[28p  x] border p-6 text-left transition hover:-translate-y-1 hover:shadow-[0_24px_54px_-32px_rgba(0,0,0,0.24)]";
+  "group cursor-pointer overflow-hidden rounded-[28px] border p-6 text-left transition duration-200 hover:-translate-y-1 hover:scale-[1.01] active:scale-[0.99] hover:shadow-[0_24px_54px_-32px_rgba(0,0,0,0.24)]";
   const baseIcon = "flex h-14 w-14 items-center justify-center rounded-2xl";
   const baseAccent = "text-sm font-semibold";
 
