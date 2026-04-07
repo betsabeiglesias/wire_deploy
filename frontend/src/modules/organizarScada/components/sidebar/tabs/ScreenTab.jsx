@@ -60,7 +60,7 @@ const ScreenTab = ({
         <h3 className="text-sm font-semibold text-slate-800">Pantallas</h3>
         <button
           onClick={onCreateView}
-          className="inline-flex items-center justify-center rounded border border-slate-300 bg-slate-50 px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
+          className="cursor-pointer transition-all duration-200 hover:scale-[1.03] active:scale-95 inline-flex items-center justify-center rounded border border-slate-300 bg-slate-50 px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50"
         >
           + Nueva pantalla
         </button>
