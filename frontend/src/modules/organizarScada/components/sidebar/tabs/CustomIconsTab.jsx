@@ -31,7 +31,7 @@ const CustomIconsTab = ({
           type="button"
           onClick={() => uploadInputRef.current?.click()}
           disabled={isProcessingUpload}
-          className="rounded border border-slate-300 bg-slate-50 px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50 disabled:opacity-50"
+          className="cursor-pointer rounded border border-slate-300 bg-slate-50 px-2 py-1 text-[11px] text-slate-700 hover:border-sky-400 hover:bg-slate-50 disabled:opacity-50"
         >
           {isProcessingUpload ? "Procesando..." : "Subir icono"}
         </button>
