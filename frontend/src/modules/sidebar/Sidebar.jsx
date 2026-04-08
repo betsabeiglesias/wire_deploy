@@ -17,8 +17,8 @@ const navigationItems = [
   { icon: Orbit, label: "Home", to: "/" },
   { icon: UserRound, label: "User", to: "/user" },
   { icon: Heart, label: "Saved", to: "/saved" },
-  { icon: ClipboardList, label: "Projects", to: "/task-project" },
-  { icon: Settings, label: "Settings", to: "/settings" },
+  // { icon: ClipboardList, label: "Projects", to: "/task-project" },
+  // { icon: Settings, label: "Settings", to: "/settings" },
 ];
 
 export default function Sidebar() {
