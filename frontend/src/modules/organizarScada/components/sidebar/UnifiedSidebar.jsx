@@ -44,6 +44,7 @@ const SidebarRail = ({ items, activeSection, onSelect }) => (
 		  onClick={() => onSelect(item.id)}
 		  className={`
 			w-10 h-10 flex items-center justify-center rounded-md
+			cursor-pointer
 			transition-all duration-150
 			hover:scale-105 active:scale-95
 			${isActive
