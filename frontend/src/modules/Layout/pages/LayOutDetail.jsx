@@ -17,6 +17,7 @@ import api from "@/services/api";
 // Componentes UI Reutilizables
 import Header from "../../../components/ui/Header";
 import Button from "../../../components/Button";
+import HomeButton from "../../../components/HomeButton";
 
 /**
  * Utilidad para normalizar los elementos del canvas
@@ -219,14 +220,17 @@ export default function LayOutDetail() {
 
       <main className="flex-1 overflow-y-auto bg-[#eef2f4]">
         <div className="min-h-full px-4 py-4 md:px-6 md:py-6">
-          <div className="overflow-hidden rounded-[30px] border border-[#d9e0e5] bg-[linear-gradient(180deg,#f7f9fa_0%,#f2f5f6_100%)] shadow-lg">
+          <div className=" relative overflow-hidden rounded-[30px] border border-[#d9e0e5] bg-[linear-gradient(180deg,#f7f9fa_0%,#f2f5f6_100%)] shadow-lg">
             {/* CABECERA */}
-            <Header
-              badgeText="Proyecto SCADA"
-              title={layoutName}
-              highlightText="Dashboard"
-              icon={Activity}
-            />
+            <div>
+              <Header
+                badgeText="Proyecto SCADA"
+                title={layoutName}
+                highlightText="Dashboard"
+                icon={Activity}
+              />
+              <HomeButton/>
+            </div>
 
             {/* BARRA DE ACCIONES Y STATUS */}
             <section className="border-b border-[#dde4e8] px-6 py-5 md:px-8">

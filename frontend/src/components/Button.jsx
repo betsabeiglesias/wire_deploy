@@ -29,23 +29,26 @@ const handleClick = () => {
 const Button = ({ 
   children, 
   onClick, 
-  variant = "primary", // Valor por defecto
+  variant = "primary", 
   className = "", 
   type = "button", 
   ...props 
 }) => {
-  // Seleccionamos las clases basadas en la variante pasadapor props
   const variantClasses = variants[variant] || variants.primary;
 
   return (
     <button
       type={type}
       onClick={onClick}
-      // Clases base (layout y transiciones) + Clases de variante + Clases extra
-      className={`inline-flex cursor-pointer items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:scale-[1.03] active:scale-95 ${variantClasses} ${className}`}
+      // 1. Aseguramos que sea inline-flex o flex y tenga un z-index relativo si es necesario
+      // 2. Mantenemos el group para controlar estados internos si fuera necesario
+      className={`group relative flex cursor-pointer items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:scale-[1.03] active:scale-95 ${variantClasses} ${className}`}
       {...props}
     >
-      {children}
+      {/* Eliminamos cualquier margen o padding extra que pueda tener el span */}
+      <span className="pointer-events-none select-none">
+        {children}
+      </span>
     </button>
   );
 };

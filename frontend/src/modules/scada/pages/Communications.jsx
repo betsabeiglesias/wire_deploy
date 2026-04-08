@@ -21,6 +21,7 @@ import Button from "../../../components/Button";
 import ConfigurarComunicacionesButton from "../components/ConfigurarComunicacionesButton";
 
 import { useRealtime } from "@/context/RealtimeProvider";
+import HomeButton from "../../../components/HomeButton";
 
 export default function Communications() {
   
@@ -217,9 +218,7 @@ export default function Communications() {
         <ConfigurarComunicacionesButton />
         
         <div className="absolute right-0 top-0">
-          <Button variant="secondary" onClick={() => window.location.assign("/")}>
-            Home
-          </Button>
+          <HomeButton/>
         </div>
       </div>
 

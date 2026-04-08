@@ -31,6 +31,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import HomeButton from "../../../components/HomeButton";
 
 const PowerBiAll = () => {
   const {
@@ -119,8 +120,9 @@ const PowerBiAll = () => {
                   <h1 className="mt-5 text-4xl font-semibold leading-[0.95] tracking-[-0.05em] text-[#464851] md:text-6xl">
                     Galeria de
                     <br />
-                    <span className="text-[#79c8f1]">dashboards analiticos.</span>
+                    <span className="text-[#79c8f1]">dashboards analíticos.</span>
                   </h1>
+                  <HomeButton/>
                 </div>
               </div>
             </section>

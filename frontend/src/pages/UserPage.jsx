@@ -10,6 +10,7 @@ import Sidebar from "../modules/sidebar/Sidebar";
 import { useAuthStore } from "../store/useAuthStore";
 import Header from "../components/ui/Header";
 import { Activity, ChartColumnBig, MapPinned, MonitorCog } from "lucide-react";
+import HomeButton from "../components/HomeButton";
 
 const formatJoinDate = (value) =>
   new Date(value).toLocaleDateString("es-ES", {
@@ -99,16 +100,19 @@ export default function UserPage() {
 
       <main className="flex-1 overflow-y-auto bg-[#f7f7f8]">
         <div className="min-h-full px-4 py-4 md:px-6 md:py-6">
-          <div className="overflow-hidden rounded-[30px] border border-[#ececee] bg-[#fbfbfc] shadow-[0_24px_70px_-42px_rgba(31,41,55,0.12)]">
+          <div className="relative overflow-hidden rounded-[30px] border border-[#ececee] bg-[#fbfbfc] shadow-[0_24px_70px_-42px_rgba(31,41,55,0.12)]">
             
               {/* <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(rgba(52,85,112,0.42)_1px,transparent_1px),linear-gradient(90deg,rgba(52,85,112,0.42)_1px,transparent_1px)] [background-size:64px_64px]" /> */}
+              <div>
               <Header
                 badgeText="User"
                 title="Perfil del"
                 highlightText="Usuario"
                 icon={Activity}
               />{" "}
-          
+              <HomeButton/>
+              </div>
+
 
             <section className="px-6 py-8 md:px-5 md:py-5">
               <div className="grid gap-6 xl:grid-cols-[1fr_0.92fr]">
