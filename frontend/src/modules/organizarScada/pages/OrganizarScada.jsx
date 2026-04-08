@@ -383,7 +383,7 @@ const OrganizarScada = () => {
             <button
               onClick={() => setShowPropsPanel((p) => !p)}
               title={showPropsPanel ? "Colapsar propiedades" : "Expandir propiedades"}
-              className="ml-auto flex items-center justify-center w-7 h-7 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors shrink-0"
+              className="cursor-pointer ml-auto flex items-center justify-center w-7 h-7 rounded hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition-colors shrink-0"
             >
               {showPropsPanel
                 ? <PanelRightClose className="w-4 h-4" />
