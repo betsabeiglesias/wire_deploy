@@ -324,7 +324,32 @@ export const renderWidget = ({
         );
       }
 
-      return (
+      // opcion 1:
+    //   return (
+    //     <div
+    //       style={{
+    //         width: "100%",
+    //         height: "100%",
+    //         display: "flex",
+    //         alignItems: "center",
+    //         justifyContent: "center",
+    //       }}
+    //     >
+    //       <img
+    //         src={src}
+    //         alt={label}
+    //         style={{
+    //           maxWidth: "100%",
+    //           maxHeight: "100%",
+    //           objectFit: "contain",
+    //         }}
+    //       />
+    //     </div>
+    //   );
+    // }
+
+        // opcion 2:
+    return (
         <div
           style={{
             width: "100%",
@@ -338,14 +363,15 @@ export const renderWidget = ({
             src={src}
             alt={label}
             style={{
-              width: "100%",
-              height: "100%",
+              maxWidth: "100%",
+              maxHeight: "100%",
               objectFit: "contain",
             }}
           />
         </div>
       );
     }
+
 
     /* =========================================================
        DEFAULT
