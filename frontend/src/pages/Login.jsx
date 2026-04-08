@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Activity,
   ArrowRight,
@@ -332,7 +333,13 @@ const Login = () => {
                     </button>
 
                       <p className="pt-2 text-center text-sm text-[#7f90a5]">
-                        Necesitas ayuda con tu acceso?
+                        ¿Necesitas ayuda con tu acceso?{" "}
+                        <Link 
+                          to="/ayuda" 
+                          className="font-semibold text-[#194b68] hover:underline transition-colors duration-200"
+                        >
+                          Haz clic aquí
+                        </Link>
                       </p>
                     </form>
                   </div>
