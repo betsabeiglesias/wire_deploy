@@ -118,9 +118,9 @@ const PowerBiAll = () => {
               <div className="relative z-10 grid gap-6 xl:grid-cols-[1.2fr_0.8fr] xl:items-end">
                 <div className="max-w-3xl">
                   <h1 className="mt-5 text-4xl font-semibold leading-[0.95] tracking-[-0.05em] text-[#464851] md:text-6xl">
-                    Galeria de
+                    Galería de
                     <br />
-                    <span className="text-[#79c8f1]">dashboards analíticos.</span>
+                    <span className="text-[#79c8f1]">dashboards analíticos</span>
                   </h1>
                   <HomeButton/>
                 </div>

@@ -51,7 +51,7 @@ const HmiPage = () => {
             <Header
               badgeText="Scada"
               title="Organiza la operación"
-              highlightText="desde una sola vista."
+              highlightText="desde una sola vista"
               icon={Activity}
             />
 

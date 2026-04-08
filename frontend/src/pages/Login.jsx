@@ -45,7 +45,7 @@ const Login = () => {
       navigate("/");
     } catch (err) {
       console.error("Error en login:", err);
-      setError("Credenciales invalidas o error de servidor");
+      setError("Credenciales inválidas o error de servidor");
     } finally {
       setIsSubmitting(false);
     }
@@ -174,13 +174,13 @@ const Login = () => {
                   Acceso central
                   <br />
                   <span className="text-[#7ec8ff]">
-                    a tu entorno operativo.
+                    a tu entorno operativo
                   </span>
                 </h1>
 
                 <p className="max-w-xl text-base leading-7 text-[#9fb4d8]">
-                  Inicia sesion para acceder a analitica, layouts, HMI y paneles
-                  de control desde una entrada mas limpia y profesional.
+                  Inicia sesion para acceder a Analíticas, Layouts, HMIs y Paneles
+                  de Control desde una interfaz sencilla y profesional
                 </p>
               </div>
 
@@ -276,7 +276,7 @@ const Login = () => {
                       Bienvenido
                     </h2>
                     <p className="mt-3 text-center text-sm leading-6 text-[#667380]">
-                      Introduce tus credenciales para continuar.
+                      Introduce tus credenciales para continuar
                     </p>
                     <form onSubmit={handleSubmit} className="mt-8 space-y-5">
                       <label className="block">
@@ -299,14 +299,14 @@ const Login = () => {
 
                       <label className="block">
                         <span className="mb-2 block text-sm font-medium text-[#4a617f]">
-                          Contrasena
+                          Contraseña
                         </span>
                         <div className="flex items-center gap-3 rounded-2xl border border-[#d9e0e5] bg-white px-4 py-3 shadow-[0_18px_30px_-28px_rgba(31,41,55,0.16)]">
                           <LockKeyhole className="h-4.5 w-4.5 text-[#6b7681]" />
                           <input
                             type="password"
                             className="w-full bg-transparent text-sm text-[#2f3942] outline-none placeholder:text-[#8f98a3]"
-                            placeholder="Introduce tu contrasena"
+                            placeholder="Introduce tu contraseña"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
@@ -338,7 +338,7 @@ const Login = () => {
                           to="/ayuda" 
                           className="font-semibold text-[#194b68] hover:underline transition-colors duration-200"
                         >
-                          Haz clic aquí
+                          Haz click aquí
                         </Link>
                       </p>
                     </form>

@@ -141,7 +141,7 @@ export function FavoriteViews({ title, type, onlyFavorites = true }) {
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8f919a]" />
             <input
               type="text"
-              placeholder={`Filtrar ${title.toLowerCase()}...`}
+              placeholder={`Filtrar ${title}...`}
               className="w-full rounded-2xl border border-[#d9e0e5] bg-[#f8fafc] py-3 pl-12 text-sm outline-none focus:border-[#255f82] transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

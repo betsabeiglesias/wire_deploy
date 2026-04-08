@@ -12,7 +12,7 @@ const Home = () => {
     {
       title: "Centro HMI",
       description:
-        "Acceso a supervisión visual, estados de proceso y control de pantallas operativas.",
+        "Acceso a supervisión visual, estados de proceso y control de pantallas operativas",
       onClick: () => navigate("/hmi"),
       icon: MonitorCog,
       badge: "Operación",
@@ -21,7 +21,7 @@ const Home = () => {
     {
       title: "Analítica Power BI",
       description:
-        "Indicadores de rendimiento, tendencias de línea y lectura consolidada de KPIs críticos.",
+        "Indicadores de rendimiento, tendencias de línea y lectura consolidada de KPIs críticos",
       onClick: () => navigate("/powerbi-all"),
       icon: ChartColumnBig,
       badge: "Analítica",
@@ -30,7 +30,7 @@ const Home = () => {
       {
     title: "Historian",
     description:
-      "Consulta histórica de variables de proceso, tendencias temporales y análisis de datos industriales.",
+      "Consulta histórica de variables de proceso, tendencias temporales y análisis de datos industriales",
     onClick: () => navigate("/historian"),
     icon: Activity,
     badge: "Data",

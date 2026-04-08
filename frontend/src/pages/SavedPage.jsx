@@ -18,7 +18,7 @@ export default function SavedPage() {
             <Header
               badgeText="Favorites control"
               title="Mis proyectos"
-              highlightText="favoritos."
+              highlightText="favoritos"
               icon={Activity}
             />
             <HomeButton/>
