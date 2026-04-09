@@ -13,6 +13,9 @@ export default function DraggableBox({
   projectTags = [],
 }) {
   if (!data) return null;
+  if (data.type === "image-widget" && data.settings?.isBackground) {
+  return null;
+  }
 
   const [pos,  setPos]  = useState({ x: initialX, y: initialY });
   const [size, setSize] = useState({ w: initialWidth, h: initialHeight });

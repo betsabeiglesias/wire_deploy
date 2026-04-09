@@ -25,6 +25,7 @@ const CanvasEditor = ({
   const realtime  = useRealtime();
   const tagsMap   = realtime?.tagsMap || new Map();
   const { tags: projectTags } = useProjectTags(isLiveMode ? layoutId : null, tagsMap);
+  const [backgroundImage, setBackgroundImage] = useState(null);
 
 
   useEffect(() => {
@@ -50,7 +51,6 @@ const CanvasEditor = ({
 
     setAutoZoom(fitZoom);
   };
-
   updateZoom();
 
   const observer = new ResizeObserver(updateZoom);
@@ -58,6 +58,32 @@ const CanvasEditor = ({
 
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    const bgWidget = elements.find(
+      (el) =>
+        el?.data?.type === "image-widget" &&
+        el?.data?.settings?.isBackground
+    );
+
+    if (bgWidget) {
+      const settings = bgWidget.data.settings;
+
+      const src =
+        settings.imageBase64 ||
+        settings.src ||
+        settings.url ||
+        settings.image ||
+        settings.path;
+
+      setBackgroundImage(src || null);
+    } else {
+      setBackgroundImage(null);
+    }
+  }, [elements]);
+
+  
+  
 
   const effectiveZoom = zoom * autoZoom;
 
@@ -109,6 +135,10 @@ const CanvasEditor = ({
               height: BASE_HEIGHT,
               transform: `scale(${effectiveZoom})`,
               transformOrigin: "top left",
+              backgroundImage: backgroundImage ? `url(${backgroundImage})` : "none",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
             }}
           >
             {elements.map((el) => {
