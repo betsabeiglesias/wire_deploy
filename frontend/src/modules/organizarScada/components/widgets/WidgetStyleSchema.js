@@ -1,105 +1,15 @@
-// src/modules/organizarScada/components/widgets/WidgetStyleSchema.js
+// WidgetStyleSchema.js
+// Construye el mapa type → styleSchema leyendo directamente de WIDGET_REGISTRY.
+// SidebarPropiedades consume esto igual que antes: widgetStyleSchema[type] || widgetStyleSchema.default
 
-export const widgetStyleSchema = {
-  "hmi-scada-gauge": [
-    {
-      group: "General",
-      fields: [
-        { key: "primary", label: "Color principal (aguja)", type: "color" },
-        { key: "secondary", label: "Color ticks", type: "color" },
-      ],
-    },
-    {
-      group: "Texto",
-      fields: [
-        { key: "text", label: "Color valor", type: "color" },
-        { key: "unit", label: "Color unidad", type: "color" },
-      ],
-    },
-  ],
+import { WIDGET_REGISTRY, DEFAULT_STYLE_SCHEMA } from "./index";
 
-  "temp-gauge": [
-    {
-      group: "Gauge",
-      fields: [
-        { key: "primary", label: "Color arco", type: "color" },
-      ],
+export const widgetStyleSchema = new Proxy(
+  { default: DEFAULT_STYLE_SCHEMA },
+  {
+    get(target, type) {
+      if (type in target) return target[type];
+      return WIDGET_REGISTRY[type]?.styleSchema ?? DEFAULT_STYLE_SCHEMA;
     },
-    {
-      group: "Texto",
-      fields: [
-        { key: "text", label: "Color valor", type: "color" },
-        { key: "label", label: "Color etiqueta", type: "color" },
-      ],
-    },
-  ],
-
-  "hmi-progress-bar": [
-    {
-      group: "Barra",
-      fields: [
-        { key: "primary", label: "Color barra", type: "color" },
-        { key: "secondary", label: "Color degradado", type: "color" },
-      ],
-    },
-    {
-      group: "Texto",
-      fields: [
-        { key: "text", label: "Color texto", type: "color" },
-      ],
-    },
-  ],
-
-  "hmi-tank-level": [
-    {
-      group: "Nivel",
-      fields: [
-        { key: "primary", label: "Color líquido", type: "color" },
-        { key: "secondary", label: "Color gradiente", type: "color" },
-      ],
-    },
-    {
-      group: "Texto",
-      fields: [
-        { key: "text", label: "Color valor", type: "color" },
-      ],
-    },
-  ],
-
-  "energy-bar-chart": [
-    {
-      group: "Gráfico",
-      fields: [
-        { key: "primary", label: "Color barras", type: "color" },
-        { key: "secondary", label: "Color límite", type: "color" },
-      ],
-    },
-    {
-      group: "Texto",
-      fields: [
-        { key: "text", label: "Color texto", type: "color" },
-      ],
-    },
-  ],
-
-  "temperature-line-chart": [
-    {
-      group: "Línea",
-      fields: [
-        { key: "primary", label: "Color línea", type: "color" },
-        { key: "secondary", label: "Color área", type: "color" },
-      ],
-    },
-  ],
-
-  /* 🔥 DEFAULT GLOBAL */
-  default: [
-    {
-      group: "General",
-      fields: [
-        { key: "primary", label: "Color principal", type: "color" },
-        { key: "text", label: "Color texto", type: "color" },
-      ],
-    },
-  ],
-};
+  }
+);

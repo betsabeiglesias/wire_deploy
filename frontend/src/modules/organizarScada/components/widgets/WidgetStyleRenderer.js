@@ -1,72 +1,25 @@
-// src/modules/organizarScada/components/widgets/WidgetStyleRenderer.js
+// WidgetStyleRenderer.js
+// Delega en la definición del widget del WIDGET_REGISTRY.
+// Consumido por registry.jsx internamente — no se usa fuera de widgets/.
 
+import { WIDGET_REGISTRY } from "./index";
+
+const FALLBACK_PALETTE = {
+  primary:   "#3b82f6",
+  secondary: "#94a3b8",
+  text:      "#ffffff",
+  unit:      "#94a3b8",
+  label:     "#e2e8f0",
+};
 
 export const resolveWidgetStyle = (type, settings) => {
-  const palette = settings?.style?.palette || {};
+  const palette    = settings?.style?.palette || {};
+  const mode       = settings?.style?.mode;
+  const definition = WIDGET_REGISTRY[type];
 
-  const base = {
-    primary: palette.primary || settings.color || "#3b82f6",
-    secondary: palette.secondary || "#94a3b8",
-    text: palette.text || "#ffffff",
-    unit: palette.unit || "#94a3b8",
-    label: palette.label || "#e2e8f0",
-    mode: settings?.style?.mode || "solid", 
-  };
-
-  switch (type) {
-    case "hmi-scada-gauge":
-      return {
-        arcColor: base.primary,
-        needleColor: base.primary,
-        tickColor: base.secondary,
-        valueColor: base.text,
-        unitColor: base.unit,
-      };
-
-    case "temp-gauge":
-    if (base.mode === "solid") {
-        return {
-        arcStartColor: base.primary,
-        arcMidColor: base.primary,
-        arcEndColor: base.primary,
-        valueColor: base.text,
-        labelColor: base.label,
-        };
-    }
-
-    if (base.mode === "zones") {
-        return {
-        arcStartColor: "#22c55e",
-        arcMidColor: "#facc15",
-        arcEndColor: "#ef4444",
-        valueColor: base.text,
-        labelColor: base.label,
-        };
-    }
-
-    case "hmi-progress-bar":
-      return {
-        gradientFrom: base.primary,
-        gradientTo: base.secondary,
-        labelColor: base.text,
-      };
-
-    case "hmi-tank-level":
-      return {
-        fluidBase: base.primary,
-        gradientFrom: base.primary,
-        gradientTo: base.secondary,
-        labelColor: base.text,
-      };
-
-    case "energy-bar-chart":
-      return {
-        barGradientFrom: base.primary,
-        limitColor: base.secondary,
-        labelColor: base.text,
-      };
-
-    default:
-      return base;
+  if (definition?.resolveStyle) {
+    return definition.resolveStyle(palette, mode);
   }
+
+  return { ...FALLBACK_PALETTE, ...palette, mode: mode || "solid" };
 };
