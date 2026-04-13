@@ -145,8 +145,16 @@ const CanvasEditor = ({
         onDrop={!isLiveMode ? handleDrop : undefined}
         onDragOver={!isLiveMode ? (e) => e.preventDefault() : undefined}
         onMouseDown={(e) => {
+          // 1. Si el clic viene de un botón (como el de eliminar) o de un widget, no hacemos nada.
+          // Buscamos si el clic ocurrió dentro de algo que NO sea el fondo.
+          if (e.target.closest('.box-header') || e.target.closest('button')) {
+            return;
+          }
+
+          // 2. Si no es un modo edición o no hay imagen, fuera.
           if (!backgroundImage || isLiveMode) return;
 
+          // 3. Iniciamos el movimiento
           const startX = e.clientX;
           const startY = e.clientY;
 
@@ -154,6 +162,7 @@ const CanvasEditor = ({
           const initY = bgTransform.y;
 
           const onMove = (ev) => {
+            // Aquí el movimiento es 1:1 con el ratón
             setBgTransform((prev) => ({
               ...prev,
               x: initX + (ev.clientX - startX),
@@ -169,6 +178,7 @@ const CanvasEditor = ({
           window.addEventListener("mousemove", onMove);
           window.addEventListener("mouseup", onUp);
         }}
+
         onWheel={(e) => {
           if (!backgroundImage) return;
 
@@ -221,76 +231,94 @@ const CanvasEditor = ({
             />
 
             {/* ========================= */}
-            {/* RESIZE HANDLES (4 lados) */}
+            {/* RESIZE HANDLES (8 puntos) */}
             {/* ========================= */}
 
-            {/* RIGHT */}
+            {/* LADO DERECHO */}
             <div
               onMouseDown={(e) => {
                 e.stopPropagation();
                 const startX = e.clientX;
                 const startWidth = bgSize.width;
-
                 const onMove = (ev) => {
-                  const delta = ev.clientX - startX;
-                  setBgSize((prev) => ({
-                    ...prev,
-                    width: Math.max(200, startWidth + delta),
-                  }));
+                  const delta = (ev.clientX - startX) / effectiveZoom;
+                  setBgSize((prev) => ({ ...prev, width: Math.max(50, startWidth + delta) }));
                 };
-
                 const onUp = () => {
                   window.removeEventListener("mousemove", onMove);
                   window.removeEventListener("mouseup", onUp);
                 };
-
                 window.addEventListener("mousemove", onMove);
                 window.addEventListener("mouseup", onUp);
               }}
-              style={{
-                position: "absolute",
-                right: 0,
-                top: 0,
-                width: "6px",
-                height: "100%",
-                cursor: "ew-resize",
-              }}
+              style={{ position: "absolute", right: -3, top: 0, width: "10px", height: "100%", cursor: "ew-resize", zIndex: 10 }}
             />
 
-            {/* BOTTOM */}
+            {/* LADO INFERIOR */}
             <div
               onMouseDown={(e) => {
                 e.stopPropagation();
                 const startY = e.clientY;
                 const startHeight = bgSize.height;
-
                 const onMove = (ev) => {
-                  const delta = ev.clientY - startY;
-                  setBgSize((prev) => ({
-                    ...prev,
-                    height: Math.max(200, startHeight + delta),
-                  }));
+                  const delta = (ev.clientY - startY) / effectiveZoom;
+                  setBgSize((prev) => ({ ...prev, height: Math.max(50, startHeight + delta) }));
                 };
-
                 const onUp = () => {
                   window.removeEventListener("mousemove", onMove);
                   window.removeEventListener("mouseup", onUp);
                 };
-
                 window.addEventListener("mousemove", onMove);
                 window.addEventListener("mouseup", onUp);
               }}
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                width: "100%",
-                height: "6px",
-                cursor: "ns-resize",
-              }}
+              style={{ position: "absolute", bottom: -3, left: 0, width: "100%", height: "10px", cursor: "ns-resize", zIndex: 10 }}
             />
 
-            {/* BOTTOM-RIGHT CORNER */}
+            {/* LADO IZQUIERDO */}
+            <div
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                const startX = e.clientX;
+                const startWidth = bgSize.width;
+                const initX = bgTransform.x;
+                const onMove = (ev) => {
+                  const delta = (ev.clientX - startX) / effectiveZoom;
+                  setBgSize((prev) => ({ ...prev, width: Math.max(50, startWidth - delta) }));
+                  setBgTransform((prev) => ({ ...prev, x: initX + delta }));
+                };
+                const onUp = () => {
+                  window.removeEventListener("mousemove", onMove);
+                  window.removeEventListener("mouseup", onUp);
+                };
+                window.addEventListener("mousemove", onMove);
+                window.addEventListener("mouseup", onUp);
+              }}
+              style={{ position: "absolute", left: -3, top: 0, width: "10px", height: "100%", cursor: "ew-resize", zIndex: 10 }}
+            />
+
+            {/* LADO SUPERIOR */}
+            <div
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                const startY = e.clientY;
+                const startHeight = bgSize.height;
+                const initY = bgTransform.y;
+                const onMove = (ev) => {
+                  const delta = (ev.clientY - startY) / effectiveZoom;
+                  setBgSize((prev) => ({ ...prev, height: Math.max(50, startHeight - delta) }));
+                  setBgTransform((prev) => ({ ...prev, y: initY + delta }));
+                };
+                const onUp = () => {
+                  window.removeEventListener("mousemove", onMove);
+                  window.removeEventListener("mouseup", onUp);
+                };
+                window.addEventListener("mousemove", onMove);
+                window.addEventListener("mouseup", onUp);
+              }}
+              style={{ position: "absolute", top: -3, left: 0, width: "100%", height: "10px", cursor: "ns-resize", zIndex: 10 }}
+            />
+
+            {/* ESQUINA INFERIOR DERECHA */}
             <div
               onMouseDown={(e) => {
                 e.stopPropagation();
@@ -298,34 +326,113 @@ const CanvasEditor = ({
                 const startY = e.clientY;
                 const startWidth = bgSize.width;
                 const startHeight = bgSize.height;
-
                 const onMove = (ev) => {
-                  const dx = ev.clientX - startX;
-                  const dy = ev.clientY - startY;
-
                   setBgSize({
-                    width: Math.max(200, startWidth + dx),
-                    height: Math.max(200, startHeight + dy),
+                    width: Math.max(50, startWidth + (ev.clientX - startX) / effectiveZoom),
+                    height: Math.max(50, startHeight + (ev.clientY - startY) / effectiveZoom),
                   });
                 };
-
                 const onUp = () => {
                   window.removeEventListener("mousemove", onMove);
                   window.removeEventListener("mouseup", onUp);
                 };
-
                 window.addEventListener("mousemove", onMove);
                 window.addEventListener("mouseup", onUp);
               }}
               style={{
                 position: "absolute",
-                right: 0,
-                bottom: 0,
+                right: -5,
+                bottom: -5,
                 width: "14px",
                 height: "14px",
                 cursor: "nwse-resize",
                 background: "rgba(59,130,246,0.8)",
+                borderRadius: "2px",
+                zIndex: 20
               }}
+            />
+            
+            {/* ESQUINA INFERIOR IZQUIERDA */}
+            <div
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startWidth = bgSize.width;
+                const startHeight = bgSize.height;
+                const initX = bgTransform.x;
+                const onMove = (ev) => {
+                  const dx = (ev.clientX - startX) / effectiveZoom;
+                  setBgSize({
+                    width: Math.max(50, startWidth - dx),
+                    height: Math.max(50, startHeight + (ev.clientY - startY) / effectiveZoom),
+                  });
+                  setBgTransform(prev => ({ ...prev, x: initX + dx }));
+                };
+                const onUp = () => {
+                  window.removeEventListener("mousemove", onMove);
+                  window.removeEventListener("mouseup", onUp);
+                };
+                window.addEventListener("mousemove", onMove);
+                window.addEventListener("mouseup", onUp);
+              }}
+              style={{ position: "absolute", left: -5, bottom: -5, width: "14px", height: "14px", cursor: "nesw-resize", background: "rgba(59,130,246,0.8)", zIndex: 20 }}
+            />
+
+            {/* ESQUINA SUPERIOR DERECHA */}
+            <div
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startWidth = bgSize.width;
+                const startHeight = bgSize.height;
+                const initY = bgTransform.y;
+                const onMove = (ev) => {
+                  const dy = (ev.clientY - startY) / effectiveZoom;
+                  setBgSize({
+                    width: Math.max(50, startWidth + (ev.clientX - startX) / effectiveZoom),
+                    height: Math.max(50, startHeight - dy),
+                  });
+                  setBgTransform(prev => ({ ...prev, y: initY + dy }));
+                };
+                const onUp = () => {
+                  window.removeEventListener("mousemove", onMove);
+                  window.removeEventListener("mouseup", onUp);
+                };
+                window.addEventListener("mousemove", onMove);
+                window.addEventListener("mouseup", onUp);
+              }}
+              style={{ position: "absolute", right: -5, top: -5, width: "14px", height: "14px", cursor: "nesw-resize", background: "rgba(59,130,246,0.8)", zIndex: 20 }}
+            />
+
+            {/* ESQUINA SUPERIOR IZQUIERDA */}
+            <div
+              onMouseDown={(e) => {
+                e.stopPropagation();
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startWidth = bgSize.width;
+                const startHeight = bgSize.height;
+                const initX = bgTransform.x;
+                const initY = bgTransform.y;
+                const onMove = (ev) => {
+                  const dx = (ev.clientX - startX) / effectiveZoom;
+                  const dy = (ev.clientY - startY) / effectiveZoom;
+                  setBgSize({
+                    width: Math.max(50, startWidth - dx),
+                    height: Math.max(50, startHeight - dy),
+                  });
+                  setBgTransform(prev => ({ ...prev, x: initX + dx, y: initY + dy }));
+                };
+                const onUp = () => {
+                  window.removeEventListener("mousemove", onMove);
+                  window.removeEventListener("mouseup", onUp);
+                };
+                window.addEventListener("mousemove", onMove);
+                window.addEventListener("mouseup", onUp);
+              }}
+              style={{ position: "absolute", left: -5, top: -5, width: "14px", height: "14px", cursor: "nwse-resize", background: "rgba(59,130,246,0.8)", zIndex: 20 }}
             />
           </div>
         )}

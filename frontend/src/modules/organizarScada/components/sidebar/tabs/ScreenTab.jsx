@@ -178,7 +178,7 @@ const ScreenTab = ({
       <div className="border-t border-slate-300/60 pt-3">
         <div className="mb-2 flex items-center justify-between">
           <h4 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">
-            Capas
+            Capasssss
           </h4>
           <span className="text-[10px] text-slate-400">{layers.length} elementos</span>
         </div>

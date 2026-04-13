@@ -90,6 +90,10 @@ export default function DraggableBox({
       ].join(" ")}
       size={{ width: size.w, height: size.h }}
       position={{ x: pos.x, y: pos.y }}
+      onMouseDown={(e) => {
+        // 🔥 Evita que el clic se propague al fondo (CanvasEditor)
+        e.stopPropagation();
+      }}
       onDragStop={(_e, d) => {
         setPos({ x: d.x, y: d.y });
         onDragStop?.(id, d.x, d.y);
