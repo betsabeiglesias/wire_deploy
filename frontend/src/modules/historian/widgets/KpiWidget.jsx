@@ -2,37 +2,30 @@
  * KpiWidget.jsx
  *
  * Widget de KPI para el Historian Dashboard.
- * Muestra el último valor, unidad y estadísticas básicas (avg / min / max)
- * para cada tag seleccionado en el rango de tiempo configurado.
- *
- * Props:
- *   config     : Widget
- *   isEditing  : bool
- *   onEdit     : () => void
- *   onDelete   : () => void
+ * Muestra el ultimo valor y estadisticas basicas para cada tag seleccionado.
  */
 import React, { useEffect, useCallback, useState, useMemo } from "react";
 import WidgetShell from "./WidgetShell";
 import { queryHistorian } from "@/services/historianService";
 import { resolveTimeRange } from "./timePresets";
+import { getTagDisplayName, getTagFullLabel } from "../utils/tagPresentation";
 
-/** Calcula estadísticas básicas a partir de un array de filas para un tag dado. */
 function computeStats(rows, equipment_id, variable) {
   const values = rows
     .filter(
-      (r) =>
-        r.equipment_id === equipment_id &&
-        r.variable === variable &&
-        r.value !== null &&
-        r.value !== undefined
+      (row) =>
+        row.equipment_id === equipment_id &&
+        row.variable === variable &&
+        row.value !== null &&
+        row.value !== undefined
     )
-    .map((r) => Number(r.value))
-    .filter((v) => !isNaN(v));
+    .map((row) => Number(row.value))
+    .filter((value) => !Number.isNaN(value));
 
   if (!values.length) return null;
 
   const last = values[values.length - 1];
-  const avg = values.reduce((s, v) => s + v, 0) / values.length;
+  const avg = values.reduce((sum, value) => sum + value, 0) / values.length;
   const min = Math.min(...values);
   const max = Math.max(...values);
 
@@ -49,7 +42,9 @@ function KpiCard({ tag, stats, unit }) {
   if (!stats) {
     return (
       <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-slate-50 border border-slate-100 min-h-[110px]">
-        <span className="text-xs text-slate-400 truncate max-w-full">{tag.variable}</span>
+        <span className="text-xs text-slate-400 truncate max-w-full">
+          {getTagDisplayName(tag)}
+        </span>
         <span className="text-sm text-slate-300 mt-1">Sin datos</span>
       </div>
     );
@@ -57,15 +52,13 @@ function KpiCard({ tag, stats, unit }) {
 
   return (
     <div className="flex flex-col p-4 rounded-xl bg-slate-50 border border-slate-100">
-      {/* Variable */}
       <span
         className="text-[11px] font-medium text-slate-500 truncate mb-1"
-        title={`${tag.equipment_id} · ${tag.variable}`}
+        title={getTagFullLabel(tag)}
       >
-        {tag.variable}
+        {getTagDisplayName(tag)}
       </span>
 
-      {/* Valor principal */}
       <div className="flex items-baseline gap-1.5 mt-0.5">
         <span className="text-3xl font-semibold tracking-tight text-slate-800 tabular-nums">
           {stats.last}
@@ -75,15 +68,14 @@ function KpiCard({ tag, stats, unit }) {
         )}
       </div>
 
-      {/* Stats secundarios */}
       <div className="flex gap-3 mt-3 text-[10px] text-slate-400">
         <span title="Promedio">
           avg <span className="font-semibold text-slate-600">{stats.avg}</span>
         </span>
-        <span title="Mínimo">
+        <span title="Minimo">
           min <span className="font-semibold text-slate-600">{stats.min}</span>
         </span>
-        <span title="Máximo">
+        <span title="Maximo">
           max <span className="font-semibold text-slate-600">{stats.max}</span>
         </span>
         <span className="ml-auto" title="Registros">

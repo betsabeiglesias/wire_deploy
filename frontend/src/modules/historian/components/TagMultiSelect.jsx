@@ -2,6 +2,11 @@
 // Selector multi-tag filtrable. Usa useScadaConfig() igual que DeviceManagerModal.
 import React, { useMemo, useState, useRef, useEffect } from "react";
 import { useScadaConfig } from "@/context/ScadaConfigProvider";
+import {
+  getTagDisplayName,
+  getTagFullLabel,
+  getTagSearchText,
+} from "../utils/tagPresentation";
 
 /**
  * Props:
@@ -14,7 +19,6 @@ export default function TagMultiSelect({ selected = [], onChange }) {
   const [search, setSearch] = useState("");
   const containerRef = useRef(null);
 
-  // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
     const handler = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
@@ -25,29 +29,32 @@ export default function TagMultiSelect({ selected = [], onChange }) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Lista plana de tags disponibles
   const allTags = useMemo(() => {
     if (!config?.tagIndex) return [];
-    return Object.values(config.tagIndex).map((t) => ({
-      equipment_id: [
-          t.site,
-          t.area,
-          t.line,
-          t.cell,
-          t.equipment
-        ].filter(Boolean).join("/"),
-      variable: t.variable,
-      unit: t.unit || "",
-      datatype: t.datatype || "",
-      label: `${t.equipment || t.equipment_id} · ${t.variable}`,
-    }));
+
+    return Object.values(config.tagIndex).map((t) => {
+      const equipment_id = [t.site, t.area, t.line, t.cell, t.equipment]
+        .filter(Boolean)
+        .join("/");
+
+      const tag = {
+        equipment_id,
+        variable: t.variable,
+        unit: t.unit || "",
+        datatype: t.datatype || "",
+      };
+
+      return {
+        ...tag,
+        searchText: getTagSearchText(tag),
+      };
+    });
   }, [config]);
-  console.log(allTags);
-  // Filtrado por búsqueda
+
   const filtered = useMemo(() => {
     if (!search.trim()) return allTags;
     const q = search.toLowerCase();
-    return allTags.filter((t) => t.label.toLowerCase().includes(q));
+    return allTags.filter((tag) => tag.searchText.includes(q));
   }, [allTags, search]);
 
   const isSelected = (tag) =>
@@ -62,9 +69,10 @@ export default function TagMultiSelect({ selected = [], onChange }) {
           (s) => !(s.equipment_id === tag.equipment_id && s.variable === tag.variable)
         )
       );
-    } else {
-      onChange([...selected, { equipment_id: tag.equipment_id, variable: tag.variable }]);
+      return;
     }
+
+    onChange([...selected, { equipment_id: tag.equipment_id, variable: tag.variable }]);
   };
 
   const removeChip = (tag, e) => {
@@ -78,37 +86,41 @@ export default function TagMultiSelect({ selected = [], onChange }) {
 
   return (
     <div ref={containerRef} className="relative w-full">
-      {/* Campo con chips */}
       <div
         className="min-h-[38px] flex flex-wrap gap-1 items-center border border-slate-300 rounded-md px-2 py-1.5 bg-white cursor-text focus-within:border-sky-400 focus-within:ring-1 focus-within:ring-sky-400"
         onClick={() => setOpen(true)}
       >
         {selected.length === 0 && (
           <span className="text-slate-400 text-sm select-none">
-            {loading ? "Cargando tags…" : "Selecciona tags…"}
+            {loading ? "Cargando tags..." : "Selecciona tags..."}
           </span>
         )}
-        {selected.map((s) => (
+
+        {selected.map((tag) => (
           <span
-            key={`${s.equipment_id}|${s.variable}`}
+            key={`${tag.equipment_id}|${tag.variable}`}
             className="flex items-center gap-1 bg-sky-100 text-sky-800 text-xs font-medium px-2 py-0.5 rounded-full"
           >
-            <span className="max-w-[180px] truncate" title={`${s.equipment_id} · ${s.variable}`}>
-              {s.variable}
+            <span className="max-w-[180px] truncate" title={getTagFullLabel(tag)}>
+              {getTagDisplayName(tag)}
             </span>
             <button
               type="button"
-              onClick={(e) => removeChip(s, e)}
+              onClick={(e) => removeChip(tag, e)}
               className="text-sky-500 hover:text-sky-800 leading-none"
             >
-              ×
+              x
             </button>
           </span>
         ))}
+
         {selected.length > 0 && (
           <button
             type="button"
-            onClick={(e) => { e.stopPropagation(); onChange([]); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange([]);
+            }}
             className="ml-auto text-slate-400 hover:text-slate-700 text-xs px-1"
           >
             Limpiar
@@ -116,35 +128,35 @@ export default function TagMultiSelect({ selected = [], onChange }) {
         )}
       </div>
 
-      {/* Dropdown */}
       {open && (
         <div className="absolute z-50 mt-1 w-full bg-white border border-slate-200 rounded-md shadow-lg flex flex-col max-h-72">
-          {/* Búsqueda */}
           <div className="p-2 border-b border-slate-100">
             <input
               autoFocus
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar equipo · variable…"
+              placeholder="Buscar variable..."
               className="w-full text-sm border border-slate-200 rounded px-2 py-1 focus:border-sky-400 focus:outline-none"
             />
           </div>
 
-          {/* Lista */}
           <div className="overflow-y-auto flex-1">
             {loading && (
-              <div className="px-3 py-4 text-xs text-slate-400">Cargando…</div>
+              <div className="px-3 py-4 text-xs text-slate-400">Cargando...</div>
             )}
             {!loading && filtered.length === 0 && (
               <div className="px-3 py-4 text-xs text-slate-400">Sin resultados</div>
             )}
+
             {filtered.map((tag) => {
               const sel = isSelected(tag);
+
               return (
                 <div
                   key={`${tag.equipment_id}|${tag.variable}`}
                   onClick={() => toggle(tag)}
+                  title={getTagFullLabel(tag)}
                   className={[
                     "flex items-center gap-2 px-3 py-2 cursor-pointer text-xs hover:bg-slate-50",
                     sel ? "bg-sky-50" : "",
@@ -160,21 +172,20 @@ export default function TagMultiSelect({ selected = [], onChange }) {
                   >
                     {sel && "✓"}
                   </span>
-                  <span className="flex-1 truncate">
-                    <span className="text-slate-500">{tag.equipment_id}</span>
-                    <span className="mx-1 text-slate-300">·</span>
-                    <span className="font-medium text-slate-800">{tag.variable}</span>
+
+                  <span className="flex-1 truncate font-medium text-slate-800">
+                    <span>{getTagDisplayName(tag)}</span>
                     {tag.unit && (
                       <span className="ml-1 text-slate-400">[{tag.unit}]</span>
                     )}
                   </span>
+
                   <span className="text-slate-300 shrink-0">{tag.datatype}</span>
                 </div>
               );
             })}
           </div>
 
-          {/* Footer con conteo */}
           <div className="px-3 py-1.5 border-t border-slate-100 text-[10px] text-slate-400 flex justify-between">
             <span>{filtered.length} tags disponibles</span>
             <span>{selected.length} seleccionados</span>
