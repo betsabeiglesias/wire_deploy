@@ -15,6 +15,7 @@ const CanvasEditor = ({
   zoom = 1,
   isLiveMode = false,
   layoutId = null,
+  layers = [],
 }) => {
 
   const BASE_WIDTH = 1920;
@@ -145,24 +146,25 @@ const CanvasEditor = ({
         onDrop={!isLiveMode ? handleDrop : undefined}
         onDragOver={!isLiveMode ? (e) => e.preventDefault() : undefined}
         onMouseDown={(e) => {
-          // 1. Si el clic viene de un botón (como el de eliminar) o de un widget, no hacemos nada.
-          // Buscamos si el clic ocurrió dentro de algo que NO sea el fondo.
+          // 1. Si no hay imagen o estamos en modo live, no hacemos nada.
+          if (!backgroundImage || isLiveMode) return;
+
+          // 2. Si el fondo está bloqueado (opcional, si quieres esa función)
+          const bgLayer = (layers || []).find(l => l.data?.settings?.isBackground);
+          if (bgLayer?.isLocked) return;
+
+          // 3. Evitamos mover el fondo si clicamos en un widget o botón
           if (e.target.closest('.box-header') || e.target.closest('button')) {
             return;
           }
 
-          // 2. Si no es un modo edición o no hay imagen, fuera.
-          if (!backgroundImage || isLiveMode) return;
-
-          // 3. Iniciamos el movimiento
+          // 4. Iniciamos el movimiento
           const startX = e.clientX;
           const startY = e.clientY;
-
           const initX = bgTransform.x;
           const initY = bgTransform.y;
 
           const onMove = (ev) => {
-            // Aquí el movimiento es 1:1 con el ratón
             setBgTransform((prev) => ({
               ...prev,
               x: initX + (ev.clientX - startX),
@@ -440,6 +442,12 @@ const CanvasEditor = ({
         {/* ELEMENTOS */}
         {elements.map((el) => {
           const isVisible = el?.data?.settings?.is_visible !== false;
+          
+          // Buscamos si el elemento está bloqueado en el array de capas
+          // IMPORTANTE: Asegúrate de que 'layers' llega como prop a este componente
+          const layerInfo = (layers || []).find(l => String(l.id) === String(el.id));
+          const isLocked = layerInfo?.isLocked === true;
+
           if (!isVisible) return null;
 
           return (
@@ -453,6 +461,7 @@ const CanvasEditor = ({
               data={el.data}
               isSelected={selectedId === el.id}
               isLiveMode={isLiveMode}
+              isLocked={isLocked} 
               onSelect={() => !isLiveMode && onSelect?.(el.id)}
               onDragStop={(id, x, y) => onUpdate?.(id, { x, y })}
               onResizeStop={(id, w, h, x, y) =>
