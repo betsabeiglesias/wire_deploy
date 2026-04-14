@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 const WizardNavigation = ({
   onBack,
   onNext,
-  backTo,     // ⭐ navigation explícita
-  nextTo,     // ⭐ navigation explícita
+  backTo,
+  nextTo,
   nextDisabled = false,
   nextLabel = "Next",
   nextClassName = "",
@@ -22,21 +22,21 @@ const WizardNavigation = ({
   };
 
   return (
-    <div className="mt-6 flex justify-between">
+    <div className="flex justify-between">
       <button
         onClick={handleBack}
-        className="px-6 py-2 rounded bg-gray-300 hover:bg-gray-400 text-gray-800"
+        className="inline-flex items-center justify-center h-8 px-3 text-[12px] font-medium rounded-[4px] border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition-colors"
       >
-        Back
+        Atrás
       </button>
 
       <button
         onClick={handleNext}
         disabled={nextDisabled}
-        className={`px-6 py-2 rounded text-white ${
+        className={`inline-flex items-center justify-center h-8 px-4 text-[12px] font-medium rounded-[4px] transition-colors ${
           nextDisabled
-            ? "bg-gray-400 cursor-not-allowed"
-            : nextClassName || "bg-blue-600 hover:bg-blue-700"
+            ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+            : nextClassName || "bg-[#29468B] hover:bg-[#1F3A73] text-white"
         }`}
       >
         {nextLabel}
