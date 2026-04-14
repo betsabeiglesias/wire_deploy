@@ -14,6 +14,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Search, LayoutGrid, Home } from "lucide-react";
+import HomeButton from "@/components/HomeButton";
 
 /* ── Navegación del left rail ─────────────────────────────────────────────── */
 const RAIL_ITEMS = [
@@ -36,7 +37,7 @@ const RAIL_ITEMS = [
 /* ── Top bar ──────────────────────────────────────────────────────────────── */
 export function HistorianTopBar({ subtitle, rightSlot }) {
   return (
-    <div className="h-[36px] shrink-0 bg-[#29468b] px-4 text-white shadow-sm">
+    <div className="relative h-[36px] shrink-0 bg-[#29468b] px-4 text-white shadow-sm">
       <div className="flex h-full items-center justify-between">
         {/* Izquierda: título + subtítulo */}
         <div className="flex items-center gap-2">
@@ -54,6 +55,7 @@ export function HistorianTopBar({ subtitle, rightSlot }) {
         {/* Derecha: slot de acciones + branding */}
         <div className="flex items-center gap-3">
           {rightSlot}
+          <HomeButton className="static" />
           <span className="text-[14px] font-extrabold tracking-wide text-white/90">
             RDT Wire
           </span>
