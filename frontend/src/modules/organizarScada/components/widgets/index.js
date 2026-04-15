@@ -28,6 +28,10 @@ import miniBubble           from "./definitions/mini-bubble";
 import miniNeedle           from "./definitions/mini-needle";
 import miniLamp             from "./definitions/mini-lamp";
 import miniTable            from "./definitions/mini-table";
+import imageWidget          from "./definitions/image-widget";
+import processValueCard     from "./definitions/process-value-card";
+import processStatusBadge   from "./definitions/process-status-badge";
+import processLevelCard     from "./definitions/process-level-card";
 
 const ALL_DEFINITIONS = [
   tempGauge,
@@ -55,6 +59,10 @@ const ALL_DEFINITIONS = [
   miniNeedle,
   miniLamp,
   miniTable,
+  imageWidget,
+  processValueCard,
+  processStatusBadge,
+  processLevelCard,
 ];
 
 export const WIDGET_REGISTRY = Object.fromEntries(

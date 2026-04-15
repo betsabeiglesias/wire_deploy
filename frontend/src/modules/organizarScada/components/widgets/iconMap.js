@@ -20,16 +20,28 @@ import {
   IconTank,
   IconValve,
   IconFlow,
+  IconPump,
+  IconMotor,
+  IconFan,
+  IconCompressor,
+  IconMixer,
+  IconFilter,
 } from "./icons_ui";
 
 export const ICON_MAP = {
   // ───── PROCESO / MEDIDAS ─────
   gauge: Gauge,                    // gauges circulares
   temperature: IconTemperature,    // temperatura — termómetro industrial
-  flow: IconFlow,                 // caudal — tubería con flechas
-  pressure: IconPressure,           // presión — manómetro analógico
-  tank: IconTank,                // tanque / depósito cilíndrico
-  valve: IconValve,              // válvula — símbolo P&ID
+  flow: IconFlow,                  // caudal — tubería con flechas
+  pressure: IconPressure,          // presión — manómetro analógico
+  tank: IconTank,                  // tanque / depósito cilíndrico
+  valve: IconValve,                // válvula — símbolo P&ID
+  pump: IconPump,                  // bomba centrífuga — símbolo P&ID
+  motor: IconMotor,                // motor eléctrico
+  fan: IconFan,                    // ventilador / extractor
+  compressor: IconCompressor,      // compresor de pistón
+  mixer: IconMixer,                // agitador / mezclador
+  filter: IconFilter,              // filtro — símbolo P&ID
 
   // ───── VISUALIZACIÓN ─────
   chart: LineChart,
