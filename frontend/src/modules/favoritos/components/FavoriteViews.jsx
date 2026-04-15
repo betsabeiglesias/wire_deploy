@@ -24,6 +24,7 @@ import { useLayoutStore } from "@/store/useLayoutStore";
 // UI
 import ViewCard from "@/components/ui/ViewCard";
 
+
 export function FavoriteViews({ title, type, onlyFavorites = true }) {
   const navigate = useNavigate();
   

@@ -167,8 +167,7 @@ const OrganizarScada = () => {
   const handleDeleteSelected = () => { if (!selectedId) return; handleDeleteComponent(selectedId); };
 
   useEffect(() => {
-    if (selectedElement) setShowPropsPanel(true);
-    else setShowPropsPanel(false);
+    if (!selectedElement) setShowPropsPanel(false);
   }, [selectedElement]);
 
   const performPublish = async (nameOverride) => {
@@ -267,7 +266,7 @@ const OrganizarScada = () => {
   const canvasProps = {
     elements:     canvasElements,
     selectedId,
-    onSelect:     (id) => { setSelectedId(id); setIsPropsOpen(true); },
+    onSelect:     (id, openProps = false) => { setSelectedId(id); if (id === null) { setShowPropsPanel(false); } else if (openProps) { setIsPropsOpen(true); setShowPropsPanel(true); } },
     onUpdate:     (id, changes) => handleUpdateComponent(id, changes),
     onDelete:     handleDeleteComponent,
     onDrop:       (event, canvasEl) => handleDropFromSidebar(event, canvasEl, zoom, stageSize),

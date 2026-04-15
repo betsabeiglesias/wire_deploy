@@ -307,6 +307,15 @@ const SidebarPropiedades = ({
               })
             }
           />
+          {isImageWidget && (
+            <div className="flex items-center justify-between mt-2">
+              <FieldLabel>Usar como fondo</FieldLabel>
+              <Toggle
+                checked={currentSettings.isBackground || false}
+                onChange={(val) => updateSettings({ isBackground: val })}
+              />
+            </div>
+          )}
         </div>
       </SectionCard>
     </div>

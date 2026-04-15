@@ -25,7 +25,7 @@ export default function Layout() {
             <section className="px-6 py-6 md:px-8 md:py-8">
               {/* REUTILIZACIÓN: Usamos el componente indicando que queremos TODOS los layouts */}
               <FavoriteViews
-                title="proyectos HMI"
+                title="Proyectos HMI"
                 type="mylayout"
                 onlyFavorites={false}
               />

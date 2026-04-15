@@ -8,11 +8,15 @@ export default function DraggableBox({
   initialX, initialY, initialWidth, initialHeight,
   data, id, theme = "theme-clean",
   isSelected = false, isLiveMode = false,
-  onSelect, onDragStop, onResizeStop, onDelete,
+  onSelect, onDoubleClick, onDragStop, onResizeStop, onDelete,
   isReadOnly = false,
   projectTags = [],
+  scale = 1,
 }) {
   if (!data) return null;
+  if (data.type === "image-widget" && data.settings?.isBackground) {
+  return null;
+  }
 
   const [pos,  setPos]  = useState({ x: initialX, y: initialY });
   const [size, setSize] = useState({ w: initialWidth, h: initialHeight });
@@ -82,7 +86,7 @@ export default function DraggableBox({
   return (
     <Rnd
       className={[
-        "bg-white rounded-lg shadow border",
+        "bg-white rounded-lg shadow border flex flex-col",
         isSelected ? "border-sky-400 shadow-sky-100 shadow-md" : "border-gray-200",
       ].join(" ")}
       size={{ width: size.w, height: size.h }}
@@ -101,10 +105,12 @@ export default function DraggableBox({
       bounds="parent"
       minWidth={50}
       minHeight={50}
+      scale={scale}
       dragHandleClassName="box-header"
       cancel=".widget-content"
       resizeHandleClasses={{ bottomRight: "resize-handle-br" }}
       onClick={() => onSelect?.()}
+      onDoubleClick={() => onDoubleClick?.()}
     >
       {/* Header — drag handle + label + delete */}
       <div className="box-header flex justify-between items-center px-2 py-1 border-b border-gray-200 cursor-grab active:cursor-grabbing">
@@ -113,13 +119,29 @@ export default function DraggableBox({
         </span>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete?.(id); }}
-          className="flex items-center justify-center w-5 h-5 rounded-full text-gray-400 hover:bg-red-100 hover:text-red-600 text-base font-bold shrink-0"
+          className="
+            flex items-center justify-center
+            w-8 h-8
+            -mr-1
+            rounded-full
+            text-gray-400
+            hover:bg-red-100 hover:text-red-600
+            text-lg font-bold
+            shrink-0
+            transition-all duration-150
+            hover:scale-125
+          "
           aria-label="Eliminar"
-        >×</button>
+        >
+          ×
+        </button>
       </div>
 
       {/* Widget — pointer-events none para que los clicks suban al Rnd */}
-      <div className="widget-content" style={{ pointerEvents: "none", height: "calc(100% - 28px)" }}>
+      <div
+        className="widget-content flex-1"
+        style={{ pointerEvents: "none", overflow: "hidden" }}
+      >
         <WidgetLiveWrapper
           data={data}
           width={size.w}
