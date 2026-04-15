@@ -289,13 +289,15 @@ export const useOrganizarScada = () => {
   const handleDropFromSidebar = useCallback(
     (event, canvasEl, zoom = 1, stageSize) => {
       if (!canvasEl) return;
-      const tplRaw = event.dataTransfer.getData("application/x-scada-template");
+      const tplRaw = event.dataTransfer?.getData("application/x-scada-template");
       if (!tplRaw) return;
       event.preventDefault();
       try {
         const tpl = JSON.parse(tplRaw);
         const rect = canvasEl.getBoundingClientRect();
-        const zoomFactor = zoom || 1;
+        // effectiveZoom = rect.width / BASE_WIDTH (canvas transforms include autoZoom)
+        const BASE_WIDTH = 1920;
+        const zoomFactor = rect.width > 0 ? rect.width / BASE_WIDTH : zoom || 1;
         const x = (event.clientX - rect.left) / zoomFactor;
         const y = (event.clientY - rect.top) / zoomFactor;
         const width = Number(tpl.width ?? tpl.data?.width) || 220;

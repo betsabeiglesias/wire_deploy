@@ -96,6 +96,11 @@ export const renderWidget = ({
   demoNow,
 }) => {
   if (!data) return null;
+  console.log("[renderWidget DEBUG]", {
+    type: data?.type,
+    settings: data?.settings,
+    live,
+  });
 
   const settings = data.settings || {};
   const history = valueHistory || [];
@@ -296,6 +301,79 @@ export const renderWidget = ({
     }
 
     /* =========================================================
+      IMAGE / MEDIA WIDGET
+    ========================================================= */
+    case "image-widget":
+    case "image":
+    case "img":
+    case "picture":
+    case "asset-image": {
+      const src =
+        settings.imageBase64 ||
+        live?.value ||
+        settings.src ||
+        settings.url ||
+        settings.image ||
+        settings.path;
+
+      if (!src) {
+        return (
+          <div className="p-2 text-gray-400">
+            Sin imagen
+          </div>
+        );
+      }
+
+      // opcion 1:
+    //   return (
+    //     <div
+    //       style={{
+    //         width: "100%",
+    //         height: "100%",
+    //         display: "flex",
+    //         alignItems: "center",
+    //         justifyContent: "center",
+    //       }}
+    //     >
+    //       <img
+    //         src={src}
+    //         alt={label}
+    //         style={{
+    //           maxWidth: "100%",
+    //           maxHeight: "100%",
+    //           objectFit: "contain",
+    //         }}
+    //       />
+    //     </div>
+    //   );
+    // }
+
+        // opcion 2:
+    return (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <img
+            src={src}
+            alt={label}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+            }}
+          />
+        </div>
+      );
+    }
+
+
+    /* =========================================================
        DEFAULT
     ========================================================= */
     default:
@@ -306,3 +384,4 @@ export const renderWidget = ({
       );
   }
 };
+
