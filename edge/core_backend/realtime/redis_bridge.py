@@ -37,8 +37,24 @@ class RedisStreamBridge:
             decode_responses=True,
         )
 
+    async def _connect_central_with_retry(self, retries=10, delay=2):
+        for i in range(retries):
+            try:
+                await self.central_redis.ping()
+                logger.info("✅ Connected to CENTRAL Redis")
+                return True
+            except Exception as e:
+                logger.warning(f"[Retry {i+1}] Central Redis not ready: {e}")
+                await asyncio.sleep(delay)
+
+        logger.error("❌ Could not connect to CENTRAL Redis after retries")
+        return False
+
     async def run(self):
         logger.info("🟢 RedisStreamBridge started (%s)", self.stream_key)
+
+        # Esperar a Redis central
+        await self._connect_central_with_retry()
 
         while True:
             try:
@@ -67,13 +83,31 @@ class RedisStreamBridge:
         if not raw:
             return
 
-        # reenviar TAL CUAL, pero al Redis central
-        await self.central_redis.xadd(
-            name=f"scada:stream:{self.tenant}",
-            fields={"event": raw},
-        )
+        try:
+            await self.central_redis.xadd(
+                name=f"scada:stream:{self.tenant}",
+                fields={"event": raw},
+            )
 
-        logger.debug("➡️ forwarded event to central (%s)", self.tenant)
+            logger.debug("➡️ forwarded event to central (%s)", self.tenant)
+
+        except Exception as e:
+            logger.warning(f"⚠️ Central Redis unavailable: {e}")
+
+            # 🔥 intento reconexión rápida
+            ok = await self._connect_central_with_retry(retries=3, delay=1)
+
+            if ok:
+                try:
+                    await self.central_redis.xadd(
+                        name=f"scada:stream:{self.tenant}",
+                        fields={"event": raw},
+                    )
+                    logger.info("✅ Recovered connection to CENTRAL Redis")
+                except Exception:
+                    logger.error("❌ Failed again after retry → dropping event")
+            else:
+                logger.error("❌ Central Redis still down → dropping event")
 
 
 async def main():

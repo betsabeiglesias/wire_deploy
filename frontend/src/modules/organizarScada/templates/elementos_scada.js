@@ -549,8 +549,85 @@ export const elementos_scada = {
     },
   ],
   minis: [
-   
-   {
+    {
+      id: "tpl-mini-ring",
+      title: "Ring Gauge",
+      icon: "gauge",
+      thumbnailType: "preview",
+      data: {
+        type: "mini-ring",
+        width: 120,
+        height: 120,
+        label: "Variable",
+        settings: { min: 0, max: 100, initialValue: 65, unit: "%" },
+      },
+    },
+    {
+      id: "tpl-mini-needle",
+      title: "Aguja",
+      icon: "gauge",
+      thumbnailType: "preview",
+      data: {
+        type: "mini-needle",
+        width: 120,
+        height: 120,
+        label: "Variable",
+        settings: { min: 0, max: 100, initialValue: 40, unit: "%" },
+      },
+    },
+    {
+      id: "tpl-mini-donut",
+      title: "Donut Gauge",
+      icon: "gauge",
+      thumbnailType: "preview",
+      data: {
+        type: "mini-donut",
+        width: 120,
+        height: 120,
+        label: "Variable",
+        settings: { min: 0, max: 100, initialValue: 75, unit: "%" },
+      },
+    },
+    {
+      id: "tpl-mini-horizontal",
+      title: "Barra Horizontal",
+      icon: "gauge",
+      thumbnailType: "preview",
+      data: {
+        type: "mini-horizontal",
+        width: 160,
+        height: 60,
+        label: "Carga",
+        settings: { min: 0, max: 100, initialValue: 55, unit: "%" },
+      },
+    },
+    {
+      id: "tpl-mini-bubble",
+      title: "Burbuja de Valor",
+      icon: "gauge",
+      thumbnailType: "preview",
+      data: {
+        type: "mini-bubble",
+        width: 100,
+        height: 100,
+        label: "Valor",
+        settings: { initialValue: 42, unit: "kW" },
+      },
+    },
+    {
+      id: "tpl-mini-lamp",
+      title: "Lámpara Boolean",
+      icon: "status_ok",
+      thumbnailType: "preview",
+      data: {
+        type: "mini-lamp",
+        width: 80,
+        height: 80,
+        label: "Estado",
+        settings: { initialValue: true },
+      },
+    },
+    {
       id: "tpl-mini-table",
       title: "Mini Table",
            icon: "table",

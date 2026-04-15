@@ -9,7 +9,7 @@
  *   onSave   : (widgetConfig) => void
  *   onCancel : () => void
  */
-import React, { useState } from "react";
+import { useState } from "react";
 import { X, BarChart2, Table2, Activity } from "lucide-react";
 import TagMultiSelect from "../components/TagMultiSelect";
 import DateRangePicker from "../components/DateRangePicker";
@@ -21,16 +21,8 @@ const TYPE_OPTIONS = [
   { value: "kpi",   label: "KPI / Último valor",  icon: Activity },
 ];
 
-const LIMIT_OPTIONS = [1000, 5000, 10000, 25000, 50000];
+const LIMIT_OPTIONS = [10, 50, 100, 500, 1000, 5000];
 
-function now() {
-  const d = new Date();
-  const pad = (n) => String(n).padStart(2, "0");
-  return (
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
-    `T${pad(d.getHours())}:${pad(d.getMinutes())}`
-  );
-}
 
 const DEFAULT_WIDGET = {
   type: "chart",

@@ -187,7 +187,7 @@ export default function HistorianPage() {
                 onChange={(e) => setLimit(Number(e.target.value))}
                 className="w-full rounded-[4px] border border-slate-300 px-2 py-1.5 text-[12px] focus:border-[#29468b] focus:outline-none"
               >
-                {[1000, 5000, 10000, 25000, 50000].map((v) => (
+                {[10, 50, 100, 500, 1000, 5000, 10000, 25000, 50000].map((v) => (
                   <option key={v} value={v}>
                     {v.toLocaleString()} registros
                   </option>
@@ -211,12 +211,12 @@ export default function HistorianPage() {
               </div>
             )}
 
-            {/* Resultado truncado */}
+            {/* Resultado truncado
             {result?.truncated && (
               <div className="rounded-[4px] border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-700">
                 Resultado truncado — ajusta el rango o el límite.
               </div>
-            )}
+            )} */}
 
             {/* Separador hacia Dashboards */}
             <div className="mt-auto border-t border-slate-200 pt-3">

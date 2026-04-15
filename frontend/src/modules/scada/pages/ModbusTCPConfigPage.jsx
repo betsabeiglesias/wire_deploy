@@ -1,164 +1,116 @@
-// docker-suite/frontend/src/modules/scada/pages/ModbusTCPConfigPage.jsx
+// frontend/src/modules/scada/pages/ModbusTCPConfigPage.jsx
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import WizardNavigation from "../components/WizardNavigationButton";
+
+const inputCls  = "h-8 w-full px-2 text-[12px] border border-slate-300 rounded-[4px] outline-none text-slate-700 placeholder:text-slate-400 bg-white focus:border-[#29468B] focus:ring-1 focus:ring-[#29468B]/20 disabled:bg-slate-50 disabled:text-slate-400 transition-colors";
+const selectCls = "h-8 w-full px-2 text-[12px] border border-slate-300 rounded-[4px] outline-none text-slate-700 bg-white focus:border-[#29468B] transition-colors";
+const labelCls  = "text-[10px] font-semibold uppercase tracking-[0.05em] text-slate-600";
+const hintCls   = "text-[11px] text-slate-400 mt-0.5";
+const panelCls  = "rounded-[4px] border border-slate-200 bg-white p-3 flex flex-col gap-3";
+const secTitleCls = "text-[10px] font-semibold uppercase tracking-[0.05em] text-slate-600 mb-1";
 
 const ModbusTCPConfigPage = () => {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({
-    name: "",
-    description: "",
-    enabled: false,
-
-    // Connection
-    host: "",
-    port: 502,
-    poll_rate_ms: 500,
-
-    // Default Modbus format for all items
-    byte_order: "big",
-    word_order: "little",
+    name: "", description: "", enabled: false,
+    host: "", port: 502, poll_rate_ms: 500,
+    byte_order: "big", word_order: "little",
   });
 
-  const update = (field, value) => {
-    setForm(prev => ({ ...prev, [field]: value }));
-  };
+  const update = (field, value) => setForm((prev) => ({ ...prev, [field]: value }));
 
-  const handleNext = () => {
-    console.log("Modbus TCP config:", form);
+  const handleNext = () =>
     navigate("/devices/new/isa95", { state: { from: "modbus", connection: form } });
-  };
 
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-semibold mb-6">Configure Modbus TCP Device</h1>
+    <div className="flex flex-col h-full bg-[#EFEFEF] overflow-hidden">
 
-      {/* GENERAL */}
-      <div className="border rounded bg-gray-100 px-4 py-3 mb-6">
-        <h2 className="text-xl font-semibold mb-2">General</h2>
+      {/* Header */}
+      <div className="px-3 py-2 bg-white border-b border-slate-200">
+        <h1 className="text-[10px] font-semibold uppercase tracking-[0.05em] text-slate-600">
+          Configurar dispositivo Modbus TCP
+        </h1>
+      </div>
 
-        <p className="text-sm text-gray-600 mb-4">
-          The <strong>technical identifier</strong> should be unique and independent from ISA-95 structure.
-        </p>
+      <div className="flex-1 overflow-auto p-4">
+        <div className="max-w-2xl mx-auto flex flex-col gap-3">
 
-        {/* Name */}
-        <div className="mb-3">
-          <label className="block text-sm font-medium">Name (Technical Identifier)</label>
-          <input
-            value={form.name}
-            onChange={(e) => update("name", e.target.value)}
-            className="w-full border p-2 rounded"
-            placeholder="ModbusPLC01"
-          />
-        </div>
+          {/* GENERAL */}
+          <section className={panelCls}>
+            <h2 className={secTitleCls}>General</h2>
+            <p className="text-[11px] text-slate-500">
+              El <strong>identificador técnico</strong> debe ser único e independiente de la estructura ISA-95.
+            </p>
+            <div className="flex flex-col gap-1">
+              <label className={labelCls}>Nombre *</label>
+              <input value={form.name} onChange={(e) => update("name", e.target.value)} className={inputCls} placeholder="ModbusPLC01" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className={labelCls}>Descripción</label>
+              <input value={form.description} onChange={(e) => update("description", e.target.value)} className={inputCls} placeholder="Power meter on line 1" />
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={form.enabled} onChange={(e) => update("enabled", e.target.checked)} className="w-4 h-4 accent-[#29468B]" />
+              <span className="text-[12px] text-slate-700">Habilitado</span>
+            </label>
+          </section>
 
-        {/* Description */}
-        <div className="mb-3">
-          <label className="block text-sm font-medium">Description</label>
-          <input
-            value={form.description}
-            onChange={(e) => update("description", e.target.value)}
-            className="w-full border p-2 rounded"
-            placeholder="Power meter on line 1"
-          />
-        </div>
+          {/* CONNECTION */}
+          <section className={panelCls}>
+            <h2 className={secTitleCls}>Conexión</h2>
+            <div className="flex flex-col gap-1">
+              <label className={labelCls}>Host / IP *</label>
+              <input value={form.host} onChange={(e) => update("host", e.target.value)} className={inputCls} placeholder="192.168.100.94" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className={labelCls}>Puerto</label>
+                <input type="number" value={form.port} onChange={(e) => update("port", Number(e.target.value))} className={inputCls} />
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className={labelCls}>Poll rate (ms)</label>
+                <input type="number" value={form.poll_rate_ms} onChange={(e) => update("poll_rate_ms", Number(e.target.value))} className={inputCls} />
+              </div>
+            </div>
+          </section>
 
-        <div className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={form.enabled}
-            onChange={(e) => update("enabled", e.target.checked)}
-          />
-          <label className="text-sm">Enabled</label>
+          {/* FORMAT */}
+          <section className={panelCls}>
+            <h2 className={secTitleCls}>Formato Modbus por defecto</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className={labelCls}>Orden de bytes</label>
+                <select value={form.byte_order} onChange={(e) => update("byte_order", e.target.value)} className={selectCls}>
+                  <option value="big">Big Endian</option>
+                  <option value="little">Little Endian</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className={labelCls}>Orden de palabras</label>
+                <select value={form.word_order} onChange={(e) => update("word_order", e.target.value)} className={selectCls}>
+                  <option value="big">Big Endian</option>
+                  <option value="little">Little Endian</option>
+                </select>
+              </div>
+            </div>
+            <span className={hintCls}>Aplica globalmente. Cada ítem puede sobreescribir el formato.</span>
+          </section>
         </div>
       </div>
 
-      {/* CONNECTION */}
-      <div className="border rounded bg-gray-100 px-4 py-3 mb-6">
-        <h2 className="text-xl font-semibold mb-2">Connection</h2>
-
-        {/* Host */}
-        <div className="mb-3">
-          <label className="block text-sm font-medium">Host / IP</label>
-          <input
-            value={form.host}
-            onChange={(e) => update("host", e.target.value)}
-            className="w-full border p-2 rounded"
-            placeholder="192.168.100.94"
-          />
-        </div>
-
-        {/* Port */}
-        <div className="mb-3">
-          <label className="block text-sm font-medium">Port</label>
-          <input
-            type="number"
-            value={form.port}
-            onChange={(e) => update("port", Number(e.target.value))}
-            className="w-full border p-2 rounded"
-          />
-        </div>
-
-        {/* Poll rate */}
-        <div className="mb-3">
-          <label className="block text-sm font-medium">Poll rate (ms)</label>
-          <input
-            type="number"
-            value={form.poll_rate_ms}
-            onChange={(e) => update("poll_rate_ms", Number(e.target.value))}
-            className="w-full border p-2 rounded"
+      <div className="px-4 py-3 bg-white border-t border-slate-200">
+        <div className="max-w-2xl mx-auto">
+          <WizardNavigation
+            onBack={() => navigate("/devices/new")}
+            onNext={handleNext}
+            nextDisabled={form.name.trim() === "" || form.host.trim() === ""}
+            nextLabel="Continuar"
           />
         </div>
       </div>
-
-      {/* MODBUS FORMAT */}
-      <div className="border rounded bg-gray-100 px-4 py-3 mb-6">
-        <h2 className="text-xl font-semibold mb-2">Default Modbus Format</h2>
-
-        <div className="grid grid-cols-2 gap-4">
-          {/* Byte order */}
-          <div>
-            <label className="block text-sm font-medium">Byte Order</label>
-            <select
-              value={form.byte_order}
-              onChange={(e) => update("byte_order", e.target.value)}
-              className="w-full border p-2 rounded"
-            >
-              <option value="big">Big Endian</option>
-              <option value="little">Little Endian</option>
-            </select>
-          </div>
-
-          {/* Word order */}
-          <div>
-            <label className="block text-sm font-medium">Word Order</label>
-            <select
-              value={form.word_order}
-              onChange={(e) => update("word_order", e.target.value)}
-              className="w-full border p-2 rounded"
-            >
-              <option value="big">Big Endian</option>
-              <option value="little">Little Endian</option>
-            </select>
-          </div>
-        </div>
-
-        <p className="text-xs text-gray-600 mt-2">
-          These settings apply globally. Items may override format individually.
-        </p>
-      </div>
-
-      {/* WIZARD BUTTONS */}
-      <WizardNavigation
-        onBack={() => navigate("/devices/new")}
-        onNext={handleNext}
-        nextDisabled={
-          form.name.trim() === "" ||
-          form.host.trim() === ""
-        }
-      />
     </div>
   );
 };

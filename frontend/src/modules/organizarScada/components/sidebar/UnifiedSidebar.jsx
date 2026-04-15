@@ -33,29 +33,36 @@ const SIDEBAR_ITEMS = [
 // ─── Sub-components (puro layout, sin lógica de dominio) ────────────────────────
 
 const SidebarRail = ({ items, activeSection, onSelect }) => (
-  <div className="w-12 bg-slate-900 flex flex-col items-center py-2 gap-1">
-	{items.map((item) => {
-	  const { Icon } = item;
-	  const isActive = activeSection === item.id;
-	  return (
-		<button
-		  key={item.id}
-		  title={item.label}
-		  onClick={() => onSelect(item.id)}
-		  className={`
-			w-10 h-10 flex items-center justify-center rounded-md
-			cursor-pointer
-			transition-all duration-150
-			hover:scale-105 active:scale-95
-			${isActive
-			  ? "bg-sky-500 text-white shadow"
-			  : "text-slate-400 hover:bg-slate-700 hover:text-white"}
-		  `}
-		>
-		  <Icon className="w-5 h-5" />
-		</button>
-	  );
-	})}
+  <div className="w-16 bg-slate-900 flex flex-col items-center py-2 gap-1">
+    {items.map((item) => {
+      const { Icon } = item;
+      const isActive = activeSection === item.id;
+
+      return (
+        <button
+          key={item.id}
+          onClick={() => onSelect(item.id)}
+          className={`
+            w-full
+            flex flex-col items-center justify-center
+            py-2
+            rounded-md
+            transition-all duration-150
+            hover:scale-105 active:scale-95
+
+            ${isActive
+              ? "bg-sky-500 text-white shadow"
+              : "text-slate-400 hover:bg-slate-700 hover:text-white"}
+          `}
+        >
+          <Icon className="w-5 h-5" />
+
+          <span className="text-[8px] leading-none text-center mt-1 w-full px-1 whitespace-nowrap overflow-hidden text-ellipsis">
+            {item.label}
+          </span>
+        </button>
+      );
+    })}
   </div>
 );
 
@@ -73,16 +80,16 @@ const SidebarPanel = ({
   if (!activeSection) return null;
 
   return (
-	<div className="w-72 bg-slate-100/90 backdrop-blur border-r border-slate-300/60 flex flex-col shadow-sm">
+	<div className="w-72 h-full min-h-0 overflow-hidden bg-slate-100/90 backdrop-blur border-r border-slate-300/60 flex flex-col shadow-sm">
 	  {/* Header */}
-	  <div className="h-10 px-3 flex items-center justify-between border-b bg-slate-200/60">
+	  <div className="h-10 shrink-0 px-3 flex items-center justify-between border-b bg-slate-200/60">
 		<span className="text-xs font-semibold text-slate-700 capitalize">
 		  {activeSection}
 		</span>
 	  </div>
 
 	  {/* Proyecto */}
-	  <div className="p-3 border-b border-slate-300/60 bg-slate-100/70 backdrop-blur-md">
+	  <div className="shrink-0 p-3 border-b border-slate-300/60 bg-slate-100/70 backdrop-blur-md">
 		<div
 		  onClick={() => !isEditingProjectName && setIsEditingProjectName(true)}
 		  className="flex flex-col gap-1 px-3 py-2 rounded-md hover:bg-slate-200/60 transition cursor-pointer group"
@@ -119,7 +126,7 @@ const SidebarPanel = ({
 	  </div>
 
 	  {/* Contenido (tab) */}
-	  <div className="flex-1 overflow-y-auto p-3 animate-fadeIn">
+	  <div className="flex-1 min-h-0 overflow-y-auto p-3 animate-fadeIn">
 		{children}
 	  </div>
 	</div>
@@ -287,7 +294,7 @@ const UnifiedSidebar = ({
   // ── Shell ─────────────────────────────────────────────────────────────────
   return (
 	<>
-	  <div className="flex h-full">
+	  <div className="flex h-full min-h-0 overflow-hidden">
 		{/* ── RAIL (siempre visible) ─────────────────────────────────────── */}
 		<SidebarRail
 		  items={SIDEBAR_ITEMS}
@@ -299,7 +306,7 @@ const UnifiedSidebar = ({
 		{visibleSection && (
 		  <div
 			className={`
-			  w-72 relative
+			  w-72 h-full min-h-0 relative
 			  transition-all duration-200 ease-out
 			  ${activeSection
 				? "opacity-100 translate-x-0 scale-100"

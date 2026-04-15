@@ -1,114 +1,9 @@
-.gateway-container {
-  padding: 30px;
-  background-color: #f5f7fa;
-  color: #1f2937;
-  font-family: "Inter", sans-serif;
-  min-height: 100vh;
-  text-align: center;
-}
+/*
+  gateway.css — Solo estilos de componentes gauge/SVG.
+  Layout, tabla, filtros y badges están en Tailwind (Communications.jsx / GatewayTable.jsx).
+*/
 
-.gateway-title {
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin-bottom: 15px;
-}
-
-.gateway-status {
-  margin: 10px 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  font-weight: 500;
-}
-
-.status-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.status-dot.connected {
-  background-color: #22c55e; /* verde */
-}
-.status-dot.disconnected {
-  background-color: #f97316; /* naranja */
-}
-
-.level-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin: 20px 0;
-}
-
-.level-buttons button {
-  background-color: #0078d7;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 10px 20px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.level-buttons button:hover {
-  background-color: #005fa3;
-  transform: translateY(-2px);
-}
-
-.breadcrumb {
-  margin: 15px 0;
-  font-size: 0.95rem;
-  color: #4b5563;
-}
-
-.breadcrumb span {
-  color: #0078d7;
-  font-weight: 500;
-}
-
-.gateway-table {
-  width: 90%;
-  margin: 25px auto;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-  border: 1px solid #ddd;
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.gateway-table th,
-.gateway-table td {
-  border: 1px solid #e5e7eb;
-  padding: 10px 14px;
-  text-align: left;
-}
-
-.gateway-table th {
-  background-color: #e0e7ff;
-  font-weight: 600;
-}
-
-.gateway-table tr:nth-child(even) {
-  background-color: #f9fafb;
-}
-
-
-select {
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-family: inherit;
-  font-size: 0.9rem;
-  background-color: white;
-}
-
-
-/* ----- Estilos compactos para los mini gauges ----- */
+/* ── Grid de tarjetas de gauge ─────────────────────────────────── */
 
 .gauge-grid {
   display: grid;
@@ -126,7 +21,6 @@ select {
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* gap: 12px; */
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
   min-height: 150px;
 }
@@ -161,6 +55,8 @@ select {
   align-items: center;
   gap: 8px;
 }
+
+/* ── Ring gauge ─────────────────────────────────────────────────── */
 
 .ring-gauge {
   position: relative;
@@ -207,6 +103,8 @@ select {
   font-size: 0.85rem;
   color: #94a3b8;
 }
+
+/* ── Needle gauge ───────────────────────────────────────────────── */
 
 .needle-gauge {
   display: flex;
@@ -266,6 +164,8 @@ select {
   color: #6b7280;
 }
 
+/* ── KW shield gauge ────────────────────────────────────────────── */
+
 .kw-card {
   width: 100%;
   padding: 12px 16px;
@@ -296,11 +196,6 @@ select {
   height: 26px;
 }
 
-.kw-value {
-  font-size: 1.8rem;
-  font-weight: 700;
-}
-
 .kw-meta {
   display: flex;
   flex-direction: column;
@@ -312,6 +207,11 @@ select {
   align-items: baseline;
   gap: 6px;
   font-weight: 600;
+}
+
+.kw-value {
+  font-size: 1.8rem;
+  font-weight: 700;
 }
 
 .kw-unit {
@@ -326,6 +226,8 @@ select {
   opacity: 0.85;
 }
 
+/* ── Press trend gauge ──────────────────────────────────────────── */
+
 .press-card {
   width: 100%;
   padding: 12px 16px;
@@ -336,7 +238,7 @@ select {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin: 1rem 0 0 0 ;
+  margin: 1rem 0 0 0;
 }
 
 .press-header {
@@ -359,6 +261,33 @@ select {
   color: #dc2626;
 }
 
+.press-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.press-value span {
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+.press-chart {
+  width: 100%;
+  height: 45px;
+}
+
+.press-chart path {
+  fill: none;
+  stroke: #2563eb;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* ── Horizontal bar ─────────────────────────────────────────────── */
 
 .horizontal-gauge .mini-bar-track {
   width: 100%;
@@ -383,6 +312,8 @@ select {
   color: #4b5563;
   text-align: center;
 }
+
+/* ── Donut gauge ────────────────────────────────────────────────── */
 
 .donut-gauge {
   position: relative;
@@ -422,6 +353,8 @@ select {
   font-size: 1rem;
 }
 
+/* ── Boolean lamp ───────────────────────────────────────────────── */
+
 .boolean-lamp .lamp {
   width: 54px;
   height: 54px;
@@ -437,6 +370,8 @@ select {
 .boolean-lamp .lamp.off {
   background: radial-gradient(circle at 30% 30%, #fda4a4, #dc2626);
 }
+
+/* ── Value bubble ───────────────────────────────────────────────── */
 
 .value-bubble .bubble-body {
   width: 80px;
@@ -457,62 +392,4 @@ select {
 .value-bubble .bubble-body span {
   font-size: 0.75rem;
   opacity: 0.9;
-}
-
-.gauge-empty {
-  width: 100%;
-  text-align: center;
-  font-weight: 600;
-  color: #94a3b8;
-  padding: 30px 0;
-}
-
-.press-card {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 16px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.press-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  color: #475569;
-  text-transform: capitalize;
-}
-.press-trend {
-  font-weight: 600;
-}
-.press-trend.up {
-  color: #16a34a;
-}
-.press-trend.down {
-  color: #dc2626;
-}
-.press-value {
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #0f172a;
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-.press-value span {
-  font-size: 0.9rem;
-  color: #94a3b8;
-}
-.press-chart {
-  width: 100%;
-  height: 45px;
-}
-.press-chart path {
-  fill: none;
-  stroke: #2563eb;
-  stroke-width: 3;
-  stroke-linecap: round;
 }
