@@ -1,23 +1,31 @@
 // historian/components/TimeSeriesChart.jsx
-// Gráfico de series temporales usando ApexCharts (react-apexcharts ya instalado).
+// Grafico de series temporales usando ApexCharts.
 import React, { useMemo } from "react";
 import ReactApexChart from "react-apexcharts";
+import { getTagDisplayName } from "../utils/tagPresentation";
 
 const COLORS = [
-  "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
-  "#06b6d4", "#f97316", "#84cc16", "#ec4899", "#14b8a6",
+  "#3b82f6",
+  "#10b981",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#06b6d4",
+  "#f97316",
+  "#84cc16",
+  "#ec4899",
+  "#14b8a6",
 ];
 
 /**
  * Props:
  *   rows     : Array<{timestamp, equipment_id, variable, value, unit}>
- *   tags     : [{equipment_id, variable}]  — para mantener el orden de series
+ *   tags     : [{equipment_id, variable}] para mantener el orden de series
  */
 export default function TimeSeriesChart({ rows = [], tags = [] }) {
   const series = useMemo(() => {
     if (!rows.length || !tags.length) return [];
 
-    // Agrupar por clave
     const grouped = {};
     for (const row of rows) {
       const key = `${row.equipment_id}|${row.variable}`;
@@ -29,11 +37,11 @@ export default function TimeSeriesChart({ rows = [], tags = [] }) {
     }
 
     return tags
-      .map((t) => {
-        const key = `${t.equipment_id}|${t.variable}`;
+      .map((tag) => {
+        const key = `${tag.equipment_id}|${tag.variable}`;
         const data = grouped[key];
         if (!data || !data.length) return null;
-        return { name: `${t.equipment_id} · ${t.variable}`, data };
+        return { name: getTagDisplayName(tag), data };
       })
       .filter(Boolean);
   }, [rows, tags]);
@@ -71,7 +79,7 @@ export default function TimeSeriesChart({ rows = [], tags = [] }) {
   if (!tags.length) {
     return (
       <div className="flex items-center justify-center h-48 text-sm text-slate-400">
-        Selecciona al menos un tag para visualizar el gráfico.
+        Selecciona al menos un tag para visualizar el grafico.
       </div>
     );
   }

@@ -1,10 +1,10 @@
 import React from "react";
-import { FolderKanban, Network, PanelsTopLeft } from "lucide-react";
+import { FolderKanban, Network, PanelsTopLeft, SlidersHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../sidebar/Sidebar";
 import Card from "../../../components/ui/Card";
 import Header from "../../../components/ui/Header";
-import { Activity, ChartColumnBig, MapPinned, MonitorCog } from "lucide-react";
+import { Activity } from "lucide-react";
 
 const HmiPage = () => {
   const navigate = useNavigate();
@@ -37,6 +37,15 @@ const HmiPage = () => {
       route: "/layout",
       variant: "operation",
     },
+    {
+      title: "Configurar comunicaciones",
+      description:
+        "Define dispositivos, enlaces y parámetros de comunicación para preparar la conectividad de la capa operativa.",
+      icon: SlidersHorizontal,
+      eyebrow: "Configuración",
+      route: "/devices",
+      variant: "operation",
+    },
   ];
 
   return (
@@ -45,17 +54,13 @@ const HmiPage = () => {
 
       <main className="flex-1 overflow-y-auto bg-[#f7f7f8]">
         <div className="min-h-full px-4 py-4 md:px-6 md:py-6">
-          {/* Contenedor Principal Estilizado */}
           <div className="overflow-hidden rounded-[30px] border border-[#ececee] bg-[#fbfbfc] shadow-[0_24px_70px_-42px_rgba(31,41,55,0.12)]">
-            {/* Cabecera / Hero Section */}
             <Header
               badgeText="Scada"
               title="Organiza la operación"
               highlightText="desde una sola vista"
               icon={Activity}
             />
-
-            {/* Grid de Módulos */}
             <section className="px-6 py-6 md:px-8 md:py-8">
               <div className="grid gap-6 lg:grid-cols-3">
                 {modules.map((item) => (

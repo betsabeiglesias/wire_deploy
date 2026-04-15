@@ -18,7 +18,6 @@ import { NeedleGauge } from "../components/gauges/NeedleGauge";
 import { Filters } from "../components/Filters";
 import { GatewayTable } from "../components/GatewayTable";
 import Button from "../../../components/Button";
-import ConfigurarComunicacionesButton from "../components/ConfigurarComunicacionesButton";
 
 import { useRealtime } from "@/context/RealtimeProvider";
 import HomeButton from "../../../components/HomeButton";
@@ -215,8 +214,6 @@ export default function Communications() {
           para que el botón 'absolute' se pegue al borde derecho de la pantalla
       */}
       <div className="relative mb-4 w-full flex items-center justify-start">
-        <ConfigurarComunicacionesButton />
-        
         <div className="absolute right-0 top-0">
           <HomeButton/>
         </div>
