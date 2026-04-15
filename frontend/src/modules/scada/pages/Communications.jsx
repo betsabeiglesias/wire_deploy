@@ -2,8 +2,9 @@
 
 import "@/styles/gateway.css";
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { parseNumericValue, formatNumericValue, clampPercent } from "../utils";
-import { Filter, Wifi, WifiOff, Clock } from "lucide-react";
+import { Filter, Wifi, WifiOff, Clock, ArrowLeft } from "lucide-react";
 
 // Gauges
 import { RingGauge } from "../components/gauges/RingGauge";
@@ -19,9 +20,9 @@ import { Filters } from "../components/Filters";
 import { GatewayTable } from "../components/GatewayTable";
 
 import { useRealtime } from "@/context/RealtimeProvider";
-import HomeButton from "../../../components/HomeButton";
 
 export default function Communications() {
+  const navigate = useNavigate();
   const { connected, dataStale, allTags } = useRealtime();
 
   const [filters, setFilters] = useState({
@@ -182,7 +183,13 @@ export default function Communications() {
           </h1>
           {connectionBadge}
         </div>
-        <HomeButton />
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1 h-8 px-3 text-[11px] font-medium border border-slate-300 bg-white text-slate-700 rounded-[4px] hover:border-slate-400 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Atrás
+        </button>
       </div>
 
       {/* ── Filtros ISA-95 ──────────────────────────────────────────── */}

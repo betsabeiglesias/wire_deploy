@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { getPLCs, deletePLC, togglePLC } from "../api/plcApi";
 import { useRealtimeData } from "../../../hooks/useRealtimeData";
 import Swal from "sweetalert2";
-import { Plus, Pencil, Trash2, Search, Activity, CheckCircle2, XCircle, Clock, WifiOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Activity, CheckCircle2, XCircle, Clock, WifiOff, ArrowLeft } from "lucide-react";
 
 const statusConfig = {
   connected:         { label: "Conectado",       cls: "bg-[#EDF8EF] text-[#2A8B4B]",  icon: CheckCircle2 },
@@ -146,6 +146,13 @@ const DevicesPage = () => {
           <button onClick={() => navigate("/devices/new")} className={btnPrimary}>
             <Plus className="h-4 w-4" aria-hidden="true" />
             Nuevo dispositivo
+          </button>
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-1 h-8 px-3 text-[11px] font-medium border border-slate-300 bg-white text-slate-700 rounded-[4px] hover:border-slate-400 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Atrás
           </button>
         </div>
       </div>
