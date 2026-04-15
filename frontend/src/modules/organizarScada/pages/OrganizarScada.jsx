@@ -1,4 +1,6 @@
 // Contenedor orquestador del editor SCADA con vistas múltiples y publicación.
+import "@/styles/gateway.css";
+import "@/styles/Scada.css";
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import UnifiedSidebar from "../components/sidebar/UnifiedSidebar";

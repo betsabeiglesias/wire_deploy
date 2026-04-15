@@ -1,18 +1,18 @@
-// frontend/src/modules/scada/pages/PLCTagsPage.jsx
+// frontend/src/modules/scada/pages/TagsPLCPage.jsx
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getPLC } from "../api/plcApi";
-import Swal from "sweetalert2";
-import { deleteTag, toggleTag } from "../api/plcApi";
+import { getPLC, deleteTag, toggleTag } from "../api/plcApi";
 import { markConfigDirty } from "../../../utils/configUtils";
+import Swal from "sweetalert2";
 import WizardNavigation from "../components/WizardNavigationButton";
+import { Pencil, Trash2, Plus } from "lucide-react";
 
 export default function PLCTagsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [plc, setPlc] = useState(null);
+  const [plc, setPlc]         = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,190 +29,180 @@ export default function PLCTagsPage() {
     loadPLC();
   }, [id]);
 
-  // ========================================
-  // 🔥 HANDLE DELETE TAG
-  // ========================================
   async function handleDelete(tagId) {
     const confirm = await Swal.fire({
-      title: "Delete variable?",
-      text: "This action cannot be undone.",
+      title: "¿Eliminar variable?",
+      text: "Esta acción no se puede deshacer.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d33",
-      confirmButtonText: "Delete",
+      confirmButtonColor: "#dc2626",
+      confirmButtonText: "Eliminar",
     });
-
     if (!confirm.isConfirmed) return;
-
     try {
       await deleteTag(id, tagId);
-
-      Swal.fire({
-        icon: "success",
-        title: "Variable deleted",
-        timer: 1200,
-        showConfirmButton: false
-      });
-
-      // Recargar PLC
+      Swal.fire({ icon: "success", title: "Variable eliminada", timer: 1200, showConfirmButton: false });
       const updated = await getPLC(id);
       setPlc(updated);
-
-      // 🔥 Marcar configuración como sucia
       markConfigDirty();
-
     } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Error deleting variable",
-        text: err.message || "Unknown error"
-      });
+      Swal.fire({ icon: "error", title: "Error al eliminar variable", text: err.message || "Error desconocido" });
     }
   }
 
-  // ========================================
-  // 🔥 HANDLE TOGGLE TAG ENABLED
-  // ========================================
   async function handleToggleTag(tagId, currentState) {
-     try {
+    try {
       await toggleTag(id, tagId, !currentState);
-
-      // Recargar PLC para mostrar cambios
       const updated = await getPLC(id);
       setPlc(updated);
-
-      // 🔥 Marcar configuración como sucia
       markConfigDirty();
-
-      // Feedback visual rápido
-      Swal.fire({
-        icon: "success",
-        title: currentState ? "Tag disabled" : "Tag enabled",
-        timer: 800,
-        showConfirmButton: false,
-        toast: true,
-        position: 'top-end'
-      });
-
+      Swal.fire({ icon: "success", title: currentState ? "Tag deshabilitado" : "Tag habilitado", timer: 800, showConfirmButton: false, toast: true, position: "top-end" });
     } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Error toggling tag",
-        text: err.message || "Unknown error"
-      });
+      Swal.fire({ icon: "error", title: "Error al cambiar estado del tag", text: err.message || "Error desconocido" });
     }
   }
 
-  if (loading) return <div className="p-6">Loading PLC...</div>;
-  if (!plc) return <div className="p-6 text-red-600">PLC not found.</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center gap-3 h-48">
+        <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-[#29468B]" />
+        <p className="text-[12px] text-slate-500">Cargando PLC...</p>
+      </div>
+    );
+  }
+
+  if (!plc) {
+    return <div className="p-4 text-[12px] text-[#DC2626] font-medium">PLC no encontrado.</div>;
+  }
+
+  const enabledCount = plc.tags?.filter((t) => t.enabled).length || 0;
+  const totalCount   = plc.tags?.length || 0;
+
+  const btnSecondary = "inline-flex items-center gap-1 h-7 px-2.5 text-[11px] font-medium border border-slate-300 bg-white text-slate-700 rounded-[4px] hover:border-slate-400 transition-colors";
+  const btnDanger    = "inline-flex items-center gap-1 h-7 px-2.5 text-[11px] font-medium bg-[#FEF2F2] text-[#DC2626] rounded-[4px] hover:brightness-95 transition-colors";
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-semibold mb-6">{plc.name}</h1>
+    <div className="flex flex-col h-full bg-[#EFEFEF] overflow-hidden">
 
-      {/* ---------- GENERAL INFO ---------- */}
-      <div className="border rounded p-4 bg-white shadow mb-6">
-        <h2 className="text-xl font-semibold mb-3">General Information</h2>
-        <div className="grid grid-cols-2 gap-3">
-          <p><strong>Driver:</strong> {plc.driver_name}</p>
-          <p><strong>Work Unit:</strong> {plc.work_unit_detail?.name}</p>
-          <p><strong>IP Address:</strong> {plc.connection_string}</p>
-          <p><strong>Enabled:</strong> {plc.enabled ? "Yes" : "No"}</p>
-        </div>
+      {/* ── Header de página ───────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-3 py-2 bg-white border-b border-slate-200">
+        <h1 className="text-[10px] font-semibold uppercase tracking-[0.05em] text-slate-600">
+          {plc.name}
+        </h1>
+        <button
+          onClick={() => navigate(`/devices/${id}/variables/new`)}
+          className="inline-flex items-center gap-1.5 h-8 px-3 text-[11px] font-medium bg-[#29468B] text-white rounded-[4px] hover:bg-[#1F3A73] transition-colors"
+        >
+          <Plus className="h-4 w-4" aria-hidden="true" />
+          Crear variable
+        </button>
       </div>
 
-      {/* ---------- VARIABLES ---------- */}
-      <div className="border rounded p-4 bg-white shadow">
-        <div className="flex justify-between items-center mb-3">
-          <h2 className="text-xl font-semibold">Variables</h2>
-          <span className="text-sm text-gray-600">
-            {plc.tags?.filter(t => t.enabled).length || 0} enabled / {plc.tags?.length || 0} total
-          </span>
-        </div>
+      {/* ── KPI de info general ─────────────────────────────────────── */}
+      <div className="flex gap-2 px-3 py-2 bg-[#F9F9FA] border-b border-slate-200 overflow-x-auto">
+        {[
+          { label: "Driver",          value: plc.driver_name },
+          { label: "Unidad de trabajo", value: plc.work_unit_detail?.name || "—" },
+          { label: "Dirección IP",    value: plc.connection_string, mono: true },
+          { label: "Habilitado",      value: plc.enabled ? "Sí" : "No" },
+          { label: "Variables",       value: `${enabledCount} / ${totalCount}` },
+        ].map(({ label, value, mono }) => (
+          <div key={label} className="flex flex-col px-3 py-1.5 rounded-[4px] border border-slate-200 bg-white min-w-fit">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.05em] text-slate-500">{label}</span>
+            <span className={`text-[12px] font-medium text-slate-800 ${mono ? "font-mono" : ""}`}>{value}</span>
+          </div>
+        ))}
+      </div>
 
+      {/* ── Tabla de variables ──────────────────────────────────────── */}
+      <div className="flex-1 overflow-auto p-3">
         {plc.tags?.length > 0 ? (
-          <table className="min-w-full border border-gray-300 bg-white">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-2 border w-20">Status</th>
-                <th className="p-2 border">Name</th>
-                <th className="p-2 border">Address</th>
-                <th className="p-2 border">Data Type</th>
-                <th className="p-2 border">Unit</th>
-                <th className="p-2 border">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {plc.tags.map((tag) => (
-                <tr 
-                  key={tag.id}
-                  className={`
-                    ${tag.enabled ? '' : 'bg-gray-50 text-gray-500'}
-                    transition-colors
-                  `}
-                >
-                  {/* 🔥 COLUMNA DE STATUS CON CHECKBOX */}
-                  <td className="p-2 border text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <span 
-                        className={`
-                          w-2 h-2 rounded-full
-                          ${tag.enabled ? 'bg-green-500' : 'bg-gray-400'}
-                        `}
-                        title={tag.enabled ? 'Enabled' : 'Disabled'}
-                      />
-                      <input
-                        type="checkbox"
-                        checked={tag.enabled}
-                        onChange={() => handleToggleTag(tag.id, tag.enabled)}
-                        className="w-4 h-4 cursor-pointer"
-                        title={tag.enabled ? 'Click to disable' : 'Click to enable'}
-                      />
-                    </div>
-                  </td>
-
-                  <td className="p-2 border font-medium">{tag.name}</td>
-                  <td className="p-2 border font-mono text-sm">{tag.address}</td>
-                  <td className="p-2 border">{tag.datatype}</td>
-                  <td className="p-2 border">{tag.unit || '-'}</td>
-
-                  {/* --- ACTION BUTTONS --- */}
-                  <td className="p-2 border text-center">
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition"
-                        onClick={() => navigate(`/devices/${id}/variables/${tag.id}/edit`)}
-                        title="Edit variable"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                        onClick={() => handleDelete(tag.id)}
-                        title="Delete variable"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
+          <div className="rounded-[4px] border border-slate-200 bg-white overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
+            <table className="w-full text-[12px] border-collapse">
+              <thead>
+                <tr className="bg-[#EEF2F8] border-b border-slate-200">
+                  {["Estado", "Nombre", "Dirección", "Tipo de dato", "Unidad", "Acciones"].map((col) => (
+                    <th key={col} className="px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-[0.05em] text-slate-700 whitespace-nowrap">
+                      {col}
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {plc.tags.map((tag, i) => (
+                  <tr
+                    key={tag.id}
+                    className={`border-b border-slate-100 last:border-0 hover:bg-blue-50 transition-colors ${
+                      tag.enabled
+                        ? i % 2 === 0 ? "bg-white" : "bg-slate-50"
+                        : "bg-slate-50 opacity-60"
+                    }`}
+                  >
+                    {/* STATUS + CHECKBOX */}
+                    <td className="px-2 py-2">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${tag.enabled ? "bg-[#2A8B4B]" : "bg-slate-300"}`}
+                          title={tag.enabled ? "Habilitado" : "Deshabilitado"}
+                        />
+                        <input
+                          type="checkbox"
+                          checked={tag.enabled}
+                          onChange={() => handleToggleTag(tag.id, tag.enabled)}
+                          className="w-4 h-4 cursor-pointer accent-[#29468B]"
+                          title={tag.enabled ? "Clic para deshabilitar" : "Clic para habilitar"}
+                        />
+                      </div>
+                    </td>
+
+                    <td className="px-2 py-2 font-medium text-slate-800">{tag.name}</td>
+                    <td className="px-2 py-2 font-mono text-[11px] text-slate-500">{tag.address}</td>
+                    <td className="px-2 py-2 text-slate-600">{tag.datatype}</td>
+                    <td className="px-2 py-2 text-slate-500">{tag.unit || "—"}</td>
+
+                    <td className="px-2 py-2">
+                      <div className="flex gap-1">
+                        <button
+                          className={btnSecondary}
+                          onClick={() => navigate(`/devices/${id}/variables/${tag.id}/edit`)}
+                          title="Editar variable"
+                        >
+                          <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                          Editar
+                        </button>
+                        <button
+                          className={btnDanger}
+                          onClick={() => handleDelete(tag.id)}
+                          title="Eliminar variable"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                          Eliminar
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
-          <div className="text-gray-600 text-center p-4 border rounded bg-gray-50">
-            No variables defined. Click "+ Create Variable" to add one.
+          <div className="flex flex-col items-center justify-center gap-3 h-40 border-2 border-dashed border-slate-200 rounded-[4px] bg-white">
+            <p className="text-[12px] text-slate-400">No hay variables definidas.</p>
+            <button
+              onClick={() => navigate(`/devices/${id}/variables/new`)}
+              className="inline-flex items-center gap-1.5 h-8 px-3 text-[11px] font-medium bg-[#29468B] text-white rounded-[4px] hover:bg-[#1F3A73] transition-colors"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              Crear primera variable
+            </button>
           </div>
         )}
       </div>
 
-      {/* ---------- WIZARD NAVIGATION ---------- */}
-      <WizardNavigation
-        backTo="/devices"
-        nextTo={`/devices/${id}/variables/new`}
-        nextLabel="+ Create Variable"
-        nextClassName="bg-blue-600 hover:bg-blue-700"
-      />
+      {/* ── Navegación wizard ───────────────────────────────────────── */}
+      <div className="px-3 py-2 bg-white border-t border-slate-200">
+        <WizardNavigation backTo="/devices" nextTo={null} nextLabel="" />
+      </div>
     </div>
   );
 }
