@@ -2,7 +2,7 @@
 import os
 import pyodbc
 from typing import Any, Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def _normalize_dt(dt_str: str) -> str:
@@ -41,10 +41,29 @@ def _coalesce_value(
     return None
 
 
+def _serialize_utc_iso(value: Any) -> str:
+    """
+    Serializa timestamps en ISO-8601 con zona explícita UTC (`Z`).
+
+    pyodbc suele devolver `DATETIME2` como naive datetime; en este proyecto
+    esos valores se persisten en UTC, así que los marcamos como UTC antes
+    de serializar para evitar ambigüedad en frontend.
+    """
+    if not hasattr(value, "isoformat"):
+        return str(value)
+
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    else:
+        value = value.astimezone(timezone.utc)
+
+    return value.isoformat().replace("+00:00", "Z")
+
+
 def _row_to_dict(rd: Dict) -> Dict[str, Any]:
     ts = rd["timestamp"]
     return {
-        "timestamp": ts.isoformat() if hasattr(ts, "isoformat") else str(ts),
+        "timestamp": _serialize_utc_iso(ts),
         "equipment_id": rd["equipment_id"],
         "variable": rd["variable"],
         "value": _coalesce_value(
@@ -235,7 +254,7 @@ def query_aggregate(
         rd = dict(zip(columns, row))
         bucket = rd["bucket"]
         rows.append({
-            "bucket": bucket.isoformat() if hasattr(bucket, "isoformat") else str(bucket),
+            "bucket": _serialize_utc_iso(bucket),
             "equipment_id": rd["equipment_id"],
             "variable": rd["variable"],
             "value": rd["value"],
