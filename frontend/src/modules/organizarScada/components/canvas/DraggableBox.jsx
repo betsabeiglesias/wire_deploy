@@ -27,6 +27,7 @@ export default function DraggableBox({
   }, [initialX, initialY, initialWidth, initialHeight]);
 
   const settings = data.settings || {};
+  const zIndex = Number.isFinite(Number(settings.z_index)) ? Number(settings.z_index) : 1;
 
   // ── MODO LIVE — completamente pasivo, sin Rnd, sin interacción ─────────────
   if (isLiveMode) {
@@ -37,6 +38,7 @@ export default function DraggableBox({
           width:     `${size.w}px`,
           height:    `${size.h}px`,
           transform: `translate(${pos.x}px, ${pos.y}px)`,
+          zIndex,
           pointerEvents: "none",
         }}
       >
@@ -64,6 +66,7 @@ export default function DraggableBox({
           width:     `${size.w}px`,
           height:    `${size.h}px`,
           transform: `translate(${pos.x}px, ${pos.y}px)`,
+          zIndex,
         }}
         onClick={() => onSelect?.()}
       >
@@ -109,6 +112,7 @@ export default function DraggableBox({
       dragHandleClassName="box-header"
       cancel=".widget-content"
       resizeHandleClasses={{ bottomRight: "resize-handle-br" }}
+      style={{ zIndex }}
       onClick={() => onSelect?.()}
       onDoubleClick={() => onDoubleClick?.()}
     >

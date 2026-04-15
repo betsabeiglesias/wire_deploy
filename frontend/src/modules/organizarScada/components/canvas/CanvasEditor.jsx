@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useMemo, useState } from "react";
 import DraggableBox from "./DraggableBox";
 import { useProjectTags } from "@/modules/organizarScada/hooks/useProjectTags";
 import { useRealtime } from "@/context/RealtimeProvider";
@@ -105,6 +105,16 @@ const CanvasEditor = ({
   
 
   const effectiveZoom = zoom * autoZoom;
+
+  const orderedElements = useMemo(() => {
+    return [...elements].sort((a, b) => {
+      const aZ = Number(a?.data?.settings?.z_index);
+      const bZ = Number(b?.data?.settings?.z_index);
+      const safeAZ = Number.isFinite(aZ) ? aZ : 0;
+      const safeBZ = Number.isFinite(bZ) ? bZ : 0;
+      return safeAZ - safeBZ;
+    });
+  }, [elements]);
 
 
   
@@ -326,7 +336,7 @@ const CanvasEditor = ({
         )}
 
         {/* ELEMENTOS */}
-        {elements.map((el) => {
+        {orderedElements.map((el) => {
           const isVisible = el?.data?.settings?.is_visible !== false;
           if (!isVisible) return null;
 
