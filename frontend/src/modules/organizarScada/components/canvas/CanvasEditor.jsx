@@ -139,8 +139,15 @@ const CanvasEditor = ({
         onDrop={!isLiveMode ? handleDrop : undefined}
         onDragOver={!isLiveMode ? (e) => e.preventDefault() : undefined}
         onClick={!isLiveMode ? (e) => { if (e.target === e.currentTarget) onSelect?.(null); } : undefined}
+        
         onMouseDown={(e) => {
+          // 🛑 SOLO fondo (no widgets)
+          if (e.target !== e.currentTarget) return;
+
+          // 🛑 condiciones básicas
           if (!backgroundImage || isLiveMode) return;
+
+          e.preventDefault(); // ✅ evita comportamientos raros
 
           const startX = e.clientX;
           const startY = e.clientY;
@@ -149,11 +156,11 @@ const CanvasEditor = ({
           const initY = bgTransform.y;
 
           const onMove = (ev) => {
-            setBgTransform((prev) => ({
-              ...prev,
+            setBgTransform({
+              ...bgTransform,
               x: initX + (ev.clientX - startX),
               y: initY + (ev.clientY - startY),
-            }));
+            });
           };
 
           const onUp = () => {

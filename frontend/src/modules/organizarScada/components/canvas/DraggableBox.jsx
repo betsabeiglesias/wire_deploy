@@ -85,6 +85,16 @@ export default function DraggableBox({
   // permitiendo que onClick del Rnd funcione limpiamente sin overlays.
   return (
     <Rnd
+      onMouseDown={(e) => {
+        e.stopPropagation();
+
+        // 🛑 SI ESTÁ BLOQUEADO → NO HACER NADA
+        if (settings.is_locked === true) {
+          e.preventDefault();
+        }
+      }}
+      disableDragging={settings.is_locked === true}
+      enableResizing={settings.is_locked !== true}
       className={[
         "bg-white rounded-lg shadow border flex flex-col",
         isSelected ? "border-sky-400 shadow-sky-100 shadow-md" : "border-gray-200",
