@@ -318,13 +318,52 @@ const SidebarPropiedades = ({
           )}
         </div>
       </SectionCard>
+
+      {isTempGauge && (
+        <SectionCard title="Rango">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <FieldLabel>Valor mÃ­nimo</FieldLabel>
+              <FieldInput
+                type="number"
+                value={currentSettings.min ?? currentSettings.minValue ?? 0}
+                onChange={(e) => {
+                  const nextMin = Number(e.target.value);
+                  updateSettings({ min: Number.isFinite(nextMin) ? nextMin : 0 });
+                }}
+              />
+            </div>
+            <div>
+              <FieldLabel>Valor mÃ¡ximo</FieldLabel>
+              <FieldInput
+                type="number"
+                value={currentSettings.max ?? currentSettings.maxValue ?? 140}
+                onChange={(e) => {
+                  const nextMax = Number(e.target.value);
+                  updateSettings({ max: Number.isFinite(nextMax) ? nextMax : 140 });
+                }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <FieldLabel>Unidad</FieldLabel>
+            <FieldInput
+              value={currentSettings.unit ?? "C"}
+              placeholder="C"
+              onChange={(e) => updateSettings({ unit: e.target.value })}
+            />
+          </div>
+        </SectionCard>
+      )}
     </div>
   );
 
   // ─── TAB: Dispositivo (lógica original) ───────────────────────────────────
   const renderDispositivo = () => {
-    const linkedVarId = currentSettings.variableId || "";
-    const linkedVar   = tableVariables.find(v => v.variable_id === linkedVarId);
+    const linkedVarId  = currentSettings.variableId || "";
+    const linkedTagId  = currentSettings.tagId || "";
+    const linkedVar    = tableVariables.find(v => v.variable_id === linkedVarId);
 
     const filteredVariables = tableVariables.filter(v => {
       if (!varSearch.trim()) return true;
@@ -338,8 +377,38 @@ const SidebarPropiedades = ({
 
     return (
       <div className="flex flex-col gap-3">
-        <SectionCard title="Origen de datos">
 
+        {/* ── Binding directo (recomendado) ───────────────────────────── */}
+        <SectionCard title="Tag en tiempo real">
+          <p className="text-[10px] text-slate-400 -mt-1">
+            Vincula directamente con un tag del sistema.
+          </p>
+          <TagSelector
+            value={linkedTagId ? { tagId: linkedTagId } : null}
+            onChange={(opt) => {
+              if (!opt) {
+                updateSettings({ tagId: "", variable: "", equipment: "", unit: "", datatype: "" });
+                return;
+              }
+              updateSettings({
+                tagId:     opt.tagId,
+                variable:  opt.variableName || "",
+                equipment: opt.equipmentId  || "",
+                unit:      opt.unit         || "",
+                datatype:  opt.datatype     || "",
+              });
+            }}
+          />
+          {linkedTagId && (
+            <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-md px-3 py-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
+              <span className="text-[11px] font-mono text-emerald-700 truncate">{linkedTagId}</span>
+            </div>
+          )}
+        </SectionCard>
+
+        {/* ── Binding por tabla de proyecto (avanzado) ─────────────────── */}
+        <SectionCard title="Variable de proyecto">
           <div className="relative">
             <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 opacity-30 pointer-events-none"
               width="13" height="13" viewBox="0 0 16 16" fill="none">
@@ -395,13 +464,12 @@ const SidebarPropiedades = ({
               </FieldSelect>
             </div>
           )}
+
+          {linkedVar && (
+            <LinkedVarBadge variable={linkedVar} />
+          )}
         </SectionCard>
 
-        {linkedVar && (
-          <SectionCard title="Variable enlazada">
-            <LinkedVarBadge variable={linkedVar} />
-          </SectionCard>
-        )}
       </div>
     );
   };

@@ -7,11 +7,6 @@ import { WIDGET_REGISTRY } from "./index";
 
 export const renderWidget = ({ data, live = {}, width, height, valueHistory, demoNow }) => {
   if (!data) return null;
-  console.log("[renderWidget DEBUG]", {
-    type: data?.type,
-    settings: data?.settings,
-    live,
-  });
 
   const definition = WIDGET_REGISTRY[data.type];
 

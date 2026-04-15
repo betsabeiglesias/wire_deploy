@@ -10,6 +10,7 @@ import { renderWidget } from "@/modules/organizarScada/components/widgets/regist
 import WidgetThumbnail from "@/modules/organizarScada/components/widgets/WidgetThumbnail";
 
 const SCADA_GROUPS = [
+  { id: "proceso",  label: "Proceso",  items: elementos_scada.proceso  || [] },
   { id: "gauges",   label: "Gauges",   items: elementos_scada.gauges   || [] },
   { id: "barras",   label: "Barras",   items: elementos_scada.barras   || [] },
   { id: "tarjetas", label: "Tarjetas", items: elementos_scada.tarjetas || [] },

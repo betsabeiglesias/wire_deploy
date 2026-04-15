@@ -645,6 +645,84 @@ export const elementos_scada = {
         },
       },
     },
-    
+
+  ],
+
+  proceso: [
+    // ── Tarjetas de valor (process-value-card) ──────────────────────────────
+    {
+      id: "tpl-pvc-temperature", title: "Temp · Valor", thumbnailType: "icon", icon: "temperature",
+      data: { type: "process-value-card", width: 200, height: 120, label: "Temperatura",
+        settings: { iconKey: "temperature", label: "Temperatura", unit: "°C", min: 0, max: 200, initialValue: 75,
+          style: { palette: { primary: "#ef4444" } } } },
+    },
+    {
+      id: "tpl-pvc-pressure", title: "Presión · Valor", thumbnailType: "icon", icon: "pressure",
+      data: { type: "process-value-card", width: 200, height: 120, label: "Presión",
+        settings: { iconKey: "pressure", label: "Presión", unit: "bar", min: 0, max: 16, initialValue: 6,
+          style: { palette: { primary: "#3b82f6" } } } },
+    },
+    {
+      id: "tpl-pvc-flow", title: "Caudal · Valor", thumbnailType: "icon", icon: "flow",
+      data: { type: "process-value-card", width: 200, height: 120, label: "Caudal",
+        settings: { iconKey: "flow", label: "Caudal", unit: "m³/h", min: 0, max: 500, initialValue: 120,
+          style: { palette: { primary: "#06b6d4" } } } },
+    },
+    {
+      id: "tpl-pvc-pump", title: "Bomba · Valor", thumbnailType: "icon", icon: "pump",
+      data: { type: "process-value-card", width: 200, height: 120, label: "Bomba",
+        settings: { iconKey: "pump", label: "Caudal bomba", unit: "m³/h", min: 0, max: 100, initialValue: 45,
+          style: { palette: { primary: "#29468b" } } } },
+    },
+    {
+      id: "tpl-pvc-compressor", title: "Compresor · Valor", thumbnailType: "icon", icon: "compressor",
+      data: { type: "process-value-card", width: 200, height: 120, label: "Compresor",
+        settings: { iconKey: "compressor", label: "Presión salida", unit: "bar", min: 0, max: 12, initialValue: 8,
+          style: { palette: { primary: "#dc2626" } } } },
+    },
+    {
+      id: "tpl-pvc-filter", title: "Filtro · Valor", thumbnailType: "icon", icon: "filter",
+      data: { type: "process-value-card", width: 200, height: 120, label: "Filtro",
+        settings: { iconKey: "filter", label: "ΔP filtro", unit: "mbar", min: 0, max: 500, initialValue: 80,
+          style: { palette: { primary: "#92400e" } } } },
+    },
+    // ── Estado de equipo (process-status-badge) ─────────────────────────────
+    {
+      id: "tpl-psb-motor", title: "Motor · Estado", thumbnailType: "icon", icon: "motor",
+      data: { type: "process-status-badge", width: 160, height: 130, label: "Motor",
+        settings: { iconKey: "motor", label: "Motor", initialValue: "running",
+          style: { palette: { primary: "#7c3aed" } } } },
+    },
+    {
+      id: "tpl-psb-fan", title: "Ventilador · Estado", thumbnailType: "icon", icon: "fan",
+      data: { type: "process-status-badge", width: 160, height: 130, label: "Ventilador",
+        settings: { iconKey: "fan", label: "Ventilador", initialValue: "stopped",
+          style: { palette: { primary: "#0284c7" } } } },
+    },
+    {
+      id: "tpl-psb-pump", title: "Bomba · Estado", thumbnailType: "icon", icon: "pump",
+      data: { type: "process-status-badge", width: 160, height: 130, label: "Bomba",
+        settings: { iconKey: "pump", label: "Bomba centrif.", initialValue: "running",
+          style: { palette: { primary: "#29468b" } } } },
+    },
+    {
+      id: "tpl-psb-valve", title: "Válvula · Estado", thumbnailType: "icon", icon: "valve",
+      data: { type: "process-status-badge", width: 160, height: 130, label: "Válvula",
+        settings: { iconKey: "valve", label: "Válvula V-01", initialValue: "stopped",
+          style: { palette: { primary: "#f59e0b" } } } },
+    },
+    // ── Nivel de depósito (process-level-card) ──────────────────────────────
+    {
+      id: "tpl-plc-tank", title: "Depósito · Nivel", thumbnailType: "icon", icon: "tank",
+      data: { type: "process-level-card", width: 160, height: 200, label: "Depósito",
+        settings: { iconKey: "tank", label: "Depósito T-01", unit: "%", min: 0, max: 100, initialValue: 62,
+          style: { palette: { primary: "#3b82f6" } } } },
+    },
+    {
+      id: "tpl-plc-mixer", title: "Mezclador · Nivel", thumbnailType: "icon", icon: "mixer",
+      data: { type: "process-level-card", width: 160, height: 200, label: "Mezclador",
+        settings: { iconKey: "mixer", label: "Mezclador M-01", unit: "%", min: 0, max: 100, initialValue: 40,
+          style: { palette: { primary: "#059669" } } } },
+    },
   ],
 };

@@ -1,5 +1,11 @@
 export { IconTemperature } from "./process/IconTemperature";
-export { IconPressure } from "./process/IconPressure";
-export { IconTank } from "./process/IconTank";
-export { IconValve } from "./process/IconValve";
-export { IconFlow } from "./process/IconFlow";
+export { IconPressure }    from "./process/IconPressure";
+export { IconTank }        from "./process/IconTank";
+export { IconValve }       from "./process/IconValve";
+export { IconFlow }        from "./process/IconFlow";
+export { IconPump }        from "./process/IconPump";
+export { IconMotor }       from "./process/IconMotor";
+export { IconFan }         from "./process/IconFan";
+export { IconCompressor }  from "./process/IconCompressor";
+export { IconMixer }       from "./process/IconMixer";
+export { IconFilter }      from "./process/IconFilter";
