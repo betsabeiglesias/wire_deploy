@@ -85,40 +85,55 @@ export default function DraggableBox({
   // permitiendo que onClick del Rnd funcione limpiamente sin overlays.
   return (
     <Rnd
+      // 🔒 CONTROL DE BLOQUEO
+      disableDragging={settings.is_locked === true}
+      enableResizing={settings.is_locked !== true}
+
       onMouseDown={(e) => {
         e.stopPropagation();
 
-        // 🛑 SI ESTÁ BLOQUEADO → NO HACER NADA
+        // 🛑 SI ESTÁ BLOQUEADO → cancelar interacción
         if (settings.is_locked === true) {
           e.preventDefault();
+          return;
         }
       }}
-      disableDragging={settings.is_locked === true}
-      enableResizing={settings.is_locked !== true}
+
       className={[
         "bg-white rounded-lg shadow border flex flex-col",
         isSelected ? "border-sky-400 shadow-sky-100 shadow-md" : "border-gray-200",
       ].join(" ")}
+
       size={{ width: size.w, height: size.h }}
       position={{ x: pos.x, y: pos.y }}
+
       onDragStop={(_e, d) => {
+        if (settings.is_locked === true) return; // 🔒 extra seguridad
         setPos({ x: d.x, y: d.y });
         onDragStop?.(id, d.x, d.y);
       }}
+
       onResizeStop={(_e, _dir, ref, _delta, p) => {
-        const w = parseInt(ref.style.width,  10);
+        if (settings.is_locked === true) return; // 🔒 extra seguridad
+
+        const w = parseInt(ref.style.width, 10);
         const h = parseInt(ref.style.height, 10);
+
         setSize({ w, h });
         setPos({ x: p.x, y: p.y });
+
         onResizeStop?.(id, w, h, p.x, p.y);
       }}
+
       bounds="parent"
       minWidth={50}
       minHeight={50}
       scale={scale}
+
       dragHandleClassName="box-header"
       cancel=".widget-content"
       resizeHandleClasses={{ bottomRight: "resize-handle-br" }}
+
       onClick={() => onSelect?.()}
       onDoubleClick={() => onDoubleClick?.()}
     >

@@ -141,36 +141,33 @@ const CanvasEditor = ({
         onClick={!isLiveMode ? (e) => { if (e.target === e.currentTarget) onSelect?.(null); } : undefined}
         
         onMouseDown={(e) => {
-          // 🛑 SOLO fondo (no widgets)
-          if (e.target !== e.currentTarget) return;
+        // ✅ SOLO si haces click en el canvas (fondo o imagen)
+        if (e.target !== e.currentTarget) return;
 
-          // 🛑 condiciones básicas
-          if (!backgroundImage || isLiveMode) return;
+        if (!backgroundImage || isLiveMode) return;
 
-          e.preventDefault(); // ✅ evita comportamientos raros
+        const startX = e.clientX;
+        const startY = e.clientY;
 
-          const startX = e.clientX;
-          const startY = e.clientY;
+        const initX = bgTransform.x;
+        const initY = bgTransform.y;
 
-          const initX = bgTransform.x;
-          const initY = bgTransform.y;
+        const onMove = (ev) => {
+          setBgTransform({
+            ...bgTransform,
+            x: initX + (ev.clientX - startX),
+            y: initY + (ev.clientY - startY),
+          });
+        };
 
-          const onMove = (ev) => {
-            setBgTransform({
-              ...bgTransform,
-              x: initX + (ev.clientX - startX),
-              y: initY + (ev.clientY - startY),
-            });
-          };
+        const onUp = () => {
+          window.removeEventListener("mousemove", onMove);
+          window.removeEventListener("mouseup", onUp);
+        };
 
-          const onUp = () => {
-            window.removeEventListener("mousemove", onMove);
-            window.removeEventListener("mouseup", onUp);
-          };
-
-          window.addEventListener("mousemove", onMove);
-          window.addEventListener("mouseup", onUp);
-        }}
+        window.addEventListener("mousemove", onMove);
+        window.addEventListener("mouseup", onUp);
+      }}
         onWheel={(e) => {
           if (!backgroundImage) return;
 
