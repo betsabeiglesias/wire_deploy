@@ -8,9 +8,10 @@ export default function DraggableBox({
   initialX, initialY, initialWidth, initialHeight,
   data, id, theme = "theme-clean",
   isSelected = false, isLiveMode = false,
-  onSelect, onDragStop, onResizeStop, onDelete,
+  onSelect, onDoubleClick, onDragStop, onResizeStop, onDelete,
   isReadOnly = false,
   projectTags = [],
+  scale = 1,
 }) {
   if (!data) return null;
   if (data.type === "image-widget" && data.settings?.isBackground) {
@@ -104,10 +105,12 @@ export default function DraggableBox({
       bounds="parent"
       minWidth={50}
       minHeight={50}
+      scale={scale}
       dragHandleClassName="box-header"
       cancel=".widget-content"
       resizeHandleClasses={{ bottomRight: "resize-handle-br" }}
       onClick={() => onSelect?.()}
+      onDoubleClick={() => onDoubleClick?.()}
     >
       {/* Header — drag handle + label + delete */}
       <div className="box-header flex justify-between items-center px-2 py-1 border-b border-gray-200 cursor-grab active:cursor-grabbing">

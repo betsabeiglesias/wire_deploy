@@ -111,13 +111,7 @@ const CanvasEditor = ({
 
   const handleDrop = (e) => {
   e.preventDefault();
-
-  const rect = canvasRef.current.getBoundingClientRect();
-
-      const x = (e.clientX - rect.left) / effectiveZoom;
-      const y = (e.clientY - rect.top) / effectiveZoom;
-
-      onDrop?.({ x, y }, canvasRef.current);
+      onDrop?.(e, canvasRef.current);
     };
 
 
@@ -144,6 +138,7 @@ const CanvasEditor = ({
         ref={canvasRef}
         onDrop={!isLiveMode ? handleDrop : undefined}
         onDragOver={!isLiveMode ? (e) => e.preventDefault() : undefined}
+        onClick={!isLiveMode ? (e) => { if (e.target === e.currentTarget) onSelect?.(null); } : undefined}
         onMouseDown={(e) => {
           if (!backgroundImage || isLiveMode) return;
 
@@ -346,7 +341,8 @@ const CanvasEditor = ({
               data={el.data}
               isSelected={selectedId === el.id}
               isLiveMode={isLiveMode}
-              onSelect={() => !isLiveMode && onSelect?.(el.id)}
+              onSelect={() => !isLiveMode && onSelect?.(el.id, false)}
+              onDoubleClick={() => !isLiveMode && onSelect?.(el.id, true)}
               onDragStop={(id, x, y) => onUpdate?.(id, { x, y })}
               onResizeStop={(id, w, h, x, y) =>
                 onUpdate?.(id, {
@@ -357,6 +353,7 @@ const CanvasEditor = ({
               }
               onDelete={onDelete}
               projectTags={projectTags}
+              scale={effectiveZoom}
             />
           );
         })}
