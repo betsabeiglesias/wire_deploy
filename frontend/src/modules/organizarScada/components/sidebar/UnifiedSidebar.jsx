@@ -150,6 +150,7 @@ const UnifiedSidebar = ({
   canvasElements = [],
   selectedElementId = null,
   onSelectElement,
+  onDeleteElement,
   onToggleElementVisibility,
   onToggleElementLock,
   onRenameElementLayer,
@@ -230,6 +231,7 @@ const UnifiedSidebar = ({
 			onRefreshViews={onRefreshViews}
 			viewsLoading={viewsLoading}
 			viewsError={viewsError}
+			onDeleteElement={onDeleteElement}
 			layers={layers}
 			selectedElementId={selectedElementId}
 			onSelectElement={onSelectElement}

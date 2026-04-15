@@ -4,7 +4,7 @@
 // Extraído de UnifiedSidebar.renderSectionContent("pantallas").
 //
 import React, { useState } from "react";
-import { Eye, EyeOff, Lock, Unlock, GripVertical } from "lucide-react";
+import { Eye, EyeOff, Lock, Unlock, GripVertical, Trash2 } from "lucide-react";
 import SkeletonBlock from "@/components/ui/SkeletonBlock";
 
 const ScreenTab = ({
@@ -17,6 +17,7 @@ const ScreenTab = ({
   onRefreshViews,
   viewsLoading,
   viewsError,
+  onDeleteElement,
   // Layers
   layers,
   selectedElementId,
@@ -235,6 +236,17 @@ const ScreenTab = ({
                   ) : (
                     <Unlock size={12} className="text-slate-400" />
                   )}
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-500 hover:bg-red-50 hover:text-red-600"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteElement?.(layer.id);
+                  }}
+                  title="Eliminar capa"
+                >
+                  <Trash2 size={12} />
                 </button>
                 <div className="min-w-0 flex-1">
                   {isEditing ? (

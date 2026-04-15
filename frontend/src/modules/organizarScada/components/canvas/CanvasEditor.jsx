@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useRef, useEffect, useMemo, useState } from "react";
 import DraggableBox from "./DraggableBox";
 import { useProjectTags } from "@/modules/organizarScada/hooks/useProjectTags";
 import { useRealtime } from "@/context/RealtimeProvider";
@@ -28,7 +28,6 @@ const CanvasEditor = ({
   const [backgroundImage, setBackgroundImage] = useState(null);
 
   const [bgTransform, setBgTransform] = useState({
-    scale: 1,
     x: 0,
     y: 0,
   });
@@ -38,6 +37,18 @@ const CanvasEditor = ({
       width: BASE_WIDTH,
       height: BASE_HEIGHT,
     });
+
+  const backgroundWidget = useMemo(
+    () =>
+      elements.find(
+        (el) =>
+          el?.data?.type === "image-widget" &&
+          el?.data?.settings?.isBackground
+      ) || null,
+    [elements]
+  );
+
+  const backgroundIsLocked = backgroundWidget?.data?.settings?.is_locked === true;
 
 
   useEffect(() => {
@@ -72,11 +83,7 @@ const CanvasEditor = ({
   }, []);
 
   useEffect(() => {
-    const bgWidget = elements.find(
-      (el) =>
-        el?.data?.type === "image-widget" &&
-        el?.data?.settings?.isBackground
-    );
+    const bgWidget = backgroundWidget;
 
     if (bgWidget) {
       const settings = bgWidget.data.settings;
@@ -91,15 +98,23 @@ const CanvasEditor = ({
       setBackgroundImage(src || null);
 
       setBgTransform({
-        scale: settings.bgScale || 1,
         x: settings.bgX || 0,
         y: settings.bgY || 0,
       });
 
+      setBgSize({
+        width: settings.bgWidth || BASE_WIDTH,
+        height: settings.bgHeight || BASE_HEIGHT,
+      });
+
     } else {
       setBackgroundImage(null);
+      setBgSize({
+        width: BASE_WIDTH,
+        height: BASE_HEIGHT,
+      });
     }
-  }, [elements]);
+  }, [backgroundWidget]);
 
   
   
@@ -123,6 +138,55 @@ const CanvasEditor = ({
   e.preventDefault();
       onDrop?.(e, canvasRef.current);
     };
+
+  const persistBackgroundSettings = useCallback((patch) => {
+    if (!backgroundWidget?.id) return;
+
+    onUpdate?.(backgroundWidget.id, {
+      data: {
+        ...backgroundWidget.data,
+        settings: {
+          ...(backgroundWidget.data?.settings || {}),
+          ...patch,
+        },
+      },
+    });
+  }, [backgroundWidget, onUpdate]);
+
+  const handleBackgroundDragStart = useCallback((e) => {
+    if (isLiveMode || backgroundIsLocked) return;
+
+    e.stopPropagation();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const initX = bgTransform.x;
+    const initY = bgTransform.y;
+    let nextX = initX;
+    let nextY = initY;
+
+    const onMove = (ev) => {
+      nextX = initX + (ev.clientX - startX);
+      nextY = initY + (ev.clientY - startY);
+      setBgTransform((prev) => ({
+        ...prev,
+        x: nextX,
+        y: nextY,
+      }));
+    };
+
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      persistBackgroundSettings({
+        bgX: nextX,
+        bgY: nextY,
+      });
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, [bgTransform.x, bgTransform.y, backgroundIsLocked, isLiveMode, persistBackgroundSettings]);
 
 
   return (
@@ -149,45 +213,6 @@ const CanvasEditor = ({
         onDrop={!isLiveMode ? handleDrop : undefined}
         onDragOver={!isLiveMode ? (e) => e.preventDefault() : undefined}
         onClick={!isLiveMode ? (e) => { if (e.target === e.currentTarget) onSelect?.(null); } : undefined}
-        onMouseDown={(e) => {
-          if (!backgroundImage || isLiveMode) return;
-
-          const startX = e.clientX;
-          const startY = e.clientY;
-
-          const initX = bgTransform.x;
-          const initY = bgTransform.y;
-
-          const onMove = (ev) => {
-            setBgTransform((prev) => ({
-              ...prev,
-              x: initX + (ev.clientX - startX),
-              y: initY + (ev.clientY - startY),
-            }));
-          };
-
-          const onUp = () => {
-            window.removeEventListener("mousemove", onMove);
-            window.removeEventListener("mouseup", onUp);
-          };
-
-          window.addEventListener("mousemove", onMove);
-          window.addEventListener("mouseup", onUp);
-        }}
-        onWheel={(e) => {
-          if (!backgroundImage) return;
-
-          e.preventDefault();
-
-          setBgTransform((prev) => {
-            const next = prev.scale + (e.deltaY < 0 ? 0.1 : -0.1);
-
-            return {
-              ...prev,
-              scale: Math.max(0.5, Math.min(next, 3)),
-            };
-          });
-        }}
         className="absolute top-0 left-0 rounded-xl border border-slate-300 bg-white shadow-sm"
         style={{
           width: BASE_WIDTH,
@@ -201,10 +226,12 @@ const CanvasEditor = ({
         {/* 🔥 BACKGROUND IMAGE CONTROLLED */}
         {backgroundImage && (
           <div
+            onMouseDown={handleBackgroundDragStart}
+            onClick={() => !isLiveMode && onSelect?.(backgroundWidget?.id, false)}
             style={{
               position: "absolute",
               inset: 0,
-              cursor: "grab",
+              cursor: backgroundIsLocked ? "default" : "grab",
             }}
           >
             <img
@@ -218,7 +245,6 @@ const CanvasEditor = ({
                 height: bgSize.height,
                 transform: `
                   translate(${bgTransform.x}px, ${bgTransform.y}px)
-                  scale(${bgTransform.scale})
                 `,
                 transformOrigin: "top left",
                 pointerEvents: "none",
@@ -230,108 +256,128 @@ const CanvasEditor = ({
             {/* ========================= */}
 
             {/* RIGHT */}
-            <div
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                const startX = e.clientX;
-                const startWidth = bgSize.width;
+            {!backgroundIsLocked && (
+              <div
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  const startX = e.clientX;
+                  const startWidth = bgSize.width;
+                  let nextWidth = startWidth;
 
-                const onMove = (ev) => {
-                  const delta = ev.clientX - startX;
-                  setBgSize((prev) => ({
-                    ...prev,
-                    width: Math.max(200, startWidth + delta),
-                  }));
-                };
+                  const onMove = (ev) => {
+                    const delta = ev.clientX - startX;
+                    nextWidth = Math.max(200, startWidth + delta);
+                    setBgSize((prev) => ({
+                      ...prev,
+                      width: nextWidth,
+                    }));
+                  };
 
-                const onUp = () => {
-                  window.removeEventListener("mousemove", onMove);
-                  window.removeEventListener("mouseup", onUp);
-                };
+                  const onUp = () => {
+                    window.removeEventListener("mousemove", onMove);
+                    window.removeEventListener("mouseup", onUp);
+                    persistBackgroundSettings({ bgWidth: nextWidth });
+                  };
 
-                window.addEventListener("mousemove", onMove);
-                window.addEventListener("mouseup", onUp);
-              }}
-              style={{
-                position: "absolute",
-                right: 0,
-                top: 0,
-                width: "6px",
-                height: "100%",
-                cursor: "ew-resize",
-              }}
-            />
+                  window.addEventListener("mousemove", onMove);
+                  window.addEventListener("mouseup", onUp);
+                }}
+                style={{
+                  position: "absolute",
+                  right: 0,
+                  top: 0,
+                  width: "6px",
+                  height: "100%",
+                  cursor: "ew-resize",
+                }}
+              />
+            )}
 
             {/* BOTTOM */}
-            <div
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                const startY = e.clientY;
-                const startHeight = bgSize.height;
+            {!backgroundIsLocked && (
+              <div
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  const startY = e.clientY;
+                  const startHeight = bgSize.height;
+                  let nextHeight = startHeight;
 
-                const onMove = (ev) => {
-                  const delta = ev.clientY - startY;
-                  setBgSize((prev) => ({
-                    ...prev,
-                    height: Math.max(200, startHeight + delta),
-                  }));
-                };
+                  const onMove = (ev) => {
+                    const delta = ev.clientY - startY;
+                    nextHeight = Math.max(200, startHeight + delta);
+                    setBgSize((prev) => ({
+                      ...prev,
+                      height: nextHeight,
+                    }));
+                  };
 
-                const onUp = () => {
-                  window.removeEventListener("mousemove", onMove);
-                  window.removeEventListener("mouseup", onUp);
-                };
+                  const onUp = () => {
+                    window.removeEventListener("mousemove", onMove);
+                    window.removeEventListener("mouseup", onUp);
+                    persistBackgroundSettings({ bgHeight: nextHeight });
+                  };
 
-                window.addEventListener("mousemove", onMove);
-                window.addEventListener("mouseup", onUp);
-              }}
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                width: "100%",
-                height: "6px",
-                cursor: "ns-resize",
-              }}
-            />
+                  window.addEventListener("mousemove", onMove);
+                  window.addEventListener("mouseup", onUp);
+                }}
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "6px",
+                  cursor: "ns-resize",
+                }}
+              />
+            )}
 
             {/* BOTTOM-RIGHT CORNER */}
-            <div
-              onMouseDown={(e) => {
-                e.stopPropagation();
-                const startX = e.clientX;
-                const startY = e.clientY;
-                const startWidth = bgSize.width;
-                const startHeight = bgSize.height;
+            {!backgroundIsLocked && (
+              <div
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  const startX = e.clientX;
+                  const startY = e.clientY;
+                  const startWidth = bgSize.width;
+                  const startHeight = bgSize.height;
+                  let nextWidth = startWidth;
+                  let nextHeight = startHeight;
 
-                const onMove = (ev) => {
-                  const dx = ev.clientX - startX;
-                  const dy = ev.clientY - startY;
+                  const onMove = (ev) => {
+                    const dx = ev.clientX - startX;
+                    const dy = ev.clientY - startY;
+                    nextWidth = Math.max(200, startWidth + dx);
+                    nextHeight = Math.max(200, startHeight + dy);
 
-                  setBgSize({
-                    width: Math.max(200, startWidth + dx),
-                    height: Math.max(200, startHeight + dy),
-                  });
-                };
+                    setBgSize({
+                      width: nextWidth,
+                      height: nextHeight,
+                    });
+                  };
 
-                const onUp = () => {
-                  window.removeEventListener("mousemove", onMove);
-                  window.removeEventListener("mouseup", onUp);
-                };
+                  const onUp = () => {
+                    window.removeEventListener("mousemove", onMove);
+                    window.removeEventListener("mouseup", onUp);
+                    persistBackgroundSettings({
+                      bgWidth: nextWidth,
+                      bgHeight: nextHeight,
+                    });
+                  };
 
-                window.addEventListener("mousemove", onMove);
-                window.addEventListener("mouseup", onUp);
-              }}
-              style={{
-                position: "absolute",
-                right: 0,
-                bottom: 0,
-                width: "14px",
-                height: "14px",
-                cursor: "nwse-resize",
-                background: "rgba(59,130,246,0.8)",
-              }}
-            />
+                  window.addEventListener("mousemove", onMove);
+                  window.addEventListener("mouseup", onUp);
+                }}
+                style={{
+                  position: "absolute",
+                  right: 0,
+                  bottom: 0,
+                  width: "14px",
+                  height: "14px",
+                  cursor: "nwse-resize",
+                  background: "rgba(59,130,246,0.8)",
+                }}
+              />
+            )}
           </div>
         )}
 

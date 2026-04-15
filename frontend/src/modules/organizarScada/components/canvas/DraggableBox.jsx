@@ -28,6 +28,7 @@ export default function DraggableBox({
 
   const settings = data.settings || {};
   const zIndex = Number.isFinite(Number(settings.z_index)) ? Number(settings.z_index) : 1;
+  const isLocked = settings.is_locked === true;
 
   // ── MODO LIVE — completamente pasivo, sin Rnd, sin interacción ─────────────
   if (isLiveMode) {
@@ -91,6 +92,7 @@ export default function DraggableBox({
       className={[
         "bg-white rounded-lg shadow border flex flex-col",
         isSelected ? "border-sky-400 shadow-sky-100 shadow-md" : "border-gray-200",
+        isLocked ? "opacity-95" : "",
       ].join(" ")}
       size={{ width: size.w, height: size.h }}
       position={{ x: pos.x, y: pos.y }}
@@ -108,6 +110,8 @@ export default function DraggableBox({
       bounds="parent"
       minWidth={50}
       minHeight={50}
+      disableDragging={isLocked}
+      enableResizing={!isLocked}
       scale={scale}
       dragHandleClassName="box-header"
       cancel=".widget-content"
@@ -117,7 +121,12 @@ export default function DraggableBox({
       onDoubleClick={() => onDoubleClick?.()}
     >
       {/* Header — drag handle + label + delete */}
-      <div className="box-header flex justify-between items-center px-2 py-1 border-b border-gray-200 cursor-grab active:cursor-grabbing">
+      <div
+        className={[
+          "box-header flex justify-between items-center px-2 py-1 border-b border-gray-200",
+          isLocked ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing",
+        ].join(" ")}
+      >
         <span className="font-semibold text-xs text-gray-700 truncate">
           {settings.attributeLabel || settings.equipment || data.label || "Widget"}
         </span>

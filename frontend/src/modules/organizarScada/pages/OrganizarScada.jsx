@@ -320,6 +320,7 @@ const OrganizarScada = () => {
           canvasElements={canvasElements}
           selectedElementId={selectedId}
           onSelectElement={handleSelectLayer}
+          onDeleteElement={handleDeleteComponent}
           onToggleElementVisibility={handleToggleLayerVisibility}
           onToggleElementLock={handleToggleLayerLock}
           onRenameElementLayer={handleRenameLayer}
