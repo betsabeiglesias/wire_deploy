@@ -76,6 +76,11 @@ export default function TimeSeriesChart({ rows = [], tags = [] }) {
     []
   );
 
+  // Clave única por combinación de tags seleccionados.
+  // Fuerza remontaje de ApexCharts cuando cambia la selección,
+  // evitando que series anteriores queden visualmente bloqueadas.
+  const chartKey = tags.map((t) => `${t.equipment_id}|${t.variable}`).join(",");
+
   if (!tags.length) {
     return (
       <div className="flex items-center justify-center h-48 text-sm text-slate-400">
@@ -86,6 +91,7 @@ export default function TimeSeriesChart({ rows = [], tags = [] }) {
 
   return (
     <ReactApexChart
+      key={chartKey}
       options={options}
       series={series}
       type="line"

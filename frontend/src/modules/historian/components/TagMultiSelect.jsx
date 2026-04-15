@@ -33,12 +33,8 @@ export default function TagMultiSelect({ selected = [], onChange }) {
     if (!config?.tagIndex) return [];
 
     return Object.values(config.tagIndex).map((t) => {
-      const equipment_id = [t.site, t.area, t.line, t.cell, t.equipment]
-        .filter(Boolean)
-        .join("/");
-
       const tag = {
-        equipment_id,
+        equipment_id: t.equipment_id,
         variable: t.variable,
         unit: t.unit || "",
         datatype: t.datatype || "",
