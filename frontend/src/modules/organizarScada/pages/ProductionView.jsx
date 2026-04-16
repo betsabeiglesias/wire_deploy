@@ -1,20 +1,14 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  ChevronDown,
-  FolderKanban,
-  SquarePen,
-  House,
-  Layers,
-  Maximize2,
-  Minimize2,
-} from "lucide-react";
+import { Layers } from "lucide-react";
 import useRealtimeStore from "@/store/useRealtimeStore";
 import { useProjectTags } from "../hooks/useProjectTags";
 import api from "../../../services/api";
 import "@/styles/gateway.css";
 import "../../../styles/Scada.css";
 import { renderWidget } from "../components/widgets/registry.jsx";
+import ProductionTopBar from "../components/layout/ProductionTopBar.jsx";
+import ProductionSidebar from "../components/layout/ProductionSidebar.jsx";
 
 const PUBLISHED_VIEWS_KEY = "publishedScadaViews";
 const BASE_WIDTH = 1920;
@@ -41,7 +35,6 @@ const ProductionView = () => {
   const [layoutName, setLayoutName] = useState("");
   const [appViewsData, setAppViewsData] = useState(null);
   const [scale, setScale] = useState(1);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [backgroundImage, setBackgroundImage] = useState(null);
   const [bgTransform, setBgTransform] = useState({ x: 0, y: 0 });
@@ -303,116 +296,39 @@ const ProductionView = () => {
   return (
     <div className="flex h-screen w-full flex-col overflow-hidden bg-[#E9EAED]">
       {/* ── TOP BAR ── */}
-      <header className="flex h-[36px] shrink-0 items-center justify-between border-b border-[#CED5DF] bg-[#29468B] px-4 shadow-sm">
-        {/* Izquierda: nombre */}
-        <div className="flex items-center gap-2">
-          <Layers className="h-4 w-4 text-white/70" />
-          <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-white">
-            {layoutName || "HMI"}
-          </span>
-        </div>
+      <ProductionTopBar
+        layoutName={layoutName}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        onHome={() => navigate("/")}
+        onMyHMIs={() => navigate("/layout")}
+        onEditHMI={() =>
+          navigate("/organizar-scada", {
+            state: {
+              loadPublishedId: routeViewId,
+              layoutId: routeViewId,
+              layOutName: layoutName,
+              editMode: true,
+              initialLayoutElements: elements,
+            },
+          })
+        }
+      />
 
-        {/* Derecha: controles */}
-        <div className="flex items-center gap-1">
-          {/* Navegación de vistas si hay múltiples */}
-          {appViewsData?.views?.length > 1 && (
-            <div className="mr-2 flex items-center gap-1">
-              {appViewsData.views.map((view) => (
-                <button
-                  key={view.id}
-                  onClick={() => handleNavigate(view.id)}
-                  className={`h-6 rounded-[4px] px-2.5 text-[11px] font-medium transition-colors ${
-                    activeViewId === view.id
-                      ? "bg-white/20 text-white"
-                      : "text-white/60 hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  {view.name || `Vista ${view.id}`}
-                </button>
-              ))}
-            </div>
-          )}
+      {/* ── BODY: sidebar + canvas ── */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Navegación de vistas (view-level) */}
+        <ProductionSidebar
+          views={appViewsData?.views}
+          activeViewId={activeViewId}
+          onNavigate={handleNavigate}
+        />
 
-          {/* Fullscreen */}
-          <button
-            onClick={toggleFullscreen}
-            title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-            className="flex h-7 w-7 items-center justify-center rounded-[4px] text-white/70 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </button>
-
-          {/* Menú acciones */}
-          <div className="relative">
-            <button
-              onClick={() => setIsMenuOpen((p) => !p)}
-              className="flex h-7 items-center gap-1.5 rounded-[4px] px-2.5 text-[11px] font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              Acciones
-              <ChevronDown
-                className={`h-3.5 w-3.5 transition-transform ${isMenuOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-
-            {isMenuOpen && (
-              <>
-                {/* Backdrop */}
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setIsMenuOpen(false)}
-                />
-                <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-[200px] rounded-[6px] border border-[#CED5DF] bg-white p-1.5 shadow-lg">
-                  <button
-                    onClick={() => { setIsMenuOpen(false); navigate("/"); }}
-                    className="flex w-full items-center gap-2 rounded-[4px] px-2.5 py-1.5 text-[12px] text-slate-700 hover:bg-[#F2F3F5]"
-                  >
-                    <House className="h-4 w-4 text-slate-400" />
-                    Home
-                  </button>
-                  <button
-                    onClick={() => { setIsMenuOpen(false); navigate("/layout"); }}
-                    className="flex w-full items-center gap-2 rounded-[4px] px-2.5 py-1.5 text-[12px] text-slate-700 hover:bg-[#F2F3F5]"
-                  >
-                    <FolderKanban className="h-4 w-4 text-slate-400" />
-                    Mis HMIs
-                  </button>
-                  <div className="my-1 border-t border-slate-100" />
-                  <button
-                    onClick={() => {
-                      setIsMenuOpen(false);
-                      navigate("/organizar-scada", {
-                        state: {
-                          loadPublishedId: routeViewId,
-                          layoutId: routeViewId,
-                          layOutName: layoutName,
-                          editMode: true,
-                          initialLayoutElements: elements,
-                        },
-                      });
-                    }}
-                    className="flex w-full items-center gap-2 rounded-[4px] px-2.5 py-1.5 text-[12px] text-[#2f7a57] hover:bg-[#f4fbf7]"
-                  >
-                    <SquarePen className="h-4 w-4" />
-                    Editar HMI
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* ── CANVAS VIEWPORT ── */}
-      <div
-        ref={viewportRef}
-        className="relative flex flex-1 items-center justify-center overflow-hidden"
-        style={{
-          background: "linear-gradient(180deg, #E1E5EB 0%, #D7DBE2 100%)",
-          backgroundImage:
-            "radial-gradient(circle at 1px 1px, #CBD5E1 1px, transparent 0), linear-gradient(180deg, #E1E5EB 0%, #D7DBE2 100%)",
-          backgroundSize: "20px 20px, 100% 100%",
-        }}
-      >
+        {/* ── CANVAS VIEWPORT ── */}
+        <div
+          ref={viewportRef}
+          className="relative flex flex-1 items-center justify-center overflow-hidden bg-white"
+        >
         {/* Lienzo escalado — igual que CanvasEditor */}
         <div
           style={{
@@ -422,7 +338,7 @@ const ProductionView = () => {
           }}
         >
           <div
-            className="absolute top-0 left-0 overflow-hidden rounded-xl border border-[#CED5DF] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.10)]"
+            className="absolute top-0 left-0 overflow-hidden bg-white"
             style={{
               width: BASE_WIDTH,
               height: BASE_HEIGHT,
@@ -430,15 +346,6 @@ const ProductionView = () => {
               transformOrigin: "top left",
             }}
           >
-            {/* Grid sutil de fondo */}
-            <div
-              className="pointer-events-none absolute inset-0"
-              style={{
-                backgroundImage:
-                  "linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px)",
-                backgroundSize: "20px 20px",
-              }}
-            />
 
             {/* Imagen de fondo */}
             {backgroundImage && (
@@ -469,6 +376,7 @@ const ProductionView = () => {
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>
