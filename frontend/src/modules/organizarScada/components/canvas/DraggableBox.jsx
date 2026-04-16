@@ -116,7 +116,7 @@ export default function DraggableBox({
       dragHandleClassName="box-header"
       cancel=".widget-content"
       resizeHandleClasses={{ bottomRight: "resize-handle-br" }}
-      style={{ zIndex }}
+      style={{ zIndex: zIndex, position: 'absolute' }}
       onClick={() => onSelect?.()}
       onDoubleClick={() => onDoubleClick?.()}
     >
