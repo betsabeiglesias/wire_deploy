@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  ArrowLeft,
   ChevronDown,
   FolderKanban,
   House,
@@ -18,6 +19,7 @@ import {
  *   layoutName        string   — nombre del layout activo
  *   isFullscreen      boolean  — estado de pantalla completa
  *   onToggleFullscreen fn      — toggle fullscreen
+ *   onBack            fn      — navegar atrás
  *   onHome            fn      — navegar a /
  *   onMyHMIs          fn      — navegar a /layout
  *   onEditHMI         fn      — abrir editor
@@ -26,6 +28,7 @@ const ProductionTopBar = ({
   layoutName,
   isFullscreen,
   onToggleFullscreen,
+  onBack,
   onHome,
   onMyHMIs,
   onEditHMI,
@@ -33,13 +36,37 @@ const ProductionTopBar = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="flex h-[36px] shrink-0 items-center justify-between border-b border-[#CED5DF] bg-[#29468B] px-4 shadow-sm">
-      {/* Izquierda: identidad del layout */}
-      <div className="flex items-center gap-2">
-        <Layers className="h-4 w-4 text-white/70" />
-        <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-white">
-          {layoutName || "HMI"}
-        </span>
+    <header className="flex h-[36px] shrink-0 items-center justify-between border-b border-[#CED5DF] bg-[#29468B] px-2 shadow-sm">
+      {/* Izquierda: navegación + identidad del layout */}
+      <div className="flex items-center gap-1">
+        {/* Atrás */}
+        <button
+          onClick={onBack}
+          title="Atrás"
+          className="flex h-7 w-7 items-center justify-center rounded-[4px] text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
+
+        {/* Home */}
+        <button
+          onClick={onHome}
+          title="Inicio"
+          className="flex h-7 w-7 items-center justify-center rounded-[4px] text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          <House className="h-4 w-4" />
+        </button>
+
+        {/* Separador */}
+        <div className="mx-1 h-4 w-px bg-white/20" />
+
+        {/* Nombre del layout */}
+        <div className="flex items-center gap-1.5">
+          <Layers className="h-3.5 w-3.5 text-white/60" />
+          <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-white">
+            {layoutName || "HMI"}
+          </span>
+        </div>
       </div>
 
       {/* Derecha: controles globales */}
@@ -76,13 +103,6 @@ const ProductionTopBar = ({
                 onClick={() => setIsMenuOpen(false)}
               />
               <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-[200px] rounded-[6px] border border-[#CED5DF] bg-white p-1.5 shadow-lg">
-                <button
-                  onClick={() => { setIsMenuOpen(false); onHome(); }}
-                  className="flex w-full items-center gap-2 rounded-[4px] px-2.5 py-1.5 text-[12px] text-slate-700 hover:bg-[#F2F3F5]"
-                >
-                  <House className="h-4 w-4 text-slate-400" />
-                  Home
-                </button>
                 <button
                   onClick={() => { setIsMenuOpen(false); onMyHMIs(); }}
                   className="flex w-full items-center gap-2 rounded-[4px] px-2.5 py-1.5 text-[12px] text-slate-700 hover:bg-[#F2F3F5]"

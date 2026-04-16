@@ -15,7 +15,7 @@ const ProductionSidebar = ({ views, activeViewId, onNavigate }) => {
   if (!views?.length || views.length <= 1) return null;
 
   return (
-    <aside className="flex w-[148px] shrink-0 flex-col border-r border-[#CED5DF] bg-white">
+    <aside className="flex w-fit shrink-0 flex-col border-r border-[#CED5DF] bg-white">
       {/* Cabecera de sección */}
       <div className="flex h-[36px] items-center gap-1.5 border-b border-[#CED5DF] px-3">
         <LayoutDashboard className="h-3.5 w-3.5 text-slate-400" />
@@ -32,19 +32,13 @@ const ProductionSidebar = ({ views, activeViewId, onNavigate }) => {
             <button
               key={view.id}
               onClick={() => onNavigate(view.id)}
-              title={view.name || `Vista ${view.id}`}
-              className={`w-full rounded-[4px] px-2.5 py-[6px] text-left text-[11px] font-medium transition-colors ${
+              className={`whitespace-nowrap rounded-[4px] px-2.5 py-[6px] text-left text-[11px] font-medium transition-colors ${
                 isActive
                   ? "bg-[#EEF3FF] text-[#29468B]"
                   : "text-slate-600 hover:bg-[#F2F3F5] hover:text-slate-800"
               }`}
             >
-              <span className="block truncate">{view.name || `Vista ${view.id}`}</span>
-              {isActive && (
-                <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-[0.05em] text-[#29468B]/60">
-                  activa
-                </span>
-              )}
+              {view.name || `Vista ${view.id}`}
             </button>
           );
         })}

@@ -300,6 +300,7 @@ const ProductionView = () => {
         layoutName={layoutName}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
+        onBack={() => navigate(-1)}
         onHome={() => navigate("/")}
         onMyHMIs={() => navigate("/layout")}
         onEditHMI={() =>
