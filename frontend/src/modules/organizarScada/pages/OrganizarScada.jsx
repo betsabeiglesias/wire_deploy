@@ -464,6 +464,11 @@ const OrganizarScada = () => {
                 selectedElement={selectedElement}
                 views={views}
                 onChange={(changes) => {
+                  if (changes?.__delete) {
+                    handleDeleteComponent(selectedElement.id);
+                    return;
+                  }
+
                   selectedElement && handleUpdateComponent(selectedElement.id, changes);
                 }}
                 isAdvancedMode={true} 

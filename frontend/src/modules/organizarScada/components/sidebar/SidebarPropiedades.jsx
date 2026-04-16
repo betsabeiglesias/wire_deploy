@@ -308,13 +308,36 @@ const SidebarPropiedades = ({
             }
           />
           {isImageWidget && (
-            <div className="flex items-center justify-between mt-2">
-              <FieldLabel>Usar como fondo</FieldLabel>
-              <Toggle
-                checked={currentSettings.isBackground || false}
-                onChange={(val) => updateSettings({ isBackground: val })}
-              />
-            </div>
+            <>
+              <div className="flex items-center justify-between mt-2">
+                <FieldLabel>Usar como fondo</FieldLabel>
+                <Toggle
+                  checked={currentSettings.isBackground || false}
+                  onChange={(val) => updateSettings({ isBackground: val })}
+                />
+              </div>
+
+              {/* 🔴 BOTÓN ELIMINAR FONDO */}
+              {currentSettings.isBackground && (
+                <button
+                  onClick={() => {
+                    // 1. Quitar fondo
+                    updateSettings({ isBackground: false });
+
+                    // 2. Eliminar el widget completamente
+                    onChange?.({
+                      ...draftElement,
+                      __delete: true, // 👈 señal para eliminar
+                    });
+                  }}
+                  className="mt-2 w-full py-2 rounded-md text-xs font-semibold
+                            bg-red-50 border border-red-200 text-red-600
+                            hover:bg-red-100 transition"
+                >
+                  Eliminar fondo
+                </button>
+              )}
+            </>
           )}
         </div>
       </SectionCard>
