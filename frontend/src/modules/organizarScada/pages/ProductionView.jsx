@@ -1,22 +1,18 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  Layout,
-  ChevronDown,
-  FolderKanban,
-  SquarePen,
-  House,
-} from "lucide-react";
-import { useRealtime } from "@/context/RealtimeProvider";
+import { Layers } from "lucide-react";
+import useRealtimeStore from "@/store/useRealtimeStore";
+import { useProjectTags } from "../hooks/useProjectTags";
 import api from "../../../services/api";
 import "@/styles/gateway.css";
 import "../../../styles/Scada.css";
 import { renderWidget } from "../components/widgets/registry.jsx";
-import Button from "../../../components/Button";
+import ProductionTopBar from "../components/layout/ProductionTopBar.jsx";
+import ProductionSidebar from "../components/layout/ProductionSidebar.jsx";
 
 const PUBLISHED_VIEWS_KEY = "publishedScadaViews";
-const BASE_STAGE_WIDTH = 1176;
-const BASE_STAGE_HEIGHT = 720;
+const BASE_WIDTH = 1920;
+const BASE_HEIGHT = 1080;
 
 const normalizeElements = (items = []) =>
   items.map((item, idx) => ({
@@ -31,195 +27,240 @@ const normalizeElements = (items = []) =>
 const ProductionView = () => {
   const { id: routeViewId } = useParams();
   const navigate = useNavigate();
-  const stageViewportRef = useRef(null);
+  const viewportRef = useRef(null);
 
-  const [layout, setLayout] = useState([]);
+  const [elements, setElements] = useState([]);
   const [activeViewId, setActiveViewId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [layoutName, setLayoutName] = useState("");
   const [appViewsData, setAppViewsData] = useState(null);
   const [scale, setScale] = useState(1);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [backgroundImage, setBackgroundImage] = useState(null);
+  const [bgTransform, setBgTransform] = useState({ x: 0, y: 0 });
+  const [bgSize, setBgSize] = useState({ width: BASE_WIDTH, height: BASE_HEIGHT });
 
-  const realtime = useRealtime();
-  const allTags = realtime?.allTags || [];
+  const allTags = useRealtimeStore((s) => s.allTags);
+  const tagsMap = useRealtimeStore((s) => s.tagsMap);
 
+  // Mismo sistema de resolución que usa el editor en live mode:
+  // carga las tablas del layout para poder resolver variableId → tagId
+  const { tags: projectTags } = useProjectTags(routeViewId, tagsMap);
+
+  // Auto-scale para ajustar el lienzo al viewport, igual que CanvasEditor
   useEffect(() => {
-    const handleResize = () => {
-      const viewport = stageViewportRef.current;
-
-      if (!viewport) return;
-
-      const availableWidth = viewport.clientWidth;
-      const availableHeight = viewport.clientHeight;
-      const widthScale = availableWidth / BASE_STAGE_WIDTH;
-      const heightScale = availableHeight / BASE_STAGE_HEIGHT;
-
-      let nextScale = Math.min(widthScale, heightScale);
-
-      if (nextScale > 1) nextScale = 1;
-      if (nextScale < 0.2) nextScale = 0.2;
-
-      setScale(nextScale);
+    const updateScale = () => {
+      if (!viewportRef.current) return;
+      const { clientWidth, clientHeight } = viewportRef.current;
+      const scaleX = clientWidth / BASE_WIDTH;
+      const scaleY = clientHeight / BASE_HEIGHT;
+      const next = Math.min(scaleX, scaleY, 1);
+      setScale(Math.max(next, 0.1));
     };
 
-    handleResize();
-    window.addEventListener("resize", handleResize);
-
-    const resizeObserver = new ResizeObserver(() => {
-      handleResize();
-    });
-
-    if (stageViewportRef.current) {
-      resizeObserver.observe(stageViewportRef.current);
-    }
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    const observer = new ResizeObserver(updateScale);
+    if (viewportRef.current) observer.observe(viewportRef.current);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
-      resizeObserver.disconnect();
+      window.removeEventListener("resize", updateScale);
+      observer.disconnect();
     };
   }, []);
 
-  const loadFromLocalPublished = (id) => {
-    const raw = localStorage.getItem(PUBLISHED_VIEWS_KEY);
+  // Fullscreen API
+  useEffect(() => {
+    const onFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
 
-    if (!raw) return false;
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
+  };
 
-    try {
-      const parsed = JSON.parse(raw) || {};
-      const target = parsed[id];
+  // Actualizar background cuando cambian los elementos
+  const backgroundWidget = useMemo(
+    () =>
+      elements.find(
+        (el) =>
+          el?.data?.type === "image-widget" &&
+          el?.data?.settings?.isBackground
+      ) || null,
+    [elements]
+  );
 
-      if (!target) return false;
+  useEffect(() => {
+    if (backgroundWidget) {
+      const s = backgroundWidget.data.settings;
+      const src = s.imageBase64 || s.src || s.url || s.image || s.path;
+      setBackgroundImage(src || null);
+      setBgTransform({ x: s.bgX || 0, y: s.bgY || 0 });
+      setBgSize({ width: s.bgWidth || BASE_WIDTH, height: s.bgHeight || BASE_HEIGHT });
+    } else {
+      setBackgroundImage(null);
+      setBgSize({ width: BASE_WIDTH, height: BASE_HEIGHT });
+    }
+  }, [backgroundWidget]);
 
-      setLayoutName(target.name || target?.views_data?.app_name || `Layout ${id}`);
+  const applyViewData = (data) => {
+    setLayoutName(data.name || data?.views_data?.app_name || `Layout ${routeViewId}`);
+    setAppViewsData(data?.views_data || null);
 
-      if (target.views_data?.views?.length) {
-        const firstView = target.views_data.views[0];
-        setLayout(normalizeElements(firstView?.elements || []));
-        setActiveViewId(id);
-        return true;
-      }
-    } catch (err) {
-      console.error("Error al cargar publicacion local", err);
+    if (data?.views_data?.views?.length) {
+      const firstView = data.views_data.views[0];
+      setElements(normalizeElements(firstView?.elements || []));
+    } else if (data && Array.isArray(data.elements)) {
+      setElements(normalizeElements(data.elements));
+    } else {
+      setElements([]);
     }
 
-    return false;
+    setActiveViewId(routeViewId);
+  };
+
+  const loadFromLocalPublished = (id) => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(PUBLISHED_VIEWS_KEY) || "{}");
+      const target = parsed[id];
+      if (!target) return false;
+      applyViewData(target);
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   useEffect(() => {
-    const loadLayoutFromServer = async () => {
-      if (!routeViewId) {
-        setIsLoading(false);
-        return;
-      }
+    if (!routeViewId) {
+      setIsLoading(false);
+      return;
+    }
 
-      setIsLoading(true);
+    setIsLoading(true);
 
-      try {
-        const res = await api.get(`/api/scada/layout/${routeViewId}/`);
-
-        if (res.status === 200) {
-          const data = res.data;
-
-          setLayoutName(
-            data.name || data?.views_data?.app_name || `Layout ${routeViewId}`,
-          );
-          setAppViewsData(data?.views_data || null);
-
-          if (data?.views_data?.views?.length) {
-            const selectedView = data.views_data.views[0];
-            setLayout(normalizeElements(selectedView?.elements || []));
-          } else if (data && Array.isArray(data.elements)) {
-            setLayout(normalizeElements(data.elements));
-          } else {
-            setLayout([]);
-          }
-
-          setActiveViewId(routeViewId);
-        }
-      } catch (err) {
-        console.error("Error al cargar el layout servidor:", err);
-
-        if (!loadFromLocalPublished(routeViewId)) {
-          setLayout([]);
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadLayoutFromServer();
+    api
+      .get(`/api/scada/layout/${routeViewId}/`)
+      .then((res) => {
+        if (res.status === 200) applyViewData(res.data);
+      })
+      .catch(() => {
+        if (!loadFromLocalPublished(routeViewId)) setElements([]);
+      })
+      .finally(() => setIsLoading(false));
   }, [routeViewId]);
 
   const handleNavigate = (targetViewId) => {
     if (!targetViewId || !appViewsData) return;
-
-    const targetView = appViewsData.views?.find((view) => view.id === targetViewId);
-
+    const targetView = appViewsData.views?.find((v) => v.id === targetViewId);
     if (!targetView) return;
-
-    setLayout(normalizeElements(targetView.elements || []));
+    setElements(normalizeElements(targetView.elements || []));
     setActiveViewId(targetView.id);
   };
 
+  // Misma lógica de resolución que WidgetLiveWrapper + useLiveTag:
+  // 1. settings.tagId       → lookup directo en tagsMap
+  // 2. settings.variableId  → resolución via projectTags → tagId → tagsMap
+  // 3. Fallback legacy      → búsqueda por variable + equipment en allTags
   const resolveLiveData = (item) => {
     const settings = item.data?.settings || {};
-    const variable = settings.variable || settings.attributeKey;
-    const equipment = settings.equipment || item.data?.equipment;
+    let entry = null;
 
-    const tag =
-      allTags.find(
-        (currentTag) =>
-          currentTag.variable === variable &&
-          (!equipment || currentTag.equipment === equipment),
-      ) ||
-      allTags.find((currentTag) => currentTag.variable === variable) ||
-      null;
+    if (settings.tagId) {
+      entry = tagsMap.get(settings.tagId) ?? null;
+    } else if (settings.variableId && projectTags?.length) {
+      const pt = projectTags.find((t) => t.id === settings.variableId);
+      if (pt?.tagId) {
+        entry = tagsMap.get(pt.tagId) ?? null;
+      } else if (pt?.equipment && pt?.variable) {
+        // projectTag sin tagId aún: buscar en tagsMap por equipment+variable
+        for (const e of tagsMap.values()) {
+          if (e.equipment === pt.equipment && e.variable === pt.variable) {
+            entry = e;
+            break;
+          }
+        }
+      }
+    }
+
+    // Fallback legacy: settings.variable / settings.equipment
+    if (!entry) {
+      const variable = settings.variable || settings.attributeKey;
+      const equipment = settings.equipment || item.data?.equipment;
+      if (variable) {
+        entry =
+          allTags.find((t) => t.variable === variable && (!equipment || t.equipment === equipment)) ||
+          allTags.find((t) => t.variable === variable) ||
+          null;
+      }
+    }
 
     return {
-      value:
-        typeof tag?.value !== "undefined"
-          ? tag.value
-          : (settings?.initialValue ?? 0),
-      unit: tag?.unit || settings?.unit,
-      tag,
+      value: typeof entry?.value !== "undefined" ? entry.value : (settings?.initialValue ?? 0),
+      unit: entry?.unit || settings?.unit,
+      tag: entry,
     };
   };
 
-  const renderComponent = (item) => {
+  // Ordenar por z_index igual que el editor
+  const orderedElements = useMemo(
+    () =>
+      [...elements].sort((a, b) => {
+        const az = Number.isFinite(Number(a?.data?.settings?.z_index))
+          ? Number(a.data.settings.z_index)
+          : 0;
+        const bz = Number.isFinite(Number(b?.data?.settings?.z_index))
+          ? Number(b.data.settings.z_index)
+          : 0;
+        return az - bz;
+      }),
+    [elements]
+  );
+
+  const renderElement = (item) => {
     const data = item?.data || {};
+    const settings = data.settings || {};
+
+    // Ocultar elementos no visibles
+    if (settings.is_visible === false) return null;
+
+    // Saltar el widget de fondo (se renderiza separado)
+    if (data.type === "image-widget" && settings.isBackground) return null;
+
     const live = resolveLiveData(item);
-    const { type, settings = {} } = data;
+    const { type } = data;
 
     const style = {
       position: "absolute",
-      left: typeof item.x === "number" ? `${item.x}px` : item.x,
-      top: typeof item.y === "number" ? `${item.y}px` : item.y,
+      left: `${item.x}px`,
+      top: `${item.y}px`,
       width: `${data.width || 200}px`,
       height: `${data.height || 180}px`,
-      zIndex: 10,
+      zIndex: Number.isFinite(Number(settings.z_index)) ? Number(settings.z_index) : 10,
     };
 
-    if (
-      type === "nav-button" ||
-      type === "btn-primary" ||
-      type === "btn-outline"
-    ) {
+    if (type === "nav-button" || type === "btn-primary" || type === "btn-outline") {
       const targetViewId = data?.targetViewId || settings?.targetViewId;
-
       return (
-        <div
-          key={item.id}
-          style={style}
-          className="flex items-center justify-center"
-        >
-          <Button
-            variant={type === "btn-outline" ? "secondary" : "primary"}
+        <div key={item.id} style={style} className="flex items-center justify-center">
+          <button
             onClick={() => targetViewId && handleNavigate(targetViewId)}
-            className={`h-full w-full rounded-xl ${activeViewId === targetViewId ? "ring-2 ring-[#255f82]/30" : ""}`}
+            className={`
+              h-full w-full rounded-[6px] border text-[11px] font-medium transition-colors
+              ${type === "btn-outline"
+                ? "border-[#29468B] bg-transparent text-[#29468B] hover:bg-[#EEF3FF]"
+                : "border-transparent bg-[#29468B] text-white hover:bg-[#1F3A73]"
+              }
+              ${activeViewId === targetViewId ? "ring-2 ring-[#29468B]/30" : ""}
+            `}
           >
-            {data?.label || settings?.attributeLabel || "Boton"}
-          </Button>
+            {data?.label || settings?.attributeLabel || "Botón"}
+          </button>
         </div>
       );
     }
@@ -238,115 +279,105 @@ const ProductionView = () => {
     );
   };
 
+  // ----- LOADING -----
   if (isLoading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#eef2f4]">
-        <div className="animate-pulse rounded-[30px] border border-[#dce3e8] bg-white px-10 py-8 font-medium text-[#697682] shadow-lg">
-          Sincronizando consola de produccion...
+      <div className="flex h-screen w-full items-center justify-center bg-[#E9EAED]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#29468B] border-t-transparent" />
+          <span className="text-[12px] font-medium text-slate-500">
+            Cargando consola de producción...
+          </span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-[#eef2f4]">
-      <div className="pointer-events-none absolute right-4 top-4 z-50 md:right-6 md:top-6">
-        <div className="pointer-events-auto relative">
-          <Button
-            variant="secondary"
-            onClick={() => setIsMenuOpen((prev) => !prev)}
-            className="min-w-[190px] justify-between bg-white/94 shadow-[0_18px_36px_-24px_rgba(31,41,55,0.24)] backdrop-blur-sm"
-          >
-            Acciones
-            <ChevronDown
-              className={`ml-3 h-4 w-4 transition-transform ${isMenuOpen ? "rotate-180" : ""}`}
-            />
-          </Button>
+    <div className="flex h-screen w-full flex-col overflow-hidden bg-[#E9EAED]">
+      {/* ── TOP BAR ── */}
+      <ProductionTopBar
+        layoutName={layoutName}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
+        onBack={() => navigate(-1)}
+        onHome={() => navigate("/")}
+        onMyHMIs={() => navigate("/layout")}
+        onEditHMI={() =>
+          navigate("/organizar-scada", {
+            state: {
+              loadPublishedId: routeViewId,
+              layoutId: routeViewId,
+              layOutName: layoutName,
+              editMode: true,
+              initialLayoutElements: elements,
+            },
+          })
+        }
+      />
 
-          {isMenuOpen && (
-            <div className="absolute right-0 top-[calc(100%+12px)] z-50 w-[230px] rounded-[24px] border border-[#dce3e8] bg-white p-3 shadow-[0_24px_40px_-24px_rgba(31,41,55,0.18)]">
-              <div className="flex flex-col gap-2">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    navigate("/");
-                  }}
-                  className="w-full justify-start"
-                >
-                  <House className="mr-2 h-4 w-4" />
-                  Home
-                </Button>
+      {/* ── BODY: sidebar + canvas ── */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Navegación de vistas (view-level) */}
+        <ProductionSidebar
+          views={appViewsData?.views}
+          activeViewId={activeViewId}
+          onNavigate={handleNavigate}
+        />
 
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    navigate("/layout");
-                  }}
-                  className="w-full justify-start"
-                >
-                  <FolderKanban className="mr-2 h-4 w-4" />
-                  Mis HMIs
-                </Button>
-
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    navigate("/organizar-scada", {
-                      state: {
-                        loadPublishedId: routeViewId,
-                        layoutId: routeViewId,
-                        layOutName: layoutName,
-                        editMode: true,
-                        initialLayoutElements: layout,
-                      },
-                    });
-                  }}
-                  className="w-full justify-start border-[#cfe4d9] text-[#2f7a57] hover:bg-[#f4fbf7]"
-                >
-                  <SquarePen className="mr-2 h-4 w-4" />
-                  Editar HMI
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div
-        ref={stageViewportRef}
-        className="relative z-10 flex h-full w-full items-center justify-center p-2 md:p-3"
-      >
+        {/* ── CANVAS VIEWPORT ── */}
         <div
-          className="origin-center transition-all duration-300 ease-out"
+          ref={viewportRef}
+          className="relative flex flex-1 items-center justify-center overflow-hidden bg-white"
+        >
+        {/* Lienzo escalado — igual que CanvasEditor */}
+        <div
           style={{
-            transform: `scale(1.4)`,
-            width: `${BASE_STAGE_WIDTH}px`,
-            height: `${BASE_STAGE_HEIGHT}px`,
+            width: BASE_WIDTH * scale,
+            height: BASE_HEIGHT * scale,
+            position: "relative",
           }}
         >
           <div
-            className="relative h-full w-full overflow-hidden rounded-[30px] border border-[#dce3e8] bg-white shadow-2xl"
+            className="absolute top-0 left-0 overflow-hidden bg-white"
             style={{
-              width: `${BASE_STAGE_WIDTH}px`,
-              height: `${BASE_STAGE_HEIGHT}px`,
+              width: BASE_WIDTH,
+              height: BASE_HEIGHT,
+              transform: `scale(${scale})`,
+              transformOrigin: "top left",
             }}
           >
-            <div className="pointer-events-none absolute inset-0 opacity-[0.03] [background-image:linear-gradient(#000_1px,transparent_1px),linear-gradient(90deg,#000_1px,transparent_1px)] [background-size:20px_20px]" />
 
-            {layout.length > 0 ? (
-              layout.map((item) => renderComponent(item))
+            {/* Imagen de fondo */}
+            {backgroundImage && (
+              <img
+                src={backgroundImage}
+                alt="background"
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: bgSize.width,
+                  height: bgSize.height,
+                  transform: `translate(${bgTransform.x}px, ${bgTransform.y}px)`,
+                  transformOrigin: "top left",
+                  pointerEvents: "none",
+                  zIndex: 0,
+                }}
+              />
+            )}
+
+            {/* Widgets */}
+            {orderedElements.length > 0 ? (
+              orderedElements.map(renderElement)
             ) : (
-              <div className="flex h-full w-full flex-col items-center justify-center text-[#94a3b8]">
-                <Layout className="h-12 w-12 opacity-20" />
-                <p className="mt-4 font-medium">
-                  No hay elementos en esta vista
-                </p>
+              <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-slate-400">
+                <Layers className="h-12 w-12 opacity-20" />
+                <p className="text-[13px] font-medium">No hay elementos en esta vista</p>
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>

@@ -1,9 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { useRealtime } from "@/context/RealtimeProvider";
+import useRealtimeStore from "@/store/useRealtimeStore";
 
 const ValveGaugeFormModal = ({ component, userId, onClose, onSave }) => {
-    const realtime = useRealtime();
-    const allTags = realtime?.allTags || [];
+    const allTags = useRealtimeStore((s) => s.allTags);
 
     const [site, setSite] = useState('');
     const [area, setArea] = useState('');

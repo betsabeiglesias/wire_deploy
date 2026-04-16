@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState } from "react";
 import DraggableBox from "./DraggableBox";
 import { useProjectTags } from "@/modules/organizarScada/hooks/useProjectTags";
-import { useRealtime } from "@/context/RealtimeProvider";
+import useRealtimeStore from "@/store/useRealtimeStore";
 
 
 const CanvasEditor = ({
@@ -22,8 +22,7 @@ const CanvasEditor = ({
   const viewportRef = useRef(null);
   const canvasRef   = useRef(null);
 
-  const realtime  = useRealtime();
-  const tagsMap   = realtime?.tagsMap || new Map();
+  const tagsMap = useRealtimeStore((s) => s.tagsMap);
   const { tags: projectTags } = useProjectTags(isLiveMode ? layoutId : null, tagsMap);
   const [backgroundImage, setBackgroundImage] = useState(null);
 

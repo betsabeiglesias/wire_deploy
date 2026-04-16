@@ -19,11 +19,13 @@ import { NeedleGauge } from "../components/gauges/NeedleGauge";
 import { Filters } from "../components/Filters";
 import { GatewayTable } from "../components/GatewayTable";
 
-import { useRealtime } from "@/context/RealtimeProvider";
+import useRealtimeStore from "@/store/useRealtimeStore";
 
 export default function Communications() {
   const navigate = useNavigate();
-  const { connected, dataStale, allTags } = useRealtime();
+  const connected = useRealtimeStore((s) => s.connected);
+  const dataStale = useRealtimeStore((s) => s.dataStale);
+  const allTags   = useRealtimeStore((s) => s.allTags);
 
   const [filters, setFilters] = useState({
     site: "", area: "", line: "", cell: "", equipment_id: "",
