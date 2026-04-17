@@ -204,18 +204,26 @@ class ModbusTCPDriver(BaseDriver):
             word_order = item_format.get("word_order", self.default_word_order)
 
             try:
-                value = self._read(address, datatype, fc, byte_order, word_order)
+                result = self._read(address, datatype, fc, byte_order, word_order)
+                
+                # =========================
+                # CALIDAD
+                # =========================
+                if isinstance(result, dict):
+                    value = result["value"]
+                    raw_status = result["raw_status"]
+                    error = result.get("error")
+                else:
+                    value = result
+                    raw_status = "ok"
+                    error = None
 
-                # =========================
-                # 🔥 CALIDAD SCADA
-                # =========================
-                quality = "GOOD"
-                if value is None:
-                    quality = "BAD"
+                if value is None and raw_status == "ok":
+                    raw_status = "read_error"
                     self.logger.warning(f"⚠️ Lectura falló para {variable}@{address} (FC{fc})")
 
                 # =========================
-                # 📐 SCALE (solo si hay valor)
+                # SCALE (solo si hay valor)
                 # =========================
                 if value is not None and scale:
                     try:
@@ -239,17 +247,19 @@ class ModbusTCPDriver(BaseDriver):
                     value=value,  # puede ser None
                     datatype=normalized_datatype,
                     unit=unit,
-                    quality=quality,
+                    quality=None,
                     timestamp=utc_iso(),
                     source={
                         "protocol": "modbus",
                         "address": address,
                         "fc": fc,
-                        "format": f"{byte_order}-{word_order}"
+                        "format": f"{byte_order}-{word_order}",
+                        "raw_status": raw_status,
+                        "error": error
                     }
                 )
 
-                self.logger.debug(f"📤 Emitiendo: {variable}={value} quality={quality}")
+                self.logger.debug(f"📤 Emitiendo: {variable}={value} raw_status={raw_status}")
                 self.emit_tag(pv)
                 
                 self.last_emit_ts = time.time()
@@ -261,6 +271,9 @@ class ModbusTCPDriver(BaseDriver):
                     exc_info=True
                 )
                 error_count += 1
+                raw_status = "exception"
+                error = str(exc)
+                value = None
         
         if success_count > 0:
             self.logger.debug(f"✅ Ciclo completado: {success_count} OK, {error_count} errores")
@@ -306,7 +319,11 @@ class ModbusTCPDriver(BaseDriver):
                 rr = self.client.read_coils(address, 1, slave=self.unit_id)
                 if rr.isError():
                     self.logger.warning(f"❌ FC1 error en @{address}: {rr}")
-                    return None
+                    return {
+                        "value": None,
+                        "raw_status": "modbus_exception",
+                        "error": str(rr)
+                    }
                 return bool(rr.bits[0])
 
             elif fc == 2:
@@ -314,7 +331,11 @@ class ModbusTCPDriver(BaseDriver):
                 rr = self.client.read_discrete_inputs(address, 1, slave=self.unit_id)
                 if rr.isError():
                     self.logger.warning(f"❌ FC2 error en @{address}: {rr}")
-                    return None
+                    return {
+                        "value": None,
+                        "raw_status": "modbus_exception",
+                        "error": str(rr)
+                    }
                 return bool(rr.bits[0])
 
             # === LECTURA DE REGISTROS (FC3, FC4) ===
@@ -336,7 +357,11 @@ class ModbusTCPDriver(BaseDriver):
                     
                 if not rr.registers:
                     self.logger.warning(f"❌ FC{fc} sin registros en @{address}")
-                    return None
+                    return {
+                        "value": None,
+                        "raw_status": "modbus_exception",
+                        "error": str(rr)
+                    }
 
                 regs = rr.registers
                 self.logger.debug(f"📊 FC{fc} @{address}: regs={regs} (formato: {byte_order}-{word_order})")
@@ -375,7 +400,11 @@ class ModbusTCPDriver(BaseDriver):
                 f"{byte_order}-{word_order}): {e!r}", 
                 exc_info=True
             )
-            return None
+            return {
+                "value": None,
+                "raw_status": "exception",
+                "error": str(e)
+            }
 
     # === 🔥 MÉTODOS DE DECODIFICACIÓN ===
     

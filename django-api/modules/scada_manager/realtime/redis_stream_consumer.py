@@ -73,6 +73,7 @@ class CentralRedisStreamConsumer:
             return
 
         event = json.loads(raw)
+        self._normalize_event(event, tenant)
 
         # Fan-out al grupo WS del tenant
         await self.channel_layer.group_send(
@@ -84,6 +85,20 @@ class CentralRedisStreamConsumer:
         )
 
         logger.debug("🔥 Event forwarded to WS (tenant=%s)", tenant)
+
+    def _normalize_event(self, event: dict, tenant: str) -> None:
+        """
+        Normaliza el contrato realtime para frontend/consumidores.
+
+        Acepta eventos antiguos con `ts` y garantiza una salida estable con
+        `timestamp`, manteniendo compatibilidad hacia atrás.
+        """
+        ts = event.get("timestamp") or event.get("ts")
+        if ts:
+            event["timestamp"] = ts
+            event.setdefault("ts", ts)
+
+        event.setdefault("tenant", tenant)
 
     async def _get_streams(self):
         """
