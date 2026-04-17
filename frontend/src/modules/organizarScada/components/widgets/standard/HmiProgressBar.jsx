@@ -17,6 +17,7 @@ const HmiProgressBar = ({
   hatchStroke = "#2c6993",
   labelColor = "#999",
   percentColorOverride,
+  accentColor, // 👈 añadido
   showValue = true,
   showLabel = false,
   labelOffsetX = 0,
@@ -40,6 +41,10 @@ const HmiProgressBar = ({
 
   const textColor = percentColorOverride || percentColor;
 
+  const colorFrom = accentColor || gradientFrom;
+  const colorTo = accentColor || gradientTo;
+  const hatchColor = accentColor || hatchStroke;
+
   const centerX = 175;
   const centerY = 35;
 
@@ -53,8 +58,8 @@ const HmiProgressBar = ({
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor={gradientFrom} stopOpacity="1" />
-          <stop offset="100%" stopColor={gradientTo} stopOpacity="1" />
+          <stop offset="0%" stopColor={colorFrom} stopOpacity="1" />
+          <stop offset="100%" stopColor={colorTo} stopOpacity="1" />
         </linearGradient>
         <pattern
           id={hatchId}
@@ -64,7 +69,7 @@ const HmiProgressBar = ({
         >
           <path
             d="M-1,1 l2,-2 M0,10 l10,-10 M9,11 l2,-2"
-            stroke={hatchStroke}
+            stroke={hatchColor}
             strokeWidth="2"
           />
         </pattern>

@@ -26,6 +26,7 @@ const HmiTrendCard = ({
   width = 400,
   height = 220,
   colors = {},
+  accentColor,
 }) => {
   const uid = useId().replace(/:/g, "");
   const gradId = `blueGrad-${uid}`;
@@ -37,8 +38,8 @@ const HmiTrendCard = ({
     textMuted = "rgba(255,255,255,0.7)",
   } = colors;
 
-  const chartMin = 50;
-  const chartMax = 180;
+  const mainColor = accentColor || gradStart;
+
   const chartHeight = height;
   const chartWidth = width;
   const pointsCount = 10;
@@ -56,6 +57,7 @@ const HmiTrendCard = ({
   }, [seriesValues, step]);
 
   const fillData = `${pathData} L ${chartWidth} ${chartHeight} L 0 ${chartHeight} Z`;
+
   const displayValue = Math.round(
     minValue + ((maxValue - minValue) * clampPercent((value - minValue) / (maxValue - minValue) * 100)) / 100
   );
@@ -65,17 +67,11 @@ const HmiTrendCard = ({
   const ringY = 70;
 
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      xmlns="http://www.w3.org/2000/svg"
-      style={{ display: "block" }}
-    >
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
       <defs>
         <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={gradStart} stopOpacity="1" />
-          <stop offset="100%" stopColor={gradEnd} stopOpacity="1" />
+          <stop offset="0%" stopColor={mainColor} stopOpacity="1" />
+          <stop offset="100%" stopColor={accentColor || gradEnd} stopOpacity="1" />
         </linearGradient>
         <linearGradient id={lineGradId} x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor="#ffffff" stopOpacity="0.5" />
@@ -85,38 +81,15 @@ const HmiTrendCard = ({
 
       <rect width={width} height={height} rx="30" ry="30" fill={`url(#${gradId})`} />
 
-      <text
-        x="35"
-        y="45"
-        fill={textMuted}
-        fontSize="14"
-        fontWeight="700"
-        letterSpacing="1"
-        fontFamily="'Segoe UI', sans-serif"
-      >
+      <text x="35" y="45" fill={textMuted} fontSize="14" fontWeight="700">
         {title}
       </text>
 
-      <text
-        x="35"
-        y="110"
-        fill="#ffffff"
-        fontSize="70"
-        fontWeight="700"
-        fontFamily="'Segoe UI', sans-serif"
-        style={{ fontVariantNumeric: "tabular-nums" }}
-      >
+      <text x="35" y="110" fill="#ffffff" fontSize="70" fontWeight="700">
         {displayValue}
       </text>
 
-      <text
-        x="38"
-        y="140"
-        fill="rgba(255,255,255,0.8)"
-        fontSize="18"
-        letterSpacing="2"
-        fontFamily="'Segoe UI', sans-serif"
-      >
+      <text x="38" y="140" fill="rgba(255,255,255,0.8)" fontSize="18">
         {unitLabel}
       </text>
 
@@ -124,7 +97,7 @@ const HmiTrendCard = ({
       <path
         d={pathData}
         fill="none"
-        stroke="#ffffff"
+        stroke={accentColor || "#ffffff"}
         strokeWidth="4"
         strokeLinecap="round"
         strokeLinejoin="round"
