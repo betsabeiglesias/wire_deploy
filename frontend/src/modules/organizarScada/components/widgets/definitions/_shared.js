@@ -66,3 +66,23 @@ export const DEFAULT_STYLE_SCHEMA = [
     ],
   },
 ];
+
+
+// Estilos compartidos 
+export const buildBaseStyle = (palette = {}) => ({
+  bgColor: palette.background || "#ffffff",
+  borderColor: "#e5e7eb",
+
+  titleColor: "#0f172a",
+  labelColor: "#64748b",
+
+  gridColor: "#e2e8f0",
+  axisColor: "#94a3b8",
+
+  primary: palette.primary || "#3b82f6",
+  primaryDark: palette.primaryDark || "#1d4ed8",
+
+  success: "#10b981",
+  warning: "#f59e0b",
+  danger: "#ef4444",
+});

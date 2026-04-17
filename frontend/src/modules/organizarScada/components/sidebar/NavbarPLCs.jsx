@@ -31,6 +31,14 @@ export default function NavbarPLCs({ toolbar }) {
         >
           Mis HMIs
         </Button>
+
+        <Button
+          variant="secondary"
+          onClick={() => navigate("/hmi")}
+          title="Volver a Centro HMI"
+        >
+          Centro HMI
+        </Button>
       </div>
 
       {show && (
@@ -41,11 +49,11 @@ export default function NavbarPLCs({ toolbar }) {
             variant="secondary"
             className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100 font-semibold"
             onClick={handleCancel}
-            title="Descartar cambios y volver"
+            title="Descartar cambios y volver a Centro HMI"
           >
             Descartar
           </Button> 
-          
+
           <Button
             variant="secondary"
             className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
