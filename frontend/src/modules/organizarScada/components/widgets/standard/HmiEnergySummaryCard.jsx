@@ -10,6 +10,12 @@ const HmiEnergySummaryCard = ({
   deltaDirection = "up",
   width = 380,
   height = 140,
+
+  // 👇 NUEVO (IMPORTANTE)
+  backgroundColor = "#ffffff",
+  textColor = "#0f172a",
+  primaryColor = "#3b82f6",
+  secondaryColor = "#94a3b8",
 }) => {
   const arrowColor = deltaDirection === "down" ? "#10b981" : "#ef4444";
   const arrow = deltaDirection === "down" ? "▼" : "▲";
@@ -22,14 +28,35 @@ const HmiEnergySummaryCard = ({
       xmlns="http://www.w3.org/2000/svg"
       style={{ display: "block" }}
     >
-      <rect x="1" y="1" width="378" height="138" rx="12" fill="#ffffff" stroke="#e5e7eb" />
-      <rect x="1" y="1" width="378" height="34" rx="12" fill="#f3f4f6" />
-      <rect x="1" y="23" width="378" height="12" fill="#f3f4f6" />
+      {/* Fondo */}
+      <rect
+        x="1"
+        y="1"
+        width="378"
+        height="138"
+        rx="12"
+        fill={backgroundColor}
+        stroke={secondaryColor}
+      />
 
-      <text x="16" y="22" fontSize="12" fill="#6b7280" fontFamily="Arial, sans-serif">
+      {/* Header */}
+      <rect
+        x="1"
+        y="1"
+        width="378"
+        height="34"
+        rx="12"
+        fill={secondaryColor}
+        opacity="0.15"
+      />
+
+      <text x="16" y="22" fontSize="12" fill={textColor}>
         {title}
       </text>
-      <circle cx="55" cy="72" r="30" fill="#5b8dbb" />
+
+      {/* Círculo unidad */}
+      <circle cx="55" cy="72" r="30" fill={primaryColor} />
+
       <text
         x="55"
         y="76"
@@ -37,31 +64,32 @@ const HmiEnergySummaryCard = ({
         fill="#ffffff"
         fontWeight="700"
         textAnchor="middle"
-        fontFamily="Arial, sans-serif"
       >
         {unit}
       </text>
 
+      {/* Valor */}
       <text
         x="135"
         y="70"
         fontSize="24"
-        fill="#4f83b6"
+        fill={textColor}
         fontWeight="700"
-        fontFamily="Arial, sans-serif"
       >
         {value}
       </text>
-      <text x="135" y="90" fontSize="12" fill="#6b7280" fontFamily="Arial, sans-serif">
+
+      <text x="135" y="90" fontSize="12" fill={secondaryColor}>
         {subtitle}
       </text>
 
-      <line x1="16" y1="103" x2="364" y2="103" stroke="#e5e7eb" strokeWidth="1" />
+      <line x1="16" y1="103" x2="364" y2="103" stroke={secondaryColor} />
 
-      <text x="16" y="122" fontSize="11" fill="#6b7280" fontFamily="Arial, sans-serif">
+      <text x="16" y="122" fontSize="11" fill={secondaryColor}>
         {deltaText}
       </text>
-      <text x="315" y="122" fontSize="12" fill={arrowColor} fontFamily="Arial, sans-serif">
+
+      <text x="315" y="122" fontSize="12" fill={arrowColor}>
         {arrow} {deltaValue}
       </text>
     </svg>

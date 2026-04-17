@@ -1,4 +1,5 @@
 import ProcessStatusBadge from "../process/ProcessStatusBadge";
+import { buildBaseStyle } from "./_shared";
 
 export default {
   type:        "process-status-badge",
@@ -24,8 +25,19 @@ export default {
     },
   ],
 
-  resolveStyle(palette) {
-    return { primary: palette.primary || "#3b82f6" };
+  resolveStyle(palette = {}) {
+    const base = buildBaseStyle(palette);
+
+    return {
+      backgroundColor: base.bgColor,
+      textColor: base.titleColor,
+
+      gridColor: base.gridColor,
+      axisColor: base.axisColor,
+
+      primaryColor: base.primary,
+      secondaryColor: base.primaryDark,
+    };
   },
 
   component: ProcessStatusBadge,

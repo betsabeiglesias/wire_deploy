@@ -1,5 +1,6 @@
 import HmiTankLevel from "../standard/HmiTankLevel";
 import { parseNumericValue, normalizePercent } from "@/modules/organizarScada/utils/numbers";
+import { buildBaseStyle } from "./_shared";
 
 export default {
   type:        "hmi-tank-level",
@@ -33,14 +34,19 @@ export default {
     },
   ],
 
-  resolveStyle(palette) {
+  resolveStyle(palette = {}) {
+    const base = buildBaseStyle(palette);
+
     return {
-      fluidBase:    palette.primary   || "#8e44ad",
-      gradientFrom: palette.primary   || "#9b59b6",
-      gradientTo:   palette.secondary || "#8e44ad",
-      labelColor:   palette.text      || "#e2e8f0",
+      backgroundColor: base.bgColor,
+      textColor: base.titleColor,
+
+      gridColor: base.gridColor,
+      axisColor: base.axisColor,
+
+      primaryColor: base.primary,
+      secondaryColor: base.primaryDark,
     };
   },
-
   component: HmiTankLevel,
 };

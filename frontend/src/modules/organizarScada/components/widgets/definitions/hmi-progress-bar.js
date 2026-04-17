@@ -1,5 +1,6 @@
 import HmiProgressBar from "../standard/HmiProgressBar";
 import { parseNumericValue, normalizePercent } from "@/modules/organizarScada/utils/numbers";
+import { buildBaseStyle } from "./_shared";
 
 export default {
   type:        "hmi-progress-bar",
@@ -33,11 +34,18 @@ export default {
     },
   ],
 
-  resolveStyle(palette) {
+  resolveStyle(palette = {}) {
+    const base = buildBaseStyle(palette);
+
     return {
-      gradientFrom: palette.primary   || "#3b82f6",
-      gradientTo:   palette.secondary || "#94a3b8",
-      labelColor:   palette.text      || "#ffffff",
+      backgroundColor: base.bgColor,
+      textColor: base.titleColor,
+
+      gridColor: base.gridColor,
+      axisColor: base.axisColor,
+
+      primaryColor: base.primary,
+      secondaryColor: base.primaryDark,
     };
   },
 

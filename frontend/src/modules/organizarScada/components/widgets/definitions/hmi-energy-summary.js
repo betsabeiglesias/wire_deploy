@@ -1,4 +1,5 @@
 import HmiEnergySummaryCard from "../standard/HmiEnergySummaryCard";
+import { buildBaseStyle } from "./_shared";
 
 export default {
   type:        "hmi-energy-summary",
@@ -23,8 +24,19 @@ export default {
 
   styleSchema: [],
 
-  resolveStyle() {
-    return {};
+  resolveStyle(palette = {}) {
+    const base = buildBaseStyle(palette);
+
+    return {
+      backgroundColor: base.bgColor,
+      textColor: base.titleColor,
+
+      gridColor: base.gridColor,
+      axisColor: base.axisColor,
+
+      primaryColor: base.primary,
+      secondaryColor: base.primaryDark,
+    };
   },
 
   component: HmiEnergySummaryCard,
