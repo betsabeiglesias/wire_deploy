@@ -24,56 +24,28 @@ const SvgShape = ({
 
   const body =
     shape === "circle" ? (
-      <circle
-        cx={width / 2}
-        cy={height / 2}
-        r={Math.min(width, height) / 2}
-        vectorEffect="non-scaling-stroke"
-      />
+      <circle cx={width / 2} cy={height / 2} r={Math.min(width, height) / 2} />
     ) : shape === "diamond" ? (
-      <polygon
-        points={`${width / 2},0 ${width},${height / 2} ${width / 2},${height} 0,${height / 2}`}
-        vectorEffect="non-scaling-stroke"
-      />
+      <polygon points={`${width / 2},0 ${width},${height / 2} ${width / 2},${height} 0,${height / 2}`} />
     ) : shape === "cylinder" ? (
       <g>
-        <rect
-          x={0}
-          y={10}
-          width={width}
-          height={height - 20}
-          fillOpacity="0.9"
-          vectorEffect="non-scaling-stroke"
-        />
-        <ellipse cx={width / 2} cy={10} rx={width / 2} ry={10} vectorEffect="non-scaling-stroke" />
-        <ellipse
-          cx={width / 2}
-          cy={height - 10}
-          rx={width / 2}
-          ry={10}
-          vectorEffect="non-scaling-stroke"
-        />
+        <rect x={0} y={10} width={width} height={height - 20} />
+        <ellipse cx={width / 2} cy={10} rx={width / 2} ry={10} />
+        <ellipse cx={width / 2} cy={height - 10} rx={width / 2} ry={10} />
       </g>
     ) : (
-      <rect width={width} height={height} rx={rx} ry={rx} vectorEffect="non-scaling-stroke" />
+      <rect width={width} height={height} rx={rx} ry={rx} />
     );
 
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      className="w-full h-full"
-    >
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
       <g
-        id="svg-shape"
         stroke={strokeColor}
         strokeWidth={strokeWidth}
         fill={fillColor}
         onClick={onSelect}
-        style={{ cursor: "pointer", pointerEvents: "all" }}
+        style={{ cursor: "pointer" }}
         className={isSelected ? "drop-shadow-[0_0_0_2px_rgba(56,189,248,0.35)]" : ""}
-        transform="translate(0 0)"
       >
         <rect width={width} height={height} fill="transparent" stroke="none" />
         {body}
