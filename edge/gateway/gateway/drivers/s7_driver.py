@@ -425,7 +425,7 @@ class S7Driver(BaseDriver):
                         value=None,
                         datatype=it["datatype"],
                         timestamp=now,
-                        quality="Bad",
+                        quality="BAD",
                         unit=it.get("unit"),
                         source={
                             "protocol": "snap7",

@@ -209,9 +209,9 @@ class ModbusTCPDriver(BaseDriver):
                 # =========================
                 # 🔥 CALIDAD SCADA
                 # =========================
-                quality = "Good"
+                quality = "GOOD"
                 if value is None:
-                    quality = "Bad"
+                    quality = "BAD"
                     self.logger.warning(f"⚠️ Lectura falló para {variable}@{address} (FC{fc})")
 
                 # =========================

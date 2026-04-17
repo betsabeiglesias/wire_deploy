@@ -33,7 +33,7 @@ def datatype_after_scale(datatype_in: str, scale: Optional[float]) -> str:
     return datatype_in
 
 def quality_from_status(status: ua.StatusCode) -> str:
-    return "Good" if status.is_good() else ("Uncertain" if status.is_uncertain() else "Bad")
+    return "GOOD" if status.is_good() else ("Uncertain" if status.is_uncertain() else "BAD")
 
 def normalize_opcua_mapping(cfg: Dict[str, Any]) -> Dict[str, Any]:
     out: Dict[str, Any] = dict(cfg)
@@ -109,7 +109,7 @@ def _status_is_good(st) -> bool:
     try:
         return bool(st.is_good())
     except Exception:
-        return str(st).endswith("Good") if st is not None else False
+        return str(st).endswith("GOOD") if st is not None else False
 
 def _normalize_create_results(results):
     """Devuelve (lista_de_resultados, es_lista_de_handles_int) para create_monitored_items."""
