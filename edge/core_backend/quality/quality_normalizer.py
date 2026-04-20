@@ -18,7 +18,7 @@ def normalize_quality(pv) -> str:
     - pv.source (protocol-specific info)
 
     Output:
-    - GOOD / BAD / BAD_COMM / BAD_DEVICE / UNCERTAIN / STALE
+    - GOOD / BAD / BAD_COMM / BAD_DEVICE / BAD_CONFIG / UNCERTAIN / STALE
     """
 
     # -------------------------
@@ -93,6 +93,9 @@ def normalize_quality(pv) -> str:
 
         if raw_status in ["datatype_error", "address_error"]:
             return "BAD_CONFIG"
+
+        if raw_status == "exception":
+            return "BAD"
 
         if value is None:
             return "BAD"

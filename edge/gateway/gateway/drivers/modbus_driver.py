@@ -44,7 +44,7 @@ class ModbusTCPDriver(BaseDriver):
       
         self._stop_flag = threading.Event()
         self._thread: Optional[threading.Thread] = None
-        self.last_emit_ts = 0
+        # Fix 5: eliminado self.last_emit_ts — usar self._last_emit_ts de BaseDriver
         
         # Logger específico
         self.logger = logging.getLogger(f"gateway.modbus.{self.equipment_id}")
@@ -261,8 +261,7 @@ class ModbusTCPDriver(BaseDriver):
 
                 self.logger.debug(f"📤 Emitiendo: {variable}={value} raw_status={raw_status}")
                 self.emit_tag(pv)
-                
-                self.last_emit_ts = time.time()
+                # Fix 5: emit_tag() ya actualiza _last_emit_ts y _last_emit_monotonic en BaseDriver
                 success_count += 1
 
             except Exception as exc:
@@ -353,7 +352,11 @@ class ModbusTCPDriver(BaseDriver):
 
                 if rr.isError():
                     self.logger.warning(f"❌ FC{fc} error en @{address}: {rr}")
-                    return None
+                    return {
+                        "value": None,
+                        "raw_status": "modbus_exception",
+                        "error": str(rr)
+                    }  # Fix 4: consistente con FC1/FC2 y el resto del método
                     
                 if not rr.registers:
                     self.logger.warning(f"❌ FC{fc} sin registros en @{address}")
@@ -474,13 +477,10 @@ class ModbusTCPDriver(BaseDriver):
 
     def get_health(self) -> Dict[str, Any]:
         """Retorna estado de salud del driver"""
-        return {
-            "equipment_id": self.equipment_id,
-            "driver": "modbus",
-            "state": self.state,
-            "connected": self.client.connected if self.client else False,
-            "last_emit_ts": self.last_emit_ts,
-            "last_emit_age": time.time() - self.last_emit_ts if self.last_emit_ts else None,
+        health = super().get_health()  # Fix 5: delegar a BaseDriver para _last_emit_monotonic
+        health.update({
             "thread_alive": self._thread.is_alive() if self._thread else False,
-            "format": f"{self.default_byte_order}-{self.default_word_order}"
-        }
+            "format": f"{self.default_byte_order}-{self.default_word_order}",
+            "connected": self.client.connected if self.client else False,
+        })
+        return health

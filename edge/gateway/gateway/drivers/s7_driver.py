@@ -409,7 +409,7 @@ class S7Driver(BaseDriver):
                     raw_status = "ok"
 
                     if self._consec_fail > 3:
-                        raw_status = "degraded"
+                        raw_status = "connection_lost"  # Fix 2b: "degraded" no existe en normalizer → BAD_COMM es más correcto
                     tag = build_tag(
                         equipment_id=self.equipment_id,
                         item=it,
@@ -427,7 +427,7 @@ class S7Driver(BaseDriver):
                 if "timeout" in error_str:
                     raw_status = "timeout"
                 elif "connection" in error_str:
-                    raw_status = "connection_error"
+                    raw_status = "connection_lost"  # Fix 2: normalizer espera "connection_lost"
                 else:
                     raw_status = "exception"
                 for it in db_items:

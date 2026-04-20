@@ -738,6 +738,7 @@ class OPCUADriver(BaseDriver):
                     "endpoint": self.endpoint,
                     "ip": plc_ip,
                     "nodeid": nodeid,
+                    "status_code": str(dv.Value.StatusCode),  # Fix 1: requerido por normalize_quality
                     "attrs": dict(item.get("attrs") or {}),
                 }
             )
@@ -911,11 +912,3 @@ class OPCUADriver(BaseDriver):
                         self.log.warning(f"[Watchdog] {equip}: sin datos desde hace {age:.1f}s.")
                 except Exception as ex:
                     self.log.error(f"[Watchdog] Error al consultar estado de {equip}: {ex}")
-
-
-
-
-
-
-
-

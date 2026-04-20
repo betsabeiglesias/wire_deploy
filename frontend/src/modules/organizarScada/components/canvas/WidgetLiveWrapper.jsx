@@ -13,18 +13,14 @@ export default function WidgetLiveWrapper({
 }) {
   const settings = data?.settings || {};
 
-  // ─────────────────────────────────────────────
-  // RESOLUCIÓN DEL TAG (segura)
-  // ─────────────────────────────────────────────
+  // Resolucion del tag (segura)
   const tag = useMemo(() => {
     if (!isLiveMode) return null;
 
-    // 1. Binding directo
     if (settings.tagId) {
       return { source: "connection", tagId: settings.tagId };
     }
 
-    // 2. Resolución por variableId
     if (settings.variableId && projectTags?.length) {
       return projectTags.find((t) => t.id === settings.variableId) ?? null;
     }
@@ -32,23 +28,21 @@ export default function WidgetLiveWrapper({
     return null;
   }, [isLiveMode, settings.tagId, settings.variableId, projectTags]);
 
-  // ─────────────────────────────────────────────
-  // LIVE DATA (protegido contra null)
-  // ─────────────────────────────────────────────
   const { live = {}, valueHistory = [] } = useLiveTag(tag || null);
 
-  // ─────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────
   if (!data) return null;
 
-  return renderWidget({
-    data,
-    live,
-    width,
-    height,
-    theme,
-    valueHistory,
-    demoNow: Date.now(),
-  });
+  return (
+    <div style={{ position: "relative", width, height }}>
+      {renderWidget({
+        data,
+        live,
+        width,
+        height,
+        theme,
+        valueHistory,
+        demoNow: Date.now(),
+      })}
+    </div>
+  );
 }
