@@ -1,15 +1,14 @@
 import { LIGHT_THEME } from "./light-theme";
 import { DARK_THEME } from "./dark-theme";
+import { CYBER_THEME } from "./cyber-theme";
+import { FOREST_THEME } from "./forest-theme";
 
-// Diccionario de temas para poder seleccionarlos por nombre si fuera necesario
 export const THEMES = {
-  light: LIGHT_THEME,
-  dark: DARK_THEME
+  light: { ...LIGHT_THEME, label: "Luminoso" },
+  dark: { ...DARK_THEME, label: "Industrial" },
+  cyber: { ...CYBER_THEME, label: "Cyberpunk" },
+  forest: { ...FOREST_THEME, label: "Ecológico" }
 };
+export const HMI_THEME = THEMES.light;
 
-/**
- * CAMBIO DE TEMA MANUAL:
- * Solo tienes que cambiar la referencia aquí abajo.
- * Tus widgets e interfaz usan siempre "HMI_THEME", por lo que el cambio es transparente.
- */
-export const HMI_THEME = THEMES.light; // <--- Cambia 'dark' por 'light' y listo.
+export const DEFAULT_THEME = THEMES.light;
