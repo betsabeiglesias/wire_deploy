@@ -448,12 +448,23 @@ const OrganizarScada = () => {
         <h2 className="text-sm font-semibold text-slate-700">
           Editor avanzado
         </h2>
-        <button
-          onClick={() => setIsAdvancedOpen(false)}
-          className="text-slate-500 hover:text-slate-800"
-        >
-          ✕
-        </button>
+          <button
+  onClick={() => setIsAdvancedOpen(false)}
+  className="
+    flex items-center justify-center 
+    w-7 h-7 
+    rounded-md 
+    bg-red-100 
+    text-red-600 
+    cursor-pointer 
+    transition-colors 
+    hover:bg-red-200 
+    hover:text-red-700
+  "
+  aria-label="Cerrar"
+>
+  <span className="font-bold text-sm">✕</span>
+</button>
       </div>
 
           <SidebarPropiedades
