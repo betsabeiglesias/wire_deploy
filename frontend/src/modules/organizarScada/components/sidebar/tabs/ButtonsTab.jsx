@@ -46,9 +46,12 @@ const ButtonsTab = ({ addComponentToCanvas }) => {
     e.dataTransfer.effectAllowed = "copy";
   };
 
+  // Esta es la función que hace que aparezca al hacer CLICK
   const handlePickButton = (item) => {
-    if (addComponentToCanvas) {
-      addComponentToCanvas(getButtonBaseData(item));
+    console.log("Picking item:", item.id); // Debug para verificar que el click entra
+    if (typeof addComponentToCanvas === "function") {
+      const data = getButtonBaseData(item);
+      addComponentToCanvas(data);
     }
   };
 
@@ -73,16 +76,17 @@ const ButtonsTab = ({ addComponentToCanvas }) => {
             key={item.id}
             draggable
             onDragStart={(e) => handleButtonDragStart(e, item)}
-            onClick={() => handlePickButton(item)}
-            className="cursor-grab select-none rounded-md border px-2 py-2 text-[10px] transition-all hover:shadow-md active:cursor-grabbing"
+            onClick={() => handlePickButton(item)} // Aseguramos que el evento está aquí
+            className="cursor-pointer select-none rounded-md border px-2 py-2 text-[10px] transition-all hover:shadow-md hover:border-sky-400 active:scale-95"
             style={{ 
               backgroundColor: theme.colors.bgWidget || "#ffffff",
               borderColor: theme.colors.border || "#cbd5e1",
               color: theme.colors.text || "#334155"
             }}
           >
+            {/* Añadimos pointer-events-none para que el click pase al padre (el div con onClick) */}
             <div 
-              className={item.previewClass} 
+              className={`${item.previewClass} pointer-events-none`} 
               style={item.style}
             >
               {item.kind === "button" 
