@@ -7,7 +7,6 @@ export default function WidgetLiveWrapper({
   data,
   width,
   height,
-  theme,
   isLiveMode,
   projectTags,
 }) {
@@ -47,7 +46,6 @@ export default function WidgetLiveWrapper({
     live,
     width,
     height,
-    theme,
     valueHistory,
     demoNow: Date.now(),
   });

@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useEffect, useMemo, useState } from "react"
 import DraggableBox from "./DraggableBox";
 import { useProjectTags } from "@/modules/organizarScada/hooks/useProjectTags";
 import useRealtimeStore from "@/store/useRealtimeStore";
-
+import { useHmiTheme } from "@/modules/organizarScada/components/widgets/styles/ThemeProvider";
 
 const CanvasEditor = ({
   elements = [],
@@ -16,11 +16,11 @@ const CanvasEditor = ({
   isLiveMode = false,
   layoutId = null,
 }) => {
-
+  const { theme } = useHmiTheme();
   const BASE_WIDTH = 1920;
   const BASE_HEIGHT = 1080;
   const viewportRef = useRef(null);
-  const canvasRef   = useRef(null);
+  const canvasRef = useRef(null);
 
   const tagsMap = useRealtimeStore((s) => s.tagsMap);
   const { tags: projectTags } = useProjectTags(isLiveMode ? layoutId : null, tagsMap);
@@ -31,11 +31,10 @@ const CanvasEditor = ({
     y: 0,
   });
 
-
   const [bgSize, setBgSize] = useState({
-      width: BASE_WIDTH,
-      height: BASE_HEIGHT,
-    });
+    width: BASE_WIDTH,
+    height: BASE_HEIGHT,
+  });
 
   const backgroundWidget = useMemo(
     () =>
@@ -49,44 +48,35 @@ const CanvasEditor = ({
 
   const backgroundIsLocked = backgroundWidget?.data?.settings?.is_locked === true;
 
-
   useEffect(() => {
-      onStageSize?.({
-        width: BASE_WIDTH,
-        height: BASE_HEIGHT,
-      });
-    }, []);
+    onStageSize?.({
+      width: BASE_WIDTH,
+      height: BASE_HEIGHT,
+    });
+  }, []);
 
   const [autoZoom, setAutoZoom] = useState(1);
 
-
   useEffect(() => {
-  const updateZoom = () => {
-    if (!viewportRef.current) return;
+    const updateZoom = () => {
+      if (!viewportRef.current) return;
+      const rect = viewportRef.current.getBoundingClientRect();
+      const scaleX = rect.width / BASE_WIDTH;
+      const scaleY = rect.height / BASE_HEIGHT;
+      const fitZoom = Math.min(scaleX, scaleY);
+      setAutoZoom(fitZoom);
+    };
+    updateZoom();
 
-    const rect = viewportRef.current.getBoundingClientRect();
-
-    const scaleX = rect.width / BASE_WIDTH;
-    const scaleY = rect.height / BASE_HEIGHT;
-
-    const fitZoom = Math.min(scaleX, scaleY);
-
-    setAutoZoom(fitZoom);
-  };
-  updateZoom();
-
-  const observer = new ResizeObserver(updateZoom);
+    const observer = new ResizeObserver(updateZoom);
     if (viewportRef.current) observer.observe(viewportRef.current);
-
     return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
     const bgWidget = backgroundWidget;
-
     if (bgWidget) {
       const settings = bgWidget.data.settings;
-
       const src =
         settings.imageBase64 ||
         settings.src ||
@@ -95,17 +85,14 @@ const CanvasEditor = ({
         settings.path;
 
       setBackgroundImage(src || null);
-
       setBgTransform({
         x: settings.bgX || 0,
         y: settings.bgY || 0,
       });
-
       setBgSize({
         width: settings.bgWidth || BASE_WIDTH,
         height: settings.bgHeight || BASE_HEIGHT,
       });
-
     } else {
       setBackgroundImage(null);
       setBgSize({
@@ -114,9 +101,6 @@ const CanvasEditor = ({
       });
     }
   }, [backgroundWidget]);
-
-  
-  
 
   const effectiveZoom = zoom * autoZoom;
 
@@ -130,17 +114,13 @@ const CanvasEditor = ({
     });
   }, [elements]);
 
-
-  
-
   const handleDrop = (e) => {
-  e.preventDefault();
-      onDrop?.(e, canvasRef.current);
-    };
+    e.preventDefault();
+    onDrop?.(e, canvasRef.current);
+  };
 
   const persistBackgroundSettings = useCallback((patch) => {
     if (!backgroundWidget?.id) return;
-
     onUpdate?.(backgroundWidget.id, {
       data: {
         ...backgroundWidget.data,
@@ -154,9 +134,7 @@ const CanvasEditor = ({
 
   const handleBackgroundDragStart = useCallback((e) => {
     if (isLiveMode || backgroundIsLocked) return;
-
     e.stopPropagation();
-
     const startX = e.clientX;
     const startY = e.clientY;
     const initX = bgTransform.x;
@@ -187,18 +165,16 @@ const CanvasEditor = ({
     window.addEventListener("mouseup", onUp);
   }, [bgTransform.x, bgTransform.y, backgroundIsLocked, isLiveMode, persistBackgroundSettings]);
 
-
   return (
     <div
       ref={viewportRef}
-      className="absolute inset-0 overflow-auto bg-slate-100"
+      className="absolute inset-0 overflow-auto"
       style={{
-        backgroundImage:
-          "radial-gradient(circle at 1px 1px, #e2e8f0 1px, transparent 0)",
+        backgroundColor: theme.colors.bgPreview || "#f1f5f9",
+        backgroundImage: `radial-gradient(circle at 1px 1px, ${theme.colors.border || "#e2e8f0"} 1px, transparent 0)`,
         backgroundSize: "20px 20px",
       }}
     >
-      {/* CENTRADO REAL */}
       <div
         style={{
           width: BASE_WIDTH * effectiveZoom,
@@ -212,7 +188,7 @@ const CanvasEditor = ({
           onDrop={!isLiveMode ? handleDrop : undefined}
           onDragOver={!isLiveMode ? (e) => e.preventDefault() : undefined}
           onClick={!isLiveMode ? (e) => { if (e.target === e.currentTarget) onSelect?.(null); } : undefined}
-          className="absolute top-0 left-0 rounded-xl border border-slate-300 bg-white shadow-sm"
+          className="absolute top-0 left-0 rounded-xl border shadow-sm transition-colors duration-300"
           style={{
             width: BASE_WIDTH,
             height: BASE_HEIGHT,
@@ -220,14 +196,14 @@ const CanvasEditor = ({
             transformOrigin: "top left",
             position: "relative",
             overflow: "hidden",
+            backgroundColor: theme.colors.bgWidget || "#ffffff",
+            borderColor: theme.colors.border || "#cbd5e1",
           }}
         >
-          {/* RENDERIZADO UNIFICADO POR Z-INDEX */}
           {orderedElements.map((el) => {
             const isVisible = el?.data?.settings?.is_visible !== false;
             if (!isVisible) return null;
 
-            // CASO 1: ES LA IMAGEN DE FONDO
             if (el?.data?.type === "image-widget" && el?.data?.settings?.isBackground) {
               const src =
                 el.data.settings.imageBase64 ||
@@ -237,7 +213,6 @@ const CanvasEditor = ({
                 el.data.settings.path;
 
               if (!src) return null;
-
               const zIndex = Number.isFinite(Number(el.data?.settings?.z_index))
                 ? Number(el.data?.settings?.z_index)
                 : 0;
@@ -268,10 +243,8 @@ const CanvasEditor = ({
                       pointerEvents: "none",
                     }}
                   />
-
                   {!backgroundIsLocked && (
                     <>
-                      {/* RIGHT */}
                       <div
                         onMouseDown={(e) => {
                           e.stopPropagation();
@@ -281,10 +254,7 @@ const CanvasEditor = ({
                           const onMove = (ev) => {
                             const delta = ev.clientX - startX;
                             nextWidth = Math.max(200, startWidth + delta);
-                            setBgSize((prev) => ({
-                              ...prev,
-                              width: nextWidth,
-                            }));
+                            setBgSize((prev) => ({ ...prev, width: nextWidth }));
                           };
                           const onUp = () => {
                             window.removeEventListener("mousemove", onMove);
@@ -303,8 +273,6 @@ const CanvasEditor = ({
                           cursor: "ew-resize",
                         }}
                       />
-
-                      {/* BOTTOM */}
                       <div
                         onMouseDown={(e) => {
                           e.stopPropagation();
@@ -314,10 +282,7 @@ const CanvasEditor = ({
                           const onMove = (ev) => {
                             const delta = ev.clientY - startY;
                             nextHeight = Math.max(200, startHeight + delta);
-                            setBgSize((prev) => ({
-                              ...prev,
-                              height: nextHeight,
-                            }));
+                            setBgSize((prev) => ({ ...prev, height: nextHeight }));
                           };
                           const onUp = () => {
                             window.removeEventListener("mousemove", onMove);
@@ -336,8 +301,6 @@ const CanvasEditor = ({
                           cursor: "ns-resize",
                         }}
                       />
-
-                      {/* BOTTOM-RIGHT CORNER */}
                       <div
                         onMouseDown={(e) => {
                           e.stopPropagation();
@@ -352,18 +315,12 @@ const CanvasEditor = ({
                             const dy = ev.clientY - startY;
                             nextWidth = Math.max(200, startWidth + dx);
                             nextHeight = Math.max(200, startHeight + dy);
-                            setBgSize({
-                              width: nextWidth,
-                              height: nextHeight,
-                            });
+                            setBgSize({ width: nextWidth, height: nextHeight });
                           };
                           const onUp = () => {
                             window.removeEventListener("mousemove", onMove);
                             window.removeEventListener("mouseup", onUp);
-                            persistBackgroundSettings({
-                              bgWidth: nextWidth,
-                              bgHeight: nextHeight,
-                            });
+                            persistBackgroundSettings({ bgWidth: nextWidth, bgHeight: nextHeight });
                           };
                           window.addEventListener("mousemove", onMove);
                           window.addEventListener("mouseup", onUp);
@@ -375,7 +332,7 @@ const CanvasEditor = ({
                           width: "14px",
                           height: "14px",
                           cursor: "nwse-resize",
-                          background: "rgba(59,130,246,0.8)",
+                          background: theme.colors.primary || "rgba(59,130,246,0.8)",
                         }}
                       />
                     </>
@@ -384,7 +341,6 @@ const CanvasEditor = ({
               );
             }
 
-            // CASO 2: ES UN WIDGET NORMAL
             return (
               <DraggableBox
                 key={el.id}
@@ -413,9 +369,11 @@ const CanvasEditor = ({
             );
           })}
 
-          {/* EMPTY STATE */}
           {elements.length === 0 && !isLiveMode && (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-center text-xs text-slate-400">
+            <div 
+              className="pointer-events-none absolute inset-0 flex items-center justify-center text-center text-xs"
+              style={{ color: theme.colors.textMuted || "#94a3b8" }}
+            >
               Arrastra elementos al lienzo para empezar.
             </div>
           )}
