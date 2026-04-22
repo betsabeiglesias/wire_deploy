@@ -1,5 +1,6 @@
 import TempGauge from "../standard/TempGauge";
 import { parseNumericValue } from "@/modules/organizarScada/utils/numbers";
+import { buildBaseStyle } from "./_shared";
 
 export default {
   type:        "temp-gauge",
@@ -34,24 +35,20 @@ export default {
     },
   ],
 
-  resolveStyle(palette, mode = "solid") {
-    if (mode === "zones") {
-      return {
-        arcStartColor: "#22c55e",
-        arcMidColor:   "#facc15",
-        arcEndColor:   "#ef4444",
-        valueColor:    palette.text  || "#ffffff",
-        labelColor:    palette.label || "#e2e8f0",
-      };
-    }
+  resolveStyle(palette = {}) {
+    const base = buildBaseStyle(palette);
+
     return {
-      arcStartColor: palette.primary   || "#fb923c",
-      arcMidColor:   palette.primary   || "#f97316",
-      arcEndColor:   palette.secondary || "#ef4444",
-      valueColor:    palette.text      || "#ffffff",
-      labelColor:    palette.label     || "#e2e8f0",
+      backgroundColor: base.bgColor,
+      textColor: base.titleColor,
+
+      gridColor: base.gridColor,
+      axisColor: base.axisColor,
+
+      primaryColor: base.primary,
+      secondaryColor: base.primaryDark,
     };
-  },
+  }, 
 
   component: TempGauge,
 };

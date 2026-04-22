@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { Rnd } from "react-rnd";
 import WidgetLiveWrapper from "./WidgetLiveWrapper";
 
-
 export default function DraggableBox({
   initialX, initialY, initialWidth, initialHeight,
   data, id, theme = "theme-clean",
@@ -15,7 +14,7 @@ export default function DraggableBox({
 }) {
   if (!data) return null;
   if (data.type === "image-widget" && data.settings?.isBackground) {
-  return null;
+    return null;
   }
 
   const [pos,  setPos]  = useState({ x: initialX, y: initialY });
@@ -28,9 +27,12 @@ export default function DraggableBox({
 
   const settings = data.settings || {};
   const zIndex = Number.isFinite(Number(settings.z_index)) ? Number(settings.z_index) : 1;
-  const isLocked = settings.is_locked === true;
+  
+  // UNIFICACIÓN DE BLOQUEO: Leemos del objeto raíz (que viene de ScreenTab/Layers)
+  // o de los settings internos por compatibilidad.
+  const isLocked = data.isLocked === true || settings.is_locked === true || settings.isLocked === true;
 
-  // ── MODO LIVE — completamente pasivo, sin Rnd, sin interacción ─────────────
+  // ── MODO LIVE ──────────────────────────────────────────────────────────────
   if (isLiveMode) {
     return (
       <div
@@ -55,7 +57,7 @@ export default function DraggableBox({
     );
   }
 
-  // ── MODO READ-ONLY — posición fija, seleccionable pero no arrastrable ──────
+  // ── MODO READ-ONLY ─────────────────────────────────────────────────────────
   if (isReadOnly) {
     return (
       <div
@@ -84,15 +86,13 @@ export default function DraggableBox({
     );
   }
 
-  // ── MODO EDICIÓN — arrastrable con Rnd ─────────────────────────────────────
-  // cancel=".widget-content" hace que Rnd ignore eventos dentro del widget,
-  // permitiendo que onClick del Rnd funcione limpiamente sin overlays.
+  // ── MODO EDICIÓN ───────────────────────────────────────────────────────────
   return (
     <Rnd
       className={[
-        "bg-white rounded-lg shadow border flex flex-col",
+        "bg-white rounded-lg shadow border flex flex-col transition-colors",
         isSelected ? "border-sky-400 shadow-sky-100 shadow-md" : "border-gray-200",
-        isLocked ? "opacity-95" : "",
+        isLocked ? "border-amber-400 ring-1 ring-amber-100" : "",
       ].join(" ")}
       size={{ width: size.w, height: size.h }}
       position={{ x: pos.x, y: pos.y }}
@@ -110,25 +110,29 @@ export default function DraggableBox({
       bounds="parent"
       minWidth={50}
       minHeight={50}
+      // BLOQUEO DE INTERACCIÓN
       disableDragging={isLocked}
       enableResizing={!isLocked}
       scale={scale}
       dragHandleClassName="box-header"
       cancel=".widget-content"
       resizeHandleClasses={{ bottomRight: "resize-handle-br" }}
-      style={{ zIndex }}
+      style={{ zIndex: zIndex, position: 'absolute' }}
       onClick={() => onSelect?.()}
       onDoubleClick={() => onDoubleClick?.()}
     >
       {/* Header — drag handle + label + delete */}
       <div
         className={[
-          "box-header flex justify-between items-center px-2 py-1 border-b border-gray-200",
-          isLocked ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing",
+          "box-header flex justify-between items-center px-2 py-1 border-b border-gray-200 transition-colors",
+          isLocked ? "bg-amber-50 cursor-not-allowed" : "cursor-grab active:cursor-grabbing",
         ].join(" ")}
       >
-        <span className="font-semibold text-xs text-gray-700 truncate">
-          {settings.attributeLabel || settings.equipment || data.label || "Widget"}
+        <span className={[
+          "font-semibold text-xs truncate",
+          isLocked ? "text-amber-700" : "text-gray-700"
+        ].join(" ")}>
+          {isLocked && "🔒 "}{settings.attributeLabel || settings.equipment || data.label || "Widget"}
         </span>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete?.(id); }}
@@ -150,7 +154,7 @@ export default function DraggableBox({
         </button>
       </div>
 
-      {/* Widget — pointer-events none para que los clicks suban al Rnd */}
+      {/* Widget */}
       <div
         className="widget-content flex-1"
         style={{ pointerEvents: "none", overflow: "hidden" }}
@@ -165,7 +169,10 @@ export default function DraggableBox({
       </div>
 
       {/* Badge equipo */}
-      <div className="component-equipment-label">
+      <div className={[
+        "component-equipment-label transition-colors",
+        isLocked ? "bg-amber-100 text-amber-800 border-amber-200" : ""
+      ].join(" ")}>
         {settings.tagId
           ? settings.tagId.split(":")[1] || settings.tagId
           : settings.equipment || data.label || "Sin binding"}

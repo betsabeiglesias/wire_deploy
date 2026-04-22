@@ -17,6 +17,7 @@ const HmiTankLevel = ({
   topFrom = "#d49cf2",
   topTo = "#9b59b6",
   percentColorOverride,
+  accentColor,
   showValue = true,
   valueOffsetX = 0,
   valueOffsetY = 0,
@@ -30,8 +31,12 @@ const HmiTankLevel = ({
 }) => {
   const safePercent = clampPercent(percent);
   const uid = useId().replace(/:/g, "");
+
   const tankGradId = `tankGrad-${uid}`;
   const topGradId = `topGrad-${uid}`;
+
+  const baseColor = accentColor || gradientFrom;
+
   const percentColor =
     percentColorOverride || (safePercent > 80 ? "#ff4d4d" : "#ffffff");
 
@@ -84,12 +89,12 @@ const HmiTankLevel = ({
       >
         <defs>
           <linearGradient id={tankGradId} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={gradientFrom} stopOpacity="1" />
-            <stop offset="100%" stopColor={gradientTo} stopOpacity="1" />
+            <stop offset="0%" stopColor={baseColor} stopOpacity="1" />
+            <stop offset="100%" stopColor={accentColor || gradientTo} stopOpacity="1" />
           </linearGradient>
           <linearGradient id={topGradId} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={topFrom} stopOpacity="1" />
-            <stop offset="100%" stopColor={topTo} stopOpacity="1" />
+            <stop offset="0%" stopColor={accentColor || topFrom} stopOpacity="1" />
+            <stop offset="100%" stopColor={accentColor || topTo} stopOpacity="1" />
           </linearGradient>
         </defs>
         <style>{`
@@ -116,7 +121,7 @@ const HmiTankLevel = ({
             fill={`url(#${tankGradId})`}
             opacity={fluidOpacity}
           />
-          <ellipse cx="60" cy="150" rx="50" ry="20" fill={fluidBase} opacity={fluidOpacity} />
+          <ellipse cx="60" cy="150" rx="50" ry="20" fill={accentColor || fluidBase} opacity={fluidOpacity} />
           <ellipse
             className={waveEnabled ? `fluid-top-${uid}` : undefined}
             cx="60"

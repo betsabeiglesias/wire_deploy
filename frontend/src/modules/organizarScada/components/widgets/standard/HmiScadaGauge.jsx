@@ -20,6 +20,7 @@ const HmiScadaGauge = ({
   max = 100,
   unit = "",
   themeColor = "#94a3b8",
+  accentColor,
   zones = [],
   width = 220,
   height = 220,
@@ -34,6 +35,8 @@ const HmiScadaGauge = ({
   unitColor = "#64748b",
 }) => {
   if (visible === false) return null;
+
+  const color = accentColor || themeColor;
 
   const size = 200;
   const center = size / 2;
@@ -65,13 +68,7 @@ const HmiScadaGauge = ({
   }, []);
 
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox={`0 0 ${size} ${size}`}
-      xmlns="http://www.w3.org/2000/svg"
-      style={{ display: "block" }}
-    >
+    <svg width={width} height={height} viewBox={`0 0 ${size} ${size}`}>
       <path
         d={describeArc(center, center, 80, startAngle, endAngle)}
         fill="none"
@@ -97,15 +94,7 @@ const HmiScadaGauge = ({
 
       <g>
         {tickLines.map((line, idx) => (
-          <line
-            key={`tick-${idx}`}
-            x1={line.x1}
-            y1={line.y1}
-            x2={line.x2}
-            y2={line.y2}
-            stroke={line.stroke}
-            strokeWidth={line.strokeWidth}
-          />
+          <line key={`tick-${idx}`} {...line} />
         ))}
       </g>
 
@@ -118,14 +107,14 @@ const HmiScadaGauge = ({
       >
         <path
           d={`M ${center - 2} ${center} L ${center} 30 L ${center + 2} ${center} Z`}
-          fill={themeColor}
+          fill={color}
         />
         <circle
           cx={center}
           cy={center}
           r="4"
           fill="#0f172a"
-          stroke={themeColor}
+          stroke={color}
           strokeWidth="2"
         />
       </g>

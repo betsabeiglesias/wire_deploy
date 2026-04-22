@@ -7,7 +7,6 @@ export default function WidgetLiveWrapper({
   data,
   width,
   height,
-  theme,
   isLiveMode,
   projectTags,
 }) {

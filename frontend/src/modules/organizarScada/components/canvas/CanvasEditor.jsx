@@ -3,7 +3,7 @@ import DraggableBox from "./DraggableBox";
 import DataQualityPanel from "./DataQualityPanel";
 import { useProjectTags } from "@/modules/organizarScada/hooks/useProjectTags";
 import useRealtimeStore from "@/store/useRealtimeStore";
-
+import { useHmiTheme } from "@/modules/organizarScada/components/widgets/styles/ThemeProvider";
 
 const CanvasEditor = ({
   elements = [],
@@ -17,11 +17,11 @@ const CanvasEditor = ({
   isLiveMode = false,
   layoutId = null,
 }) => {
-
+  const { theme } = useHmiTheme();
   const BASE_WIDTH = 1920;
   const BASE_HEIGHT = 1080;
   const viewportRef = useRef(null);
-  const canvasRef   = useRef(null);
+  const canvasRef = useRef(null);
 
   const tagsMap = useRealtimeStore((s) => s.tagsMap);
   const { tags: projectTags } = useProjectTags(isLiveMode ? layoutId : null, tagsMap);
@@ -32,11 +32,10 @@ const CanvasEditor = ({
     y: 0,
   });
 
-
   const [bgSize, setBgSize] = useState({
-      width: BASE_WIDTH,
-      height: BASE_HEIGHT,
-    });
+    width: BASE_WIDTH,
+    height: BASE_HEIGHT,
+  });
 
   const backgroundWidget = useMemo(
     () =>
@@ -50,44 +49,35 @@ const CanvasEditor = ({
 
   const backgroundIsLocked = backgroundWidget?.data?.settings?.is_locked === true;
 
-
   useEffect(() => {
-      onStageSize?.({
-        width: BASE_WIDTH,
-        height: BASE_HEIGHT,
-      });
-    }, []);
+    onStageSize?.({
+      width: BASE_WIDTH,
+      height: BASE_HEIGHT,
+    });
+  }, []);
 
   const [autoZoom, setAutoZoom] = useState(1);
 
-
   useEffect(() => {
-  const updateZoom = () => {
-    if (!viewportRef.current) return;
+    const updateZoom = () => {
+      if (!viewportRef.current) return;
+      const rect = viewportRef.current.getBoundingClientRect();
+      const scaleX = rect.width / BASE_WIDTH;
+      const scaleY = rect.height / BASE_HEIGHT;
+      const fitZoom = Math.min(scaleX, scaleY);
+      setAutoZoom(fitZoom);
+    };
+    updateZoom();
 
-    const rect = viewportRef.current.getBoundingClientRect();
-
-    const scaleX = rect.width / BASE_WIDTH;
-    const scaleY = rect.height / BASE_HEIGHT;
-
-    const fitZoom = Math.min(scaleX, scaleY);
-
-    setAutoZoom(fitZoom);
-  };
-  updateZoom();
-
-  const observer = new ResizeObserver(updateZoom);
+    const observer = new ResizeObserver(updateZoom);
     if (viewportRef.current) observer.observe(viewportRef.current);
-
     return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
     const bgWidget = backgroundWidget;
-
     if (bgWidget) {
       const settings = bgWidget.data.settings;
-
       const src =
         settings.imageBase64 ||
         settings.src ||
@@ -96,17 +86,14 @@ const CanvasEditor = ({
         settings.path;
 
       setBackgroundImage(src || null);
-
       setBgTransform({
         x: settings.bgX || 0,
         y: settings.bgY || 0,
       });
-
       setBgSize({
         width: settings.bgWidth || BASE_WIDTH,
         height: settings.bgHeight || BASE_HEIGHT,
       });
-
     } else {
       setBackgroundImage(null);
       setBgSize({
@@ -115,9 +102,6 @@ const CanvasEditor = ({
       });
     }
   }, [backgroundWidget]);
-
-  
-  
 
   const effectiveZoom = zoom * autoZoom;
 
@@ -131,17 +115,13 @@ const CanvasEditor = ({
     });
   }, [elements]);
 
-
-  
-
   const handleDrop = (e) => {
-  e.preventDefault();
-      onDrop?.(e, canvasRef.current);
-    };
+    e.preventDefault();
+    onDrop?.(e, canvasRef.current);
+  };
 
   const persistBackgroundSettings = useCallback((patch) => {
     if (!backgroundWidget?.id) return;
-
     onUpdate?.(backgroundWidget.id, {
       data: {
         ...backgroundWidget.data,
@@ -155,9 +135,7 @@ const CanvasEditor = ({
 
   const handleBackgroundDragStart = useCallback((e) => {
     if (isLiveMode || backgroundIsLocked) return;
-
     e.stopPropagation();
-
     const startX = e.clientX;
     const startY = e.clientY;
     const initX = bgTransform.x;
@@ -188,243 +166,222 @@ const CanvasEditor = ({
     window.addEventListener("mouseup", onUp);
   }, [bgTransform.x, bgTransform.y, backgroundIsLocked, isLiveMode, persistBackgroundSettings]);
 
-
   return (
-  <>
-  <div
-    ref={viewportRef}
-    className="absolute inset-0 overflow-auto bg-slate-100"
-    style={{
-      backgroundImage:
-        "radial-gradient(circle at 1px 1px, #e2e8f0 1px, transparent 0)",
-      backgroundSize: "20px 20px",
-    }}
-  >
-    {/* CENTRADO REAL */}
     <div
+      ref={viewportRef}
+      className="absolute inset-0 overflow-auto"
       style={{
-        width: BASE_WIDTH * effectiveZoom,
-        height: BASE_HEIGHT * effectiveZoom,
-        position: "relative",
-        margin: "0 auto",
+        backgroundColor: theme.colors.bgPreview || "#f1f5f9",
+        backgroundImage: `radial-gradient(circle at 1px 1px, ${theme.colors.border || "#e2e8f0"} 1px, transparent 0)`,
+        backgroundSize: "20px 20px",
       }}
     >
       <div
-        ref={canvasRef}
-        onDrop={!isLiveMode ? handleDrop : undefined}
-        onDragOver={!isLiveMode ? (e) => e.preventDefault() : undefined}
-        onClick={!isLiveMode ? (e) => { if (e.target === e.currentTarget) onSelect?.(null); } : undefined}
-        className="absolute top-0 left-0 rounded-xl border border-slate-300 bg-white shadow-sm"
         style={{
-          width: BASE_WIDTH,
-          height: BASE_HEIGHT,
-          transform: `scale(${effectiveZoom})`,
-          transformOrigin: "top left",
+          width: BASE_WIDTH * effectiveZoom,
+          height: BASE_HEIGHT * effectiveZoom,
           position: "relative",
-          overflow: "hidden",
+          margin: "0 auto",
         }}
       >
-        {/* 🔥 BACKGROUND IMAGE CONTROLLED */}
-        {backgroundImage && (
-          <div
-            onMouseDown={handleBackgroundDragStart}
-            onClick={() => !isLiveMode && onSelect?.(backgroundWidget?.id, false)}
-            style={{
-              position: "absolute",
-              inset: 0,
-              cursor: backgroundIsLocked ? "default" : "grab",
-            }}
-          >
-            <img
-              src={backgroundImage}
-              alt="background"
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: bgSize.width,
-                height: bgSize.height,
-                transform: `
-                  translate(${bgTransform.x}px, ${bgTransform.y}px)
-                `,
-                transformOrigin: "top left",
-                pointerEvents: "none",
-              }}
-            />
+        <div
+          ref={canvasRef}
+          onDrop={!isLiveMode ? handleDrop : undefined}
+          onDragOver={!isLiveMode ? (e) => e.preventDefault() : undefined}
+          onClick={!isLiveMode ? (e) => { if (e.target === e.currentTarget) onSelect?.(null); } : undefined}
+          className="absolute top-0 left-0 rounded-xl border shadow-sm transition-colors duration-300"
+          style={{
+            width: BASE_WIDTH,
+            height: BASE_HEIGHT,
+            transform: `scale(${effectiveZoom})`,
+            transformOrigin: "top left",
+            position: "relative",
+            overflow: "hidden",
+            backgroundColor: theme.colors.bgWidget || "#ffffff",
+            borderColor: theme.colors.border || "#cbd5e1",
+          }}
+        >
+          {orderedElements.map((el) => {
+            const isVisible = el?.data?.settings?.is_visible !== false;
+            if (!isVisible) return null;
 
-            {/* ========================= */}
-            {/* RESIZE HANDLES (4 lados) */}
-            {/* ========================= */}
+            if (el?.data?.type === "image-widget" && el?.data?.settings?.isBackground) {
+              const src =
+                el.data.settings.imageBase64 ||
+                el.data.settings.src ||
+                el.data.settings.url ||
+                el.data.settings.image ||
+                el.data.settings.path;
 
-            {/* RIGHT */}
-            {!backgroundIsLocked && (
-              <div
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  const startX = e.clientX;
-                  const startWidth = bgSize.width;
-                  let nextWidth = startWidth;
+              if (!src) return null;
+              const zIndex = Number.isFinite(Number(el.data?.settings?.z_index))
+                ? Number(el.data?.settings?.z_index)
+                : 0;
 
-                  const onMove = (ev) => {
-                    const delta = ev.clientX - startX;
-                    nextWidth = Math.max(200, startWidth + delta);
-                    setBgSize((prev) => ({
-                      ...prev,
-                      width: nextWidth,
-                    }));
-                  };
+              return (
+                <div
+                  key={el.id}
+                  onMouseDown={handleBackgroundDragStart}
+                  onClick={() => !isLiveMode && onSelect?.(el.id, false)}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    zIndex: zIndex,
+                    cursor: backgroundIsLocked ? "default" : "grab",
+                  }}
+                >
+                  <img
+                    src={src}
+                    alt="background"
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: bgSize.width,
+                      height: bgSize.height,
+                      transform: `translate(${bgTransform.x}px, ${bgTransform.y}px)`,
+                      transformOrigin: "top left",
+                      pointerEvents: "none",
+                    }}
+                  />
+                  {!backgroundIsLocked && (
+                    <>
+                      <div
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          const startX = e.clientX;
+                          const startWidth = bgSize.width;
+                          let nextWidth = startWidth;
+                          const onMove = (ev) => {
+                            const delta = ev.clientX - startX;
+                            nextWidth = Math.max(200, startWidth + delta);
+                            setBgSize((prev) => ({ ...prev, width: nextWidth }));
+                          };
+                          const onUp = () => {
+                            window.removeEventListener("mousemove", onMove);
+                            window.removeEventListener("mouseup", onUp);
+                            persistBackgroundSettings({ bgWidth: nextWidth });
+                          };
+                          window.addEventListener("mousemove", onMove);
+                          window.addEventListener("mouseup", onUp);
+                        }}
+                        style={{
+                          position: "absolute",
+                          right: 0,
+                          top: 0,
+                          width: "6px",
+                          height: "100%",
+                          cursor: "ew-resize",
+                        }}
+                      />
+                      <div
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          const startY = e.clientY;
+                          const startHeight = bgSize.height;
+                          let nextHeight = startHeight;
+                          const onMove = (ev) => {
+                            const delta = ev.clientY - startY;
+                            nextHeight = Math.max(200, startHeight + delta);
+                            setBgSize((prev) => ({ ...prev, height: nextHeight }));
+                          };
+                          const onUp = () => {
+                            window.removeEventListener("mousemove", onMove);
+                            window.removeEventListener("mouseup", onUp);
+                            persistBackgroundSettings({ bgHeight: nextHeight });
+                          };
+                          window.addEventListener("mousemove", onMove);
+                          window.addEventListener("mouseup", onUp);
+                        }}
+                        style={{
+                          position: "absolute",
+                          bottom: 0,
+                          left: 0,
+                          width: "100%",
+                          height: "6px",
+                          cursor: "ns-resize",
+                        }}
+                      />
+                      <div
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          const startX = e.clientX;
+                          const startY = e.clientY;
+                          const startWidth = bgSize.width;
+                          const startHeight = bgSize.height;
+                          let nextWidth = startWidth;
+                          let nextHeight = startHeight;
+                          const onMove = (ev) => {
+                            const dx = ev.clientX - startX;
+                            const dy = ev.clientY - startY;
+                            nextWidth = Math.max(200, startWidth + dx);
+                            nextHeight = Math.max(200, startHeight + dy);
+                            setBgSize({ width: nextWidth, height: nextHeight });
+                          };
+                          const onUp = () => {
+                            window.removeEventListener("mousemove", onMove);
+                            window.removeEventListener("mouseup", onUp);
+                            persistBackgroundSettings({ bgWidth: nextWidth, bgHeight: nextHeight });
+                          };
+                          window.addEventListener("mousemove", onMove);
+                          window.addEventListener("mouseup", onUp);
+                        }}
+                        style={{
+                          position: "absolute",
+                          right: 0,
+                          bottom: 0,
+                          width: "14px",
+                          height: "14px",
+                          cursor: "nwse-resize",
+                          background: theme.colors.primary || "rgba(59,130,246,0.8)",
+                        }}
+                      />
+                    </>
+                  )}
+                </div>
+              );
+            }
 
-                  const onUp = () => {
-                    window.removeEventListener("mousemove", onMove);
-                    window.removeEventListener("mouseup", onUp);
-                    persistBackgroundSettings({ bgWidth: nextWidth });
-                  };
-
-                  window.addEventListener("mousemove", onMove);
-                  window.addEventListener("mouseup", onUp);
-                }}
-                style={{
-                  position: "absolute",
-                  right: 0,
-                  top: 0,
-                  width: "6px",
-                  height: "100%",
-                  cursor: "ew-resize",
-                }}
+            return (
+              <DraggableBox
+                key={el.id}
+                id={el.id}
+                initialX={el.x}
+                initialY={el.y}
+                initialWidth={el.data?.width || 200}
+                initialHeight={el.data?.height || 180}
+                data={el.data}
+                isSelected={selectedId === el.id}
+                isLiveMode={isLiveMode}
+                onSelect={() => !isLiveMode && onSelect?.(el.id, false)}
+                onDoubleClick={() => !isLiveMode && onSelect?.(el.id, true)}
+                onDragStop={(id, x, y) => onUpdate?.(id, { x, y })}
+                onResizeStop={(id, w, h, x, y) =>
+                  onUpdate?.(id, {
+                    x,
+                    y,
+                    data: { ...el.data, width: w, height: h },
+                  })
+                }
+                onDelete={onDelete}
+                projectTags={projectTags}
+                scale={effectiveZoom}
               />
-            )}
+            );
+          })}
 
-            {/* BOTTOM */}
-            {!backgroundIsLocked && (
-              <div
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  const startY = e.clientY;
-                  const startHeight = bgSize.height;
-                  let nextHeight = startHeight;
-
-                  const onMove = (ev) => {
-                    const delta = ev.clientY - startY;
-                    nextHeight = Math.max(200, startHeight + delta);
-                    setBgSize((prev) => ({
-                      ...prev,
-                      height: nextHeight,
-                    }));
-                  };
-
-                  const onUp = () => {
-                    window.removeEventListener("mousemove", onMove);
-                    window.removeEventListener("mouseup", onUp);
-                    persistBackgroundSettings({ bgHeight: nextHeight });
-                  };
-
-                  window.addEventListener("mousemove", onMove);
-                  window.addEventListener("mouseup", onUp);
-                }}
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "6px",
-                  cursor: "ns-resize",
-                }}
-              />
-            )}
-
-            {/* BOTTOM-RIGHT CORNER */}
-            {!backgroundIsLocked && (
-              <div
-                onMouseDown={(e) => {
-                  e.stopPropagation();
-                  const startX = e.clientX;
-                  const startY = e.clientY;
-                  const startWidth = bgSize.width;
-                  const startHeight = bgSize.height;
-                  let nextWidth = startWidth;
-                  let nextHeight = startHeight;
-
-                  const onMove = (ev) => {
-                    const dx = ev.clientX - startX;
-                    const dy = ev.clientY - startY;
-                    nextWidth = Math.max(200, startWidth + dx);
-                    nextHeight = Math.max(200, startHeight + dy);
-
-                    setBgSize({
-                      width: nextWidth,
-                      height: nextHeight,
-                    });
-                  };
-
-                  const onUp = () => {
-                    window.removeEventListener("mousemove", onMove);
-                    window.removeEventListener("mouseup", onUp);
-                    persistBackgroundSettings({
-                      bgWidth: nextWidth,
-                      bgHeight: nextHeight,
-                    });
-                  };
-
-                  window.addEventListener("mousemove", onMove);
-                  window.addEventListener("mouseup", onUp);
-                }}
-                style={{
-                  position: "absolute",
-                  right: 0,
-                  bottom: 0,
-                  width: "14px",
-                  height: "14px",
-                  cursor: "nwse-resize",
-                  background: "rgba(59,130,246,0.8)",
-                }}
-              />
-            )}
-          </div>
-        )}
-
-        {/* ELEMENTOS */}
-        {orderedElements.map((el) => {
-          const isVisible = el?.data?.settings?.is_visible !== false;
-          if (!isVisible) return null;
-
-          return (
-            <DraggableBox
-              key={el.id}
-              id={el.id}
-              initialX={el.x}
-              initialY={el.y}
-              initialWidth={el.data?.width || 200}
-              initialHeight={el.data?.height || 180}
-              data={el.data}
-              isSelected={selectedId === el.id}
-              isLiveMode={isLiveMode}
-              onSelect={() => !isLiveMode && onSelect?.(el.id, false)}
-              onDoubleClick={() => !isLiveMode && onSelect?.(el.id, true)}
-              onDragStop={(id, x, y) => onUpdate?.(id, { x, y })}
-              onResizeStop={(id, w, h, x, y) =>
-                onUpdate?.(id, {
-                  x,
-                  y,
-                  data: { ...el.data, width: w, height: h },
-                })
-              }
-              onDelete={onDelete}
-              projectTags={projectTags}
-              scale={effectiveZoom}
-            />
-          );
-        })}
-
-        {/* EMPTY STATE */}
-        {elements.length === 0 && !isLiveMode && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-center text-xs text-slate-400">
-            Arrastra elementos al lienzo para empezar.
-          </div>
-        )}
+          {elements.length === 0 && !isLiveMode && (
+            <div 
+              className="pointer-events-none absolute inset-0 flex items-center justify-center text-center text-xs"
+              style={{ color: theme.colors.textMuted || "#94a3b8" }}
+            >
+              Arrastra elementos al lienzo para empezar.
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-  {isLiveMode && (
+    {isLiveMode && (
     <DataQualityPanel elements={elements} projectTags={projectTags} />
   )}
   </>

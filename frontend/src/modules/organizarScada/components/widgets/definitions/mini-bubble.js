@@ -1,5 +1,6 @@
 import MiniBubbleWidget from "../mini/MiniBubbleWidget";
 import { buildNumericMiniProps } from "./_shared";
+import { buildBaseStyle } from "./_shared";
 
 export default {
   type:        "mini-bubble",
@@ -23,10 +24,18 @@ export default {
     },
   ],
 
-  resolveStyle(palette) {
+  resolveStyle(palette = {}) {
+    const base = buildBaseStyle(palette);
+
     return {
-      primary: palette.primary || "#3b82f6",
-      text:    palette.text    || "#ffffff",
+      backgroundColor: base.bgColor,
+      textColor: base.titleColor,
+
+      gridColor: base.gridColor,
+      axisColor: base.axisColor,
+
+      primaryColor: base.primary,
+      secondaryColor: base.primaryDark,
     };
   },
 

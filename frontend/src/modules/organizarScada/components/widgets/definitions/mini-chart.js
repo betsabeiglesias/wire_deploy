@@ -1,4 +1,5 @@
 import MiniTrendChart from "../mini/MiniTrendChart";
+import { buildBaseStyle } from "./_shared";
 
 export default {
   type:        "mini-chart",
@@ -15,8 +16,19 @@ export default {
 
   styleSchema: [],
 
-  resolveStyle() {
-    return {};
+  resolveStyle(palette = {}) {
+    const base = buildBaseStyle(palette);
+
+    return {
+      backgroundColor: base.bgColor,
+      textColor: base.titleColor,
+
+      gridColor: base.gridColor,
+      axisColor: base.axisColor,
+
+      primaryColor: base.primary,
+      secondaryColor: base.primaryDark,
+    };
   },
 
   component: MiniTrendChart,

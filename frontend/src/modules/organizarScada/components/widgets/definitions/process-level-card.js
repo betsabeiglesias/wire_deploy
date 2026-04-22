@@ -1,5 +1,6 @@
 import ProcessLevelCard from "../process/ProcessLevelCard";
 import { parseNumericValue } from "@/modules/organizarScada/utils/numbers";
+import { buildBaseStyle } from "./_shared";
 
 export default {
   type:        "process-level-card",
@@ -28,8 +29,19 @@ export default {
     },
   ],
 
-  resolveStyle(palette) {
-    return { primary: palette.primary || "#3b82f6" };
+  resolveStyle(palette = {}) {
+    const base = buildBaseStyle(palette);
+
+    return {
+      backgroundColor: base.bgColor,
+      textColor: base.titleColor,
+
+      gridColor: base.gridColor,
+      axisColor: base.axisColor,
+
+      primaryColor: base.primary,
+      secondaryColor: base.primaryDark,
+    };
   },
 
   component: ProcessLevelCard,

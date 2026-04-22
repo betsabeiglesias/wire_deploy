@@ -7,6 +7,16 @@ export default function NavbarPLCs({ toolbar }) {
   const fileRef  = useRef(null);
   const show     = toolbar?.showActions;
   const navigate = useNavigate();
+  // Función para gestionar la salida descartando cambios
+  const handleCancel = () => {
+    const confirmExit = window.confirm(
+      "¿Realmente quieres descartar los cambios? No se guardará el trabajo realizado."
+    );
+    
+    if (confirmExit) {
+      navigate("/hmi");
+    }
+  };
 
   return (
     <header className="h-[50px] flex items-center justify-between px-4 border-b border-gray-200 bg-white">
@@ -21,10 +31,29 @@ export default function NavbarPLCs({ toolbar }) {
         >
           Mis HMIs
         </Button>
+
+        <Button
+          variant="secondary"
+          onClick={() => navigate("/hmi")}
+          title="Volver a Centro HMI"
+        >
+          Centro HMI
+        </Button>
       </div>
 
       {show && (
         <div className="flex items-center gap-3 mr-8">
+
+          {/* NUEVO BOTÓN: CANCELAR */}
+          <Button
+            variant="secondary"
+            className="border-red-200 bg-red-50 text-red-700 hover:bg-red-100 font-semibold"
+            onClick={handleCancel}
+            title="Descartar cambios y volver a Centro HMI"
+          >
+            Descartar
+          </Button> 
+
           <Button
             variant="secondary"
             className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"

@@ -1,8 +1,4 @@
-// tabs/ScreenTab.jsx
-//
-// Sección "Pantallas" + "Capas" del sidebar.
-// Extraído de UnifiedSidebar.renderSectionContent("pantallas").
-//
+// C:\Users\aroa.banuelos\Desktop\wire_deploy\frontend\src\modules\organizarScada\components\sidebar\tabs\ScreenTab.jsx
 import React, { useState } from "react";
 import { Eye, EyeOff, Lock, Unlock, GripVertical, Trash2 } from "lucide-react";
 import SkeletonBlock from "@/components/ui/SkeletonBlock";
@@ -223,20 +219,26 @@ const ScreenTab = ({
                     <EyeOff size={12} className="text-slate-400" />
                   )}
                 </button>
+                
+                {/* BOTÓN CANDADO CORREGIDO */}
                 <button
                   type="button"
-                  className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-500 hover:bg-slate-100"
+                  className={[
+                    "inline-flex h-5 w-5 items-center justify-center rounded transition-colors",
+                    layer.isLocked ? "text-amber-600 bg-amber-50" : "text-slate-500 hover:bg-slate-100"
+                  ].join(" ")}
                   onClick={(e) => {
                     e.stopPropagation();
                     onToggleElementLock?.(layer.id);
                   }}
                 >
                   {layer.isLocked ? (
-                    <Lock size={12} />
+                    <Lock size={12} className="text-amber-600" />
                   ) : (
                     <Unlock size={12} className="text-slate-400" />
                   )}
                 </button>
+
                 <button
                   type="button"
                   className="inline-flex h-5 w-5 items-center justify-center rounded text-slate-500 hover:bg-red-50 hover:text-red-600"
@@ -266,7 +268,7 @@ const ScreenTab = ({
                       className={[
                         "truncate",
                         !layer.isVisible ? "text-slate-400 line-through" : "",
-                        layer.isLocked ? "text-amber-700" : "",
+                        layer.isLocked ? "text-amber-700 font-medium" : "",
                       ].join(" ")}
                       onDoubleClick={(e) => {
                         e.stopPropagation();

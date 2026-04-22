@@ -1,4 +1,5 @@
 import HmiStatusCard from "../standard/HmiStatusCard";
+import { buildBaseStyle } from "./_shared";
 
 export default {
   type:        "hmi-status-card",
@@ -19,8 +20,19 @@ export default {
 
   styleSchema: [],
 
-  resolveStyle() {
-    return {};
+  resolveStyle(palette = {}) {
+    const base = buildBaseStyle(palette);
+
+    return {
+      backgroundColor: base.bgColor,
+      textColor: base.titleColor,
+
+      gridColor: base.gridColor,
+      axisColor: base.axisColor,
+
+      primaryColor: base.primary,
+      secondaryColor: base.primaryDark,
+    };
   },
 
   component: HmiStatusCard,

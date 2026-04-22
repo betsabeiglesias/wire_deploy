@@ -1,4 +1,5 @@
 import MiniLampWidget from "../mini/MiniLampWidget";
+import { buildBaseStyle } from "./_shared";
 
 export default {
   type:        "mini-lamp",
@@ -26,10 +27,18 @@ export default {
     },
   ],
 
-  resolveStyle(palette) {
+  resolveStyle(palette = {}) {
+    const base = buildBaseStyle(palette);
+
     return {
-      activeColor:   palette.primary   || "#22c55e",
-      inactiveColor: palette.secondary || "#334155",
+      backgroundColor: base.bgColor,
+      textColor: base.titleColor,
+
+      gridColor: base.gridColor,
+      axisColor: base.axisColor,
+
+      primaryColor: base.primary,
+      secondaryColor: base.primaryDark,
     };
   },
 

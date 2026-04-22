@@ -39,11 +39,16 @@ const HmiStatusCard = ({
   subtitle = "STATUS: READY",
   width = 280,
   height = 90,
+  accentColor, // 👈 añadido
 }) => {
   const uid = useId().replace(/:/g, "");
   const safeStatus = STATUS_MAP[status] ? status : "ok";
   const cfg = STATUS_MAP[safeStatus];
   const gradId = `status-grad-${safeStatus}-${uid}`;
+
+  const color = accentColor || cfg.stroke;
+  const gradStart = accentColor || cfg.gradStart;
+  const gradEnd = accentColor || cfg.gradEnd;
 
   return (
     <svg
@@ -55,8 +60,8 @@ const HmiStatusCard = ({
     >
       <defs>
         <linearGradient id={gradId} x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor={cfg.gradStart} stopOpacity={cfg.gradStartOpacity} />
-          <stop offset="100%" stopColor={cfg.gradEnd} stopOpacity={cfg.gradEndOpacity} />
+          <stop offset="0%" stopColor={gradStart} stopOpacity={cfg.gradStartOpacity} />
+          <stop offset="100%" stopColor={gradEnd} stopOpacity={cfg.gradEndOpacity} />
         </linearGradient>
       </defs>
       <style>{`
@@ -96,14 +101,14 @@ const HmiStatusCard = ({
           height="60"
           rx="5"
           fill={`url(#${gradId})`}
-          stroke={cfg.stroke}
+          stroke={color}
           strokeWidth={safeStatus === "emergency" ? "2" : "1.5"}
           strokeOpacity={safeStatus === "warning" ? "0.8" : "0.6"}
         />
         <text
           x="140"
           y="52"
-          fill={cfg.text}
+          fill={color}
           fontSize="22"
           fontWeight="bold"
           textAnchor="middle"
@@ -115,7 +120,7 @@ const HmiStatusCard = ({
         <text
           x="20"
           y="12"
-          fill={cfg.text === "#ff4d4d" ? "#ff4d4d" : "#94a3b8"}
+          fill={color === "#ff4d4d" ? "#ff4d4d" : "#94a3b8"}
           fontSize="10"
           fontWeight="bold"
           fontFamily="'Segoe UI', Arial, sans-serif"

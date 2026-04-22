@@ -282,8 +282,32 @@ export const useOrganizarScada = () => {
   );
 
   const handleDeleteComponent = useCallback((id) => {
-    setCanvasElements((prevItems) => prevItems.filter((item) => item.id !== id));
+    setCanvasElements((prev) => {
+      // 1. eliminar elemento
+      const filtered = prev.filter((el) => el.id !== id);
+
+      // 2. ordenar por z_index actual
+      const sorted = [...filtered].sort(
+        (a, b) =>
+          (a.data?.settings?.z_index || 0) -
+          (b.data?.settings?.z_index || 0)
+      );
+
+      // 3. reindexar (1,2,3...)
+      return sorted.map((el, index) => ({
+        ...el,
+        data: {
+          ...(el.data || {}),
+          settings: {
+            ...(el.data?.settings || {}),
+            z_index: index + 1,
+          },
+        },
+      }));
+    });
+
     setSelectedId((prev) => (prev === id ? null : prev));
+
   }, []);
 
   const handleDropFromSidebar = useCallback(

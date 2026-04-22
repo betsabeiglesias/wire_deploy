@@ -1,5 +1,6 @@
 import HmiScadaGauge from "../standard/HmiScadaGauge";
 import { parseNumericValue } from "@/modules/organizarScada/utils/numbers";
+import { buildBaseStyle } from "./_shared";
 
 export default {
   type:        "hmi-scada-gauge",
@@ -42,13 +43,18 @@ export default {
     },
   ],
 
-  resolveStyle(palette) {
+  resolveStyle(palette = {}) {
+    const base = buildBaseStyle(palette);
+
     return {
-      arcColor:    palette.primary   || "#94a3b8",
-      needleColor: palette.primary   || "#94a3b8",
-      tickColor:   palette.secondary || "#94a3b8",
-      valueColor:  palette.text      || "#ffffff",
-      unitColor:   palette.unit      || "#64748b",
+      backgroundColor: base.bgColor,
+      textColor: base.titleColor,
+
+      gridColor: base.gridColor,
+      axisColor: base.axisColor,
+
+      primaryColor: base.primary,
+      secondaryColor: base.primaryDark,
     };
   },
 

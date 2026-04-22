@@ -1,5 +1,6 @@
 import TemperatureLineChart from "../standard/TemperatureLineChart";
 import { buildTemperatureLineChartDemo } from "@/modules/organizarScada/utils/chartDemos";
+import { buildBaseStyle } from "./_shared";
 
 export default {
   type:        "temperature-line-chart",
@@ -27,10 +28,18 @@ export default {
     },
   ],
 
-  resolveStyle(palette) {
+  resolveStyle(palette = {}) {
+    const base = buildBaseStyle(palette);
+
     return {
-      lineColor: palette.primary   || "#3b82f6",
-      areaColor: palette.secondary || "#93c5fd",
+      backgroundColor: base.bgColor,
+      textColor: base.titleColor,
+
+      gridColor: base.gridColor,
+      axisColor: base.axisColor,
+
+      primaryColor: base.primary,
+      secondaryColor: base.primaryDark,
     };
   },
 

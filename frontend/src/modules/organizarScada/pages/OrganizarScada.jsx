@@ -120,13 +120,35 @@ const OrganizarScada = () => {
 
   const handleReorderLayers = (orderedIdsTopToBottom = []) => {
     if (!orderedIdsTopToBottom.length) return;
+
     setCanvasElements((prev) => {
       const total = orderedIdsTopToBottom.length;
-      const zMap = new Map(orderedIdsTopToBottom.map((layerId, idx) => [layerId, total - idx]));
-      return prev.map((el, idx) => ({
-        ...el,
-        data: { ...(el.data || {}), settings: { ...((el.data?.settings) || {}), z_index: zMap.get(el.id) ?? idx + 1 } },
-      }));
+      
+      // Creamos el mapa de profundidad:
+      // El primer ID de la lista (idx 0) recibe el z-index más alto (total).
+      // El último ID de la lista recibe el z-index 1.
+      const zMap = new Map(
+        orderedIdsTopToBottom.map((id, index) => [id, total - index])
+      );
+
+      return prev.map((el) => {
+        const calculatedZ = zMap.get(el.id);
+        
+        // Si por alguna razón el elemento no está en la lista de reordenación,
+        // le mantenemos su z_index actual o le damos 1 por defecto.
+        if (calculatedZ === undefined) return el;
+
+        return {
+          ...el,
+          data: {
+            ...el.data,
+            settings: {
+              ...(el.data?.settings || {}),
+              z_index: calculatedZ
+            }
+          }
+        };
+      });
     });
   };
 
@@ -426,12 +448,23 @@ const OrganizarScada = () => {
         <h2 className="text-sm font-semibold text-slate-700">
           Editor avanzado
         </h2>
-        <button
-          onClick={() => setIsAdvancedOpen(false)}
-          className="text-slate-500 hover:text-slate-800"
-        >
-          ✕
-        </button>
+          <button
+  onClick={() => setIsAdvancedOpen(false)}
+  className="
+    flex items-center justify-center 
+    w-7 h-7 
+    rounded-md 
+    bg-red-100 
+    text-red-600 
+    cursor-pointer 
+    transition-colors 
+    hover:bg-red-200 
+    hover:text-red-700
+  "
+  aria-label="Cerrar"
+>
+  <span className="font-bold text-sm">✕</span>
+</button>
       </div>
 
           <SidebarPropiedades
@@ -442,6 +475,11 @@ const OrganizarScada = () => {
                 selectedElement={selectedElement}
                 views={views}
                 onChange={(changes) => {
+                  if (changes?.__delete) {
+                    handleDeleteComponent(selectedElement.id);
+                    return;
+                  }
+
                   selectedElement && handleUpdateComponent(selectedElement.id, changes);
                 }}
                 isAdvancedMode={true} 

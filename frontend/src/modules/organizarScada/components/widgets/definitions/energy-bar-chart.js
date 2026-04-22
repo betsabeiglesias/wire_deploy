@@ -1,5 +1,6 @@
 import EnergyBarChart from "../standard/EnergyBarChart";
 import { buildEnergyBarChartDemo } from "@/modules/organizarScada/utils/chartDemos";
+import { buildBaseStyle } from "./_shared";
 
 export default {
   type:        "energy-bar-chart",
@@ -35,11 +36,22 @@ export default {
     },
   ],
 
-  resolveStyle(palette) {
+  resolveStyle(palette = {}) {
+    const base = buildBaseStyle(palette);
+
     return {
-      barGradientFrom: palette.primary   || "#3b82f6",
-      limitColor:      palette.secondary || "#94a3b8",
-      labelColor:      palette.text      || "#ffffff",
+      bgColor: base.bgColor,
+      gridColor: base.gridColor,
+      axisColor: base.axisColor,
+
+      titleColor: base.titleColor,
+      labelColor: base.labelColor,
+
+      barGradientFrom: base.primary,
+      barGradientTo: base.primaryDark,
+
+      limitColor: base.danger,
+      alertBarColor: base.warning,
     };
   },
 
