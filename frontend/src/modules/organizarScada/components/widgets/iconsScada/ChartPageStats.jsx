@@ -24,63 +24,107 @@ const defaultOptions = {
   dataLabels: { enabled: false },
   stroke: { width: [5, 7, 5], curve: "straight", dashArray: [0, 8, 5] },
   title: { text: "Page Statistics", align: "left" },
-  legend: {
-    tooltipHoverFormatter: (val, opts) =>
-      `${val} - <strong>${opts.w.globals.series[opts.seriesIndex][opts.dataPointIndex]}</strong>`,
-  },
+  legend: {},
   markers: { size: 0, hover: { sizeOffset: 6 } },
   xaxis: {
     categories: [
-      "01 Jan",
-      "02 Jan",
-      "03 Jan",
-      "04 Jan",
-      "05 Jan",
-      "06 Jan",
-      "07 Jan",
-      "08 Jan",
-      "09 Jan",
-      "10 Jan",
-      "11 Jan",
-      "12 Jan",
+      "01 Jan", "02 Jan", "03 Jan", "04 Jan",
+      "05 Jan", "06 Jan", "07 Jan", "08 Jan",
+      "09 Jan", "10 Jan", "11 Jan", "12 Jan",
     ],
   },
-  tooltip: {
-    y: [
-      {
-        title: { formatter: (val) => `${val} (mins)` },
-      },
-      {
-        title: { formatter: (val) => `${val} per session` },
-      },
-      {
-        title: { formatter: (val) => val },
-      },
-    ],
-  },
-  grid: { borderColor: "#f1f1f1" },
+  tooltip: {},
+  grid: {},
 };
 
-const ChartPageStats = ({ series, options, height, width, type = "line" }) => {
+const ChartPageStats = ({
+  series,
+  options,
+  height,
+  width,
+  type = "line",
+
+  // 🎨 Props desde el theme
+  backgroundColor,
+  textColor,
+  gridColor,
+  axisColor,
+  primaryColor,
+  secondaryColor,
+}) => {
   const mergedOptions = useMemo(() => {
-    const opts = { ...defaultOptions, ...(options || {}) };
-    opts.chart = { ...defaultOptions.chart, ...(options?.chart || {}) };
-    const hNum = Number(height);
-    const wNum = Number(width);
-    if (Number.isFinite(hNum)) opts.chart.height = hNum;
-    else if (height) opts.chart.height = height;
-    if (Number.isFinite(wNum)) opts.chart.width = wNum;
-    else if (width) opts.chart.width = width;
-    opts.dataLabels = { ...defaultOptions.dataLabels, ...(options?.dataLabels || {}) };
-    opts.stroke = { ...defaultOptions.stroke, ...(options?.stroke || {}) };
-    opts.title = { ...defaultOptions.title, ...(options?.title || {}) };
-    opts.legend = { ...defaultOptions.legend, ...(options?.legend || {}) };
-    opts.markers = { ...defaultOptions.markers, ...(options?.markers || {}) };
-    opts.xaxis = { ...defaultOptions.xaxis, ...(options?.xaxis || {}) };
-    opts.tooltip = { ...defaultOptions.tooltip, ...(options?.tooltip || {}) };
-    opts.grid = { ...defaultOptions.grid, ...(options?.grid || {}) };
+    const opts = {
+      ...defaultOptions,
+      ...(options || {}),
+    };
+
+    // 🎯 THEME aplicado
+    opts.chart = {
+      ...defaultOptions.chart,
+      ...(options?.chart || {}),
+      type,
+      background: backgroundColor,
+    };
+
+    // ✅ Colores por serie
+    opts.colors = [
+      primaryColor,
+      secondaryColor || primaryColor,
+      "#94a3b8",
+    ];
+
+    opts.title = {
+      ...defaultOptions.title,
+      ...(options?.title || {}),
+      style: {
+        color: textColor,
+      },
+    };
+
+    opts.grid = {
+      ...defaultOptions.grid,
+      ...(options?.grid || {}),
+      borderColor: gridColor,
+    };
+
+    opts.xaxis = {
+      ...defaultOptions.xaxis,
+      ...(options?.xaxis || {}),
+      labels: {
+        style: { colors: axisColor },
+      },
+      axisBorder: { color: axisColor },
+      axisTicks: { color: axisColor },
+    };
+
+    opts.yaxis = {
+      ...(options?.yaxis || {}),
+      labels: {
+        style: { colors: axisColor },
+      },
+    };
+
+    opts.legend = {
+      ...defaultOptions.legend,
+      ...(options?.legend || {}),
+      labels: {
+        colors: textColor,
+      },
+    };
+
     return opts;
-  }, [options, height, width]);
+  }, [
+    options,
+    height,
+    width,
+    backgroundColor,
+    textColor,
+    gridColor,
+    axisColor,
+    primaryColor,
+    secondaryColor,
+    type,
+  ]);
 
   const resolvedSeries =
     Array.isArray(series) && series.length ? series : defaultSeries;
@@ -88,12 +132,19 @@ const ChartPageStats = ({ series, options, height, width, type = "line" }) => {
   const chartHeight = Number.isFinite(Number(height))
     ? Number(height)
     : height || "100%";
+
   const chartWidth = Number.isFinite(Number(width))
     ? Number(width)
     : width || "100%";
 
   return (
-    <div className="w-full h-full">
+    <div
+      className="w-full h-full"
+      style={{
+        background: backgroundColor,
+        color: textColor,
+      }}
+    >
       <ReactApexChart
         key={`${chartWidth}-${chartHeight}`}
         options={mergedOptions}
