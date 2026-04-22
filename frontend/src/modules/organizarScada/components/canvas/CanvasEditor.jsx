@@ -370,21 +370,15 @@ const CanvasEditor = ({
             );
           })}
 
-          {elements.length === 0 && !isLiveMode && (
-            <div 
-              className="pointer-events-none absolute inset-0 flex items-center justify-center text-center text-xs"
-              style={{ color: theme.colors.textMuted || "#94a3b8" }}
-            >
-              Arrastra elementos al lienzo para empezar.
-            </div>
-          )}
-        </div>
+        {/* EMPTY STATE */}
+        {elements.length === 0 && !isLiveMode && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-center text-xs text-slate-400">
+            Arrastra elementos al lienzo para empezar.
+          </div>
+        )}
       </div>
     </div>
-    {isLiveMode && (
-    <DataQualityPanel elements={elements} projectTags={projectTags} />
-  )}
-  </>
+  </div>
 );
 };
 
