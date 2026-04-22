@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useEffect, useMemo, useState } from "react";
 import DraggableBox from "./DraggableBox";
+import DataQualityPanel from "./DataQualityPanel";
 import { useProjectTags } from "@/modules/organizarScada/hooks/useProjectTags";
 import useRealtimeStore from "@/store/useRealtimeStore";
 import { useHmiTheme } from "@/modules/organizarScada/components/widgets/styles/ThemeProvider";
@@ -380,7 +381,11 @@ const CanvasEditor = ({
         </div>
       </div>
     </div>
-  );
+    {isLiveMode && (
+    <DataQualityPanel elements={elements} projectTags={projectTags} />
+  )}
+  </>
+);
 };
 
 export default CanvasEditor;

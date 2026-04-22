@@ -79,6 +79,8 @@ services:
     command: python -m mqtt_bridge.run
     env_file:
       - ./customerA.env
+    environment:
+      - ENABLE_DIRECT_CENTRAL_REDIS_REPLICATION=false
     depends_on:
       - mosquitto
       - redis
@@ -159,4 +161,3 @@ volumes:
   sqlserver_data:
   mosquitto_data:
   mosquitto_log:
-

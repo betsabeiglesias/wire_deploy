@@ -44,7 +44,7 @@ class ModbusTCPDriver(BaseDriver):
       
         self._stop_flag = threading.Event()
         self._thread: Optional[threading.Thread] = None
-        self.last_emit_ts = 0
+        # Fix 5: eliminado self.last_emit_ts — usar self._last_emit_ts de BaseDriver
         
         # Logger específico
         self.logger = logging.getLogger(f"gateway.modbus.{self.equipment_id}")
@@ -204,18 +204,26 @@ class ModbusTCPDriver(BaseDriver):
             word_order = item_format.get("word_order", self.default_word_order)
 
             try:
-                value = self._read(address, datatype, fc, byte_order, word_order)
+                result = self._read(address, datatype, fc, byte_order, word_order)
+                
+                # =========================
+                # CALIDAD
+                # =========================
+                if isinstance(result, dict):
+                    value = result["value"]
+                    raw_status = result["raw_status"]
+                    error = result.get("error")
+                else:
+                    value = result
+                    raw_status = "ok"
+                    error = None
 
-                # =========================
-                # 🔥 CALIDAD SCADA
-                # =========================
-                quality = "Good"
-                if value is None:
-                    quality = "Bad"
+                if value is None and raw_status == "ok":
+                    raw_status = "read_error"
                     self.logger.warning(f"⚠️ Lectura falló para {variable}@{address} (FC{fc})")
 
                 # =========================
-                # 📐 SCALE (solo si hay valor)
+                # SCALE (solo si hay valor)
                 # =========================
                 if value is not None and scale:
                     try:
@@ -239,20 +247,21 @@ class ModbusTCPDriver(BaseDriver):
                     value=value,  # puede ser None
                     datatype=normalized_datatype,
                     unit=unit,
-                    quality=quality,
+                    quality=None,
                     timestamp=utc_iso(),
                     source={
                         "protocol": "modbus",
                         "address": address,
                         "fc": fc,
-                        "format": f"{byte_order}-{word_order}"
+                        "format": f"{byte_order}-{word_order}",
+                        "raw_status": raw_status,
+                        "error": error
                     }
                 )
 
-                self.logger.debug(f"📤 Emitiendo: {variable}={value} quality={quality}")
+                self.logger.debug(f"📤 Emitiendo: {variable}={value} raw_status={raw_status}")
                 self.emit_tag(pv)
-                
-                self.last_emit_ts = time.time()
+                # Fix 5: emit_tag() ya actualiza _last_emit_ts y _last_emit_monotonic en BaseDriver
                 success_count += 1
 
             except Exception as exc:
@@ -261,6 +270,9 @@ class ModbusTCPDriver(BaseDriver):
                     exc_info=True
                 )
                 error_count += 1
+                raw_status = "exception"
+                error = str(exc)
+                value = None
         
         if success_count > 0:
             self.logger.debug(f"✅ Ciclo completado: {success_count} OK, {error_count} errores")
@@ -306,7 +318,11 @@ class ModbusTCPDriver(BaseDriver):
                 rr = self.client.read_coils(address, 1, slave=self.unit_id)
                 if rr.isError():
                     self.logger.warning(f"❌ FC1 error en @{address}: {rr}")
-                    return None
+                    return {
+                        "value": None,
+                        "raw_status": "modbus_exception",
+                        "error": str(rr)
+                    }
                 return bool(rr.bits[0])
 
             elif fc == 2:
@@ -314,7 +330,11 @@ class ModbusTCPDriver(BaseDriver):
                 rr = self.client.read_discrete_inputs(address, 1, slave=self.unit_id)
                 if rr.isError():
                     self.logger.warning(f"❌ FC2 error en @{address}: {rr}")
-                    return None
+                    return {
+                        "value": None,
+                        "raw_status": "modbus_exception",
+                        "error": str(rr)
+                    }
                 return bool(rr.bits[0])
 
             # === LECTURA DE REGISTROS (FC3, FC4) ===
@@ -332,11 +352,19 @@ class ModbusTCPDriver(BaseDriver):
 
                 if rr.isError():
                     self.logger.warning(f"❌ FC{fc} error en @{address}: {rr}")
-                    return None
+                    return {
+                        "value": None,
+                        "raw_status": "modbus_exception",
+                        "error": str(rr)
+                    }  # Fix 4: consistente con FC1/FC2 y el resto del método
                     
                 if not rr.registers:
                     self.logger.warning(f"❌ FC{fc} sin registros en @{address}")
-                    return None
+                    return {
+                        "value": None,
+                        "raw_status": "modbus_exception",
+                        "error": str(rr)
+                    }
 
                 regs = rr.registers
                 self.logger.debug(f"📊 FC{fc} @{address}: regs={regs} (formato: {byte_order}-{word_order})")
@@ -375,7 +403,11 @@ class ModbusTCPDriver(BaseDriver):
                 f"{byte_order}-{word_order}): {e!r}", 
                 exc_info=True
             )
-            return None
+            return {
+                "value": None,
+                "raw_status": "exception",
+                "error": str(e)
+            }
 
     # === 🔥 MÉTODOS DE DECODIFICACIÓN ===
     
@@ -445,13 +477,10 @@ class ModbusTCPDriver(BaseDriver):
 
     def get_health(self) -> Dict[str, Any]:
         """Retorna estado de salud del driver"""
-        return {
-            "equipment_id": self.equipment_id,
-            "driver": "modbus",
-            "state": self.state,
-            "connected": self.client.connected if self.client else False,
-            "last_emit_ts": self.last_emit_ts,
-            "last_emit_age": time.time() - self.last_emit_ts if self.last_emit_ts else None,
+        health = super().get_health()  # Fix 5: delegar a BaseDriver para _last_emit_monotonic
+        health.update({
             "thread_alive": self._thread.is_alive() if self._thread else False,
-            "format": f"{self.default_byte_order}-{self.default_word_order}"
-        }
+            "format": f"{self.default_byte_order}-{self.default_word_order}",
+            "connected": self.client.connected if self.client else False,
+        })
+        return health

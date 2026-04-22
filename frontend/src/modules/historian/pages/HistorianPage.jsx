@@ -71,7 +71,12 @@ export default function HistorianPage() {
     setLoading(true);
     setError(null);
     try {
-      const data = await queryHistorian({ tags: selectedTags, start, stop, limit });
+      const data = await queryHistorian({
+        tags: selectedTags,
+        start: new Date(start).toISOString(),
+        stop: new Date(stop).toISOString(),
+        limit,
+      });
       setResult(data);
     } catch (err) {
       setError(
