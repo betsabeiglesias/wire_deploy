@@ -5,7 +5,7 @@ import WidgetLiveWrapper from "./WidgetLiveWrapper";
 
 export default function DraggableBox({
   initialX, initialY, initialWidth, initialHeight,
-  data, id, theme = "theme-clean",
+  data, id,
   isSelected = false, isLiveMode = false,
   onSelect, onDoubleClick, onDragStop, onResizeStop, onDelete,
   isReadOnly = false,
@@ -49,7 +49,6 @@ export default function DraggableBox({
           data={data}
           width={size.w}
           height={size.h}
-          theme={theme}
           isLiveMode={true}
           projectTags={projectTags}
         />
@@ -78,7 +77,6 @@ export default function DraggableBox({
             data={data}
             width={size.w}
             height={size.h}
-            theme={theme}
             isLiveMode={false}
           />
         </div>
@@ -163,7 +161,6 @@ export default function DraggableBox({
           data={data}
           width={size.w}
           height={size.h - 28}
-          theme={theme}
           isLiveMode={false}
         />
       </div>

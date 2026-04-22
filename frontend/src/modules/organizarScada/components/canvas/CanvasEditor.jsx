@@ -3,7 +3,6 @@ import DraggableBox from "./DraggableBox";
 import DataQualityPanel from "./DataQualityPanel";
 import { useProjectTags } from "@/modules/organizarScada/hooks/useProjectTags";
 import useRealtimeStore from "@/store/useRealtimeStore";
-import { useHmiTheme } from "@/modules/organizarScada/components/widgets/styles/ThemeProvider";
 
 const CanvasEditor = ({
   elements = [],
@@ -17,7 +16,6 @@ const CanvasEditor = ({
   isLiveMode = false,
   layoutId = null,
 }) => {
-  const { theme } = useHmiTheme();
   const BASE_WIDTH = 1920;
   const BASE_HEIGHT = 1080;
   const viewportRef = useRef(null);
@@ -172,8 +170,8 @@ const CanvasEditor = ({
       ref={viewportRef}
       className="absolute inset-0 overflow-auto"
       style={{
-        backgroundColor: theme.colors.bgPreview || "#f1f5f9",
-        backgroundImage: `radial-gradient(circle at 1px 1px, ${theme.colors.border || "#e2e8f0"} 1px, transparent 0)`,
+        backgroundColor: "#F2F3F5",
+        backgroundImage: "radial-gradient(circle at 1px 1px, #CBD5E1 1px, transparent 0)",
         backgroundSize: "20px 20px",
       }}
     >
@@ -198,8 +196,8 @@ const CanvasEditor = ({
             transformOrigin: "top left",
             position: "relative",
             overflow: "hidden",
-            backgroundColor: theme.colors.bgWidget || "#ffffff",
-            borderColor: theme.colors.border || "#cbd5e1",
+            backgroundColor: "#FFFFFF",
+            borderColor: "#CBD5E1",
           }}
         >
           {orderedElements.map((el) => {
@@ -334,7 +332,7 @@ const CanvasEditor = ({
                           width: "14px",
                           height: "14px",
                           cursor: "nwse-resize",
-                          background: theme.colors.primary || "rgba(59,130,246,0.8)",
+                          background: "#29468B",
                         }}
                       />
                     </>
@@ -374,7 +372,7 @@ const CanvasEditor = ({
           {elements.length === 0 && !isLiveMode && (
             <div 
               className="pointer-events-none absolute inset-0 flex items-center justify-center text-center text-xs"
-              style={{ color: theme.colors.textMuted || "#94a3b8" }}
+              style={{ color: "#94A3B8" }}
             >
               Arrastra elementos al lienzo para empezar.
             </div>

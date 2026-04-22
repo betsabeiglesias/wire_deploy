@@ -1,12 +1,12 @@
 // C:\Users\aroa.banuelos\Desktop\wire_deploy\frontend\src\modules\organizarScada\utils\items.js
 
-export const getButtonsLabelsItems = (theme) => [
+export const getButtonsLabelsItems = () => [
   {
     id: "btn-primary",
     label: "Boton",
     kind: "button",
     style: {
-      backgroundColor: theme.colors.primary || "#0284c7",
+      backgroundColor: "#29468B",
       color: "#ffffff",
     },
     previewClass: "text-[11px] px-3 py-1 rounded-md shadow-sm flex items-center justify-center",
@@ -16,8 +16,8 @@ export const getButtonsLabelsItems = (theme) => [
     label: "Boton",
     kind: "button",
     style: {
-      border: `1px solid ${theme.colors.primary || "#0ea5e9"}`,
-      color: theme.colors.primary || "#0ea5e9",
+      border: "1px solid #29468B",
+      color: "#29468B",
       backgroundColor: "transparent",
     },
     previewClass: "text-[11px] px-3 py-1 rounded-md flex items-center justify-center border",
@@ -27,9 +27,9 @@ export const getButtonsLabelsItems = (theme) => [
     label: "Label pill",
     kind: "label",
     style: {
-      backgroundColor: theme.colors.successLight || "#ecfdf5",
-      color: theme.colors.success || "#047857",
-      borderColor: theme.colors.successBorder || "#d1fae5",
+      backgroundColor: "#EDF8EF",
+      color: "#2A8B4B",
+      borderColor: "#D6D9E2",
     },
     previewClass: "inline-flex items-center rounded-full text-[11px] px-3 py-0.5 border",
   },
@@ -38,8 +38,8 @@ export const getButtonsLabelsItems = (theme) => [
     label: "Label badge",
     kind: "label",
     style: {
-      backgroundColor: theme.colors.text || "#1e293b",
-      color: theme.colors.bgWidget || "#f8fafc",
+      backgroundColor: "#1E293B",
+      color: "#F8FAFC",
     },
     previewClass: "inline-flex items-center rounded text-[10px] px-2 py-0.5 uppercase tracking-wide",
   },
@@ -47,8 +47,8 @@ export const getButtonsLabelsItems = (theme) => [
     id: "card-soft",
     kind: "card",
     style: {
-      backgroundColor: theme.colors.bgWidget || "#f8fafc",
-      borderColor: theme.colors.border || "#e2e8f0",
+      backgroundColor: "#F9F9FA",
+      borderColor: "#D6D9E2",
     },
     previewClass: "rounded-lg border text-[11px] px-3 py-2 shadow-sm",
   },
@@ -56,8 +56,8 @@ export const getButtonsLabelsItems = (theme) => [
     id: "card-elevated",
     kind: "card",
     style: {
-      backgroundColor: theme.colors.bgWidget || "#ffffff",
-      borderColor: theme.colors.border || "#e2e8f0",
+      backgroundColor: "#FFFFFF",
+      borderColor: "#CBD5E1",
     },
     previewClass: "rounded-lg border text-[11px] px-3 py-2 shadow-md",
   },
@@ -66,8 +66,8 @@ export const getButtonsLabelsItems = (theme) => [
     label: "Recuadro",
     kind: "shape",
     style: {
-      borderColor: theme.colors.border || "#94a3b8",
-      backgroundColor: theme.colors.bgPreview || "#f1f5f9",
+      borderColor: "#CBD5E1",
+      backgroundColor: "#F2F3F5",
     },
     previewClass: "w-full h-10 rounded-md border-2",
   },
@@ -76,8 +76,8 @@ export const getButtonsLabelsItems = (theme) => [
     label: "Circulo",
     kind: "shape",
     style: {
-      borderColor: theme.colors.border || "#94a3b8",
-      backgroundColor: theme.colors.bgPreview || "#f1f5f9",
+      borderColor: "#CBD5E1",
+      backgroundColor: "#F2F3F5",
     },
     previewClass: "w-10 h-10 rounded-full border-2 mx-auto",
   },
@@ -86,7 +86,7 @@ export const getButtonsLabelsItems = (theme) => [
     label: "Triangulo",
     kind: "shape",
     style: {
-      borderBottomColor: theme.colors.border || "#cbd5e1",
+      borderBottomColor: "#CBD5E1",
     },
     previewClass: "w-0 h-0 border-l-[18px] border-l-transparent border-r-[18px] border-r-transparent border-b-[32px] mx-auto",
   },

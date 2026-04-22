@@ -134,7 +134,7 @@ const ScadaGauge = ({ width, height, settings = {} }) => {
         y1={cy}
         x2={cx + (radius - 6) * Math.cos((Math.PI / 180) * valueAngle)}
         y2={cy + (radius - 6) * Math.sin((Math.PI / 180) * valueAngle)}
-        stroke={settings.themeColor || "#0ea5e9"}
+        stroke={settings.accentColor || "#29468B"}
         strokeWidth={4}
         vectorEffect="non-scaling-stroke"
       />

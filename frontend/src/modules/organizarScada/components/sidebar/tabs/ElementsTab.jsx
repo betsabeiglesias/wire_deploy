@@ -1,8 +1,7 @@
-// C:\Users\aroa.banuelos\Desktop\wire_deploy\frontend\src\modules\organizarScada\components\sidebar\tabs\ElementsTab.jsx
+// tabs/ElementsTab.jsx
 
 import React, { useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, Palette } from "lucide-react";
-import { useHmiTheme } from "../../widgets/styles/ThemeProvider";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { WIDGET_CATALOG } from "../../widgets/catalog/catalog";
 import { renderWidget } from "../../widgets/registry.jsx";
 
@@ -12,15 +11,12 @@ const GROUP_LABELS = {
   gauges: "Gauges",
   barras: "Barras",
   tarjetas: "Tarjetas",
-  graficas: "Gráficas",
+  graficas: "Graficas",
   minis: "Mini",
-  otros: "Otros"
+  otros: "Otros",
 };
 
 const ElementsTab = ({ addComponentToCanvas }) => {
-  const { theme, themeId, setThemeId, allThemes } = useHmiTheme();
-  
-  // 1. Generamos los grupos respetando el orden y los nombres del catálogo
   const scadaGroups = useMemo(() => {
     const groups = {};
 
@@ -36,20 +32,20 @@ const ElementsTab = ({ addComponentToCanvas }) => {
 
       groups[gId].items.push({
         id: `tpl-${w.type}-${Math.random().toString(36).substr(2, 5)}`,
-        title: w.label, // El nombre que se muestra debajo del recuadro
+        title: w.label,
         data: {
           type: w.type,
           width: w.size?.w || 200,
           height: w.size?.h || 200,
-          label: w.label, // El nombre que el widget usará internamente
+          label: w.label,
           settings: { ...w.defaults },
         },
       });
     });
 
-    return GROUP_ORDER.filter(id => groups[id])
-                      .map(id => groups[id])
-                      .concat(Object.values(groups).filter(g => !GROUP_ORDER.includes(g.id)));
+    return GROUP_ORDER.filter((id) => groups[id])
+      .map((id) => groups[id])
+      .concat(Object.values(groups).filter((g) => !GROUP_ORDER.includes(g.id)));
   }, []);
 
   const [expandedGroups, setExpandedGroups] = useState(() =>
@@ -75,80 +71,54 @@ const ElementsTab = ({ addComponentToCanvas }) => {
   };
 
   return (
-    <div className="p-4 border rounded-xl transition-all duration-500" 
-         style={{ backgroundColor: theme.colors.bgPreview, borderColor: theme.colors.border }}>
-      
-      {/* HEADER - SELECCIÓN DE TEMA */}
-      <div className="mb-6 space-y-3">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest" style={{ color: theme.colors.textDim }}>
-          <Palette size={14} /> Estética del Sistema
-        </div>
-        
-        <select 
-          value={themeId}
-          onChange={(e) => setThemeId(e.target.value)}
-          className="w-full p-2 rounded-lg border text-sm font-medium outline-none transition-all shadow-sm"
-          style={{ 
-            backgroundColor: theme.colors.bgWidget, 
-            borderColor: theme.colors.border, 
-            color: theme.colors.textMain 
-          }}
-        >
-          {Object.keys(allThemes).map(id => (
-            <option key={id} value={id}>{allThemes[id].label}</option>
-          ))}
-        </select>
-      </div>
+    <div className="rounded-[4px] border border-slate-300 bg-[#F9F9FA] p-3">
+      <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.05em] text-slate-600">
+        Elementos HMI
+      </p>
 
-      {/* LISTADO DE GRUPOS */}
-      <div className="space-y-4">
+      <div className="space-y-2">
         {scadaGroups.map((group) => {
           const isExpanded = !!expandedGroups[group.id];
           const GroupIcon = isExpanded ? ChevronDown : ChevronRight;
 
           return (
-            <div key={group.id} className="overflow-hidden rounded-xl border transition-all" 
-                 style={{ backgroundColor: theme.colors.bgWidget, borderColor: theme.colors.border, borderRadius: theme.radius }}>
-              
-              <button 
+            <div key={group.id} className="overflow-hidden rounded-[4px] border border-slate-300 bg-white">
+              <button
                 onClick={() => toggleGroup(group.id)}
-                className="flex w-full items-center justify-between p-3 hover:bg-black/5 transition-colors"
+                className="flex w-full items-center justify-between px-2 py-2 text-left transition-colors hover:bg-slate-50"
               >
-                <div className="text-left">
-                  <div className="text-[9px] font-bold uppercase tracking-tight opacity-50" style={{ color: theme.colors.textMain }}>Categoría</div>
-                  <div className="text-sm font-bold" style={{ color: theme.colors.textMain }}>{group.label}</div>
+                <div>
+                  <div className="text-[9px] font-semibold uppercase tracking-[0.05em] text-slate-500">
+                    Categoria
+                  </div>
+                  <div className="text-[12px] font-semibold text-slate-800">
+                    {group.label}
+                  </div>
                 </div>
-                <GroupIcon size={16} style={{ color: theme.colors.textDim }} />
+                <GroupIcon className="h-4 w-4 text-slate-500" />
               </button>
 
               {isExpanded && (
-                <div className="grid grid-cols-2 gap-3 p-3 border-t" style={{ borderColor: theme.colors.border }}>
+                <div className="grid grid-cols-2 gap-2 border-t border-slate-200 p-2">
                   {group.items.map((tpl) => (
                     <div
                       key={tpl.id}
                       draggable
                       onDragStart={(e) => handleDragStart(e, tpl)}
                       onClick={() => handlePickWidget(tpl)}
-                      className="group cursor-pointer rounded-lg border p-2 hover:shadow-lg active:scale-95 transition-[box-shadow,transform] duration-200"
-                      style={{ 
-                        backgroundColor: theme.colors.bgWidget, 
-                        borderColor: theme.colors.border, 
-                        borderRadius: theme.radius 
-                      }}
+                      className="group cursor-pointer rounded-[4px] border border-slate-300 bg-white p-2 transition-[box-shadow,transform,border-color] duration-200 hover:border-[#29468B] hover:shadow-sm active:scale-95"
                     >
-                      <div className="flex h-20 items-center justify-center overflow-hidden rounded-md pointer-events-none transition-colors"
-                           style={{ backgroundColor: theme.colors.bgPreview }}>
-                        <div className="scale-[0.45] origin-center">
-                          {renderWidget({ 
-                            data: tpl.data, 
-                            width: tpl.data.width, 
+                      <div className="pointer-events-none flex h-20 items-center justify-center overflow-hidden rounded-[4px] bg-[#F2F3F5]">
+                        <div className="origin-center scale-[0.45]">
+                          {renderWidget({
+                            data: tpl.data,
+                            width: tpl.data.width,
                             height: tpl.data.height,
-                            // Añadimos live para que el nombre se vea reflejado en la preview
-                            live: { value: tpl.data.settings?.initialValue, label: tpl.data.label }
+                            live: { value: tpl.data.settings?.initialValue, label: tpl.data.label },
                           })}
                         </div>
                       </div>
-                      <p className="mt-2 text-center text-[10px] font-bold truncate" style={{ color: theme.colors.textDim }}>
+                      <p className="mt-2 truncate text-center text-[10px] font-semibold text-slate-600">
                         {tpl.title}
                       </p>
                     </div>

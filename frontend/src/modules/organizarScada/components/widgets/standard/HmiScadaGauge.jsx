@@ -19,7 +19,7 @@ const HmiScadaGauge = ({
   min = 0,
   max = 100,
   unit = "",
-  themeColor = "#94a3b8",
+  baseColor = "#94a3b8",
   accentColor,
   zones = [],
   width = 220,
@@ -36,7 +36,7 @@ const HmiScadaGauge = ({
 }) => {
   if (visible === false) return null;
 
-  const color = accentColor || themeColor;
+  const color = accentColor || baseColor;
 
   const size = 200;
   const center = size / 2;

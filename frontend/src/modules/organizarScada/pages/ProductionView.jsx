@@ -273,7 +273,6 @@ const ProductionView = () => {
           live,
           width: data.width,
           height: data.height,
-          theme: "theme-clean",
           valueHistory: [],
         })}
       </div>

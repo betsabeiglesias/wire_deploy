@@ -5,7 +5,6 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useLocation } from "react-router-dom";
 import { RealtimeProvider } from '@/context/RealtimeProvider';
 import { ScadaConfigProvider } from './context/ScadaConfigProvider';
-import { ThemeProvider } from './modules/organizarScada/components/widgets/styles/ThemeProvider';
 
 function App() {
   const location = useLocation();
@@ -38,11 +37,7 @@ function App() {
   }
 
   if (!user) {
-    return (
-      <ThemeProvider>
-        <AppRoutes />
-      </ThemeProvider>
-    );
+    return <AppRoutes />;
   }
 
   const tenant = user.client?.id;
@@ -52,17 +47,15 @@ function App() {
   }
 
   return (
-    <ThemeProvider>
-      <ScadaConfigProvider>
-        {needsRealtime ? (
-          <RealtimeProvider tenant={tenant}>
-            <AppRoutes />
-          </RealtimeProvider>
-        ) : (
+    <ScadaConfigProvider>
+      {needsRealtime ? (
+        <RealtimeProvider tenant={tenant}>
           <AppRoutes />
-        )}
-      </ScadaConfigProvider>
-    </ThemeProvider>
+        </RealtimeProvider>
+      ) : (
+        <AppRoutes />
+      )}
+    </ScadaConfigProvider>
   );
 }
 

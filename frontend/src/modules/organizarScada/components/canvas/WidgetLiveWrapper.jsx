@@ -38,7 +38,6 @@ export default function WidgetLiveWrapper({
         live,
         width,
         height,
-        theme,
         valueHistory,
         demoNow: Date.now(),
       })}
