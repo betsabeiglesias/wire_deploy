@@ -324,8 +324,6 @@ const OrganizarScada = () => {
         <LoadProjectModal open={showLoadModal} onClose={() => setShowLoadModal(false)} onLoad={handleLoadFromDB} />
       )}
 
-      <button onClick={() => navigate("/organizar-scada/script")}>Script</button>
-
       <div className="flex flex-1 overflow-hidden relative">
         <UnifiedSidebar
           projectName={exportName}

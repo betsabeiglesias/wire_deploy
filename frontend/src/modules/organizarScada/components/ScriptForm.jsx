@@ -1,6 +1,7 @@
 // modules/organizarScada/components/ScriptForm.jsx
 
 import { useState } from "react";
+import { Check, Plus, Trash2 } from "lucide-react";
 import { TagSelector } from "./sidebar/TagSelector";
 
 const OPERATORS = [
@@ -12,8 +13,32 @@ const OPERATORS = [
   { value: "between", label: "Entre" },
 ];
 
-export function ScriptForm({ selectedTag, setSelectedTag, onTemplateChange }) {
+const inputClass = "h-8 w-full rounded-[4px] border border-slate-300 bg-white px-2 text-[12px] text-slate-700 outline-none transition-colors placeholder:text-slate-400 focus:border-[#29468B] focus:ring-1 focus:ring-[#29468B]/20";
+const labelClass = "text-[10px] font-semibold uppercase tracking-[0.05em] text-slate-600";
 
+const ColorInput = ({ label, value, onChange }) => (
+  <label className="flex min-w-0 flex-1 flex-col gap-1">
+    <span className={labelClass}>{label}</span>
+    <div className="flex h-8 overflow-hidden rounded-[4px] border border-slate-300 bg-white">
+      <input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-full w-10 cursor-pointer border-0 bg-transparent p-0"
+      />
+      <input
+        value={value}
+        maxLength={7}
+        onChange={(e) => {
+          if (/^#[0-9a-fA-F]{0,6}$/.test(e.target.value)) onChange(e.target.value);
+        }}
+        className="min-w-0 flex-1 border-0 px-2 text-[11px] font-mono text-slate-700 outline-none"
+      />
+    </div>
+  </label>
+);
+
+export function ScriptForm({ selectedTag, setSelectedTag, onTemplateChange }) {
   const [rules, setRules] = useState([
     {
       operator: "gt",
@@ -79,119 +104,124 @@ export function ScriptForm({ selectedTag, setSelectedTag, onTemplateChange }) {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-
-      {/* Selector de TAG */}
-      <TagSelector value={selectedTag} onChange={setSelectedTag} />
+    <div className="flex flex-col gap-2">
+      <div className="rounded-[4px] border border-slate-300 bg-[#F9F9FA] p-2">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.05em] text-slate-600">
+          Variable
+        </p>
+        <TagSelector value={selectedTag} onChange={setSelectedTag} />
+      </div>
 
       {selectedTag && (
         <>
-
-          {/* Color por defecto */}
-          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-            <label>Color normal</label>
-            <input
-              type="color"
-              value={defaultFill}
-              onChange={(e) => setDefaultFill(e.target.value)}
-            />
-
-            <label>Borde</label>
-            <input
-              type="color"
-              value={defaultBorder}
-              onChange={(e) => setDefaultBorder(e.target.value)}
-            />
+          <div className="rounded-[4px] border border-slate-300 bg-[#F9F9FA] p-2">
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.05em] text-slate-600">
+              Estilo por defecto
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <ColorInput label="Relleno" value={defaultFill} onChange={setDefaultFill} />
+              <ColorInput label="Borde" value={defaultBorder} onChange={setDefaultBorder} />
+            </div>
           </div>
 
-          {/* RULE BUILDER */}
-          {rules.map((rule, index) => (
-            <div
-              key={index}
-              style={{
-                border: "1px solid #ddd",
-                padding: "1rem",
-                borderRadius: "6px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.5rem",
-              }}
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.05em] text-slate-600">
+              Reglas
+            </p>
+            <button
+              type="button"
+              onClick={addRule}
+              className="flex h-7 cursor-pointer items-center gap-1 rounded-[4px] border border-slate-300 bg-white px-2 text-[11px] font-medium text-slate-700 transition-colors hover:border-[#29468B] hover:text-[#29468B]"
             >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Anadir</span>
+            </button>
+          </div>
 
-              <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div className="flex flex-col gap-2">
+            {rules.map((rule, index) => (
+              <div
+                key={index}
+                className="rounded-[4px] border border-slate-300 bg-white p-2"
+              >
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-semibold text-slate-700">
+                    Regla {index + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeRule(index)}
+                    className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-[4px] text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                    title="Eliminar regla"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
 
-                <select
-                  value={rule.operator}
-                  onChange={(e) =>
-                    updateRule(index, "operator", e.target.value)
-                  }
-                >
-                  {OPERATORS.map((op) => (
-                    <option key={op.value} value={op.value}>
-                      {op.label}
-                    </option>
-                  ))}
-                </select>
+                <div className="grid grid-cols-[1.2fr_1fr_1fr] gap-2">
+                  <label className="flex min-w-0 flex-col gap-1">
+                    <span className={labelClass}>Condicion</span>
+                    <select
+                      value={rule.operator}
+                      onChange={(e) => updateRule(index, "operator", e.target.value)}
+                      className={inputClass}
+                    >
+                      {OPERATORS.map((op) => (
+                        <option key={op.value} value={op.value}>
+                          {op.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
 
-                <input
-                  type="number"
-                  placeholder="Valor"
-                  value={rule.value}
-                  onChange={(e) =>
-                    updateRule(index, "value", e.target.value)
-                  }
-                />
+                  <label className="flex min-w-0 flex-col gap-1">
+                    <span className={labelClass}>Valor</span>
+                    <input
+                      type="number"
+                      placeholder="0"
+                      value={rule.value}
+                      onChange={(e) => updateRule(index, "value", e.target.value)}
+                      className={inputClass}
+                    />
+                  </label>
 
-                {rule.operator === "between" && (
-                  <input
-                    type="number"
-                    placeholder="Hasta"
-                    value={rule.valueTo}
-                    onChange={(e) =>
-                      updateRule(index, "valueTo", e.target.value)
-                    }
+                  <label className="flex min-w-0 flex-col gap-1">
+                    <span className={labelClass}>Hasta</span>
+                    <input
+                      type="number"
+                      placeholder="-"
+                      value={rule.valueTo}
+                      disabled={rule.operator !== "between"}
+                      onChange={(e) => updateRule(index, "valueTo", e.target.value)}
+                      className={`${inputClass} disabled:bg-slate-100 disabled:text-slate-400`}
+                    />
+                  </label>
+                </div>
+
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <ColorInput
+                    label="Relleno"
+                    value={rule.fillColor}
+                    onChange={(value) => updateRule(index, "fillColor", value)}
                   />
-                )}
-
+                  <ColorInput
+                    label="Borde"
+                    value={rule.borderColor}
+                    onChange={(value) => updateRule(index, "borderColor", value)}
+                  />
+                </div>
               </div>
+            ))}
+          </div>
 
-              <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-
-                <label>Fill</label>
-                <input
-                  type="color"
-                  value={rule.fillColor}
-                  onChange={(e) =>
-                    updateRule(index, "fillColor", e.target.value)
-                  }
-                />
-
-                <label>Border</label>
-                <input
-                  type="color"
-                  value={rule.borderColor}
-                  onChange={(e) =>
-                    updateRule(index, "borderColor", e.target.value)
-                  }
-                />
-
-                <button onClick={() => removeRule(index)}>
-                  Eliminar
-                </button>
-
-              </div>
-
-            </div>
-          ))}
-
-          <button onClick={addRule}>
-            + Añadir regla
+          <button
+            type="button"
+            onClick={buildTemplate}
+            className="flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded-[4px] bg-[#29468B] px-3 text-[11px] font-medium text-white transition-colors hover:bg-[#1F3A73] active:scale-95"
+          >
+            <Check className="h-4 w-4" />
+            <span>Aplicar reglas</span>
           </button>
-
-          <button onClick={buildTemplate}>
-            Aplicar
-          </button>
-
         </>
       )}
     </div>

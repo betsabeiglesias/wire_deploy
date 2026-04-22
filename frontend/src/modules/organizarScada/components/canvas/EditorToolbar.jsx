@@ -1,32 +1,25 @@
 //frontend\src\modules\organizarScada\components\canvas\EditorToolbar.jsx
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Play, Square } from "lucide-react";
 
 export default function EditorToolbar({
-  sidebarOpen,
-  onToggleSidebar,
   isLiveMode,
   onToggleLive,
 }) {
+  const Icon = isLiveMode ? Square : Play;
+
   return (
-    <div className="flex items-center px-3 py-2 border-b bg-white">
-
-      {/* Sidebar */}
-      <button onClick={onToggleSidebar} className="cursor-pointer p-2 hover:bg-slate-100 rounded">
-        {sidebarOpen ? <PanelLeftClose size={16} /> : <PanelLeftOpen size={16} />}
-      </button>
-
-      <div className="flex-1" />
-
-      {/* Play */}
+    <div className="absolute top-4 right-4 z-50 pointer-events-auto">
       <button
         onClick={onToggleLive}
-        className={` cursor-pointer px-3 py-1 rounded-lg text-white transition-all duration-200 hover:scale-[1.05] active:scale-95 ${
+        title={isLiveMode ? "Salir de vista en vivo" : "Activar vista en vivo"}
+        className={`h-8 cursor-pointer rounded-[4px] border px-3 text-[11px] font-medium shadow-sm transition-colors active:scale-95 flex items-center gap-1.5 ${
           isLiveMode
-            ? "bg-red-500 hover:bg-red-600"
-            : "bg-green-500 hover:bg-green-600"
+            ? "border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
+            : "border-[#29468B] bg-[#29468B] text-white hover:bg-[#1F3A73]"
         }`}
       >
-        {isLiveMode ? "Stop" : "Play"}
+        <Icon className="h-4 w-4" />
+        <span>{isLiveMode ? "Stop Run Time" : "Run Time"}</span>
       </button>
     </div>
   );
