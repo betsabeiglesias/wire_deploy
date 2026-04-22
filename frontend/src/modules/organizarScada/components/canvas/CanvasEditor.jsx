@@ -167,6 +167,7 @@ const CanvasEditor = ({
   }, [bgTransform.x, bgTransform.y, backgroundIsLocked, isLiveMode, persistBackgroundSettings]);
 
   return (
+    <>
     <div
       ref={viewportRef}
       className="absolute inset-0 overflow-auto"
