@@ -2,10 +2,10 @@ import ProcessStatusBadge from "../process/ProcessStatusBadge";
 import { buildBaseStyle } from "./_shared";
 
 export default {
-  type:        "process-status-badge",
-  label:       "Estado de equipo",
-  category:    "proceso",
-  icon:        "motor",
+  type: "process-status-badge",
+  label: "Estado de equipo",
+  category: "proceso",
+  icon: "motor",
   defaultSize: { w: 160, h: 130 },
 
   buildProps({ settings, live, width, height }) {
@@ -13,8 +13,11 @@ export default {
     const label = settings.attributeLabel || settings.label || "";
     return {
       iconKey: settings.iconKey || "motor",
-      label, value,
-      width, height,
+      label,
+      value,
+      qualityState: live.dataQuality,
+      width,
+      height,
     };
   },
 
