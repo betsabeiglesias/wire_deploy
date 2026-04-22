@@ -8,42 +8,44 @@ const TempGauge = ({
   unit = "C",
   size = 220,
   className = "",
-  labelColor = "rgba(248,113,113,0.95)",
-  valueColor = "rgba(248,113,113,0.98)",
+
+  // 🎯 COLORES DESDE THEME (ANTES HARDCODE)
+  labelColor = "#94a3b8",
+  valueColor = "#ffffff",
+  needleColor = "#ffffff",
+  tickColor = "#64748b",
+  arcStartColor = "#22c55e",
+  arcMidColor = "#16a34a",
+  arcEndColor = "#15803d",
+  minMaxColor = "#64748b",
+
+  // offsets
   labelOffsetX = 0,
   labelOffsetY = 0,
   valueOffsetX = 0,
   valueOffsetY = 0,
-  needleColor = "rgba(255,255,255,0.95)",
-  tickColor = "rgba(251,146,60,0.95)",
-  arcStartColor = "rgba(251,146,60,1)",
-  arcMidColor = "rgba(249,115,22,1)",
-  arcEndColor = "rgba(239,68,68,1)",
+
+  // flags
   showMinMax = true,
   showLabel = true,
   showValue = true,
-  minMaxColor = "rgba(148,163,184,0.9)",
   minMaxFontSize = 14,
 }) => {
-  // Constantes de diseno
+
   const sizeViewBox = 180;
   const center = sizeViewBox / 2;
   const radiusPlate = 90;
   const radiusInner = 78;
   const radiusArc = 66;
   const startDeg = 140;
-  const sweepDeg = 260; // Recorrido total
+  const sweepDeg = 260;
 
-  // Calculo de la aguja y valor
   const safeMax = max === min ? min + 1 : max;
   const clampedValue = Math.max(min, Math.min(safeMax, value));
   const ratio = (clampedValue - min) / (safeMax - min);
-  const rotation = startDeg + ratio * sweepDeg; // Grados de rotacion de la aguja
+  const rotation = startDeg + ratio * sweepDeg;
 
-  // Calculo del arco de gradiente (dasharray)
-  // Perimetro = 2 * PI * r
   const circumference = 2 * Math.PI * radiusArc;
-  // sweepDeg 260 / 360 ~= 0.722
   const arcLength = circumference * (sweepDeg / 360);
   const gapLength = circumference - arcLength;
 
@@ -58,8 +60,8 @@ const TempGauge = ({
   const minPos = polarToXY(startDeg, 84);
   const maxPos = polarToXY(startDeg + sweepDeg, 84);
 
-  // Generacion de ticks (marcas)
   const tickCount = 13;
+
   const ticks = useMemo(() => {
     return Array.from({ length: tickCount }).map((_, i) => {
       const t = i / (tickCount - 1);
@@ -87,20 +89,17 @@ const TempGauge = ({
         />
       );
     });
-  }, [startDeg, sweepDeg, center, tickColor]);
+  }, [tickColor]);
 
   return (
     <div
-  className={`relative select-none flex items-center justify-center ${className}`}
-  style={{ 
-    width: `${size || 220}px`, 
-    height: `${size || 220}px` 
-  }}
->
-      <svg
-        viewBox={`0 0 ${sizeViewBox} ${sizeViewBox}`}
-        className="w-full h-full"
-      >
+      className={`relative select-none flex items-center justify-center ${className}`}
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+      }}
+    >
+      <svg viewBox={`0 0 ${sizeViewBox} ${sizeViewBox}`} className="w-full h-full">
         <defs>
           <linearGradient id="tempGrad" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor={arcStartColor} />
@@ -109,27 +108,26 @@ const TempGauge = ({
           </linearGradient>
         </defs>
 
-        {/* Fondo placa circular */}
+        {/* Fondo */}
         <circle
           cx={center}
           cy={center}
           r={radiusPlate}
-          fill="rgba(255,255,255,0.12)"
-          stroke="rgba(255,255,255,0.10)"
+          fill="rgba(255,255,255,0.05)"
+          stroke="rgba(255,255,255,0.08)"
           strokeWidth="2"
         />
 
-        {/* Inner plate */}
         <circle
           cx={center}
           cy={center}
           r={radiusInner}
-          fill="rgba(255,255,255,0.08)"
-          stroke="rgba(255,255,255,0.10)"
+          fill="rgba(255,255,255,0.03)"
+          stroke="rgba(255,255,255,0.05)"
           strokeWidth="1.5"
         />
 
-        {/* Arco principal */}
+        {/* Arco */}
         <circle
           cx={center}
           cy={center}
@@ -142,19 +140,19 @@ const TempGauge = ({
           transform={`rotate(${startDeg} ${center} ${center})`}
         />
 
-        {/* Ticks group */}
+        {/* Ticks */}
         <g>{ticks}</g>
 
+        {/* Min / Max */}
         {showMinMax && (
           <>
             <text
               x={minPos.x}
               y={minPos.y}
               textAnchor="middle"
-              dominantBaseline="middle"
               fill={minMaxColor}
               fontSize={minMaxFontSize}
-              fontWeight="900"
+              fontWeight="800"
             >
               {min}
             </text>
@@ -162,19 +160,17 @@ const TempGauge = ({
               x={maxPos.x}
               y={maxPos.y}
               textAnchor="middle"
-              dominantBaseline="middle"
               fill={minMaxColor}
               fontSize={minMaxFontSize}
-              fontWeight="700"
+              fontWeight="800"
             >
               {max}
             </text>
           </>
         )}
 
-        {/* Aguja y Centro */}
+        {/* Aguja */}
         <g
-          className="transition-transform duration-500 ease-out"
           style={{
             transformOrigin: `${center}px ${center}px`,
             transform: `rotate(${rotation}deg)`,
@@ -183,56 +179,39 @@ const TempGauge = ({
           <path
             d="M -3 6 L 0 -58 L 3 6 Z"
             fill={needleColor}
-            stroke="rgba(0,0,0,0.15)"
-            strokeWidth="1"
             transform={`translate(${center} ${center})`}
           />
-          <circle
-            cx={center}
-            cy={center}
-            r={7}
-            fill="rgba(255,255,255,0.85)"
-            stroke="rgba(0,0,0,0.2)"
-            strokeWidth="1"
-          />
+          <circle cx={center} cy={center} r={7} fill={needleColor} />
         </g>
 
-        {/* Textos */}
+        {/* Label */}
         {showLabel && (
           <text
-          x={center + Number(labelOffsetX || 0)}
-          y={center - 22 + Number(labelOffsetY || 0)}
-          textAnchor="middle"
-          fill={labelColor}
-          fontSize="14"
-          fontWeight="800"
-          className="font-sans"
-        >
-          {label}
-        </text>
+            x={center + Number(labelOffsetX)}
+            y={center - 22 + Number(labelOffsetY)}
+            textAnchor="middle"
+            fill={labelColor}
+            fontSize="14"
+            fontWeight="800"
+          >
+            {label}
+          </text>
         )}
 
+        {/* Value */}
         {showValue && (
           <text
-          x={center + Number(valueOffsetX || 0)}
-          y={center + 20 + Number(valueOffsetY || 0)}
-          textAnchor="middle"
-          fill={valueColor}
-          fontSize="26"
-          fontWeight="900"
-          className="font-sans"
-        >
-          {Math.round(clampedValue)}
-          {unit}
-        </text>
+            x={center + Number(valueOffsetX)}
+            y={center + 20 + Number(valueOffsetY)}
+            textAnchor="middle"
+            fill={valueColor}
+            fontSize="26"
+            fontWeight="900"
+          >
+            {Math.round(clampedValue)}
+            {unit}
+          </text>
         )}
-
-        {/* Decoracion dots */}
-        <g transform={`translate(${center} ${center})`}>
-          <circle cx="-18" cy="60" r="4.5" fill="rgba(148,163,184,0.35)" />
-          <circle cx="0" cy="60" r="4.5" fill="rgba(148,163,184,0.35)" />
-          <circle cx="18" cy="60" r="4.5" fill="rgba(148,163,184,0.35)" />
-        </g>
       </svg>
     </div>
   );

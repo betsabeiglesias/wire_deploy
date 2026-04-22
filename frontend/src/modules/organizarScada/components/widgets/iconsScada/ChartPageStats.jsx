@@ -16,27 +16,6 @@ const defaultSeries = [
   },
 ];
 
-const defaultOptions = {
-  chart: {
-    type: "line",
-    zoom: { enabled: false },
-  },
-  dataLabels: { enabled: false },
-  stroke: { width: [5, 7, 5], curve: "straight", dashArray: [0, 8, 5] },
-  title: { text: "Page Statistics", align: "left" },
-  legend: {},
-  markers: { size: 0, hover: { sizeOffset: 6 } },
-  xaxis: {
-    categories: [
-      "01 Jan", "02 Jan", "03 Jan", "04 Jan",
-      "05 Jan", "06 Jan", "07 Jan", "08 Jan",
-      "09 Jan", "10 Jan", "11 Jan", "12 Jan",
-    ],
-  },
-  tooltip: {},
-  grid: {},
-};
-
 const ChartPageStats = ({
   series,
   options,
@@ -44,7 +23,6 @@ const ChartPageStats = ({
   width,
   type = "line",
 
-  // 🎨 Props desde el theme
   backgroundColor,
   textColor,
   gridColor,
@@ -52,71 +30,82 @@ const ChartPageStats = ({
   primaryColor,
   secondaryColor,
 }) => {
+
   const mergedOptions = useMemo(() => {
-    const opts = {
-      ...defaultOptions,
-      ...(options || {}),
-    };
-
-    // 🎯 THEME aplicado
-    opts.chart = {
-      ...defaultOptions.chart,
-      ...(options?.chart || {}),
-      type,
-      background: backgroundColor,
-    };
-
-    // ✅ Colores por serie
-    opts.colors = [
-      primaryColor,
-      secondaryColor || primaryColor,
-      "#94a3b8",
-    ];
-
-    opts.title = {
-      ...defaultOptions.title,
-      ...(options?.title || {}),
-      style: {
-        color: textColor,
+    return {
+      chart: {
+        type,
+        background: backgroundColor,
+        toolbar: { show: false },
       },
-    };
 
-    opts.grid = {
-      ...defaultOptions.grid,
-      ...(options?.grid || {}),
-      borderColor: gridColor,
-    };
+      // 🔥 COLORES PRINCIPALES DEL THEME
+      colors: [primaryColor, secondaryColor, "#94a3b8"],
 
-    opts.xaxis = {
-      ...defaultOptions.xaxis,
-      ...(options?.xaxis || {}),
-      labels: {
-        style: { colors: axisColor },
+      stroke: {
+        width: [3, 3, 2],
+        curve: "smooth",
       },
-      axisBorder: { color: axisColor },
-      axisTicks: { color: axisColor },
-    };
 
-    opts.yaxis = {
-      ...(options?.yaxis || {}),
-      labels: {
-        style: { colors: axisColor },
+      dataLabels: {
+        enabled: false,
       },
-    };
 
-    opts.legend = {
-      ...defaultOptions.legend,
-      ...(options?.legend || {}),
-      labels: {
-        colors: textColor,
+      grid: {
+        borderColor: gridColor,
+        strokeDashArray: 4,
       },
-    };
 
-    return opts;
+      title: {
+        text: "Page Statistics",
+        align: "left",
+        style: {
+          color: textColor,
+          fontSize: "14px",
+          fontWeight: 600,
+        },
+      },
+
+      legend: {
+        labels: {
+          colors: textColor,
+        },
+      },
+
+      xaxis: {
+        categories: [
+          "01 Jan","02 Jan","03 Jan","04 Jan","05 Jan","06 Jan",
+          "07 Jan","08 Jan","09 Jan","10 Jan","11 Jan","12 Jan",
+        ],
+        labels: {
+          style: {
+            colors: axisColor,
+          },
+        },
+        axisBorder: {
+          color: axisColor,
+        },
+        axisTicks: {
+          color: axisColor,
+        },
+      },
+
+      yaxis: {
+        labels: {
+          style: {
+            colors: axisColor,
+          },
+        },
+      },
+
+      tooltip: {
+        theme: backgroundColor === "#0f172a" ? "dark" : "light",
+      },
+
+      ...options,
+    };
   }, [
     options,
-    height,
-    width,
     backgroundColor,
     textColor,
     gridColor,
@@ -129,14 +118,6 @@ const ChartPageStats = ({
   const resolvedSeries =
     Array.isArray(series) && series.length ? series : defaultSeries;
 
-  const chartHeight = Number.isFinite(Number(height))
-    ? Number(height)
-    : height || "100%";
-
-  const chartWidth = Number.isFinite(Number(width))
-    ? Number(width)
-    : width || "100%";
-
   return (
     <div
       className="w-full h-full"
@@ -146,12 +127,11 @@ const ChartPageStats = ({
       }}
     >
       <ReactApexChart
-        key={`${chartWidth}-${chartHeight}`}
         options={mergedOptions}
         series={resolvedSeries}
         type={type}
-        height={chartHeight}
-        width={chartWidth}
+        height={height || "100%"}
+        width={width || "100%"}
       />
     </div>
   );

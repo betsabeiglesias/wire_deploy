@@ -2,29 +2,19 @@ export const INDUSTRIAL_THEME = {
   id: "industrial",
 
   colors: {
-    // 🔵 Color principal (tu azul real)
-    primary: "#29468b",
+    primary: "#f97316",       // naranja industrial
+    success: "#22c55e",
+    warning: "#eab308",
+    danger: "#ef4444",
 
-    // 🟢 Estados (basado en tu UI)
-    success: "#2a8b4b",
-    warning: "#d97706",
-    danger: "#b91c1c",
+    bgWidget: "#1c1f24",      // gris oscuro metal
+    bgPreview: "#0f1115",
 
-    // 🧱 Fondos (calcados de tu layout)
-    bgWidget: "#f9f9fa",
-    bgPreview: "#efefef",
+    border: "#2a2f36",
+    borderHover: "#f97316",
 
-    // 🧩 Bordes
-    border: "#cfd5df",
-    borderHover: "#29468b",
-
-    // 📝 Texto
-    textMain: "#1e293b",
-    textDim: "#64748b",
-
-    // ➕ Extras (MUY útiles para widgets)
-    grid: "#d8dce2",
-    axis: "#94a3b8",
+    textMain: "#e5e7eb",
+    textDim: "#9ca3af",
   },
 
   fonts: {
@@ -32,12 +22,9 @@ export const INDUSTRIAL_THEME = {
     mono: "'JetBrains Mono', monospace",
   },
 
-  // 🔲 Bordes industriales → poco redondeo
-  radius: "4px",
+  radius: "6px",
 
-  // 🌫️ Sombra muy sutil (como en tu app)
-  shadow: "0 1px 2px rgba(0,0,0,0.06)",
+  shadow: "inset 0 0 0 1px #2a2f36, 0 4px 12px rgba(0,0,0,0.6)",
 
-  // ⚡ Transición rápida (UI técnica)
   transition: "all 0.2s ease",
 };
