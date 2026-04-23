@@ -29,6 +29,8 @@ export default {
 
       primaryColor: base.primary,
       secondaryColor: base.primaryDark,
+      tertiaryColor: base.warning,
+      quaternaryColor: base.success,
     };
   },
 
