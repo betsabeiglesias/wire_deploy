@@ -1,10 +1,5 @@
 import React, { useId, useMemo } from "react";
 
-const clampPercent = (value) => {
-  if (typeof value !== "number" || Number.isNaN(value)) return 0;
-  return Math.max(0, Math.min(100, value));
-};
-
 const buildSeries = (history = [], fallback = 110, points = 10) => {
   if (history.length >= points) return history.slice(-points);
   if (history.length) return history;
@@ -25,7 +20,6 @@ const HmiTrendCard = ({
   textColor = "#ffffff",
   primaryColor = "#2196F3",
   secondaryColor = "#03A9F4",
-
   accentColor,
 }) => {
   const uid = useId().replace(/:/g, "");
@@ -67,7 +61,9 @@ const HmiTrendCard = ({
         </linearGradient>
       </defs>
 
-      <rect width={width} height={height} rx="30" fill={`url(#${gradId})`} />
+      <rect width={width} height={height} rx="30" fill={backgroundColor} />
+
+      <rect width={width} height={height} rx="30" fill={`url(#${gradId})`} opacity="0.9" />
 
       <text x="35" y="45" fill={textColor} fontSize="14">
         {title}
@@ -83,12 +79,7 @@ const HmiTrendCard = ({
 
       <path d={fillData} fill={`url(#${lineGradId})`} opacity="0.3" />
 
-      <path
-        d={pathData}
-        fill="none"
-        stroke={textColor}
-        strokeWidth="4"
-      />
+      <path d={pathData} fill="none" stroke={textColor} strokeWidth="4" />
     </svg>
   );
 };

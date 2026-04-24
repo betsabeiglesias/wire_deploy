@@ -9,7 +9,6 @@ const STATUS_MAP = {
     gradStartOpacity: 0.18,
     gradEndOpacity: 0.08,
     border: "#3f4551",
-    className: "ok",
   },
   warning: {
     stroke: "#f1c40f",
@@ -19,7 +18,6 @@ const STATUS_MAP = {
     gradStartOpacity: 0.25,
     gradEndOpacity: 0.1,
     border: "#3f4551",
-    className: "warning",
   },
   emergency: {
     stroke: "#ff4d4d",
@@ -29,7 +27,6 @@ const STATUS_MAP = {
     gradStartOpacity: 0.4,
     gradEndOpacity: 0.2,
     border: "#ff4d4d",
-    className: "emergency",
   },
 };
 
@@ -44,7 +41,6 @@ const HmiStatusCard = ({
   textColor = "#ffffff",
   primaryColor,
   secondaryColor,
-
   accentColor,
 }) => {
   const uid = useId().replace(/:/g, "");
@@ -53,7 +49,7 @@ const HmiStatusCard = ({
 
   const color = accentColor || primaryColor || cfg.stroke;
   const gradStart = accentColor || primaryColor || cfg.gradStart;
-  const gradEnd = accentColor || primaryColor || cfg.gradEnd;
+  const gradEnd = accentColor || secondaryColor || cfg.gradEnd;
   const borderColor = secondaryColor || cfg.border;
 
   const gradId = `status-grad-${uid}`;
