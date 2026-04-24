@@ -1,4 +1,4 @@
-import HmiProgressBar from "../standard/HmiProgressBar";
+import HmiProgressBar from "../bars/HmiProgressBar";
 import { parseNumericValue, normalizePercent } from "@/modules/organizarScada/utils/numbers";
 import { buildBaseStyle } from "./_shared";
 

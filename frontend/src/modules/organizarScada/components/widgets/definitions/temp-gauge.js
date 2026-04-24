@@ -1,4 +1,4 @@
-import TempGauge from "../standard/TempGauge";
+import TempGauge from "../gauges/TempGauge";
 import { parseNumericValue } from "@/modules/organizarScada/utils/numbers";
 import { buildBaseStyle } from "./_shared";
 

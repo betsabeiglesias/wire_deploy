@@ -1,4 +1,4 @@
-import HmiHorizontalGauge from "../standard/HmiHorizontalGauge";
+import HmiHorizontalGauge from "../gauges/HmiHorizontalGauge";
 import { parseNumericValue } from "@/modules/organizarScada/utils/numbers";
 import { buildBaseStyle } from "./_shared";
 

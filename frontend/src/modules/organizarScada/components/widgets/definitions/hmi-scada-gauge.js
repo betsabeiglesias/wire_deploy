@@ -1,4 +1,4 @@
-import HmiScadaGauge from "../standard/HmiScadaGauge";
+import HmiScadaGauge from "../gauges/HmiScadaGauge";
 import { parseNumericValue } from "@/modules/organizarScada/utils/numbers";
 import { buildBaseStyle } from "./_shared";
 

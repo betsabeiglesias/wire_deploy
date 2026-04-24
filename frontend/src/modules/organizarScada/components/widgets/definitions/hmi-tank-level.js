@@ -1,4 +1,4 @@
-import HmiTankLevel from "../standard/HmiTankLevel";
+import HmiTankLevel from "../bars/HmiTankLevel";
 import { parseNumericValue, normalizePercent } from "@/modules/organizarScada/utils/numbers";
 import { buildBaseStyle } from "./_shared";
 
