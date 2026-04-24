@@ -9,6 +9,14 @@ const HmiTankLevel = ({
   percent = 50,
   width = 150,
   height = 200,
+
+  // 🎯 THEME
+  backgroundColor,
+  textColor,
+  primaryColor,
+  secondaryColor,
+
+  // fallback originales
   tankDark = "#1a1f35",
   tankTop = "#252b45",
   fluidBase = "#8e44ad",
@@ -16,6 +24,7 @@ const HmiTankLevel = ({
   gradientTo = "#8e44ad",
   topFrom = "#d49cf2",
   topTo = "#9b59b6",
+
   percentColorOverride,
   accentColor,
   showValue = true,
@@ -35,10 +44,15 @@ const HmiTankLevel = ({
   const tankGradId = `tankGrad-${uid}`;
   const topGradId = `topGrad-${uid}`;
 
-  const baseColor = accentColor || gradientFrom;
+  // 🎯 THEME APPLY
+  const baseColor = accentColor || primaryColor || gradientFrom;
+  const topColorFrom = accentColor || primaryColor || topFrom;
+  const topColorTo = accentColor || secondaryColor || topTo;
 
   const percentColor =
-    percentColorOverride || (safePercent > 80 ? "#ff4d4d" : "#ffffff");
+    percentColorOverride ||
+    textColor ||
+    (safePercent > 80 ? "#ff4d4d" : "#ffffff");
 
   const viewBox = "0 0 120 180";
   const maxHeight = 110;
@@ -62,9 +76,8 @@ const HmiTankLevel = ({
         alignItems: "center",
         justifyContent: "center",
         gap: 6,
-        color: "#fff",
+        color: textColor,
         fontFamily,
-        userSelect: "none",
       }}
     >
       {label && (
@@ -72,76 +85,55 @@ const HmiTankLevel = ({
           style={{
             fontSize: 12,
             fontWeight: 700,
-            color: labelColor,
-            lineHeight: 1,
-            transform: `translate(${Number(labelOffsetX || 0)}px, ${Number(labelOffsetY || 0)}px)`,
+            color: textColor || labelColor,
+            transform: `translate(${labelOffsetX}px, ${labelOffsetY}px)`,
           }}
         >
           {label}
         </div>
       )}
-      <svg
-        width={Math.min(width, 140)}
-        height={Math.min(height, 180)}
-        viewBox={viewBox}
-        xmlns="http://www.w3.org/2000/svg"
-        style={{ display: "block" }}
-      >
+
+      <svg width={140} height={180} viewBox={viewBox}>
         <defs>
-          <linearGradient id={tankGradId} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={baseColor} stopOpacity="1" />
-            <stop offset="100%" stopColor={accentColor || gradientTo} stopOpacity="1" />
+          <linearGradient id={tankGradId}>
+            <stop offset="0%" stopColor={baseColor} />
+            <stop offset="100%" stopColor={secondaryColor || gradientTo} />
           </linearGradient>
-          <linearGradient id={topGradId} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={accentColor || topFrom} stopOpacity="1" />
-            <stop offset="100%" stopColor={accentColor || topTo} stopOpacity="1" />
+
+          <linearGradient id={topGradId}>
+            <stop offset="0%" stopColor={topColorFrom} />
+            <stop offset="100%" stopColor={topColorTo} />
           </linearGradient>
         </defs>
-        <style>{`
-          @keyframes wave {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-          }
-          .fluid-top-${uid} {
-            animation: wave 2s infinite ease-in-out;
-            transform-origin: center;
-          }
-        `}</style>
 
-        <ellipse cx="60" cy="150" rx="50" ry="20" fill={tankDark} />
-        <rect x="10" y="40" width="100" height="110" fill={tankDark} />
-        <ellipse cx="60" cy="40" rx="50" ry="20" fill={tankTop} />
+        <ellipse cx="60" cy="150" rx="50" ry="20" fill={backgroundColor || tankDark} />
+        <rect x="10" y="40" width="100" height="110" fill={backgroundColor || tankDark} />
+        <ellipse cx="60" cy="40" rx="50" ry="20" fill={backgroundColor || tankTop} />
 
-        <g>
-          <rect
-            x="10"
-            y={fluidY}
-            width="100"
-            height={fluidHeight}
-            fill={`url(#${tankGradId})`}
-            opacity={fluidOpacity}
-          />
-          <ellipse cx="60" cy="150" rx="50" ry="20" fill={accentColor || fluidBase} opacity={fluidOpacity} />
-          <ellipse
-            className={waveEnabled ? `fluid-top-${uid}` : undefined}
-            cx="60"
-            cy={fluidY}
-            rx="50"
-            ry="20"
-            fill={`url(#${topGradId})`}
-            opacity={fluidOpacity}
-          />
-        </g>
+        <rect
+          x="10"
+          y={fluidY}
+          width="100"
+          height={fluidHeight}
+          fill={`url(#${tankGradId})`}
+          opacity={fluidOpacity}
+        />
 
-        <rect x="20" y="40" width="15" height="110" fill="#000000" opacity="0.05" />
+        <ellipse cx="60" cy="150" rx="50" ry="20" fill={baseColor} />
+
+        <ellipse
+          cx="60"
+          cy={fluidY}
+          rx="50"
+          ry="20"
+          fill={`url(#${topGradId})`}
+        />
 
         {showValue && (
           <text
-            x={60 + Number(valueOffsetX || 0)}
-            y={110 + Number(valueOffsetY || 0)}
+            x={60 + valueOffsetX}
+            y={110 + valueOffsetY}
             textAnchor="middle"
-            dominantBaseline="middle"
-            fontFamily={fontFamily}
             fontSize={fontSize}
             fontWeight="700"
             fill={percentColor}

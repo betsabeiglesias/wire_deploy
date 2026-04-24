@@ -3,36 +3,30 @@ import { parseNumericValue, normalizePercent } from "@/modules/organizarScada/ut
 import { buildBaseStyle } from "./_shared";
 
 export default {
-  type:        "hmi-tank-level",
-  label:       "Nivel de Tanque",
-  category:    "gauges",
-  icon:        "tank",
+  type: "hmi-tank-level",
+  label: "Nivel de Tanque",
+  category: "gauges",
+  icon: "tank",
   defaultSize: { w: 150, h: 200 },
 
   buildProps({ settings, live, width, height }) {
-    const min     = settings.min ?? settings.minValue ?? 0;
-    const max     = settings.max ?? settings.maxValue ?? 100;
-    const value   = parseNumericValue(live.value) ?? parseNumericValue(settings.initialValue) ?? 0;
+    const min = settings.min ?? settings.minValue ?? 0;
+    const max = settings.max ?? settings.maxValue ?? 100;
+    const value =
+      parseNumericValue(live.value) ??
+      parseNumericValue(settings.initialValue) ??
+      0;
+
     const percent = normalizePercent(value, min, max);
-    const label   = settings.attributeLabel || settings.label || "";
+    const label =
+      settings.attributeLabel ||
+      settings.label ||
+      "";
+
     return { percent, width, height, label };
   },
 
-  styleSchema: [
-    {
-      group: "Nivel",
-      fields: [
-        { key: "primary",   label: "Color líquido",   type: "color" },
-        { key: "secondary", label: "Color gradiente", type: "color" },
-      ],
-    },
-    {
-      group: "Texto",
-      fields: [
-        { key: "text", label: "Color valor", type: "color" },
-      ],
-    },
-  ],
+  styleSchema: [],
 
   resolveStyle(palette = {}) {
     const base = buildBaseStyle(palette);
@@ -40,13 +34,10 @@ export default {
     return {
       backgroundColor: base.bgColor,
       textColor: base.titleColor,
-
-      gridColor: base.gridColor,
-      axisColor: base.axisColor,
-
       primaryColor: base.primary,
       secondaryColor: base.primaryDark,
     };
   },
+
   component: HmiTankLevel,
 };
