@@ -1,4 +1,4 @@
-import HmiEnergySummaryCard from "../standard/HmiEnergySummaryCard";
+import HmiEnergySummaryCard from "../process/HmiEnergySummaryCard";
 import { buildBaseStyle } from "./_shared";
 
 export default {

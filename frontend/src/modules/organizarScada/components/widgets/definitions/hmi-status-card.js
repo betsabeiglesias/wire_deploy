@@ -1,4 +1,4 @@
-import HmiStatusCard from "../standard/HmiStatusCard";
+import HmiStatusCard from "../process/HmiStatusCard";
 import { buildBaseStyle } from "./_shared";
 
 export default {

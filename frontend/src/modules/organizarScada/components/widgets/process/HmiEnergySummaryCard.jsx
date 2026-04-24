@@ -11,7 +11,6 @@ const HmiEnergySummaryCard = ({
   width = 380,
   height = 140,
 
-  // 👇 NUEVO (IMPORTANTE)
   backgroundColor = "#ffffff",
   textColor = "#0f172a",
   primaryColor = "#3b82f6",

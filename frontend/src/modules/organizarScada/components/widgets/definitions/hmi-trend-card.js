@@ -1,4 +1,4 @@
-import HmiTrendCard from "../standard/HmiTrendCard";
+import HmiTrendCard from "../process/HmiTrendCard";
 import { parseNumericValue } from "@/modules/organizarScada/utils/numbers";
 import { buildBaseStyle } from "./_shared";
 
