@@ -19,8 +19,14 @@ const HmiScadaGauge = ({
   min = 0,
   max = 100,
   unit = "",
-  themeColor = "#94a3b8",
-  accentColor,
+
+  // 🎯 THEME
+  primaryColor = "#3b82f6",
+  secondaryColor = "#94a3b8",
+  backgroundColor = "#1f2937",
+  valueColor = "#ffffff",
+  unitColor = "#64748b",
+
   zones = [],
   width = 220,
   height = 220,
@@ -31,12 +37,8 @@ const HmiScadaGauge = ({
   valueOffsetY = 0,
   unitOffsetX = 0,
   unitOffsetY = 0,
-  valueColor = "#ffffff",
-  unitColor = "#64748b",
 }) => {
   if (visible === false) return null;
-
-  const color = accentColor || themeColor;
 
   const size = 200;
   const center = size / 2;
@@ -53,34 +55,47 @@ const HmiScadaGauge = ({
       const isMajor = i % 5 === 0;
       const angle = startAngle + (i / 20) * (endAngle - startAngle);
       const rad = ((angle - 90) * Math.PI) / 180;
+
       const rIn = isMajor ? 65 : 72;
       const rOut = 78;
+
       lines.push({
         x1: center + Math.cos(rad) * rIn,
         y1: center + Math.sin(rad) * rIn,
         x2: center + Math.cos(rad) * rOut,
         y2: center + Math.sin(rad) * rOut,
-        stroke: isMajor ? "#475569" : "#334155",
+        stroke: secondaryColor,
         strokeWidth: isMajor ? 2 : 1,
       });
     }
     return lines;
-  }, []);
+  }, [secondaryColor]);
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${size} ${size}`}>
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${size} ${size}`}
+      style={{ background: backgroundColor }}
+    >
       <path
         d={describeArc(center, center, 80, startAngle, endAngle)}
         fill="none"
-        stroke="#1f2937"
+        stroke={secondaryColor}
         strokeWidth="12"
       />
 
       {zones.map((zone, idx) => {
         const zStart =
-          startAngle + ((zone.start - min) / (max - min || 1)) * (endAngle - startAngle);
+          startAngle +
+          ((zone.start - min) / (max - min || 1)) *
+            (endAngle - startAngle);
+
         const zEnd =
-          startAngle + ((zone.end - min) / (max - min || 1)) * (endAngle - startAngle);
+          startAngle +
+          ((zone.end - min) / (max - min || 1)) *
+            (endAngle - startAngle);
+
         return (
           <path
             key={`${zone.start}-${zone.end}-${idx}`}
@@ -107,14 +122,14 @@ const HmiScadaGauge = ({
       >
         <path
           d={`M ${center - 2} ${center} L ${center} 30 L ${center + 2} ${center} Z`}
-          fill={color}
+          fill={primaryColor}
         />
         <circle
           cx={center}
           cy={center}
           r="4"
-          fill="#0f172a"
-          stroke={color}
+          fill={backgroundColor}
+          stroke={primaryColor}
           strokeWidth="2"
         />
       </g>
@@ -132,6 +147,7 @@ const HmiScadaGauge = ({
           >
             {safeValue.toFixed(1)}
           </text>
+
           {showLabel && (
             <text
               x={center + Number(unitOffsetX || 0)}
