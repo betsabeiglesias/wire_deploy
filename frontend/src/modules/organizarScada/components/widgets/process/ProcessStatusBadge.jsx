@@ -35,6 +35,8 @@ export default function ProcessStatusBadge({
   const status = resolveStatus(value);
   const cfg = STATUS_CFG[status];
 
+  const color = primaryColor || cfg.color;
+
   const keyframes = cfg.pulse
     ? `@keyframes pulse-${uid} {
         0%,100%{opacity:1;transform:scale(1)}
@@ -48,7 +50,7 @@ export default function ProcessStatusBadge({
         width,
         height,
         background: backgroundColor,
-        border: `1.5px solid ${cfg.color}44`,
+        border: `1.5px solid ${color}44`,
         borderRadius: 10,
         display: "flex",
         flexDirection: "column",
@@ -69,24 +71,24 @@ export default function ProcessStatusBadge({
           width: 10,
           height: 10,
           borderRadius: "50%",
-          background: cfg.color,
+          background: color,
           animation: cfg.pulse ? `pulse-${uid} 1.4s infinite` : "none",
         }}
       />
 
-      <div style={{ color: primaryColor }}>
+      <div style={{ color }}>
         <Icon style={{ width: 44, height: 44 }} />
       </div>
 
       <div
         style={{
-          background: `${cfg.color}22`,
-          border: `1px solid ${cfg.color}99`,
+          background: `${color}22`,
+          border: `1px solid ${color}99`,
           borderRadius: 20,
           padding: "3px 14px",
           fontSize: 10,
           fontWeight: 700,
-          color: cfg.color,
+          color,
         }}
       >
         {cfg.label}

@@ -61,14 +61,14 @@ export default function ProcessValueCard({
         </div>
 
         <div>
-          <div style={{ fontSize: 9, color: "#94a3b8" }}>{label}</div>
+          <div style={{ fontSize: 9, color: `${textColor}aa` }}>{label}</div>
           <div style={{ fontSize: 26, color: textColor }}>{display}</div>
-          {unit && <div style={{ fontSize: 10 }}>{unit}</div>}
+          {unit && <div style={{ fontSize: 10, color: `${textColor}aa` }}>{unit}</div>}
         </div>
       </div>
 
       <div style={{ marginTop: 6 }}>
-        <div style={{ height: 4, background: "#1e293b" }}>
+        <div style={{ height: 4, background: `${primaryColor}22` }}>
           <div
             style={{
               width: `${pct * 100}%`,

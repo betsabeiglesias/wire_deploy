@@ -16,7 +16,6 @@ export default function ProcessLevelCard({
   min = 0,
   max = 100,
 
-  // 🔥 vienen del theme
   primaryColor,
   backgroundColor,
   textColor,
@@ -60,19 +59,17 @@ export default function ProcessLevelCard({
         fontFamily: "'Segoe UI', Arial, sans-serif",
       }}
     >
-      {/* Icon */}
       <div style={{ color: primaryColor, opacity: 0.8 }}>
         <Icon style={{ width: 24, height: 24 }} strokeWidth={1.5} />
       </div>
 
-      {/* Tank */}
       <div
         style={{
           width: 72,
           height: TANK_H,
-          border: "1.5px solid #334155",
+          border: `1.5px solid ${primaryColor}55`,
           borderRadius: 4,
-          background: "#0f172a",
+          background: backgroundColor,
           position: "relative",
           overflow: "hidden",
         }}
@@ -86,12 +83,11 @@ export default function ProcessLevelCard({
               left: 0,
               right: 0,
               height: 1,
-              background: "#334155",
+              background: `${primaryColor}33`,
             }}
           />
         ))}
 
-        {/* Fill */}
         <div
           style={{
             position: "absolute",
@@ -104,7 +100,6 @@ export default function ProcessLevelCard({
           }}
         />
 
-        {/* Value */}
         <div
           style={{
             position: "absolute",
@@ -119,17 +114,16 @@ export default function ProcessLevelCard({
           <span style={{ fontSize: 18, fontWeight: 700, color: textColor }}>
             {display}
           </span>
-          <span style={{ fontSize: 9, color: "#64748b" }}>{unit}</span>
+          <span style={{ fontSize: 9, color: `${textColor}88` }}>{unit}</span>
         </div>
       </div>
 
-      {/* Bar */}
       <div style={{ width: "100%" }}>
         <div
           style={{
             height: 4,
             borderRadius: 2,
-            background: "#1e293b",
+            background: `${primaryColor}22`,
             overflow: "hidden",
           }}
         >
@@ -148,7 +142,7 @@ export default function ProcessLevelCard({
             display: "flex",
             justifyContent: "space-between",
             fontSize: 8,
-            color: "#475569",
+            color: `${textColor}88`,
             marginTop: 2,
           }}
         >
@@ -161,7 +155,7 @@ export default function ProcessLevelCard({
         style={{
           fontSize: 9,
           fontWeight: 600,
-          color: "#94a3b8",
+          color: `${textColor}aa`,
           textTransform: "uppercase",
         }}
       >
