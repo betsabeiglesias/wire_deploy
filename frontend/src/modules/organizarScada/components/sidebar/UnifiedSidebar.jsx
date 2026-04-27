@@ -91,7 +91,7 @@ const SidebarPanel = ({
           className="flex flex-col gap-1 px-3 py-2 rounded-md hover:bg-slate-200/60 transition cursor-pointer group"
         >
           <p className="text-[10px] font-semibold tracking-wide text-slate-400">
-            PROYECTO
+            PROYECTO000
           </p>
           <div className="flex items-center gap-2 min-h-[20px]">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
