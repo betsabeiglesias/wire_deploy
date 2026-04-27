@@ -12,7 +12,7 @@ export const SCADA_THEME = {
     // Fondos (La clave de esta estética)
     bgPreview: "#f8fafc",     // Fondo general del dashboard (Gris azulado muy claro)
     bgWidget: "#ffffff",      // Fondo de las cards/widgets (Blanco puro para resaltar)
-    bgSidebar: "#0f172a",     // El azul oscuro profundo que se ve en el Rail/Header
+    bgSidebar: "#8092bd",     // El azul oscuro profundo que se ve en el Rail/Header
 
     // Bordes y Divisiones
     border: "#e2e8f0",        // Gris suave para separar secciones sin ensuciar
