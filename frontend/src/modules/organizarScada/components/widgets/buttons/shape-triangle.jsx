@@ -1,15 +1,26 @@
 import React from "react";
 
-const ShapeTriangle = ({ theme }) => {
+const ShapeTriangle = ({ theme, width, height }) => {
+  const color = theme?.colors?.border || "#e5e7eb";
+
+  // 📐 misma lógica que el resto de shapes
+  const size = Math.min(width, height);
+
+  const halfBase = Math.max(2, size * 0.4);
+  const heightTri = Math.max(4, size * 0.8);
+
   return (
     <div
       style={{
         width: 0,
         height: 0,
-        borderLeft: "20px solid transparent",
-        borderRight: "20px solid transparent",
-        borderBottom: `40px solid ${theme.colors.border}`,
-        margin: "auto",
+
+        margin: 6,
+        marginLeft: 32,
+
+        borderLeft: `${halfBase}px solid transparent`,
+        borderRight: `${halfBase}px solid transparent`,
+        borderBottom: `${heightTri}px solid ${color}`,
       }}
     />
   );
@@ -17,7 +28,13 @@ const ShapeTriangle = ({ theme }) => {
 
 export default {
   type: "shape-triangle",
+
   component: ShapeTriangle,
-  buildProps: () => ({}),
+
+  buildProps: ({ settings, width, height }) => ({
+    width,
+    height,
+  }),
+
   resolveStyle: () => ({}),
 };

@@ -1,7 +1,7 @@
 import React from "react";
 
 /**
- * Convierte cualquier color HEX a rgba con alpha
+ * Convierte HEX a RGBA con alpha
  */
 const hexToRgba = (hex, alpha = 1) => {
   if (!hex || !hex.startsWith("#")) return hex;
@@ -21,18 +21,36 @@ const hexToRgba = (hex, alpha = 1) => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-const LabelPill = ({ label = "Label", theme }) => {
+const LabelPill = ({ label = "Label", theme, width, height }) => {
   const color = theme?.colors?.success || "#10b981";
 
+  // 👇 ESCALA DINÁMICA igual que botones
+  const fontSize = Math.max(9, Math.min(width, height) * 0.16);
+  const paddingX = Math.max(6, width * 0.08);
+  const paddingY = Math.max(2, height * 0.12);
+
+  const baseStyle = {
+    width: "100%",
+    height: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 9999, // pill total
+    fontSize,
+    fontWeight: 600,
+    userSelect: "none",
+    transition: "all 0.15s ease",
+    padding: `${paddingY}px ${paddingX}px`,
+  };
+
+  const styles = {
+    color,
+    border: `1px solid ${color}`,
+    backgroundColor: hexToRgba(color, 0.15),
+  };
+
   return (
-    <div
-      className="w-full h-full flex items-center justify-center rounded-full border text-[11px] px-3 py-1"
-      style={{
-        color: color,
-        borderColor: color,
-        backgroundColor: hexToRgba(color, 0.15), // 👈 aquí está la clave
-      }}
-    >
+    <div style={{ ...baseStyle, ...styles }}>
       {label}
     </div>
   );
@@ -41,12 +59,12 @@ const LabelPill = ({ label = "Label", theme }) => {
 export default {
   type: "label-pill",
 
-  component: ({ label, theme }) => (
-    <LabelPill label={label} theme={theme} />
-  ),
+  component: LabelPill,
 
-  buildProps: ({ settings }) => ({
+  buildProps: ({ settings, width, height }) => ({
     label: settings?.label || "Label",
+    width,
+    height,
   }),
 
   resolveStyle: () => ({}),

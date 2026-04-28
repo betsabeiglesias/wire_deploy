@@ -4,11 +4,14 @@ const NavButton = ({
   label = "Button",
   variant = "btn-primary",
   theme,
+  width,
+  height,
 }) => {
-  const isOutline  = variant === "btn-outline";
-  const isInverted = variant === "btn-inverted"; // 👈 NUEVO
-
   const primary = theme?.colors?.primary || "#2563eb";
+
+  // 👇 ESCALA DINÁMICA (clave)
+  const fontSize = Math.max(10, Math.min(width, height) * 0.18);
+  const borderRadius = Math.min(width, height) * 0.12;
 
   const baseStyle = {
     width: "100%",
@@ -16,36 +19,26 @@ const NavButton = ({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: theme?.radius || 6,
-    fontSize: 12,
+    borderRadius,
+    fontSize,
     fontWeight: 600,
     cursor: "pointer",
     userSelect: "none",
     transition: "all 0.15s ease",
   };
 
-  let styles = {};
-
-  if (isInverted) {
-    // ✅ TU CASO: blanco + azul
-    styles = {
-      backgroundColor: "#ffffff",
-      color: primary,
-      border: `1px solid ${primary}`,
-    };
-  } else if (isOutline) {
-    styles = {
-      backgroundColor: "transparent",
-      color: primary,
-      border: `1px solid ${primary}`,
-    };
-  } else {
-    styles = {
-      backgroundColor: primary,
-      color: "#ffffff",
-      border: "none",
-    };
-  }
+  const styles =
+    variant === "btn-primary"
+      ? {
+          backgroundColor: primary,
+          color: "#ffffff",
+          border: "none",
+        }
+      : {
+          backgroundColor: "#ffffff",
+          color: primary,
+          border: `${Math.max(1, fontSize * 0.08)}px solid ${primary}`, // 👈 borde proporcional
+        };
 
   return (
     <div style={{ ...baseStyle, ...styles }}>
@@ -59,9 +52,11 @@ export default {
 
   component: NavButton,
 
-  buildProps: ({ settings }) => ({
+  buildProps: ({ settings, width, height }) => ({
     label: settings?.label || "Button",
     variant: settings?.variant || "btn-primary",
+    width,
+    height,
   }),
 
   resolveStyle: () => ({}),
