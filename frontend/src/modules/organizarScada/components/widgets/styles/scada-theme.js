@@ -46,7 +46,7 @@ export const SCADA_THEME = {
   // En el video no son tan redondeados
   radius: "6px",
 
-  shadow: "0 1px 2px rgba(0,0,0,0.06)",
+  shadow: "0 1px 2px hsla(0, 0%, 0%, 0.06)",
 
   transition: "all 0.2s ease",
 };
