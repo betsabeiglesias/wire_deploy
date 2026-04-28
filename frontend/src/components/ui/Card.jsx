@@ -17,7 +17,7 @@ export default function CommandCard({
       accent: "text-[#255f82] dark:text-[#8fd0ff]",
     },
     analytics: {
-      card: "border-[#8f6a18] bg-[linear-gradient(145deg,#fffdf5_0%,#f8f2dd_55%,#fdfcf8_100%)] dark:border-[#4a4c3d] dark:bg-[linear-gradient(145deg,#25281d_0%,#343824_55%,#44492d_100%)]",
+      card: "border-[#0d1d45] bg-[linear-gradient(145deg,#f7fbfd_0%,#edf5f8_55%,#fdfefe_100%)] dark:border-white/10 dark:bg-[linear-gradient(180deg,#09152f_0%,#0d1d40_42%,#132857_100%)]",
       icon: "bg-[#8f6a18] text-white dark:bg-[#e9c46a] dark:text-[#33270b]",
       accent: "text-[#8f6a18] dark:text-[#f1cf80]",
     },
