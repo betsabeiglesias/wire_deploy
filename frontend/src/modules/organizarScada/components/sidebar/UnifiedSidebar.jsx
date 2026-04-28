@@ -32,7 +32,7 @@ const SidebarRail = ({ items, activeSection, onSelect }) => {
   
   return (
     <div 
-      className="w-16 flex flex-col items-center py-2 gap-1 transition-colors duration-300"
+      className="w-16 flex flex-col items-center  gap-1 transition-colors duration-300"
       style={{ backgroundColor: theme.colors.bgSidebar }}
     >
       {items.map((item) => {
@@ -98,11 +98,11 @@ const SidebarPanel = ({
       {/* Header */}
       <div 
         className="h-10 shrink-0 px-3 flex items-center justify-between border-b"
-        style={{ backgroundColor: theme.colors.bgPreview, borderColor: theme.colors.border }}
+        style={{ backgroundColor: theme.colors.bgHeader, borderColor: theme.colors.border }}
       >
         <span 
           className="text-xs font-semibold capitalize"
-          style={{ color: theme.colors.textMain }}
+          style={{ color: theme.colors.textHeader }}
         >
           {activeSection}
         </span>
