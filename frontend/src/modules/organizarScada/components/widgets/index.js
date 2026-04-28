@@ -33,6 +33,17 @@ import processValueCard     from "./definitions/process-value-card";
 import processStatusBadge   from "./definitions/process-status-badge";
 import processLevelCard     from "./definitions/process-level-card";
 
+import navButton from "./buttons/nav-button";
+import btnPrimary from "./buttons/btn-primary";
+import btnOutline from "./buttons/btn-outline";
+import labelPill from "./buttons/label-pill";
+import labelBadge from "./buttons/label-badge";
+import cardSoft from "./buttons/card-soft";
+import cardElevated from "./buttons/card-elevated";
+import shapeRect from "./buttons/shape-rect";
+import shapeCircle from "./buttons/shape-circle";
+import shapeTriangle from "./buttons/shape-triangle";
+
 const ALL_DEFINITIONS = [
   tempGauge,
   hmiScadaGauge,
@@ -63,6 +74,17 @@ const ALL_DEFINITIONS = [
   processValueCard,
   processStatusBadge,
   processLevelCard,
+
+  navButton,
+  btnPrimary,
+  btnOutline,
+  labelPill,
+  labelBadge,
+  cardSoft,
+  cardElevated,
+  shapeRect,
+  shapeCircle,
+  shapeTriangle,
 ];
 
 export const WIDGET_REGISTRY = Object.fromEntries(
