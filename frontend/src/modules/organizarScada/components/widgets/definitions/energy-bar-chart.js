@@ -1,4 +1,4 @@
-import EnergyBarChart from "../standard/EnergyBarChart";
+import EnergyBarChart from "../iconsScada/EnergyBarChart";
 import { buildEnergyBarChartDemo } from "@/modules/organizarScada/utils/chartDemos";
 import { buildBaseStyle } from "./_shared";
 

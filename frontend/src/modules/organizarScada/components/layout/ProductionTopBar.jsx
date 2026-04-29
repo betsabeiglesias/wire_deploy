@@ -9,21 +9,8 @@ import {
   Minimize2,
   SquarePen,
 } from "lucide-react";
+import { useHmiTheme } from "../widgets/styles/ThemeProvider";
 
-/**
- * TopBar de la consola de producción.
- * Responsabilidad: identidad de la app (nombre del layout) + controles globales
- * (pantalla completa, menú de acciones). Sin lógica de vistas ni de canvas.
- *
- * Props:
- *   layoutName        string   — nombre del layout activo
- *   isFullscreen      boolean  — estado de pantalla completa
- *   onToggleFullscreen fn      — toggle fullscreen
- *   onBack            fn      — navegar atrás
- *   onHome            fn      — navegar a /
- *   onMyHMIs          fn      — navegar a /layout
- *   onEditHMI         fn      — abrir editor
- */
 const ProductionTopBar = ({
   layoutName,
   isFullscreen,
@@ -34,16 +21,43 @@ const ProductionTopBar = ({
   onEditHMI,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { theme } = useHmiTheme();
+
+  // Helpers para opacidades sin hardcodear colores
+  const withOpacity = (hex, opacity) => {
+    if (!hex) return "";
+    const alpha = Math.round(opacity * 255).toString(16).padStart(2, "0");
+    return hex + alpha;
+  };
+
+  const textMain = theme.colors.textHeader;
+  const textDim = withOpacity(theme.colors.textHeader, 0.7);
+  const hoverBg = "rgba(255,255,255,0.1)";
 
   return (
-    <header className="flex h-[36px] shrink-0 items-center justify-between border-b border-[#CED5DF] bg-[#29468B] px-2 shadow-sm">
-      {/* Izquierda: navegación + identidad del layout */}
+    <header
+      className="flex h-[36px] shrink-0 items-center justify-between px-2 shadow-sm"
+      style={{
+        backgroundColor: theme.colors.bgHeader,
+        borderBottom: `1px solid ${theme.colors.border}`,
+      }}
+    >
+      {/* ── IZQUIERDA ───────────────────────────────────────── */}
       <div className="flex items-center gap-1">
         {/* Atrás */}
         <button
           onClick={onBack}
           title="Atrás"
-          className="flex h-7 w-7 items-center justify-center rounded-[4px] text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+          className="flex h-7 w-7 items-center justify-center rounded-[4px] transition-colors"
+          style={{ color: textDim }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = hoverBg;
+            e.currentTarget.style.color = textMain;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = textDim;
+          }}
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -52,30 +66,57 @@ const ProductionTopBar = ({
         <button
           onClick={onHome}
           title="Inicio"
-          className="flex h-7 w-7 items-center justify-center rounded-[4px] text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+          className="flex h-7 w-7 items-center justify-center rounded-[4px] transition-colors"
+          style={{ color: textDim }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = hoverBg;
+            e.currentTarget.style.color = textMain;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = textDim;
+          }}
         >
           <House className="h-4 w-4" />
         </button>
 
         {/* Separador */}
-        <div className="mx-1 h-4 w-px bg-white/20" />
+        <div
+          className="mx-1 h-4 w-px"
+          style={{ backgroundColor: withOpacity(textMain, 0.2) }}
+        />
 
-        {/* Nombre del layout */}
+        {/* Nombre */}
         <div className="flex items-center gap-1.5">
-          <Layers className="h-3.5 w-3.5 text-white/60" />
-          <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-white">
+          <Layers
+            className="h-3.5 w-3.5"
+            style={{ color: withOpacity(textMain, 0.6) }}
+          />
+          <span
+            className="text-[12px] font-medium uppercase tracking-[0.08em]"
+            style={{ color: textMain }}
+          >
             {layoutName || "HMI"}
           </span>
         </div>
       </div>
 
-      {/* Derecha: controles globales */}
+      {/* ── DERECHA ───────────────────────────────────────── */}
       <div className="flex items-center gap-1">
-        {/* Pantalla completa */}
+        {/* Fullscreen */}
         <button
           onClick={onToggleFullscreen}
           title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
-          className="flex h-7 w-7 items-center justify-center rounded-[4px] text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+          className="flex h-7 w-7 items-center justify-center rounded-[4px] transition-colors"
+          style={{ color: textDim }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = hoverBg;
+            e.currentTarget.style.color = textMain;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = textDim;
+          }}
         >
           {isFullscreen ? (
             <Minimize2 className="h-4 w-4" />
@@ -84,11 +125,20 @@ const ProductionTopBar = ({
           )}
         </button>
 
-        {/* Menú de acciones */}
+        {/* Menú */}
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen((p) => !p)}
-            className="flex h-7 items-center gap-1.5 rounded-[4px] px-2.5 text-[11px] font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+            className="flex h-7 items-center gap-1.5 rounded-[4px] px-2.5 text-[11px] font-medium transition-colors"
+            style={{ color: textDim }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = hoverBg;
+              e.currentTarget.style.color = textMain;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.color = textDim;
+            }}
           >
             Acciones
             <ChevronDown
@@ -102,18 +152,52 @@ const ProductionTopBar = ({
                 className="fixed inset-0 z-40"
                 onClick={() => setIsMenuOpen(false)}
               />
-              <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-[200px] rounded-[6px] border border-[#CED5DF] bg-white p-1.5 shadow-lg">
+              <div
+                className="absolute right-0 top-[calc(100%+6px)] z-50 w-[200px] rounded-[6px] p-1.5 shadow-lg"
+                style={{
+                  backgroundColor: theme.colors.bgWidget,
+                  border: `1px solid ${theme.colors.border}`,
+                }}
+              >
                 <button
-                  onClick={() => { setIsMenuOpen(false); onMyHMIs(); }}
-                  className="flex w-full items-center gap-2 rounded-[4px] px-2.5 py-1.5 text-[12px] text-slate-700 hover:bg-[#F2F3F5]"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onMyHMIs();
+                  }}
+                  className="flex w-full items-center gap-2 rounded-[4px] px-2.5 py-1.5 text-[12px] transition-colors"
+                  style={{ color: theme.colors.textMain }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = theme.colors.bgPreview)
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
                 >
-                  <FolderKanban className="h-4 w-4 text-slate-400" />
+                  <FolderKanban
+                    className="h-4 w-4"
+                    style={{ color: theme.colors.textDim }}
+                  />
                   Mis HMIs
                 </button>
-                <div className="my-1 border-t border-slate-100" />
+
+                <div
+                  className="my-1"
+                  style={{ borderTop: `1px solid ${theme.colors.border}` }}
+                />
+
                 <button
-                  onClick={() => { setIsMenuOpen(false); onEditHMI(); }}
-                  className="flex w-full items-center gap-2 rounded-[4px] px-2.5 py-1.5 text-[12px] text-[#2f7a57] hover:bg-[#f4fbf7]"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onEditHMI();
+                  }}
+                  className="flex w-full items-center gap-2 rounded-[4px] px-2.5 py-1.5 text-[12px] transition-colors"
+                  style={{ color: theme.colors.success }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = theme.colors.bgPreview)
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
                 >
                   <SquarePen className="h-4 w-4" />
                   Editar HMI

@@ -9,7 +9,6 @@ import "../../../styles/Scada.css";
 import { renderWidget } from "../components/widgets/registry.jsx";
 import ProductionTopBar from "../components/layout/ProductionTopBar.jsx";
 import ProductionSidebar from "../components/layout/ProductionSidebar.jsx";
-import DataQualityPanel from "../components/canvas/DataQualityPanel.jsx";
 
 const PUBLISHED_VIEWS_KEY = "publishedScadaViews";
 const BASE_WIDTH = 1920;
@@ -381,7 +380,6 @@ const ProductionView = () => {
         </div>
         </div>
       </div>
-      <DataQualityPanel elements={elements} projectTags={projectTags} />
     </div>
   );
 };

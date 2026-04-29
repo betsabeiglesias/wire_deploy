@@ -11,21 +11,9 @@ logging.basicConfig(
 
 from mqtt_bridge.bridge import MQTTEventBridge
 
-
-def _env_flag(name: str, default: bool = False) -> bool:
-    value = os.environ.get(name)
-    if value is None:
-        return default
-    return value.strip().lower() in {"1", "true", "yes", "on"}
-
 def main():
     # ✅ Cargar .env
     load_dotenv()
-
-    direct_central_replication = _env_flag(
-        "ENABLE_DIRECT_CENTRAL_REDIS_REPLICATION",
-        default=True,
-    )
     
     bridge = MQTTEventBridge(
         tenant=os.environ["TENANT"],
@@ -39,17 +27,9 @@ def main():
         redis_port=int(os.environ.get("REDIS_PORT", 6379)),
         
         # Redis central (opcional)
-        central_redis_host=(
-            os.environ.get("CENTRAL_REDIS_HOST")
-            if direct_central_replication
-            else None
-        ),
+        central_redis_host=os.environ.get("CENTRAL_REDIS_HOST"),
         central_redis_port=int(os.environ.get("CENTRAL_REDIS_PORT", 6379)),
-        central_redis_password=(
-            os.environ.get("CENTRAL_REDIS_PASSWORD")
-            if direct_central_replication
-            else None
-        ),
+        central_redis_password=os.environ.get("CENTRAL_REDIS_PASSWORD"),
     )
 
     bridge.start()

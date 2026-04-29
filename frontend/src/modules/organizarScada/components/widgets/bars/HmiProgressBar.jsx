@@ -10,14 +10,23 @@ const HmiProgressBar = ({
   label = "LOREM IPSUM",
   width = 450,
   height = 90,
+
+  // 🎯 THEME
+  backgroundColor,
+  textColor,
+  primaryColor,
+  secondaryColor,
+
+  // fallback antiguos
   trackFill = "#1e2a3e",
   trackStroke = "#2c6993",
   gradientFrom = "#3498db",
   gradientTo = "#2980b9",
   hatchStroke = "#2c6993",
   labelColor = "#999",
+
   percentColorOverride,
-  accentColor, // 👈 añadido
+  accentColor,
   showValue = true,
   showLabel = false,
   labelOffsetX = 0,
@@ -26,9 +35,11 @@ const HmiProgressBar = ({
   valueOffsetY = 0,
 }) => {
   const safePercent = clampPercent(percent);
+
   const maxWidth = 350;
   const fillWidth = (maxWidth * safePercent) / 100;
   const hatchWidth = maxWidth - fillWidth;
+
   const uid = useId().replace(/:/g, "");
   const gradientId = `blueGradient-${uid}`;
   const hatchId = `diagonalHatchBlue-${uid}`;
@@ -36,37 +47,31 @@ const HmiProgressBar = ({
   const percentColor = useMemo(() => {
     if (safePercent > 85) return "#e74c3c";
     if (safePercent < 15) return "#f39c12";
-    return "#ffffff";
-  }, [safePercent]);
+    return textColor || "#ffffff";
+  }, [safePercent, textColor]);
 
-  const textColor = percentColorOverride || percentColor;
+  const finalTextColor = percentColorOverride || percentColor;
 
-  const colorFrom = accentColor || gradientFrom;
-  const colorTo = accentColor || gradientTo;
-  const hatchColor = accentColor || hatchStroke;
+  // 🎯 THEME APPLY
+  const colorFrom = accentColor || primaryColor || gradientFrom;
+  const colorTo = accentColor || secondaryColor || gradientTo;
+  const hatchColor = accentColor || secondaryColor || hatchStroke;
+
+  const finalTrackFill = backgroundColor || trackFill;
+  const finalTrackStroke = secondaryColor || trackStroke;
 
   const centerX = 175;
   const centerY = 35;
 
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox="0 0 350 60"
-      xmlns="http://www.w3.org/2000/svg"
-      style={{ display: "block" }}
-    >
+    <svg width={width} height={height} viewBox="0 0 350 60">
       <defs>
-        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor={colorFrom} stopOpacity="1" />
-          <stop offset="100%" stopColor={colorTo} stopOpacity="1" />
+        <linearGradient id={gradientId}>
+          <stop offset="0%" stopColor={colorFrom} />
+          <stop offset="100%" stopColor={colorTo} />
         </linearGradient>
-        <pattern
-          id={hatchId}
-          patternUnits="userSpaceOnUse"
-          width="10"
-          height="10"
-        >
+
+        <pattern id={hatchId} patternUnits="userSpaceOnUse" width="10" height="10">
           <path
             d="M-1,1 l2,-2 M0,10 l10,-10 M9,11 l2,-2"
             stroke={hatchColor}
@@ -76,47 +81,33 @@ const HmiProgressBar = ({
       </defs>
 
       <rect
-        x="0"
-        y="0"
         width="350"
         height="60"
         rx="10"
-        ry="10"
-        fill={trackFill}
-        stroke={trackStroke}
+        fill={finalTrackFill}
+        stroke={finalTrackStroke}
         strokeWidth="2"
       />
 
-      <rect
-        x="0"
-        y="0"
-        width={fillWidth}
-        height="60"
-        rx="10"
-        ry="10"
-        fill={`url(#${gradientId})`}
-      />
+      <rect width={fillWidth} height="60" rx="10" fill={`url(#${gradientId})`} />
 
       <rect
         x={fillWidth}
-        y="0"
         width={hatchWidth}
         height="60"
         rx="10"
-        ry="10"
         fill={`url(#${hatchId})`}
       />
 
       {showValue && (
         <text
-          x={centerX + Number(valueOffsetX || 0)}
-          y={centerY + Number(valueOffsetY || 0)}
-          fill={textColor}
+          x={centerX + Number(valueOffsetX)}
+          y={centerY + Number(valueOffsetY)}
+          fill={finalTextColor}
           fontSize="28px"
           fontWeight="700"
           textAnchor="middle"
           alignmentBaseline="middle"
-          fontFamily="'Segoe UI', Roboto, Arial, sans-serif"
         >
           {Math.round(safePercent)}%
         </text>
@@ -124,14 +115,11 @@ const HmiProgressBar = ({
 
       {showLabel && (
         <text
-          x={10 + Number(labelOffsetX || 0)}
-          y={20 + Number(labelOffsetY || 0)}
-          fill={labelColor}
+          x={10 + Number(labelOffsetX)}
+          y={20 + Number(labelOffsetY)}
+          fill={textColor || labelColor}
           fontSize="12px"
           fontWeight="600"
-          textAnchor="start"
-          alignmentBaseline="middle"
-          fontFamily="'Segoe UI', Roboto, Arial, sans-serif"
         >
           {label}
         </text>

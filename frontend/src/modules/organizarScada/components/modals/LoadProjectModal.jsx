@@ -43,7 +43,7 @@ export default function LoadProjectModal({ open, onClose, onLoad }) {
     if (!ts) return "—";
     const d = new Date(ts);
     return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString("es-ES", {
-      day: "2-digit", month: "short", year: "numeric", timeZone: "Europe/Madrid",
+      day: "2-digit", month: "short", year: "numeric",
     });
   };
 

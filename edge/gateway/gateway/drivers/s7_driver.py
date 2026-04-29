@@ -117,7 +117,7 @@ def cast_value(buf: bytes, kind: str, byte: int, bit: int | None, datatype: str,
     raise ValueError(f"Datatype CDC no soportado: {datatype}")
 
 
-def build_tag(equipment_id, item, value, endpoint, raw_status="ok",
+def build_tag(equipment_id, item, value, endpoint, quality="Good",
               error: str | None = None, datatype_out: str | None = None):
 
     from urllib.parse import urlparse
@@ -137,14 +137,13 @@ def build_tag(equipment_id, item, value, endpoint, raw_status="ok",
         datatype=datatype_out or item["datatype"],
         unit=item.get("unit"),
         timestamp=ts,
-        quality=None,
+        quality=quality,
         source={
-            "protocol": "s7",
+            "protocol": "snap7",
             "endpoint": endpoint,
             "ip": plc_ip,
             "address": item["address"],
             "attrs": attrs,
-            "raw_status": raw_status,
         }
     )
 
@@ -187,7 +186,7 @@ class S7Driver(BaseDriver):
       - castea valores y emite CDC tags
     """
     def __init__(self, mapping_cfg: Dict[str, Any], publisher=None) -> None:
-        super().__init__(mapping_cfg, publisher, driver_name="s7" )
+        super().__init__(mapping_cfg, publisher, driver_name="snap7" )
         self.cfg = validate_mapping(mapping_cfg, apply_defaults=True)
 
         conn = self.cfg["connection"]
@@ -371,13 +370,13 @@ class S7Driver(BaseDriver):
     def read_once(self, endpoint: str) -> List[ProcessValue]:
         """
         Lee una vez todos los items configurados, agrupando por DB para minimizar lecturas.
-        Devuelve una lista de ProcessValue con raw_status para normalización posterior.
+        Devuelve una lista de CDC tags (Good/Bad según resultado).
         """
         assert self._client is not None, "S7 no conectado"
         client = self._client
 
         groups = group_items_by_db(self.items)
-        out_tags: List[ProcessValue] = []
+        out_tags: List[Dict[str, Any]] = []
 
         for db, db_items in groups.items():
             try:
@@ -406,38 +405,35 @@ class S7Driver(BaseDriver):
                         datatype=it["datatype"],
                         scale=it.get("scale"),
                     )
-                    raw_status = "ok"
 
-                    if self._consec_fail > 3:
-                        raw_status = "connection_lost"  # Fix 2b: "degraded" no existe en normalizer → BAD_COMM es más correcto
                     tag = build_tag(
                         equipment_id=self.equipment_id,
                         item=it,
                         value=value,
                         endpoint=endpoint,
-                        raw_status=raw_status
+                        quality="Good",
                     )
                     out_tags.append(tag)
 
             except Exception as ex:
                 # Si falla la lectura del bloque DB completo, marca todos los items de ese DB como Bad
                 now = datetime.datetime.now(datetime.timezone.utc)
-                error_str = str(ex).lower()
-
-                if "timeout" in error_str:
-                    raw_status = "timeout"
-                elif "connection" in error_str:
-                    raw_status = "connection_lost"  # Fix 2: normalizer espera "connection_lost"
-                else:
-                    raw_status = "exception"
                 for it in db_items:
-                    bad_tag = build_tag(
+                    bad_tag = ProcessValue(
                         equipment_id=self.equipment_id,
-                        item=it,
+                        variable=it["name"],
                         value=None,
-                        endpoint=endpoint,
-                        raw_status=raw_status,
-                        error=str(ex)
+                        datatype=it["datatype"],
+                        timestamp=now,
+                        quality="Bad",
+                        unit=it.get("unit"),
+                        source={
+                            "protocol": "snap7",
+                            "endpoint": endpoint,
+                            "ip": self.ip,
+                            "address": it["address"],
+                            "error": str(ex),
+                        }
                     )
 
                     out_tags.append(bad_tag)

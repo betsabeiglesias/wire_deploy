@@ -16,60 +16,74 @@ const defaultSeries = [
   },
 ];
 
-const defaultOptions = {
-  chart: {
-    type: "area",
-    stacked: false,
-    zoom: { type: "x", enabled: true, autoScaleYaxis: true },
-    toolbar: { autoSelected: "zoom" },
-  },
-  dataLabels: { enabled: false },
-  markers: { size: 0 },
-  title: { text: "Stock Price Movement", align: "left" },
-  fill: {
-    type: "gradient",
-    gradient: {
-      shadeIntensity: 1,
-      inverseColors: false,
-      opacityFrom: 0.5,
-      opacityTo: 0,
-      stops: [0, 90, 100],
-    },
-  },
-  yaxis: {
-    labels: {
-      formatter: (val) => (val / 1_000_000).toFixed(0),
-    },
-    title: { text: "Price" },
-  },
-  xaxis: { type: "datetime" },
-  tooltip: {
-    shared: false,
-    y: {
-      formatter: (val) => (val / 1_000_000).toFixed(0),
-    },
-  },
-};
+const ChartStockArea = ({
+  series,
+  options,
+  height,
+  width,
+  type = "area",
 
-const ChartStockArea = ({ series, options, height, width, type = "area" }) => {
+  backgroundColor,
+  textColor,
+  gridColor,
+  axisColor,
+  primaryColor,
+}) => {
+
   const mergedOptions = useMemo(() => {
-    const opts = { ...defaultOptions, ...(options || {}) };
-    opts.chart = { ...defaultOptions.chart, ...(options?.chart || {}) };
-    const hNum = Number(height);
-    const wNum = Number(width);
-    if (Number.isFinite(hNum)) opts.chart.height = hNum;
-    else if (height) opts.chart.height = height;
-    if (Number.isFinite(wNum)) opts.chart.width = wNum;
-    else if (width) opts.chart.width = width;
-    opts.dataLabels = { ...defaultOptions.dataLabels, ...(options?.dataLabels || {}) };
-    opts.markers = { ...defaultOptions.markers, ...(options?.markers || {}) };
-    opts.title = { ...defaultOptions.title, ...(options?.title || {}) };
-    opts.fill = { ...defaultOptions.fill, ...(options?.fill || {}) };
-    opts.yaxis = { ...defaultOptions.yaxis, ...(options?.yaxis || {}) };
-    opts.xaxis = { ...defaultOptions.xaxis, ...(options?.xaxis || {}) };
-    opts.tooltip = { ...defaultOptions.tooltip, ...(options?.tooltip || {}) };
+    const opts = {
+      chart: {
+        type,
+        background: backgroundColor,
+        zoom: { enabled: true },
+        toolbar: { autoSelected: "zoom" },
+      },
+      colors: [primaryColor],
+      dataLabels: { enabled: false },
+      markers: { size: 0 },
+      stroke: { curve: "smooth" },
+
+      title: {
+        text: "Stock Price Movement",
+        align: "left",
+        style: { color: textColor },
+      },
+
+      grid: {
+        borderColor: gridColor,
+      },
+
+      xaxis: {
+        type: "datetime",
+        labels: { style: { colors: axisColor } },
+      },
+
+      yaxis: {
+        labels: {
+          style: { colors: axisColor },
+          formatter: (val) => (val / 1_000_000).toFixed(0),
+        },
+      },
+
+      fill: {
+        type: "gradient",
+        gradient: {
+          shadeIntensity: 1,
+          opacityFrom: 0.4,
+          opacityTo: 0,
+          stops: [0, 90, 100],
+        },
+      },
+
+      tooltip: {
+        theme: "dark",
+      },
+
+      ...(options || {}),
+    };
+
     return opts;
-  }, [options, height, width]);
+  }, [options, backgroundColor, textColor, gridColor, axisColor, primaryColor, type]);
 
   const resolvedSeries =
     Array.isArray(series) && series.length ? series : defaultSeries;
@@ -77,6 +91,7 @@ const ChartStockArea = ({ series, options, height, width, type = "area" }) => {
   const chartHeight = Number.isFinite(Number(height))
     ? Number(height)
     : height || "100%";
+
   const chartWidth = Number.isFinite(Number(width))
     ? Number(width)
     : width || "100%";

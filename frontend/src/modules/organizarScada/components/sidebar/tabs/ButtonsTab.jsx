@@ -1,99 +1,69 @@
-// C:\Users\aroa.banuelos\Desktop\wire_deploy\frontend\src\modules\organizarScada\components\sidebar\tabs\ButtonsTab.jsx
-
+// src/modules/organizarScada/components/sidebar/tabs/ButtonsTab.jsx
 import React, { useMemo } from "react";
 import { getButtonsLabelsItems } from "@/modules/organizarScada/utils/items";
 import { useHmiTheme } from "@/modules/organizarScada/components/widgets/styles/ThemeProvider";
 
 const getButtonBaseData = (item) => {
-  if (item.kind === "button")
-    return { 
-      type: "nav-button", 
-      variant: item.id, 
-      label: item.label, 
-      targetViewId: null, 
-      width: 160, 
-      height: 48 
-    };
-  if (item.kind === "label")
-    return { 
-      type: item.id, 
-      label: item.label, 
-      width: 160, 
-      height: 40 
-    };
-  return { 
+  // Ahora el type es el id (ej: 'btn-primary', 'shape-rect', etc.)
+  // Esto permite que el registry encuentre la definición correcta
+  return {
     type: item.id, 
-    label: item.label, 
-    width: 200, 
-    height: 120 
+    width: item.kind === "button" ? 160 : (item.kind === "label" ? 160 : 200),
+    height: item.kind === "button" ? 48 : (item.kind === "label" ? 40 : 120),
+    label: item.label, // Label raíz por si acaso
+    settings: {
+      label: item.label,
+      variant: item.id,
+      kind: item.kind,
+      // Pasamos el estilo original de items.js como default en settings
+      style: item.style, 
+      previewClass: item.previewClass,
+    },
   };
 };
 
 const ButtonsTab = ({ addComponentToCanvas }) => {
   const { theme } = useHmiTheme();
-
-  // Obtenemos los items pasando el tema actual
   const items = useMemo(() => getButtonsLabelsItems(theme), [theme]);
 
   const handleButtonDragStart = (e, item) => {
     e.dataTransfer.setData(
       "application/x-scada-template",
-      JSON.stringify({ 
-        id: `tpl-${item.id}`, 
-        data: getButtonBaseData(item) 
-      }),
+      JSON.stringify({
+        id: `tpl-${item.id}-${Math.random().toString(36).substr(2, 5)}`,
+        data: getButtonBaseData(item),
+      })
     );
     e.dataTransfer.effectAllowed = "copy";
   };
 
-  // Esta es la función que hace que aparezca al hacer CLICK
   const handlePickButton = (item) => {
-    console.log("Picking item:", item.id); // Debug para verificar que el click entra
     if (typeof addComponentToCanvas === "function") {
-      const data = getButtonBaseData(item);
-      addComponentToCanvas(data);
+      addComponentToCanvas(getButtonBaseData(item));
     }
   };
 
   return (
-    <div 
-      className="rounded-lg border p-3 transition-colors duration-300"
-      style={{ 
-        backgroundColor: theme.colors.bgPreview || "#f8fafc",
-        borderColor: theme.colors.border || "#e2e8f0" 
-      }}
-    >
-      <p 
-        className="text-[10px] font-semibold uppercase tracking-[0.16em] mb-3"
-        style={{ color: theme.colors.textMuted || "#94a3b8" }}
-      >
+    <div className="rounded-lg border p-3" style={{ backgroundColor: theme.colors.bgPreview, borderColor: theme.colors.border }}>
+      <p className="text-[10px] font-semibold uppercase mb-3" style={{ color: theme.colors.textMuted }}>
         Buttons & Labels
       </p>
-      
       <div className="grid grid-cols-2 gap-3">
         {items.map((item) => (
           <div
             key={item.id}
             draggable
             onDragStart={(e) => handleButtonDragStart(e, item)}
-            onClick={() => handlePickButton(item)} // Aseguramos que el evento está aquí
+            onClick={() => handlePickButton(item)}
             className="cursor-pointer select-none rounded-md border px-2 py-2 text-[10px] transition-all hover:shadow-md hover:border-sky-400 active:scale-95"
             style={{ 
-              backgroundColor: theme.colors.bgWidget || "#ffffff",
-              borderColor: theme.colors.border || "#cbd5e1",
-              color: theme.colors.text || "#334155"
+              backgroundColor: theme.colors.bgWidget, 
+              borderColor: theme.colors.border, 
+              color: theme.colors.text 
             }}
           >
-            {/* Añadimos pointer-events-none para que el click pase al padre (el div con onClick) */}
-            <div 
-              className={`${item.previewClass} pointer-events-none`} 
-              style={item.style}
-            >
-              {item.kind === "button" 
-                ? "Button" 
-                : item.kind === "label" 
-                  ? "Label" 
-                  : item.label || "Caja"}
+            <div className={`${item.previewClass} pointer-events-none`} style={item.style}>
+              {item.label || item.kind}
             </div>
           </div>
         ))}

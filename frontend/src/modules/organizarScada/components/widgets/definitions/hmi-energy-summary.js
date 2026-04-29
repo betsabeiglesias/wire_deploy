@@ -1,11 +1,11 @@
-import HmiEnergySummaryCard from "../standard/HmiEnergySummaryCard";
+import HmiEnergySummaryCard from "../cards/HmiEnergySummaryCard";
 import { buildBaseStyle } from "./_shared";
 
 export default {
-  type:        "hmi-energy-summary",
-  label:       "Resumen de Energia",
-  category:    "tarjetas",
-  icon:        "card",
+  type: "hmi-energy-summary",
+  label: "Resumen de Energia",
+  category: "tarjetas",
+  icon: "card",
   defaultSize: { w: 380, h: 140 },
 
   buildProps({ settings, width, height }) {
@@ -30,10 +30,6 @@ export default {
     return {
       backgroundColor: base.bgColor,
       textColor: base.titleColor,
-
-      gridColor: base.gridColor,
-      axisColor: base.axisColor,
-
       primaryColor: base.primary,
       secondaryColor: base.primaryDark,
     };

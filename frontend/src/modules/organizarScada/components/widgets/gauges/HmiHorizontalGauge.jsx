@@ -10,7 +10,7 @@ const HmiHorizontalGauge = ({
   width = 240,
   height = 140,
 
-  // 🎨 NUEVO
+  // 🎯 THEME
   backgroundColor = "#f8fafc",
   primaryColor = "#3b82f6",
   secondaryColor = "#94a3b8",
@@ -41,12 +41,12 @@ const HmiHorizontalGauge = ({
         y1,
         x2,
         y2,
-        stroke: i > 8 ? "#e11d48" : secondaryColor,
+        stroke: i > 8 ? primaryColor : secondaryColor,
         strokeWidth: variant === "heavy" ? 4 : 2,
       });
     }
     return lines;
-  }, [variant, secondaryColor]);
+  }, [variant, secondaryColor, primaryColor]);
 
   const needle = useMemo(() => {
     return {
@@ -56,8 +56,12 @@ const HmiHorizontalGauge = ({
   }, [primaryColor]);
 
   return (
-    <svg width={width} height={height} viewBox="0 0 240 140">
-      {/* Fondo */}
+    <svg
+      width={width}
+      height={height}
+      viewBox="0 0 240 140"
+      style={{ background: backgroundColor }}
+    >
       <path
         d="M 10,120 A 110,110 0 0,1 230,120 L 120,120 Z"
         fill={backgroundColor}
@@ -65,12 +69,10 @@ const HmiHorizontalGauge = ({
         strokeWidth="1"
       />
 
-      {/* Ticks */}
       {ticks.map((line, idx) => (
         <line key={idx} {...line} />
       ))}
 
-      {/* Aguja */}
       <g
         style={{
           transformOrigin: `${cx}px ${cy}px`,

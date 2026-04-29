@@ -1,4 +1,4 @@
-import TemperatureLineChart from "../standard/TemperatureLineChart";
+import TemperatureLineChart from "../iconsScada/TemperatureLineChart";
 import { buildTemperatureLineChartDemo } from "@/modules/organizarScada/utils/chartDemos";
 import { buildBaseStyle } from "./_shared";
 

@@ -70,19 +70,26 @@ export const DEFAULT_STYLE_SCHEMA = [
 
 // Estilos compartidos 
 export const buildBaseStyle = (palette = {}) => ({
-  bgColor: palette.background || "#ffffff",
-  borderColor: "#e5e7eb",
+  // 🔥 BACKGROUND REAL DEL THEME
+  bgColor: palette.bg || "#ffffff",
 
-  titleColor: "#0f172a",
-  labelColor: "#64748b",
+  // 🔥 BORDER DEL THEME
+  borderColor: palette.border || "#e5e7eb",
 
-  gridColor: "#e2e8f0",
-  axisColor: "#94a3b8",
+  // 🔥 TEXTOS DEL THEME
+  titleColor: palette.text || "#0f172a",
+  labelColor: palette.textDim || "#64748b",
 
+  // 🔥 GRID / EJES DEL THEME
+  gridColor: palette.border || "#e2e8f0",
+  axisColor: palette.textDim || "#94a3b8",
+
+  // 🔥 COLORES PRINCIPALES
   primary: palette.primary || "#3b82f6",
-  primaryDark: palette.primaryDark || "#1d4ed8",
+  primaryDark: palette.secondary || "#1d4ed8",
 
-  success: "#10b981",
-  warning: "#f59e0b",
-  danger: "#ef4444",
+  // 🔥 ESTADOS
+  success: palette.success || "#10b981",
+  warning: palette.warning || "#f59e0b",
+  danger: palette.danger || "#ef4444",
 });

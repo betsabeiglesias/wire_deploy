@@ -1,6 +1,12 @@
 import React from "react";
 
-export default function NeedleGauge({ percent, value, unit }) {
+export default function NeedleGauge({
+  percent,
+  value,
+  unit,
+  primaryColor = "#00b894",
+  secondaryColor = "#636e72",
+}) {
   const center = 70;
   const radius = 58;
   const startAngle = -135;
@@ -29,19 +35,23 @@ export default function NeedleGauge({ percent, value, unit }) {
 
   return (
     <div className="mini-gauge needle-gauge">
-      <svg viewBox="0 0 160 160" className="needle-svg">
-        <path className="needle-track" d={track}></path>
-        {progress && <path className="needle-progress" d={progress}></path>}
+      <svg viewBox="0 0 160 160">
+        <path d={track} stroke={secondaryColor} fill="none" strokeWidth="6" />
+        {progress && (
+          <path d={progress} stroke={primaryColor} fill="none" strokeWidth="6" />
+        )}
         <line
           x1={center}
           y1={center}
           x2={pointer.x}
           y2={pointer.y}
-          className="needle-pointer"
-        ></line>
-        <circle cx={center} cy={center} r="6" className="needle-center"></circle>
+          stroke={primaryColor}
+          strokeWidth="3"
+        />
+        <circle cx={center} cy={center} r="6" fill={primaryColor} />
       </svg>
-      <div className="needle-value">
+
+      <div className="needle-value" style={{ color: primaryColor }}>
         {value}
         {unit && <span>{unit}</span>}
       </div>

@@ -9,7 +9,6 @@ import paho.mqtt.client as mqtt
 import redis
 
 from gateway_domain.process_value import ProcessValue
-from quality.quality_normalizer import normalize_quality
 
 logger = logging.getLogger("edge.mqtt_bridge")
 
@@ -132,7 +131,7 @@ class MQTTEventBridge:
                 return
 
             pv = ProcessValue.from_tag(data)
-            if not pv or not pv.validate():
+            if not pv:
                 logger.warning(
                     "❌ Discarded tag | tenant=%s topic=%s equipment_id=%s variable=%s",
                     self.tenant,
@@ -141,8 +140,6 @@ class MQTTEventBridge:
                     data.get("variable"),
                 )
                 return
-            pv.quality = None
-            pv.quality = normalize_quality(pv)
 
             event = pv.to_event(tenant=self.tenant)
             stream_key = f"scada:stream:{tenant}"
@@ -184,8 +181,6 @@ class MQTTEventBridge:
                         tenant,
                         pv.equipment_id,
                         pv.variable,
-                        pv.quality,
-                        pv.source.get("raw_status")
                     )
                 except Exception as e:
                     # No fallar si la replicación falla

@@ -126,7 +126,6 @@ class ProcessValue:
             "datatype": self.datatype,
             "unit": self.unit,
             "quality": self.quality.upper(),
-            "timestamp": self.timestamp,
             "ts": self.timestamp,
             "source": self.source,
         }

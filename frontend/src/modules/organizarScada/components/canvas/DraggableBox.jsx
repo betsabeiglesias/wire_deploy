@@ -17,7 +17,7 @@ export default function DraggableBox({
     return null;
   }
 
-  const [pos,  setPos]  = useState({ x: initialX, y: initialY });
+  const [pos, setPos] = useState({ x: initialX, y: initialY });
   const [size, setSize] = useState({ w: initialWidth, h: initialHeight });
 
   useEffect(() => {
@@ -28,8 +28,6 @@ export default function DraggableBox({
   const settings = data.settings || {};
   const zIndex = Number.isFinite(Number(settings.z_index)) ? Number(settings.z_index) : 1;
   
-  // UNIFICACIÓN DE BLOQUEO: Leemos del objeto raíz (que viene de ScreenTab/Layers)
-  // o de los settings internos por compatibilidad.
   const isLocked = data.isLocked === true || settings.is_locked === true || settings.isLocked === true;
 
   // ── MODO LIVE ──────────────────────────────────────────────────────────────
@@ -37,9 +35,9 @@ export default function DraggableBox({
     return (
       <div
         style={{
-          position:  "absolute",
-          width:     `${size.w}px`,
-          height:    `${size.h}px`,
+          position: "absolute",
+          width: `${size.w}px`,
+          height: `${size.h}px`,
           transform: `translate(${pos.x}px, ${pos.y}px)`,
           zIndex,
           pointerEvents: "none",
@@ -66,8 +64,8 @@ export default function DraggableBox({
           isSelected ? "border-sky-400 shadow-sky-100" : "border-gray-200",
         ].join(" ")}
         style={{
-          width:     `${size.w}px`,
-          height:    `${size.h}px`,
+          width: `${size.w}px`,
+          height: `${size.h}px`,
           transform: `translate(${pos.x}px, ${pos.y}px)`,
           zIndex,
         }}
@@ -90,7 +88,7 @@ export default function DraggableBox({
   return (
     <Rnd
       className={[
-        "bg-white rounded-lg shadow border flex flex-col transition-colors",
+        "bg-white rounded-lg shadow border flex flex-col transition-colors overflow-hidden",
         isSelected ? "border-sky-400 shadow-sky-100 shadow-md" : "border-gray-200",
         isLocked ? "border-amber-400 ring-1 ring-amber-100" : "",
       ].join(" ")}
@@ -101,7 +99,7 @@ export default function DraggableBox({
         onDragStop?.(id, d.x, d.y);
       }}
       onResizeStop={(_e, _dir, ref, _delta, p) => {
-        const w = parseInt(ref.style.width,  10);
+        const w = parseInt(ref.style.width, 10);
         const h = parseInt(ref.style.height, 10);
         setSize({ w, h });
         setPos({ x: p.x, y: p.y });
@@ -110,7 +108,6 @@ export default function DraggableBox({
       bounds="parent"
       minWidth={50}
       minHeight={50}
-      // BLOQUEO DE INTERACCIÓN
       disableDragging={isLocked}
       enableResizing={!isLocked}
       scale={scale}
@@ -121,11 +118,27 @@ export default function DraggableBox({
       onClick={() => onSelect?.()}
       onDoubleClick={() => onDoubleClick?.()}
     >
-      {/* Header — drag handle + label + delete */}
+      {/* ESTO ES LO QUE CAMBIA: 
+          El widget ahora es absolute para que el size.h coincida con el modo Play 
+      */}
+      <div
+        className="widget-content absolute inset-0 z-0"
+        style={{ pointerEvents: "none" }}
+      >
+        <WidgetLiveWrapper
+          data={data}
+          width={size.w}
+          height={size.h} // <--- YA NO RESTAMOS 28, ENVIAMOS EL ALTO TOTAL
+          theme={theme}
+          isLiveMode={false}
+        />
+      </div>
+
+      {/* Header — Ahora con position relative y z-10 para flotar sobre el widget */}
       <div
         className={[
-          "box-header flex justify-between items-center px-2 py-1 border-b border-gray-200 transition-colors",
-          isLocked ? "bg-amber-50 cursor-not-allowed" : "cursor-grab active:cursor-grabbing",
+          "box-header relative z-10 flex justify-between items-center px-2 py-1 border-b border-gray-200/50 bg-white/60 backdrop-blur-sm transition-colors",
+          isLocked ? "bg-amber-50/80 cursor-not-allowed" : "cursor-grab active:cursor-grabbing",
         ].join(" ")}
       >
         <span className={[
@@ -154,24 +167,13 @@ export default function DraggableBox({
         </button>
       </div>
 
-      {/* Widget */}
-      <div
-        className="widget-content flex-1"
-        style={{ pointerEvents: "none", overflow: "hidden" }}
-      >
-        <WidgetLiveWrapper
-          data={data}
-          width={size.w}
-          height={size.h - 28}
-          theme={theme}
-          isLiveMode={false}
-        />
-      </div>
+      {/* Espaciador flexible para mantener la estructura flex-col original si fuera necesario */}
+      <div className="flex-1" />
 
-      {/* Badge equipo */}
+      {/* Badge equipo — También con z-10 para que no lo tape el widget */}
       <div className={[
-        "component-equipment-label transition-colors",
-        isLocked ? "bg-amber-100 text-amber-800 border-amber-200" : ""
+        "component-equipment-label relative z-10 transition-colors",
+        isLocked ? "bg-amber-100/80 text-amber-800 border-amber-200" : "bg-white/60"
       ].join(" ")}>
         {settings.tagId
           ? settings.tagId.split(":")[1] || settings.tagId
