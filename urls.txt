@@ -67,7 +67,7 @@ git push -u origin nueva-rama
 
 HACER MIGRACIONES A MANODESDE EL DOCKER:
 
-docker compose exec -it django-api python manage.py makemigrations
+docker compose exec -it django-api python manage.py makemigrations 
 
 docker compose exec -it django-api python manage.py migrate   
 
