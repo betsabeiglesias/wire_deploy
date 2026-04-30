@@ -5,7 +5,7 @@ import { getVariableDisplayName } from "../utils/tagPresentation";
 
 const PAGE_SIZE = 100;
 
-const TIMESTAMP_FORMATTER = new Intl.DateTimeFormat("es-ES", {
+const TIMESTAMP_FORMATTER = new Intl.DateTimeFormat(undefined, {
   year: "numeric",
   month: "2-digit",
   day: "2-digit",
@@ -13,7 +13,6 @@ const TIMESTAMP_FORMATTER = new Intl.DateTimeFormat("es-ES", {
   minute: "2-digit",
   second: "2-digit",
   hour12: false,
-  timeZone: "Europe/Madrid",
 });
 
 function formatLocalTimestamp(timestamp) {

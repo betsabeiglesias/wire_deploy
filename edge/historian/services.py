@@ -1,5 +1,4 @@
 # edge/historian/services.py
-# Estrategia de timestamps: docs/architecture/timestamp_strategy.md
 import os
 import pyodbc
 from typing import Any, Dict, List, Optional
@@ -7,24 +6,10 @@ from datetime import datetime, timezone
 
 
 def _normalize_dt(dt_str: str) -> str:
-    """Normaliza a YYYY-MM-DDTHH:MM:SS en UTC.
-
-    Acepta strings con zona horaria (Z, +HH:MM) — los convierte a UTC antes
-    de formatear, para que coincidan con los timestamps UTC del SQL Server.
-    Los strings naive se devuelven tal cual (compatibilidad con datos legados).
-    """
-    # Aware: convierte a UTC y elimina info de zona
-    normalized = dt_str.strip().replace("Z", "+00:00")
-    try:
-        dt = datetime.fromisoformat(normalized)
-        if dt.tzinfo is not None:
-            return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
-    except ValueError:
-        pass
-    # Naive: formatos clásicos
+    """Asegura formato completo YYYY-MM-DDTHH:MM:SS"""
     for fmt in ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d"):
         try:
-            return datetime.strptime(dt_str.strip(), fmt).strftime("%Y-%m-%dT%H:%M:%S")
+            return datetime.strptime(dt_str, fmt).strftime("%Y-%m-%dT%H:%M:%S")
         except ValueError:
             continue
     return dt_str

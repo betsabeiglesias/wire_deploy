@@ -19,23 +19,19 @@ function pad(n) {
   return String(n).padStart(2, "0");
 }
 
-/**
- * Convierte un string "YYYY-MM-DDTHH:MM" en hora local a ISO UTC para la API.
- * new Date(localStr) lo interpreta como hora local del navegador.
- */
-function localToUtcIso(localStr) {
-  if (!localStr) return "";
-  const d = new Date(localStr);
-  return Number.isNaN(d.getTime()) ? localStr : d.toISOString();
+function toLocalInput(date) {
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  );
 }
 
 /**
  * Resuelve el rango de tiempo efectivo para una query.
- * Devuelve siempre strings UTC ISO ("2026-04-20T08:00:00.000Z") para enviar a la API.
  *
  * @param {string|null} preset  - "1h" | "6h" | "24h" | "7d" | null
- * @param {string|null} start   - "YYYY-MM-DDTHH:MM" hora local (usado si preset es null)
- * @param {string|null} stop    - "YYYY-MM-DDTHH:MM" hora local (usado si preset es null)
+ * @param {string|null} start   - "YYYY-MM-DDTHH:MM" (usado si preset es null)
+ * @param {string|null} stop    - "YYYY-MM-DDTHH:MM" (usado si preset es null)
  * @returns {{ start: string, stop: string }}
  */
 export function resolveTimeRange(preset, start, stop) {
@@ -43,9 +39,9 @@ export function resolveTimeRange(preset, start, stop) {
   if (found) {
     const now = new Date();
     const from = new Date(now.getTime() - found.hours * 3_600_000);
-    return { start: from.toISOString(), stop: now.toISOString() };
+    return { start: toLocalInput(from), stop: toLocalInput(now) };
   }
-  return { start: localToUtcIso(start ?? ""), stop: localToUtcIso(stop ?? "") };
+  return { start: start ?? "", stop: stop ?? "" };
 }
 
 /**

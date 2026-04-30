@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 
-const XAXIS_RANGE = 90 * 1000; // 90 segundos de ventana
+const XAXIS_RANGE = 90 * 1000;
 
 const randomInRange = (min, max) =>
   Math.floor(Math.random() * (max - min + 1)) + min;
@@ -14,27 +14,33 @@ const generateSeedSeries = (points = 20, opts = { min: 10, max: 90 }) => {
   ]);
 };
 
-/**
- * ChartRealtime
- * Gráfico de línea que se actualiza cada segundo con datos sintéticos.
- * Usa Apex animations y mantiene ventana deslizante.
- */
 const ChartRealtime = ({
   settings = {},
   height,
   width,
   type = "line",
+
+  // 🎯 THEME
+  backgroundColor,
+  textColor,
+  gridColor,
+  axisColor,
+  primaryColor,
+  secondaryColor,
 }) => {
+
   const seed = useMemo(
     () => settings.series?.[0]?.data || generateSeedSeries(),
     [settings.series],
   );
+
   const [series, setSeries] = useState([
     {
       name: settings.series?.[0]?.name || "Realtime",
       data: seed,
     },
   ]);
+
   const lastDateRef = useRef(seed[seed.length - 1]?.[0] || new Date().getTime());
 
   useEffect(() => {
@@ -58,6 +64,7 @@ const ChartRealtime = ({
   const chartHeight = Number.isFinite(Number(height))
     ? Number(height)
     : height || 300;
+
   const chartWidth = Number.isFinite(Number(width))
     ? Number(width)
     : width || "100%";
@@ -76,42 +83,73 @@ const ChartRealtime = ({
         },
         toolbar: { show: false },
         zoom: { enabled: false },
+        background: backgroundColor,
       },
+      colors: [primaryColor, secondaryColor],
       dataLabels: { enabled: false },
       stroke: { curve: "smooth" },
       title: {
         text: settings.title || "Dynamic Updating Chart",
         align: "left",
+        style: { color: textColor },
       },
       markers: { size: 0 },
       xaxis: {
         type: "datetime",
         range: settings.xaxisRange ?? XAXIS_RANGE,
+        labels: {
+          style: { colors: axisColor },
+        },
+        axisBorder: { color: axisColor },
+        axisTicks: { color: axisColor },
       },
       yaxis: {
         max: settings.yMax ?? 100,
+        labels: {
+          style: { colors: axisColor },
+        },
       },
-      legend: { show: false },
+      grid: {
+        borderColor: gridColor,
+      },
+      legend: {
+        show: false,
+        labels: {
+          colors: textColor,
+        },
+      },
     };
+
     const opt = {
       ...baseOptions,
       ...(settings.options || {}),
     };
+
     opt.chart = { ...baseOptions.chart, ...(settings.options?.chart || {}) };
     opt.xaxis = { ...baseOptions.xaxis, ...(settings.options?.xaxis || {}) };
     opt.yaxis = { ...baseOptions.yaxis, ...(settings.options?.yaxis || {}) };
     opt.stroke = { ...baseOptions.stroke, ...(settings.options?.stroke || {}) };
     opt.title = { ...baseOptions.title, ...(settings.options?.title || {}) };
-    opt.markers = { ...baseOptions.markers, ...(settings.options?.markers || {}) };
-    opt.dataLabels = {
-      ...baseOptions.dataLabels,
-      ...(settings.options?.dataLabels || {}),
-    };
+
     return opt;
-  }, [settings]);
+  }, [
+    settings,
+    backgroundColor,
+    textColor,
+    gridColor,
+    axisColor,
+    primaryColor,
+    secondaryColor,
+  ]);
 
   return (
-    <div className="w-full h-full">
+    <div
+      className="w-full h-full"
+      style={{
+        background: backgroundColor,
+        color: textColor,
+      }}
+    >
       <ReactApexChart
         options={mergedOptions}
         series={series}

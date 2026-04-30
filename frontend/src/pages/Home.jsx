@@ -25,7 +25,7 @@ const Home = () => {
       onClick: () => navigate("/powerbi-all"),
       icon: ChartColumnBig,
       badge: "Analítica",
-      variant: "analytics",
+      variant: "operation",
     },
       {
     title: "Historian",
@@ -34,7 +34,7 @@ const Home = () => {
     onClick: () => navigate("/historian"),
     icon: Activity,
     badge: "Data",
-    variant: "analytics",
+    variant: "operation",
   },
   ];
 

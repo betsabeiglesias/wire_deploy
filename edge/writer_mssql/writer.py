@@ -3,7 +3,7 @@ import os
 import json
 import time
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
 
 import paho.mqtt.client as mqtt
@@ -46,7 +46,7 @@ log = logging.getLogger("mqtt_writer")
 
 
 # ============================================================
-# HELPERS
+# HELPERS  (pure functions — easy to unit-test)
 # ============================================================
 def parse_topic(topic: str) -> Optional[Dict[str, str]]:
     """
@@ -68,14 +68,13 @@ def parse_payload(raw: str) -> Optional[Dict[str, Any]]:
 
 def parse_timestamp(payload: Dict[str, Any], fallback: datetime) -> datetime:
     """
-    Acepta ISO-8601 string ('ts') o epoch-ms entero ('timestamp').
-    Siempre devuelve datetime naive UTC para compatibilidad con pyodbc/DATETIME2.
+    Accepts ISO-8601 string ('ts') or epoch-ms integer ('timestamp').
+    Falls back to `fallback` on any parse failure.
     """
     ts_str = payload.get("ts")
     if ts_str:
         try:
-            dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
-            return dt.astimezone(timezone.utc).replace(tzinfo=None)
+            return datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
         except ValueError:
             pass
 
@@ -88,9 +87,9 @@ def parse_timestamp(payload: Dict[str, Any], fallback: datetime) -> datetime:
 
     return fallback
 
-
 def normalize_datatype(dt: str) -> str:
     dt = dt.lower()
+
     if dt in ("float", "double"):
         return "float"
     elif dt in ("int", "int16", "int32", "uint16", "uint32"):
@@ -108,6 +107,7 @@ def extract_typed_value(
 ) -> Tuple[Optional[float], Optional[int], Optional[str], Optional[bool]]:
     if value is None:
         return (None, None, None, None)
+
     try:
         if datatype == "float":
             return (float(value), None, None, None)
@@ -127,6 +127,11 @@ def extract_typed_value(
 # WRITER SERVICE
 # ============================================================
 class WriterService:
+    """
+    Encapsulates the SQL connection and all write logic.
+    Designed to be injected into the MQTT client as a handler,
+    and easily extendable (metrics, multi-topic routing, etc.).
+    """
 
     def __init__(self):
         self.conn:   pyodbc.Connection = None
@@ -153,13 +158,6 @@ class WriterService:
         log.warning("Reconnecting to SQL Server...")
         self._connect()
 
-    def _safe_rollback(self) -> None:
-        try:
-            self.conn.rollback()
-        except Exception as e:
-            log.warning(f"Rollback failed (connection already gone): {e}")
-
-
     def close(self) -> None:
         try:
             self.cursor.close()
@@ -176,7 +174,8 @@ class WriterService:
     ) -> int:
         self.cursor.execute(
             """
-            INSERT INTO mqtt_raw_messages (received_at, topic, payload, client)
+            INSERT INTO mqtt_raw_messages
+                (received_at, topic, payload, client)
             OUTPUT INSERTED.id
             VALUES (?, ?, ?, ?)
             """,
@@ -184,16 +183,17 @@ class WriterService:
         )
         return self.cursor.fetchone()[0]
 
-    def _insert_parse_error(
-        self, raw_id: int, received_at: datetime, topic: str,
-        error_code: str, detail: Optional[str] = None
-    ) -> None:
+    def _mark_raw_error(self, raw_id: int, error: str) -> None:
         self.cursor.execute(
-            """
-            INSERT INTO parse_errors (raw_id, received_at, topic, error_code, detail)
-            VALUES (?, ?, ?, ?, ?)
-            """,
-            raw_id, received_at, topic, error_code, detail,
+            "UPDATE mqtt_raw_messages SET parse_error=? WHERE id=?",
+            error, raw_id,
+        )
+        self.conn.commit()
+
+    def _mark_raw_ok(self, raw_id: int) -> None:
+        self.cursor.execute(
+            "UPDATE mqtt_raw_messages SET parsed_at=? WHERE id=?",
+            datetime.utcnow(), raw_id,
         )
 
     def _insert_telemetry(
@@ -208,112 +208,125 @@ class WriterService:
         datatype: str,
         unit: Optional[str],
         quality: str,
+        batch_id: Optional[str],
     ) -> None:
         self.cursor.execute(
             """
             INSERT INTO telemetry_history
                 ([timestamp], equipment_id, variable,
                  value_float, value_int, value_string, value_bool,
-                 datatype, unit, quality)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 datatype, unit, quality, batch_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             ts, equipment_id, variable,
             v_float, v_int, v_string, v_bool,
-            datatype, unit, quality,
+            datatype, unit, quality, batch_id,
         )
 
     # --------------------------------------------------------
-    # Message handler
+    # Message handler (bound to MQTT client)
     # --------------------------------------------------------
 
     def handle_message(self, client, userdata, msg) -> None:
         """
-        Flujo de escritura:
-          1. INSERT mqtt_raw_messages  — siempre, incondicionalmente.
-          2. Parseo y validación       — cualquier fallo → INSERT parse_errors + commit + return.
-          3. INSERT telemetry_history  — solo si todo es válido.
-          4. commit único             — al final del camino feliz.
+        Dual-write strategy:
+          1. Always persist to mqtt_raw_messages  (audit / recovery).
+          2. Parse and write to telemetry_history.
+             Any failure is recorded in parse_error — nothing lost silently.
         """
-        received_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        received_at = datetime.utcnow()
         payload_str = msg.payload.decode()
         topic       = msg.topic
 
         try:
-            # -- 1. Raw insert (siempre) -----------------------
+                        # -- 1. Raw insert --------------------------------
             raw_id = self._insert_raw(received_at, topic, payload_str, CLIENT_ID)
 
-            # -- 2. Parse payload -----------------------------
+            # -- 2. Parse payload FIRST ------------------------
             data = parse_payload(payload_str)
             if not data:
-                self._insert_parse_error(raw_id, received_at, topic, "invalid_json")
-                self.conn.commit()
+                self._mark_raw_error(raw_id, "invalid_json")
                 log.warning(f"Invalid JSON — topic={topic}")
                 return
 
-            # -- 3. Extraer identificadores -------------------
+            # -- 3. Extract identifiers (SOURCE OF TRUTH) ------
             equipment_id = data.get("equipment_id")
             variable     = data.get("variable")
 
-            # Fallback al topic por compatibilidad
+            # fallback al topic (por compatibilidad)
             if not equipment_id or not variable:
                 topic_data = parse_topic(topic)
                 if not topic_data:
-                    self._insert_parse_error(
-                        raw_id, received_at, topic, "missing_identifiers"
-                    )
-                    self.conn.commit()
+                    self._mark_raw_error(raw_id, "missing_identifiers")
                     log.warning(f"Missing identifiers — topic={topic}")
                     return
+
                 equipment_id = equipment_id or topic_data["equipment_id"]
                 variable     = variable or topic_data["variable"]
 
+            # validación final
             if not equipment_id or not variable:
-                self._insert_parse_error(
-                    raw_id, received_at, topic, "invalid_identifiers"
-                )
-                self.conn.commit()
+                self._mark_raw_error(raw_id, "invalid_identifiers")
                 return
+            # # -- 1. Raw insert --------------------------------
+            # raw_id = self._insert_raw(received_at, topic, payload_str, CLIENT_ID)
 
-            # -- 4. Extraer campos ----------------------------
-            ts           = parse_timestamp(data, received_at)
+            # # -- 2. Parse topic -------------------------------
+            # topic_data = parse_topic(topic)
+            # if not topic_data:
+            #     self._mark_raw_error(raw_id, "invalid_topic_format")
+            #     log.warning(f"Invalid topic format: {topic}")
+            #     return
+
+            # equipment_id = topic_data["equipment_id"]
+            # variable     = topic_data["variable"]
+
+            # # -- 3. Parse payload -----------------------------
+            # data = parse_payload(payload_str)
+            # if not data:
+            #     self._mark_raw_error(raw_id, "invalid_json")
+            #     log.warning(f"Invalid JSON — topic={topic}")
+            #     return
+
+            # -- 4. Extract fields ----------------------------
+            ts       = parse_timestamp(data, received_at)
+            # datatype = data.get("datatype", "float")
             datatype_raw = data.get("datatype", "float")
-            datatype     = normalize_datatype(datatype_raw)
-
+            datatype = normalize_datatype(datatype_raw)
             if datatype == "unknown":
-                self._insert_parse_error(
-                    raw_id, received_at, topic,
-                    "unsupported_datatype", datatype_raw
-                )
-                self.conn.commit()
+                self._mark_raw_error(raw_id, f"unsupported_datatype:{datatype_raw}")
                 return
-
-            unit    = data.get("unit")
-            quality = (data.get("quality") or "GOOD").upper()
+            unit     = data.get("unit")
+            quality  = data.get("quality", "good")
+            batch_id = data.get("batch_id")
 
             v_float, v_int, v_string, v_bool = extract_typed_value(
                 data.get("value"), datatype
             )
 
-            if all(v is None for v in (v_float, v_int, v_string, v_bool)):
-                self._insert_parse_error(
-                    raw_id, received_at, topic, "no_valid_value",
-                    f"{equipment_id}/{variable} datatype={datatype}"
-                )
-                self.conn.commit()
-                log.warning(f"No valid value — {equipment_id}/{variable}")
+            if all(v is None for v in [v_float, v_int, v_string, v_bool]):
+                self._mark_raw_error(raw_id, "no_valid_value")
+                log.warning(f"No valid value — {equipment_id}/{variable} datatype={datatype}")
                 return
 
             # -- 5. Telemetry insert --------------------------
-            self._insert_telemetry(
-                ts, equipment_id, variable,
-                v_float, v_int, v_string, v_bool,
-                datatype, unit, quality,
-            )
+            try:
+                self._insert_telemetry(
+                    ts, equipment_id, variable,
+                    v_float, v_int, v_string, v_bool,
+                    datatype, unit, quality, batch_id,
+                )
+            except pyodbc.Error as e:
+                if e.args and e.args[0] in (2601, 2627):
+                    log.debug(f"Duplicate skipped — {equipment_id}/{variable}")
+                    self.conn.rollback()
+                    return
+                raise
 
-            # -- 6. Commit único ------------------------------
+            self._mark_raw_ok(raw_id)
             self.conn.commit()
 
-            display = next(v for v in (v_float, v_int, v_string, v_bool) if v is not None)
+            display = next(v for v in [v_float, v_int, v_string, v_bool] if v is not None)
             log.info(
                 f"✓ {equipment_id}/{variable} | "
                 f"value={display} | datatype={datatype} | quality={quality}"
@@ -321,18 +334,19 @@ class WriterService:
 
         except pyodbc.Error as e:
             error_code = e.args[0] if e.args else None
-            self.conn.rollback()
 
             if error_code in (2601, 2627):
-                log.debug(f"Duplicate skipped — {equipment_id}/{variable}")
+                log.debug("Duplicate telemetry skipped")
+                self.conn.rollback()
                 return
 
             log.error(f"SQL error [{error_code}]: {e}")
+            self.conn.rollback()
             self._reconnect()
 
         except Exception as e:
             log.error(f"Unexpected error: {e}", exc_info=True)
-            self._safe_rollback()
+            self.conn.rollback()
 
 
 # ============================================================

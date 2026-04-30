@@ -11,13 +11,16 @@ const HmiEnergySummaryCard = ({
   width = 380,
   height = 140,
 
-  // 👇 NUEVO (IMPORTANTE)
   backgroundColor = "#ffffff",
   textColor = "#0f172a",
   primaryColor = "#3b82f6",
   secondaryColor = "#94a3b8",
 }) => {
-  const arrowColor = deltaDirection === "down" ? "#10b981" : "#ef4444";
+  const arrowColor =
+    deltaDirection === "down"
+      ? primaryColor || "#10b981"
+      : "#ef4444";
+
   const arrow = deltaDirection === "down" ? "▼" : "▲";
 
   return (
@@ -25,7 +28,6 @@ const HmiEnergySummaryCard = ({
       width={width}
       height={height}
       viewBox="0 0 380 140"
-      xmlns="http://www.w3.org/2000/svg"
       style={{ display: "block" }}
     >
       {/* Fondo */}

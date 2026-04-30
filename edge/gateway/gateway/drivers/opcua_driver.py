@@ -33,7 +33,7 @@ def datatype_after_scale(datatype_in: str, scale: Optional[float]) -> str:
     return datatype_in
 
 def quality_from_status(status: ua.StatusCode) -> str:
-    return "GOOD" if status.is_good() else ("Uncertain" if status.is_uncertain() else "BAD")
+    return "Good" if status.is_good() else ("Uncertain" if status.is_uncertain() else "Bad")
 
 def normalize_opcua_mapping(cfg: Dict[str, Any]) -> Dict[str, Any]:
     out: Dict[str, Any] = dict(cfg)
@@ -109,7 +109,7 @@ def _status_is_good(st) -> bool:
     try:
         return bool(st.is_good())
     except Exception:
-        return str(st).endswith("GOOD") if st is not None else False
+        return str(st).endswith("Good") if st is not None else False
 
 def _normalize_create_results(results):
     """Devuelve (lista_de_resultados, es_lista_de_handles_int) para create_monitored_items."""
@@ -738,7 +738,6 @@ class OPCUADriver(BaseDriver):
                     "endpoint": self.endpoint,
                     "ip": plc_ip,
                     "nodeid": nodeid,
-                    "status_code": str(dv.Value.StatusCode),  # Fix 1: requerido por normalize_quality
                     "attrs": dict(item.get("attrs") or {}),
                 }
             )
@@ -912,3 +911,11 @@ class OPCUADriver(BaseDriver):
                         self.log.warning(f"[Watchdog] {equip}: sin datos desde hace {age:.1f}s.")
                 except Exception as ex:
                     self.log.error(f"[Watchdog] Error al consultar estado de {equip}: {ex}")
+
+
+
+
+
+
+
+

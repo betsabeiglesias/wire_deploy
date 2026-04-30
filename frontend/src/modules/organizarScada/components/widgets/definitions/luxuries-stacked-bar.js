@@ -1,4 +1,4 @@
-import LuxuriesStackedBarChart from "../standard/LuxuriesStackedBarChart";
+import LuxuriesStackedBarChart from "../iconsScada/LuxuriesStackedBarChart";
 import { buildBaseStyle } from "./_shared";
 
 export default {
@@ -29,6 +29,8 @@ export default {
 
       primaryColor: base.primary,
       secondaryColor: base.primaryDark,
+      tertiaryColor: base.warning,
+      quaternaryColor: base.success,
     };
   },
 
