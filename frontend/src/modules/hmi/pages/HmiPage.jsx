@@ -19,21 +19,21 @@ const HmiPage = () => {
       variant: "operation",
     },
     {
+      title: "Mis HMIs",
+      description:
+      "Accede a proyectos desplegados, pantallas guardadas y entornos listos para seguimiento continuo.",
+      icon: FolderKanban,
+      eyebrow: "Biblioteca",
+      route: "/layout",
+      variant: "operation",
+    },
+    {
       title: "Comunicaciones",
       description:
         "Conecta tags, protocolos y estados para enlazar la capa HMI con la infraestructura industrial.",
       icon: Network,
       eyebrow: "Integración",
       route: "/scada",
-      variant: "operation",
-    },
-    {
-      title: "Mis HMIs",
-      description:
-        "Accede a proyectos desplegados, pantallas guardadas y entornos listos para seguimiento continuo.",
-      icon: FolderKanban,
-      eyebrow: "Biblioteca",
-      route: "/layout",
       variant: "operation",
     },
     {
