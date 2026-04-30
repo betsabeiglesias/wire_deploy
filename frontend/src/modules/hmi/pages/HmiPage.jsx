@@ -1,10 +1,9 @@
 import React from "react";
-import { FolderKanban, Network, PanelsTopLeft, SlidersHorizontal } from "lucide-react";
+import { FolderKanban, Network, PanelsTopLeft, SlidersHorizontal, Activity } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../sidebar/Sidebar";
 import Card from "../../../components/ui/Card";
 import Header from "../../../components/ui/Header";
-import { Activity } from "lucide-react";
 
 const HmiPage = () => {
   const navigate = useNavigate();
@@ -61,8 +60,14 @@ const HmiPage = () => {
               highlightText="desde una sola vista"
               icon={Activity}
             />
+            
             <section className="px-6 py-6 md:px-8 md:py-8">
-              <div className="grid gap-6 lg:grid-cols-3">
+              {/* 
+                  He configurado grid-cols-1 para móvil, 
+                  md:grid-cols-2 para tablets y lg:grid-cols-2 para escritorio.
+                  Esto garantiza el formato 2 y 2.
+              */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                 {modules.map((item) => (
                   <Card
                     key={item.title}
